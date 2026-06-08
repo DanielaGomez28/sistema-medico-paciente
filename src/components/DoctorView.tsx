@@ -192,9 +192,11 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
   // M.4 Profile & Banking state
   const [bankHolder, setBankHolder] = useState('Dr. Alejandro Ríos García');
-  const [bankIBAN, setBankIBAN] = useState('ES76 0081 9293 0100 0100 1234');
-  const [bankBIC, setBankBIC] = useState('BSCHESMMXXX');
-  const [bankEntity, setBankEntity] = useState('Banco Santander');
+  const [bankHolderId, setBankHolderId] = useState('V-14.890.344');
+  const [bankEntity, setBankEntity] = useState('Banesco Banco Universal');
+  const [bankAccountType, setBankAccountType] = useState<'Corriente' | 'Ahorro'>('Corriente');
+  const [bankAccountNumber, setBankAccountNumber] = useState('0134-0100-01-0101234567');
+  const [bankMobilePhone, setBankMobilePhone] = useState('0414-1234567');
   const [profilePhone, setProfilePhone] = useState('+58 212 910 3348');
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
 
@@ -457,7 +459,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                 .join('')
                 .toUpperCase(),
               name: doctorName,
-              role: 'Cardiólogo (M.P. 28.490/7)',
+              role: 'Cardiólogo (MPPS 28.490)',
             }}
             onLogout={onLogout}
             logoutVariant="icon"
@@ -1203,7 +1205,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       <div className="border-t border-surface-850 pt-4 flex items-center justify-between">
                         <div className="text-xs space-y-0.5">
                           <p className="font-bold text-white">{doctorName}</p>
-                          <p className="text-[10px] text-surface-500">M.P. 28.490/7 • Cardiología</p>
+                          <p className="text-[10px] text-surface-500">MPPS 28.490 • CMDC-12.458 • Cardiología</p>
                         </div>
                         <div className="flex items-center gap-1 text-[10px] text-secondary-450 font-bold">
                           <ShieldCheck className="h-4 w-4" />
@@ -1310,7 +1312,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         </div>
                         <div>
                           <p className="zenith-field-label">Registro Profesional</p>
-                          <p className="text-sm font-semibold text-white">M.P. 28.490/7</p>
+                          <p className="text-sm font-semibold text-white">MPPS 28.490</p>
                         </div>
                       </div>
                       <div className="divide-y divide-surface-850 text-xs">
@@ -1319,8 +1321,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                           <span className="text-surface-200 font-semibold">Cardiología</span>
                         </div>
                         <div className="flex justify-between py-2">
+                          <span className="text-surface-500">Colegio de Médicos</span>
+                          <span className="text-surface-200 font-semibold">CMDC-12.458</span>
+                        </div>
+                        <div className="flex justify-between py-2">
                           <span className="text-surface-500">Institución Certificadora</span>
-                          <span className="text-surface-200 font-semibold">Real Academia de Med.</span>
+                          <span className="text-surface-200 font-semibold">MPPS Venezuela</span>
                         </div>
                         <div className="flex justify-between py-2">
                           <span className="text-surface-500">Estado de Colegiatura</span>
@@ -1341,7 +1347,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                   <div className="flex items-center gap-3 p-3 bg-secondary-500/5 border border-secondary-500/15 rounded-xl">
                     <ShieldCheck className="h-5 w-5 text-secondary-450 shrink-0" />
                     <p className="text-[10px] text-secondary-400 leading-snug">
-                      <span className="font-bold">Verificación completada por Médico-Paciente:</span> Las credenciales de este profesional han sido validadas contra el Registro Nacional de Especialistas y se encuentran vigentes a la fecha.
+                      <span className="font-bold">Verificación completada por Médico-Paciente:</span> Las credenciales han sido validadas contra el registro MPPS y el Colegio de Médicos de Venezuela, y se encuentran vigentes a la fecha.
                     </p>
                   </div>
                 </div>
@@ -1363,29 +1369,53 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       />
                     </div>
                     <div className="space-y-1.5">
+                      <label className="zenith-field-label">Cédula del Titular</label>
+                      <input
+                        type="text"
+                        value={bankHolderId}
+                        onChange={e => setBankHolderId(e.target.value)}
+                        placeholder="V-12.345.678"
+                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-secondary-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
                       <label className="zenith-field-label">Entidad Bancaria</label>
                       <input
                         type="text"
                         value={bankEntity}
                         onChange={e => setBankEntity(e.target.value)}
+                        placeholder="Ej: Banesco, Mercantil, BDV"
                         className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
                       />
                     </div>
+                    <div className="space-y-1.5">
+                      <label className="zenith-field-label">Tipo de Cuenta</label>
+                      <select
+                        value={bankAccountType}
+                        onChange={e => setBankAccountType(e.target.value as 'Corriente' | 'Ahorro')}
+                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
+                      >
+                        <option value="Corriente">Corriente</option>
+                        <option value="Ahorro">Ahorro</option>
+                      </select>
+                    </div>
                     <div className="space-y-1.5 md:col-span-2">
-                      <label className="zenith-field-label">IBAN / Número de Cuenta</label>
+                      <label className="zenith-field-label">Número de Cuenta Bancaria</label>
                       <input
                         type="text"
-                        value={bankIBAN}
-                        onChange={e => setBankIBAN(e.target.value)}
+                        value={bankAccountNumber}
+                        onChange={e => setBankAccountNumber(e.target.value)}
+                        placeholder="0134-0100-01-0101234567"
                         className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-secondary-500"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="zenith-field-label">Código BIC / SWIFT</label>
+                      <label className="zenith-field-label">Teléfono Pago Móvil</label>
                       <input
                         type="text"
-                        value={bankBIC}
-                        onChange={e => setBankBIC(e.target.value)}
+                        value={bankMobilePhone}
+                        onChange={e => setBankMobilePhone(e.target.value)}
+                        placeholder="0414-1234567"
                         className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-secondary-500"
                       />
                     </div>
@@ -1402,7 +1432,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                   <div className="p-3 bg-primary-500/5 border border-primary-500/15 rounded-xl flex items-start gap-2 text-[10px] text-primary-400">
                     <DollarSign className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                    <span>Las comisiones se liquidan el último día hábil de cada mes. Asegúrese de que los datos bancarios sean correctos antes del día 25 de cada período.</span>
+                    <span>Las comisiones se liquidan el último día hábil de cada mes mediante transferencia o Pago Móvil en bolívares. Verifique cuenta y teléfono afiliado antes del día 25 de cada período.</span>
                   </div>
 
                   {/* Save / Logout actions */}

@@ -65,7 +65,7 @@ const MOCK_RECIPES: Recipe[] = [
     instructions: 'Tomar 1 comprimido al día por la mañana en ayunas.',
     doctor: 'Dr. Alejandro Ríos',
     specialty: 'Cardiología',
-    doctorLicense: 'M.P. 28.490/7',
+    doctorLicense: 'MPPS 28.490 • CMDC-12.458',
     status: 'Activo'
   },
   {
@@ -77,7 +77,7 @@ const MOCK_RECIPES: Recipe[] = [
     instructions: 'Tomar 1 comprimido diario durante el almuerzo.',
     doctor: 'Dr. Alejandro Ríos',
     specialty: 'Cardiología',
-    doctorLicense: 'M.P. 28.490/7',
+    doctorLicense: 'MPPS 28.490 • CMDC-12.458',
     status: 'Activo'
   },
   {
@@ -89,7 +89,7 @@ const MOCK_RECIPES: Recipe[] = [
     instructions: 'Tomar 1 comprimido cada 12 horas con las comidas por 7 días.',
     doctor: 'Dr. Alejandro Ríos',
     specialty: 'Medicina General',
-    doctorLicense: 'M.P. 28.490/7',
+    doctorLicense: 'MPPS 28.490 • CMDC-12.458',
     status: 'Expirado'
   }
 ];

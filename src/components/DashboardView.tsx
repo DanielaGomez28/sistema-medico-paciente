@@ -63,11 +63,11 @@ interface StockMovement {
 }
 
 const MOCK_DOCTORS: DoctorRecord[] = [
-  { id: 'MED-101', name: 'Dr. Alejandro Ríos', specialty: 'Cardiología', license: 'M.P. 28.490/7', recipesCount: 120, commissionsEarned: 1450.80, status: 'Activo' },
-  { id: 'MED-102', name: 'Dra. Elena Vargas', specialty: 'Medicina General', license: 'M.P. 10.923/4', recipesCount: 85, commissionsEarned: 980.50, status: 'Activo' },
-  { id: 'MED-103', name: 'Dr. Juan Pérez', specialty: 'Pediatría', license: 'M.P. 15.421/2', recipesCount: 42, commissionsEarned: 320.00, status: 'Activo' },
-  { id: 'MED-104', name: 'Dra. Patricia Gómez', specialty: 'Endocrinología', license: 'M.P. 22.810/9', recipesCount: 68, commissionsEarned: 740.20, status: 'Activo' },
-  { id: 'MED-105', name: 'Dr. Roberto Sánchez', specialty: 'Dermatología', license: 'M.P. 19.340/3', recipesCount: 15, commissionsEarned: 110.00, status: 'Inactivo' }
+  { id: 'MED-101', name: 'Dr. Alejandro Ríos', specialty: 'Cardiología', license: 'MPPS 28.490 • CMDC-12.458', recipesCount: 120, commissionsEarned: 1450.80, status: 'Activo' },
+  { id: 'MED-102', name: 'Dra. Elena Vargas', specialty: 'Medicina General', license: 'MPPS 49.321 • CMV-08.912', recipesCount: 85, commissionsEarned: 980.50, status: 'Activo' },
+  { id: 'MED-103', name: 'Dr. Juan Pérez', specialty: 'Pediatría', license: 'MPPS 10.293 • CMC-05.441', recipesCount: 42, commissionsEarned: 320.00, status: 'Activo' },
+  { id: 'MED-104', name: 'Dra. Patricia Gómez', specialty: 'Endocrinología', license: 'MPPS 22.810 • CMDC-09.104', recipesCount: 68, commissionsEarned: 740.20, status: 'Activo' },
+  { id: 'MED-105', name: 'Dr. Roberto Sánchez', specialty: 'Dermatología', license: 'MPPS 19.340 • CMM-03.287', recipesCount: 15, commissionsEarned: 110.00, status: 'Inactivo' }
 ];
 
 const MOCK_PATIENTS: PatientRecord[] = [

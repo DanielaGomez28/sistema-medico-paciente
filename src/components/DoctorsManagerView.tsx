@@ -22,14 +22,15 @@ interface DoctorProfile {
   dni: string;
   specialty: string;
   licenseMpps: string;
+  colegioMedico: string;
   status: 'Verificado' | 'Pendiente' | 'Inactivo';
   registeredAt: string;
 }
 
 const INITIAL_DOCTORS: DoctorProfile[] = [
-  { id: 'MED-101', firstName: 'Alejandro', lastName: 'Ríos', email: 'ale.rios@zenith.com', dni: 'V-14.890.344', specialty: 'Cardiología', licenseMpps: 'MPPS-28490', status: 'Verificado', registeredAt: '2026-05-10' },
-  { id: 'MED-102', firstName: 'Elena', lastName: 'Vargas', email: 'elena.vargas@zenith.com', dni: 'V-16.782.903', specialty: 'Medicina General', licenseMpps: 'MPPS-49321', status: 'Verificado', registeredAt: '2026-05-18' },
-  { id: 'MED-103', firstName: 'Juan', lastName: 'Pérez', email: 'juan.perez@zenith.com', dni: 'V-12.334.892', specialty: 'Pediatría', licenseMpps: 'MPPS-10293', status: 'Verificado', registeredAt: '2026-06-01' },
+  { id: 'MED-101', firstName: 'Alejandro', lastName: 'Ríos', email: 'ale.rios@zenith.com', dni: 'V-14.890.344', specialty: 'Cardiología', licenseMpps: 'MPPS 28.490', colegioMedico: 'CMDC-12.458', status: 'Verificado', registeredAt: '2026-05-10' },
+  { id: 'MED-102', firstName: 'Elena', lastName: 'Vargas', email: 'elena.vargas@zenith.com', dni: 'V-16.782.903', specialty: 'Medicina General', licenseMpps: 'MPPS 49.321', colegioMedico: 'CMV-08.912', status: 'Verificado', registeredAt: '2026-05-18' },
+  { id: 'MED-103', firstName: 'Juan', lastName: 'Pérez', email: 'juan.perez@zenith.com', dni: 'V-12.334.892', specialty: 'Pediatría', licenseMpps: 'MPPS 10.293', colegioMedico: 'CMC-05.441', status: 'Verificado', registeredAt: '2026-06-01' },
 ];
 
 export default function DoctorsManagerView() {
@@ -43,6 +44,7 @@ export default function DoctorsManagerView() {
   const [dni, setDni] = useState('');
   const [specialty, setSpecialty] = useState('Cardiología');
   const [licenseMpps, setLicenseMpps] = useState('');
+  const [colegioMedico, setColegioMedico] = useState('');
 
   const [attachments, setAttachments] = useState<{ name: string; size: string }[]>([]);
   const [dragActive, setDragActive] = useState(false);
@@ -94,7 +96,7 @@ export default function DoctorsManagerView() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!firstName || !lastName || !email || !dni || !licenseMpps) {
+    if (!firstName || !lastName || !email || !dni || !licenseMpps || !colegioMedico) {
       alert('Por favor complete todos los campos obligatorios y adjunte soportes.');
       return;
     }
@@ -113,6 +115,7 @@ export default function DoctorsManagerView() {
       dni,
       specialty,
       licenseMpps,
+      colegioMedico,
       status: attachments.length > 0 ? 'Verificado' : 'Pendiente',
       registeredAt: new Date().toISOString().split('T')[0],
     };
@@ -135,6 +138,7 @@ export default function DoctorsManagerView() {
     setEmail('');
     setDni('');
     setLicenseMpps('');
+    setColegioMedico('');
     setAttachments([]);
   };
 
@@ -142,6 +146,7 @@ export default function DoctorsManagerView() {
     `${doc.firstName} ${doc.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
     doc.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
     doc.licenseMpps.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doc.colegioMedico?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     doc.specialty.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -262,13 +267,24 @@ export default function DoctorsManagerView() {
             />
           </div>
           <div className="space-y-1">
-            <label className="zenith-field-label">Colegiatura / MPPS *</label>
+            <label className="zenith-field-label">Registro MPPS *</label>
             <input
               type="text"
               required
               value={licenseMpps}
               onChange={e => setLicenseMpps(e.target.value)}
-              placeholder="MPPS-28490"
+              placeholder="MPPS 28.490"
+              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400 font-mono"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="zenith-field-label">Nº Colegio de Médicos *</label>
+            <input
+              type="text"
+              required
+              value={colegioMedico}
+              onChange={e => setColegioMedico(e.target.value)}
+              placeholder="CMDC-12.458"
               className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400 font-mono"
             />
           </div>
@@ -371,7 +387,7 @@ export default function DoctorsManagerView() {
                     <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
                       <th className="pb-2.5">Médico</th>
                       <th>Especialidad</th>
-                      <th>Cédula / MPPS</th>
+                      <th>Cédula / MPPS / Colegio</th>
                       <th>Estado</th>
                       <th className="text-right">Fecha Registro</th>
                     </tr>
@@ -387,6 +403,7 @@ export default function DoctorsManagerView() {
                         <td>
                           <p className="font-mono text-surface-300">{doc.dni}</p>
                           <p className="text-[10px] font-mono text-surface-500">{doc.licenseMpps}</p>
+                          <p className="text-[10px] font-mono text-surface-500">{doc.colegioMedico ?? '—'}</p>
                         </td>
                         <td className="whitespace-nowrap">
                           <span
@@ -430,6 +447,7 @@ export default function DoctorsManagerView() {
                       { label: 'Especialidad', value: doc.specialty },
                       { label: 'Cédula', value: doc.dni },
                       { label: 'MPPS', value: doc.licenseMpps },
+                      { label: 'Colegio', value: doc.colegioMedico ?? '—' },
                       { label: 'Registro', value: doc.registeredAt },
                     ]}
                   />
