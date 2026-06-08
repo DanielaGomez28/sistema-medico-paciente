@@ -747,7 +747,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
             {activeSubTab === 'payment' && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <PageHeader
-                  title="Pasarela de Confirmación de Pago"
+                  title="Preparación de Pago"
                   description="Registre el pago de sus medicamentos reservados en el almacén de distribución."
                   actions={
                     <div className="bg-secondary-500/10 border border-secondary-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-3 shrink-0">
