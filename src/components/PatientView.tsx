@@ -229,7 +229,7 @@ const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout'
 
 export default function PatientView({ patientName, patientEmail, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'
-  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('recipes');
+  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('treatment');
 
   const [recipes] = useState<Recipe[]>(MOCK_RECIPES);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -830,30 +830,28 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         </p>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-3 sm:gap-4 shrink-0">
-                      <div className="flex items-center gap-2 px-3 py-2 bg-surface-950/50 border border-surface-850 rounded-xl">
-                        <TrendingUp className="h-4 w-4 text-secondary-400" />
-                        <div>
-                          <p className="text-[10px] text-surface-500">Adherencia semanal</p>
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto sm:min-w-[22rem] shrink-0">
+                      <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-surface-950/50 border border-surface-850 rounded-xl min-w-0">
+                        <TrendingUp className="h-4 w-4 text-secondary-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-surface-500 truncate">Adherencia semanal</p>
                           <p className="text-sm font-semibold text-white tabular-nums">{weeklyAdherencePercent}%</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-2 bg-surface-950/50 border border-surface-850 rounded-xl">
-                        <Pill className="h-4 w-4 text-primary-400" />
-                        <div>
-                          <p className="text-[10px] text-surface-500">Medicamentos activos</p>
+                      <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-surface-950/50 border border-surface-850 rounded-xl min-w-0">
+                        <Pill className="h-4 w-4 text-primary-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-surface-500 truncate">Medicamentos activos</p>
                           <p className="text-sm font-semibold text-white tabular-nums">{activeTreatments.length}</p>
                         </div>
                       </div>
-                      {treatmentAlerts.length > 0 && (
-                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/5 border border-amber-500/20 rounded-xl">
-                          <Bell className="h-4 w-4 text-amber-400" />
-                          <div>
-                            <p className="text-[10px] text-surface-500">Alertas</p>
-                            <p className="text-sm font-semibold text-white tabular-nums">{treatmentAlerts.length}</p>
-                          </div>
+                      <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-amber-500/5 border border-amber-500/20 rounded-xl min-w-0">
+                        <Bell className="h-4 w-4 text-amber-400 shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-[10px] text-surface-500 truncate">Alertas</p>
+                          <p className="text-sm font-semibold text-white tabular-nums">{treatmentAlerts.length}</p>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </div>
                   {todayTotalCount > 0 && (
@@ -873,7 +871,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                 </div>
 
                 {/* Navegación interna */}
-                <div className="flex flex-wrap gap-2 p-1 bg-surface-950/50 border border-surface-850 rounded-xl">
+                <div className="flex flex-nowrap gap-2 p-1 bg-surface-950/50 border border-surface-850 rounded-xl overflow-x-auto">
                   {([
                     { id: 'today' as const, label: 'Hoy', icon: Clock, count: pendingTodayDoses.length },
                     { id: 'medications' as const, label: 'Medicamentos', icon: Pill, count: activeTreatments.length },
@@ -886,7 +884,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         key={tab.id}
                         type="button"
                         onClick={() => setTreatmentPanel(tab.id)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                           isActive
                             ? 'bg-primary-600 text-white shadow-sm'
                             : 'text-surface-400 hover:text-surface-200 hover:bg-surface-850'
