@@ -32,7 +32,7 @@ import {
   Bell,
   TrendingUp
 } from 'lucide-react';
-import { AppShell, AppSidebar, AppHeader } from './layout';
+import { AppShell, AppSidebar, AppHeader, useShell } from './layout';
 import { PageHeader, Button, ListCard, Modal, ModalBody, StatCard } from './ui';
 
 interface PatientViewProps {
@@ -215,6 +215,24 @@ const WEEKLY_ADHERENCE = [
 ];
 
 const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout';
+
+function SidebarCredentialButton({ onOpen }: { onOpen: () => void }) {
+  const { closeSidebar } = useShell();
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        onOpen();
+        closeSidebar();
+      }}
+      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-primary-400 hover:text-white hover:bg-primary-500/10 border border-primary-500/20 transition-colors cursor-pointer"
+    >
+      <QrCode className="h-4 w-4 shrink-0" />
+      <span>Credencial QR</span>
+    </button>
+  );
+}
 
 export default function PatientView({ patientName, patientEmail, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'
@@ -488,7 +506,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   };
 
   const credentialQrSvg = (
-    <svg viewBox="0 0 100 100" className="w-40 h-40 sm:w-48 sm:h-48 text-[#0a1220]">
+    <svg viewBox="0 0 100 100" className="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 text-[#0a1220]">
       <rect x="0" y="0" width="20" height="20" fill="currentColor" />
       <rect x="5" y="5" width="10" height="10" fill="white" />
       <rect x="80" y="0" width="20" height="20" fill="currentColor" />
@@ -535,6 +553,9 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
             name: profileName,
             role: 'Paciente ID #8849',
           }}
+          preProfile={
+            <SidebarCredentialButton onOpen={() => setIsCredentialModalOpen(true)} />
+          }
           onLogout={onLogout}
           logoutVariant="icon"
         />
@@ -542,12 +563,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       header={({ onMenuClick }) => (
         <AppHeader
           onMenuClick={onMenuClick}
-          actions={
-            <Button variant="outline" size="sm" onClick={() => setIsCredentialModalOpen(true)}>
-              <QrCode className="h-4 w-4" />
-              <span className="hidden sm:inline">Credencial QR</span>
-            </Button>
-          }
           profileInitials={profileName
             .split(' ')
             .filter(Boolean)
@@ -1733,13 +1748,13 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
         open={isCredentialModalOpen}
         onClose={() => setIsCredentialModalOpen(false)}
         title="Credencial QR Dinámica"
-        size="md"
+        size="lg"
       >
         <ModalBody className="space-y-4">
           <p className="text-xs text-surface-400 text-center">
             Presente este código en el mostrador para validar su identidad y retirar medicamentos.
           </p>
-          <div className="flex flex-col items-center bg-white text-[#0a1220] p-5 rounded-xl shadow-inner border border-surface-700/10 mx-auto max-w-xs">
+          <div className="flex flex-col items-center bg-white text-[#0a1220] p-6 sm:p-8 rounded-xl shadow-inner border border-surface-700/10 mx-auto max-w-md w-full">
             {credentialQrSvg}
             <div className="mt-3 text-center">
               <span className="text-xs font-mono font-bold text-[#0a1220] tracking-wider block">

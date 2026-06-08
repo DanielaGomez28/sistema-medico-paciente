@@ -27,6 +27,7 @@ export interface AppSidebarProps {
   accent?: AccentVariant;
   sectionLabel?: string;
   sidebarExtra?: React.ReactNode;
+  preProfile?: React.ReactNode;
   profile?: AppSidebarProfile;
   onLogout?: () => void;
   logoutLabel?: string;
@@ -47,6 +48,7 @@ export default function AppSidebar({
   accent = 'primary',
   sectionLabel,
   sidebarExtra,
+  preProfile,
   profile,
   onLogout,
   logoutLabel = 'Cerrar Sesión',
@@ -104,8 +106,9 @@ export default function AppSidebar({
         ))}
       </nav>
 
-      {(profile || onLogout) && (
+      {(profile || onLogout || preProfile) && (
         <div className="p-4 border-t border-surface-900 bg-surface-950/20 space-y-3">
+          {preProfile}
           {profile && (
             <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-900/40 transition-colors duration-150">
               <div
