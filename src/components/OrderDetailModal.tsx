@@ -85,9 +85,9 @@ export default function OrderDetailModal({ order, onClose, onUpdateStatus }: Ord
     <Modal open={!!order} onClose={onClose} size="xl">
       {order && (
         <>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
-          <div className="flex items-center gap-3">
-            <h3 className="zenith-section-title font-mono">{order.id}</h3>
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-4 border-b border-surface-850 shrink-0 sm:px-6">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+            <h3 className="zenith-section-title max-w-[min(100%,14rem)] truncate font-mono sm:max-w-none">{order.id}</h3>
             <Badge status={order.status}>{getDispatchStatusLabel(order.status)}</Badge>
           </div>
           <button

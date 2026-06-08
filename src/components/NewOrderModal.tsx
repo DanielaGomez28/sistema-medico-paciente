@@ -180,10 +180,10 @@ export default function NewOrderModal({
   return (
     <Modal open={isOpen} onClose={onClose} size="xl" className="max-w-6xl">
       <form onSubmit={handleSubmit} className="flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5 text-primary-400" />
-            <h3 className="zenith-section-title">Registrar Nuevo Pedido</h3>
+        <div className="flex items-center justify-between gap-3 px-4 py-4 border-b border-surface-850 shrink-0 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2">
+            <ShoppingBag className="h-5 w-5 shrink-0 text-primary-400" />
+            <h3 className="zenith-section-title truncate">Registrar Nuevo Pedido</h3>
           </div>
           <button
             type="button"
@@ -212,7 +212,7 @@ export default function NewOrderModal({
             </div>
 
             {/* Product Grid Catalog */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1">
+            <div className="grid max-h-[40vh] grid-cols-1 gap-3 overflow-y-auto pr-1 sm:max-h-[300px] md:grid-cols-2 lg:max-h-[300px]">
               {filteredProducts.map((prod) => {
                 const qtyInCart = cart[prod.id] || 0;
                 const isOutOfStock = prod.stock <= 0;

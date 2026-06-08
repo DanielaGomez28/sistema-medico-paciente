@@ -1065,7 +1065,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     
                     {/* Left Grid: Catalog & Search (5 cols) */}
-                    <div className="lg:col-span-5 bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-4 flex flex-col max-h-[600px]">
+                    <div className="lg:col-span-5 bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-4 flex flex-col max-h-none lg:max-h-[600px]">
                       <div>
                         <h3 className="zenith-section-title">Buscador de Medicamentos</h3>
                         <p className="text-xs text-surface-400">Catálogo interno de farmacia — solo productos de farmacia autorizados, no externos.</p>
@@ -1138,7 +1138,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                     </div>
 
                     {/* Right Grid: Active Prescription Cart & IA Assistant (7 cols) */}
-                    <div className="lg:col-span-7 bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md flex flex-col justify-between max-h-[600px] overflow-y-auto">
+                    <div className="lg:col-span-7 bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md flex flex-col justify-between max-h-none overflow-y-auto lg:max-h-[600px]">
                       <div className="space-y-4">
                         <div className="flex justify-between items-center border-b border-surface-850 pb-3">
                           <div>
@@ -1318,7 +1318,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                   />
 
                   {/* Financial KPI Cards */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-4">
                     <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
                       <div className="h-8 w-8 rounded-lg bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
                         <DollarSign className="h-4.5 w-4.5" />
@@ -1472,17 +1472,17 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         <p className="text-[10px] text-surface-400">Basado en récipes emitidos, ventas generadas y satisfacción del paciente.</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 shrink-0">
+                    <div className="grid w-full grid-cols-3 gap-3 sm:flex sm:w-auto sm:items-center sm:gap-4 sm:shrink-0">
                       <div className="text-center">
                         <p className="text-[9px] text-surface-500 uppercase font-bold">Récipes</p>
                         <p className="text-base font-semibold text-white">{totalRecipes}</p>
                       </div>
-                      <div className="h-8 w-px bg-surface-800"></div>
+                      <div className="hidden h-8 w-px bg-surface-800 sm:block"></div>
                       <div className="text-center">
                         <p className="text-[9px] text-surface-500 uppercase font-bold">Ventas</p>
                         <p className="text-base font-semibold text-white">{formatCurrency(totalSales)}</p>
                       </div>
-                      <div className="h-8 w-px bg-surface-800"></div>
+                      <div className="hidden h-8 w-px bg-surface-800 sm:block"></div>
                       <div className="text-center">
                         <p className="text-[9px] text-surface-500 uppercase font-bold">Valoración</p>
                         <div className="flex items-center gap-0.5 mt-0.5 justify-center">

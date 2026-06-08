@@ -27,7 +27,7 @@ export default function AppHeader({
   onMenuClick,
 }: AppHeaderProps) {
   return (
-    <header className="h-16 border-b border-surface-850 flex items-center justify-between px-4 md:px-6 lg:px-8 bg-surface-900/95 backdrop-blur-md z-10 shrink-0">
+    <header className="h-16 border-b border-surface-850 flex items-center justify-between gap-2 px-4 md:px-6 lg:px-8 bg-surface-900/95 backdrop-blur-md z-10 shrink-0 min-h-16">
       <div className="flex items-center gap-3 min-w-0">
         {onMenuClick && (
           <button
@@ -47,9 +47,9 @@ export default function AppHeader({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-5 shrink-0">
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
         {actions}
-        <ThemeToggle />
+        <ThemeToggle className="shrink-0" />
         {showNotifications && (
           <div className="relative cursor-pointer p-1.5 rounded-lg text-surface-400 hover:text-foreground hover:bg-surface-900 transition-colors">
             <Bell className="h-4.5 w-4.5" />

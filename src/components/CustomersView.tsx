@@ -95,9 +95,9 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
           <div className="h-10 w-10 rounded-xl bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
             <ShoppingBag className="h-5 w-5" />
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <span className="zenith-field-label">Mayor Comprador</span>
-            <p className="text-sm font-bold text-white truncate max-w-[150px] mt-0.5" title={topSpender?.name}>
+            <p className="text-sm font-bold text-white truncate mt-0.5" title={topSpender?.name}>
               {topSpender ? `${topSpender.name} (${topSpender.totalOrders} ped.)` : 'N/A'}
             </p>
           </div>

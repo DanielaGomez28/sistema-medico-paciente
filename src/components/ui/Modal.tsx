@@ -32,11 +32,11 @@ export default function Modal({ open, onClose, title, children, size = 'lg', cla
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto p-0 sm:items-center sm:p-4 md:p-6">
       <div className="absolute inset-0 bg-surface-950/75 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div
         className={cn(
-          'relative bg-surface-900 border border-surface-800 w-full max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col text-surface-300 animate-in fade-in zoom-in-95 duration-200',
+          'relative my-auto w-full max-h-[100dvh] overflow-y-auto rounded-t-2xl border border-surface-800 bg-surface-900 shadow-2xl flex flex-col text-surface-300 animate-in fade-in zoom-in-95 duration-200 sm:max-h-[90vh] sm:rounded-2xl',
           sizeClasses[size],
           className
         )}
@@ -44,8 +44,8 @@ export default function Modal({ open, onClose, title, children, size = 'lg', cla
         aria-modal="true"
       >
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
-            <div className="zenith-section-title">{title}</div>
+          <div className="flex items-center justify-between gap-3 px-4 py-4 border-b border-surface-850 shrink-0 sm:px-6">
+            <div className="zenith-section-title min-w-0 truncate">{title}</div>
             <button
               onClick={onClose}
               className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors cursor-pointer"

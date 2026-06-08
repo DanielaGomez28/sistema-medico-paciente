@@ -688,7 +688,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
         
         {/* Recent Orders Table */}
         <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md">
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h4 className="zenith-section-title">Últimos Pedidos</h4>
               <p className="text-xs text-surface-400">Monitoreo en tiempo real de transacciones.</p>

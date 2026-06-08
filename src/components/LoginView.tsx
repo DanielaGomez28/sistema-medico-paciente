@@ -255,13 +255,15 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                     key={account.email}
                     type="button"
                     onClick={() => handleQuickFill(account.email, account.password)}
-                    className="login-view__quick-fill flex items-center justify-between rounded-xl border px-3 py-2 text-left text-xs transition-all"
+                    className="login-view__quick-fill flex flex-col gap-1 rounded-xl border px-3 py-2 text-left text-xs transition-all sm:flex-row sm:items-center sm:justify-between"
                   >
-                    <span>
+                    <span className="min-w-0 break-all">
                       {TEST_ACCOUNT_LABELS[account.role] ?? account.role}:{' '}
                       <code className="login-view__link font-mono">{account.email}</code>
                     </span>
-                    <span className="login-view__mono font-mono text-2xs">Clave: {account.password}</span>
+                    <span className="login-view__mono shrink-0 font-mono text-2xs sm:text-right">
+                      Clave: {account.password}
+                    </span>
                   </button>
                 ))}
               </div>

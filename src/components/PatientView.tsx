@@ -864,7 +864,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         <p className="text-xs text-surface-400">Registro cronológico de adherencia al tratamiento.</p>
                       </div>
 
-                      <div className="zenith-table-wrap hidden md:block">
+                      <div className="zenith-table-wrap hidden lg:block">
                         <table className="zenith-table text-sm">
                           <thead>
                             <tr className="border-b border-surface-850 text-xs font-semibold text-surface-500 uppercase tracking-wider">
@@ -899,7 +899,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         </table>
                       </div>
 
-                      <div className="md:hidden space-y-3">
+                      <div className="lg:hidden space-y-3">
                         {doseLogs.map((dose) => (
                           <ListCard
                             key={dose.id}

@@ -15,7 +15,11 @@ export default function PageHeader({ title, description, actions, className }: P
         <h2 className="zenith-page-title">{title}</h2>
         {description && <p className="zenith-page-subtitle">{description}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2 self-start sm:self-center">{actions}</div>}
+      {actions && (
+        <div className="flex w-full flex-wrap items-center gap-2 self-start sm:w-auto sm:justify-end sm:self-center [&>button]:min-w-0">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }

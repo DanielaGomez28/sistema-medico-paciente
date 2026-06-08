@@ -39,18 +39,18 @@ export default function ListCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="font-semibold text-foreground text-sm truncate">{title}</div>
-          {subtitle && <div className="text-xs text-surface-500 mt-0.5 truncate">{subtitle}</div>}
+          <div className="font-semibold text-foreground text-sm break-words">{title}</div>
+          {subtitle && <div className="text-xs text-surface-500 mt-0.5 break-words">{subtitle}</div>}
         </div>
         {badge && <div className="shrink-0">{badge}</div>}
       </div>
 
       {fields && fields.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-2 min-[420px]:grid-cols-2">
           {fields.map((field) => (
             <div key={field.label} className="min-w-0">
               <div className="zenith-field-label">{field.label}</div>
-              <div className="text-xs text-surface-300 mt-0.5 truncate">{field.value}</div>
+              <div className="text-xs text-surface-300 mt-0.5 break-words">{field.value}</div>
             </div>
           ))}
         </div>
