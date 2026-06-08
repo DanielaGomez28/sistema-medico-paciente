@@ -11,7 +11,6 @@ import {
   LogOut,
   User,
   Heart,
-  RefreshCw,
   Clock,
   CheckCircle2,
   PackageCheck,
@@ -25,16 +24,20 @@ import {
   ShieldCheck,
   Building,
   Info,
-  QrCode,
   DollarSign,
   ExternalLink,
   Pill,
   Bell,
   TrendingUp
 } from 'lucide-react';
-import { AppShell, AppSidebar, AppHeader, useShell } from './layout';
+import { AppShell, AppSidebar, AppHeader } from './layout';
+import {
+  useCredentialQr,
+  SidebarCredentialButton,
+  CredentialQrModal,
+} from './CredentialQr';
 import { formatCurrency } from '../lib/currency';
-import { PageHeader, Button, ListCard, Modal, ModalBody, StatCard } from './ui';
+import { PageHeader, Button, ListCard, StatCard } from './ui';
 
 interface PatientViewProps {
   patientName: string;
@@ -217,24 +220,6 @@ const WEEKLY_ADHERENCE = [
 
 const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout';
 
-function SidebarCredentialButton({ onOpen }: { onOpen: () => void }) {
-  const { closeSidebar } = useShell();
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        onOpen();
-        closeSidebar();
-      }}
-      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-primary-400 hover:text-white hover:bg-primary-500/10 border border-primary-500/20 transition-colors cursor-pointer"
-    >
-      <QrCode className="h-4 w-4 shrink-0" />
-      <span>Credencial QR</span>
-    </button>
-  );
-}
-
 export default function PatientView({ patientName, patientEmail, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'
   const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('recipes');
@@ -251,10 +236,13 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   // Last Order State
   const [lastOrderStatus, setLastOrderStatus] = useState<'Pendiente por retirar' | 'Listo para retirar' | 'Retirado'>('Listo para retirar');
   
-  // QR Code Expiry State
-  const [qrToken, setQrToken] = useState('PX-992-8812');
-  const [qrSecondsLeft, setQrSecondsLeft] = useState(30);
-  const [isCredentialModalOpen, setIsCredentialModalOpen] = useState(false);
+  const {
+    qrToken,
+    qrSecondsLeft,
+    isCredentialModalOpen,
+    setIsCredentialModalOpen,
+    handleRefreshQR,
+  } = useCredentialQr('PX-992', '8812');
 
   // Proposal states (Pantalla P.2)
   const [proposalItems] = useState<ProposalItem[]>([
@@ -379,21 +367,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     if (savedMunicipio) setDeliveryMunicipio(savedMunicipio);
   }, []);
 
-  // Rotate QR code token every 30 seconds
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setQrSecondsLeft((prev) => {
-        if (prev <= 1) {
-          const rand = Math.floor(1000 + Math.random() * 9000);
-          setQrToken(`PX-992-${rand}`);
-          return 30;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
   // Countdown Timer for Payment Gateway (P.3)
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -430,12 +403,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleRefreshQR = () => {
-    const rand = Math.floor(1000 + Math.random() * 9000);
-    setQrToken(`PX-992-${rand}`);
-    setQrSecondsLeft(30);
   };
 
   const cycleOrderStatus = () => {
@@ -506,28 +473,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     else if (id === 'proposals') setActiveSubTab('proposals');
     else setActiveSubTab('profile');
   };
-
-  const credentialQrSvg = (
-    <svg viewBox="0 0 100 100" className="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 text-[#0a1220]">
-      <rect x="0" y="0" width="20" height="20" fill="currentColor" />
-      <rect x="5" y="5" width="10" height="10" fill="white" />
-      <rect x="80" y="0" width="20" height="20" fill="currentColor" />
-      <rect x="85" y="5" width="10" height="10" fill="white" />
-      <rect x="0" y="80" width="20" height="20" fill="currentColor" />
-      <rect x="5" y="85" width="10" height="10" fill="white" />
-      <rect x="30" y="10" width="10" height="5" fill="currentColor" />
-      <rect x="45" y="5" width="5" height="15" fill="currentColor" />
-      <rect x="60" y="0" width="10" height="10" fill="currentColor" />
-      <rect x="35" y="30" width="15" height="10" fill="currentColor" />
-      <rect x="10" y="35" width="10" height="15" fill="currentColor" />
-      <rect x="55" y="45" width="20" height="5" fill="currentColor" />
-      <rect x="30" y="60" width="15" height="15" fill="currentColor" />
-      <rect x="80" y="30" width="10" height="20" fill="currentColor" />
-      <rect x="75" y="60" width="15" height="10" fill="currentColor" />
-      <rect x="50" y="80" width="25" height="15" fill="currentColor" />
-      <rect x="85" y="85" width="10" height="10" fill="white" />
-    </svg>
-  );
 
   return (
     <AppShell
@@ -978,7 +923,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     </div>
                   </div>
 
-                  {/* Right column: today's schedule, adherence chart, alerts */}
+                  {/* Right column: today's schedule, alerts, adherence chart */}
                   <div className="space-y-6">
                     <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
                       <div>
@@ -1022,28 +967,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
                     <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
                       <div>
-                        <h3 className="zenith-section-title">Adherencia Semanal</h3>
-                        <p className="text-xs text-surface-400">Porcentaje de tomas completadas por día.</p>
-                      </div>
-
-                      <div className="flex items-end justify-between gap-2 h-28">
-                        {WEEKLY_ADHERENCE.map((day) => (
-                          <div key={day.day} className="flex-1 flex flex-col items-center gap-1.5">
-                            <div className="w-full bg-surface-800 rounded-t-md relative flex items-end h-20">
-                              <div
-                                className="w-full bg-primary-500/80 rounded-t-md transition-all"
-                                style={{ height: `${day.percent}%` }}
-                              />
-                            </div>
-                            <span className="text-[9px] text-surface-500 font-bold">{day.day}</span>
-                            <span className="text-[9px] text-surface-400 font-mono">{day.percent}%</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
-                      <div>
                         <h3 className="zenith-section-title">Alertas y Controles</h3>
                         <p className="text-xs text-surface-400">Recordatorios clínicos y próximas citas de seguimiento.</p>
                       </div>
@@ -1067,6 +990,28 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                             </div>
                           );
                         })}
+                      </div>
+                    </div>
+
+                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+                      <div>
+                        <h3 className="zenith-section-title">Adherencia Semanal</h3>
+                        <p className="text-xs text-surface-400">Porcentaje de tomas completadas por día.</p>
+                      </div>
+
+                      <div className="flex items-end justify-between gap-2 h-28">
+                        {WEEKLY_ADHERENCE.map((day) => (
+                          <div key={day.day} className="flex-1 flex flex-col items-center gap-1.5">
+                            <div className="w-full bg-surface-800 rounded-t-md relative flex items-end h-20">
+                              <div
+                                className="w-full bg-primary-500/80 rounded-t-md transition-all"
+                                style={{ height: `${day.percent}%` }}
+                              />
+                            </div>
+                            <span className="text-[9px] text-surface-500 font-bold">{day.day}</span>
+                            <span className="text-[9px] text-surface-400 font-mono">{day.percent}%</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -1747,35 +1692,16 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
         </div>
       )}
 
-      <Modal
+      <CredentialQrModal
         open={isCredentialModalOpen}
         onClose={() => setIsCredentialModalOpen(false)}
-        title="Credencial QR Dinámica"
-        size="lg"
-      >
-        <ModalBody className="space-y-4">
-          <p className="text-xs text-surface-400 text-center">
-            Presente este código en el mostrador para validar su identidad y retirar medicamentos.
-          </p>
-          <div className="flex flex-col items-center bg-white text-[#0a1220] p-6 sm:p-8 rounded-xl shadow-inner border border-surface-700/10 mx-auto max-w-md w-full">
-            {credentialQrSvg}
-            <div className="mt-3 text-center">
-              <span className="text-xs font-mono font-bold text-[#0a1220] tracking-wider block">
-                TOKEN: {qrToken}
-              </span>
-              <p className="text-[10px] text-surface-600 font-medium mt-1">
-                Vence en <span className="text-secondary-600 font-bold">{qrSecondsLeft}s</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex justify-center">
-            <Button variant="outline" size="sm" onClick={handleRefreshQR}>
-              <RefreshCw className="h-3.5 w-3.5" />
-              Rotar credencial
-            </Button>
-          </div>
-        </ModalBody>
-      </Modal>
+        description="Presente este código en el mostrador para validar su identidad y retirar medicamentos."
+        displayName={profileName}
+        credentialLine={profileDocumentId}
+        qrToken={qrToken}
+        qrSecondsLeft={qrSecondsLeft}
+        onRefresh={handleRefreshQR}
+      />
 
       {/* Mandatory Terms & Conditions Modal */}
       {isTermsModalOpen && (

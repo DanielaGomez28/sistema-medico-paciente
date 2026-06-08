@@ -32,7 +32,12 @@ import {
   BadgeCheck,
   Star
 } from 'lucide-react';
-import { AppShell, AppSidebar, AppHeader, useShell } from './layout';
+import { AppShell, AppSidebar, AppHeader } from './layout';
+import {
+  useCredentialQr,
+  SidebarCredentialButton,
+  CredentialQrModal,
+} from './CredentialQr';
 import { formatCurrency } from '../lib/currency';
 import { PageHeader, Button, Modal, ModalBody } from './ui';
 
@@ -186,24 +191,6 @@ const createEmptyPatient = (): LinkedPatient => ({
   medications: [],
 });
 
-function SidebarCredentialButton({ onOpen }: { onOpen: () => void }) {
-  const { closeSidebar } = useShell();
-
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        onOpen();
-        closeSidebar();
-      }}
-      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-semibold text-secondary-400 hover:text-white hover:bg-secondary-500/10 border border-secondary-500/20 transition-colors cursor-pointer"
-    >
-      <QrCode className="h-4 w-4 shrink-0" />
-      <span>Credencial QR</span>
-    </button>
-  );
-}
-
 export default function DoctorView({ doctorName, doctorEmail, onLogout }: DoctorViewProps) {
   // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'
   const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'>('agenda');
@@ -222,10 +209,13 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [consultorioMunicipio, setConsultorioMunicipio] = useState('Baruta');
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
 
-  // Doctor credential QR state
-  const [qrToken, setQrToken] = useState('MD-992-28490');
-  const [qrSecondsLeft, setQrSecondsLeft] = useState(30);
-  const [isCredentialModalOpen, setIsCredentialModalOpen] = useState(false);
+  const {
+    qrToken,
+    qrSecondsLeft,
+    isCredentialModalOpen,
+    setIsCredentialModalOpen,
+    handleRefreshQR,
+  } = useCredentialQr('MD-992', '28490');
 
   // Dynamic commission rate state
   const [commissionRate, setCommissionRate] = useState<number>(8);
@@ -241,26 +231,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     window.addEventListener('zenith_commission_update', loadRate);
     return () => window.removeEventListener('zenith_commission_update', loadRate);
   }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setQrSecondsLeft((prev) => {
-        if (prev <= 1) {
-          const rand = Math.floor(1000 + Math.random() * 9000);
-          setQrToken(`MD-992-${rand}`);
-          return 30;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleRefreshQR = () => {
-    const rand = Math.floor(1000 + Math.random() * 9000);
-    setQrToken(`MD-992-${rand}`);
-    setQrSecondsLeft(30);
-  };
 
   const [patients, setPatients] = useState<LinkedPatient[]>(INITIAL_PATIENTS);
   const [patientForm, setPatientForm] = useState<LinkedPatient>(createEmptyPatient());
@@ -464,28 +434,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     prod.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
     prod.sku.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const credentialQrSvg = (
-    <svg viewBox="0 0 100 100" className="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 text-[#0a1220]">
-      <rect x="0" y="0" width="20" height="20" fill="currentColor" />
-      <rect x="5" y="5" width="10" height="10" fill="white" />
-      <rect x="80" y="0" width="20" height="20" fill="currentColor" />
-      <rect x="85" y="5" width="10" height="10" fill="white" />
-      <rect x="0" y="80" width="20" height="20" fill="currentColor" />
-      <rect x="5" y="85" width="10" height="10" fill="white" />
-      <rect x="30" y="10" width="10" height="5" fill="currentColor" />
-      <rect x="45" y="5" width="5" height="15" fill="currentColor" />
-      <rect x="60" y="0" width="10" height="10" fill="currentColor" />
-      <rect x="35" y="30" width="15" height="10" fill="currentColor" />
-      <rect x="10" y="35" width="10" height="15" fill="currentColor" />
-      <rect x="55" y="45" width="20" height="5" fill="currentColor" />
-      <rect x="30" y="60" width="15" height="15" fill="currentColor" />
-      <rect x="80" y="30" width="10" height="20" fill="currentColor" />
-      <rect x="75" y="60" width="15" height="10" fill="currentColor" />
-      <rect x="50" y="80" width="25" height="15" fill="currentColor" />
-      <rect x="85" y="85" width="10" height="10" fill="white" />
-    </svg>
   );
 
   return (
@@ -1581,37 +1529,16 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               </div>
             )}
 
-      <Modal
+      <CredentialQrModal
         open={isCredentialModalOpen}
         onClose={() => setIsCredentialModalOpen(false)}
-        title="Credencial QR Dinámica"
-        size="lg"
-      >
-        <ModalBody className="space-y-4">
-          <p className="text-xs text-surface-400 text-center">
-            Presente este código en farmacia o recepción para validar su identidad profesional y autorizar dispensación.
-          </p>
-          <div className="flex flex-col items-center bg-white text-[#0a1220] p-6 sm:p-8 rounded-xl shadow-inner border border-surface-700/10 mx-auto max-w-md w-full">
-            {credentialQrSvg}
-            <div className="mt-3 text-center space-y-1">
-              <p className="text-sm font-bold text-[#0a1220]">{doctorName}</p>
-              <p className="text-[10px] font-mono text-surface-600">MPPS 28.490 • CMDC-12.458</p>
-              <span className="text-xs font-mono font-bold text-[#0a1220] tracking-wider block">
-                TOKEN: {qrToken}
-              </span>
-              <p className="text-[10px] text-surface-600 font-medium">
-                Vence en <span className="text-secondary-600 font-bold">{qrSecondsLeft}s</span>
-              </p>
-            </div>
-          </div>
-          <div className="flex justify-center">
-            <Button variant="outline" size="sm" onClick={handleRefreshQR}>
-              <RefreshCw className="h-3.5 w-3.5" />
-              Rotar credencial
-            </Button>
-          </div>
-        </ModalBody>
-      </Modal>
+        description="Presente este código en farmacia o recepción para validar su identidad profesional y autorizar dispensación."
+        displayName={doctorName}
+        credentialLine="MPPS 28.490 • CMDC-12.458"
+        qrToken={qrToken}
+        qrSecondsLeft={qrSecondsLeft}
+        onRefresh={handleRefreshQR}
+      />
 
       <Modal
         open={isScannerModalOpen}
