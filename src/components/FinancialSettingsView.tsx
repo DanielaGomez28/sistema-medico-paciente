@@ -84,7 +84,7 @@ export default function FinancialSettingsView() {
         actions={
           <Button variant="outline" onClick={() => setIsAuditLogOpen(true)}>
             <History className="h-4 w-4" />
-            Bitácora de Auditoría
+            Historial de Cambios
             <span className="ml-1 text-surface-500">({auditLog.length})</span>
           </Button>
         }
@@ -194,7 +194,7 @@ export default function FinancialSettingsView() {
       <Modal open={isAuditLogOpen} onClose={() => setIsAuditLogOpen(false)} size="xl" className="max-w-5xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
           <div>
-            <h3 className="zenith-section-title">Bitácora de Auditoría Financiera</h3>
+            <h3 className="zenith-section-title">Historial de Cambios Financieros</h3>
             <p className="text-xs text-surface-400 mt-0.5">Historial completo de modificaciones de reglas contables.</p>
           </div>
           <button
