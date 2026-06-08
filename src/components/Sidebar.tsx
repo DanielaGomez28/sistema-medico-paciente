@@ -17,6 +17,7 @@ export default function Sidebar({ activeTab, setActiveTab, pendingOrdersCount, l
     { id: 'orders', name: 'Pedidos', icon: ShoppingBag, badge: pendingOrdersCount > 0 ? pendingOrdersCount : null, badgeColor: 'bg-amber-500 text-black' },
     { id: 'products', name: 'Productos', icon: Package, badge: lowStockCount > 0 ? lowStockCount : null, badgeColor: 'bg-rose-500 text-white animate-pulse' },
     { id: 'customers', name: 'Clientes', icon: Users, badge: null },
+    { id: 'cms', name: 'Configuración CMS', icon: Settings, badge: null },
   ];
 
   return (

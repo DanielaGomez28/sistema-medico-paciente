@@ -14,6 +14,7 @@ import { Bell, Search, Activity, User } from 'lucide-react';
 import LoginView from '../components/LoginView';
 import DoctorView from '../components/DoctorView';
 import PatientView from '../components/PatientView';
+import CmsView from '../components/CmsView';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -341,6 +342,10 @@ export default function Home() {
                 customers={customers} 
                 onAddCustomer={handleAddCustomer}
               />
+            )}
+
+            {activeTab === 'cms' && (
+              <CmsView />
             )}
           </div>
         </main>
