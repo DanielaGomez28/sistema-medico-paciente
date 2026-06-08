@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   DollarSign, 
   ShoppingBag, 
@@ -9,7 +9,18 @@ import {
   ArrowUpRight, 
   TrendingUp, 
   ChevronRight,
-  TrendingDown
+  TrendingDown,
+  Search,
+  FileSpreadsheet,
+  Download,
+  Activity,
+  User,
+  Database,
+  CheckCircle,
+  RefreshCw,
+  Award,
+  Stethoscope,
+  Heart
 } from 'lucide-react';
 import { Order, Product } from '../types';
 
@@ -20,12 +31,75 @@ interface DashboardViewProps {
   onSelectOrder: (order: Order) => void;
 }
 
+interface DoctorRecord {
+  id: string;
+  name: string;
+  specialty: string;
+  license: string;
+  recipesCount: number;
+  commissionsEarned: number;
+  status: 'Activo' | 'Inactivo';
+}
+
+interface PatientRecord {
+  id: string;
+  name: string;
+  age: number;
+  condition: string;
+  lastRecipeDate: string;
+  withdrawalStatus: string;
+}
+
+interface StockMovement {
+  id: string;
+  medication: string;
+  type: 'Entrada' | 'Salida';
+  quantity: number;
+  date: string;
+  sourceDest: string;
+}
+
+const MOCK_DOCTORS: DoctorRecord[] = [
+  { id: 'MED-101', name: 'Dr. Alejandro Ríos', specialty: 'Cardiología', license: 'M.P. 28.490/7', recipesCount: 120, commissionsEarned: 1450.80, status: 'Activo' },
+  { id: 'MED-102', name: 'Dra. Elena Vargas', specialty: 'Medicina General', license: 'M.P. 10.923/4', recipesCount: 85, commissionsEarned: 980.50, status: 'Activo' },
+  { id: 'MED-103', name: 'Dr. Juan Pérez', specialty: 'Pediatría', license: 'M.P. 15.421/2', recipesCount: 42, commissionsEarned: 320.00, status: 'Activo' },
+  { id: 'MED-104', name: 'Dra. Patricia Gómez', specialty: 'Endocrinología', license: 'M.P. 22.810/9', recipesCount: 68, commissionsEarned: 740.20, status: 'Activo' },
+  { id: 'MED-105', name: 'Dr. Roberto Sánchez', specialty: 'Dermatología', license: 'M.P. 19.340/3', recipesCount: 15, commissionsEarned: 110.00, status: 'Inactivo' }
+];
+
+const MOCK_PATIENTS: PatientRecord[] = [
+  { id: 'PX-992-8849', name: 'Sofía Peralta', age: 28, condition: 'Hipertensión Arterial Leve', lastRecipeDate: '08 Jun, 2026', withdrawalStatus: 'Listo para retirar' },
+  { id: 'PX-992-1029', name: 'Carlos Mendoza', age: 45, condition: 'Diabetes Tipo 2 (Controlada)', lastRecipeDate: '05 Jun, 2026', withdrawalStatus: 'Retirado' },
+  { id: 'PX-992-0344', name: 'Ana Gómez Román', age: 34, condition: 'Ninguna (Chequeo anual)', lastRecipeDate: '01 Jun, 2026', withdrawalStatus: 'Retirado' },
+  { id: 'PX-992-0811', name: 'Luis Rodríguez Silva', age: 52, condition: 'Chequeo de Presión Arterial', lastRecipeDate: '28 May, 2026', withdrawalStatus: 'Pendiente por retirar' },
+  { id: 'PX-992-4112', name: 'David Ortiz Alarcón', age: 39, condition: 'Hipotiroidismo Crónico', lastRecipeDate: '15 May, 2026', withdrawalStatus: 'Retirado' }
+];
+
+const MOCK_MOVEMENTS: StockMovement[] = [
+  { id: 'MOV-104', medication: 'Ramipril 5mg', type: 'Salida', quantity: 30, date: '08 Jun, 2026', sourceDest: 'Farma-Humana Central' },
+  { id: 'MOV-103', medication: 'Metformina 850mg', type: 'Salida', quantity: 60, date: '05 Jun, 2026', sourceDest: 'Farma-Humana Norte' },
+  { id: 'MOV-102', medication: 'Atorvastatina 20mg', type: 'Salida', quantity: 30, date: '01 Jun, 2026', sourceDest: 'Farma-Humana Sur' },
+  { id: 'MOV-101', medication: 'Ibuprofeno 600mg', type: 'Entrada', quantity: 500, date: '29 May, 2026', sourceDest: 'Laboratorio Humana S.A.' },
+  { id: 'MOV-100', medication: 'Amoxicilina 875mg', type: 'Entrada', quantity: 200, date: '25 May, 2026', sourceDest: 'Droguería Médica S.A.' }
+];
+
 export default function DashboardView({ orders, products, onNavigate, onSelectOrder }: DashboardViewProps) {
-  // Calculations
+  // Navigation active metric tab for sales line chart
+  const [activeMetricTab, setActiveMetricTab] = useState<'sales' | 'recipes'>('sales');
+
+  // Database search state
+  const [dbSearchTab, setDbSearchTab] = useState<'medicos' | 'pacientes' | 'movimientos'>('medicos');
+  const [dbSearchQuery, setDbSearchQuery] = useState('');
+
+  // Export progress simulation state
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportMsg, setExportMsg] = useState('');
+
+  // Calculations for static metrics
   const completedOrders = orders.filter(o => o.status === 'Entregado');
   const activeOrders = orders.filter(o => o.status === 'Pendiente' || o.status === 'En Preparación' || o.status === 'Enviado');
   
-  // Total Revenue: delivered + active orders (excluding cancelled)
   const revenueOrders = orders.filter(o => o.status !== 'Cancelado');
   const totalRevenue = revenueOrders.reduce((sum, o) => sum + o.total, 0);
   
@@ -33,44 +107,36 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
   const preparingOrdersCount = orders.filter(o => o.status === 'En Preparación').length;
   
   const lowStockProducts = products.filter(p => p.stock <= p.minStock);
-  
-  // Custom SVG sales chart data (e.g. sales over the last 6 days)
-  // Let's generate dynamic daily data
-  const getLast6DaysSales = () => {
-    const data = [
-      { day: 'Lun', sales: 240 },
-      { day: 'Mar', sales: 380 },
-      { day: 'Mié', sales: 180 },
-      { day: 'Jue', sales: 510 },
-      { day: 'Vie', sales: 420 },
-      { day: 'Sáb', sales: 680 },
-      { day: 'Dom', sales: 850 },
-    ];
-    
-    // Adjust last item to incorporate active orders total if necessary for realism
-    const todaySales = orders
-      .filter(o => {
-        const date = new Date(o.createdAt);
-        const today = new Date();
-        return date.getDate() === today.getDate() && o.status !== 'Cancelado';
-      })
-      .reduce((sum, o) => sum + o.total, 0);
-      
-    if (todaySales > 0) {
-      data[6].sales = Math.round(todaySales);
-    }
-    return data;
-  };
 
-  const chartData = getLast6DaysSales();
-  const maxSales = Math.max(...chartData.map(d => d.sales), 1000);
+  // Dynamic Chart Data mapping based on active tab
+  const getSalesChartData = () => [
+    { label: 'Lun', value: 240 },
+    { label: 'Mar', value: 380 },
+    { label: 'Mié', value: 180 },
+    { label: 'Jue', value: 510 },
+    { label: 'Vie', value: 420 },
+    { label: 'Sáb', value: 680 },
+    { label: 'Dom', value: 850 },
+  ];
+
+  const getRecipesChartData = () => [
+    { label: 'Lun', value: 12 },
+    { label: 'Mar', value: 18 },
+    { label: 'Mié', value: 9 },
+    { label: 'Jue', value: 24 },
+    { label: 'Vie', value: 21 },
+    { label: 'Sáb', value: 35 },
+    { label: 'Dom', value: 40 },
+  ];
+
+  const chartData = activeMetricTab === 'sales' ? getSalesChartData() : getRecipesChartData();
+  const maxVal = Math.max(...chartData.map(d => d.value), 100);
   const chartHeight = 160;
   const chartWidth = 500;
   
-  // Generate SVG path for area and line
   const points = chartData.map((d, i) => {
     const x = (i / (chartData.length - 1)) * chartWidth;
-    const y = chartHeight - (d.sales / maxSales) * (chartHeight - 20);
+    const y = chartHeight - (d.value / maxVal) * (chartHeight - 20);
     return { x, y };
   });
 
@@ -82,16 +148,61 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
     ? `${linePath} L ${points[points.length - 1].x} ${chartHeight} L ${points[0].x} ${chartHeight} Z`
     : '';
 
-  // Category sales breakdown
+  // Export simulation
+  const handleExport = (type: 'Excel' | 'CSV') => {
+    setIsExporting(true);
+    setExportProgress(0);
+    setExportMsg(`Generando archivo de auditoría contable Farma-Humana (.${type.toLowerCase()})...`);
+  };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (isExporting && exportProgress < 100) {
+      timer = setInterval(() => {
+        setExportProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(timer);
+            setTimeout(() => {
+              setIsExporting(false);
+              setExportMsg('');
+              alert(`¡Reporte exportado con éxito a formato ${exportProgress === 100 ? 'auditable' : ''}!`);
+            }, 500);
+            return 100;
+          }
+          return prev + 20;
+        });
+      }, 200);
+    }
+    return () => clearInterval(timer);
+  }, [isExporting, exportProgress]);
+
+  // Database filtering
+  const filteredDoctors = MOCK_DOCTORS.filter(d => 
+    d.name.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
+    d.specialty.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
+    d.license.toLowerCase().includes(dbSearchQuery.toLowerCase())
+  );
+
+  const filteredPatients = MOCK_PATIENTS.filter(p => 
+    p.name.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
+    p.condition.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
+    p.withdrawalStatus.toLowerCase().includes(dbSearchQuery.toLowerCase())
+  );
+
+  const filteredMovements = MOCK_MOVEMENTS.filter(m => 
+    m.medication.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
+    m.sourceDest.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
+    m.type.toLowerCase().includes(dbSearchQuery.toLowerCase())
+  );
+
   const categorySales = products.reduce((acc, p) => {
-    // find quantity ordered
-    const quantityOrdered = orders
+    const qty = orders
       .filter(o => o.status !== 'Cancelado')
       .flatMap(o => o.items)
       .filter(item => item.productId === p.id)
       .reduce((sum, item) => sum + item.quantity, 0);
 
-    const totalVal = quantityOrdered * p.price;
+    const totalVal = qty * p.price;
     if (totalVal > 0) {
       acc[p.category] = (acc[p.category] || 0) + totalVal;
     }
@@ -101,271 +212,419 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
   const categoryTotals = Object.entries(categorySales).map(([name, value]) => ({ name, value }));
   const totalCatVal = categoryTotals.reduce((sum, c) => sum + c.value, 0) || 1;
 
-  // Sorting recent orders
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 4);
 
   return (
     <div className="space-y-6">
-      {/* Title Header */}
+      
+      {/* Title Header with Export Actions */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Panel Principal</h2>
-          <p className="text-sm text-slate-400">Resumen y análisis de ventas, pedidos e inventario.</p>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Panel Administrativo (Superadmin)</h2>
+          <p className="text-sm text-slate-400">Auditoría contable, estadísticas de efectividad e inteligencia de negocio.</p>
         </div>
-        <div className="flex items-center gap-2 text-xs font-semibold bg-slate-900 border border-slate-800 rounded-lg p-1.5 text-slate-400">
-          <span className="px-3 py-1 rounded bg-slate-850 text-white shadow-sm">Hoy</span>
-          <span className="px-3 py-1">Semana</span>
-          <span className="px-3 py-1">Mes</span>
+        
+        {/* Export Buttons */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleExport('Excel')}
+            disabled={isExporting}
+            className="px-3.5 py-2 bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-500/20 text-emerald-450 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            <span>Exportar Excel</span>
+          </button>
+          <button
+            onClick={() => handleExport('CSV')}
+            disabled={isExporting}
+            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-855 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" />
+            <span>Exportar CSV</span>
+          </button>
         </div>
       </div>
 
+      {/* Export progress banner */}
+      {isExporting && (
+        <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-2 animate-in fade-in duration-200">
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-indigo-400 font-semibold flex items-center gap-2">
+              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              <span>{exportMsg}</span>
+            </span>
+            <span className="font-mono text-slate-400">{exportProgress}%</span>
+          </div>
+          <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-indigo-500 transition-all duration-300"
+              style={{ width: `${exportProgress}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        
         {/* Total Sales KPI */}
-        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <DollarSign className="h-24 w-24 text-indigo-500 -mr-6 -mt-6" />
-          </div>
+        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ventas Totales</span>
             <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
               <DollarSign className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <h3 className="text-2xl font-bold text-white tracking-tight">
               {totalRevenue.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
             </h3>
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-              <TrendingUp className="h-3.5 w-3.5" />
+            <div className="mt-1 flex items-center gap-1 text-2xs text-emerald-400 font-semibold">
+              <TrendingUp className="h-3 w-3" />
               <span>+12.4% vs. mes anterior</span>
             </div>
           </div>
         </div>
 
-        {/* Total Orders KPI */}
-        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <ShoppingBag className="h-24 w-24 text-purple-500 -mr-6 -mt-6" />
-          </div>
+        {/* Volume of Recipes Issued */}
+        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pedidos Totales</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Récipes Emitidos</span>
+            <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+              <Heart className="h-4 w-4" />
+            </div>
+          </div>
+          <div className="mt-3">
+            <h3 className="text-2xl font-bold text-white tracking-tight">338</h3>
+            <div className="mt-1 flex items-center gap-1 text-2xs text-indigo-400 font-semibold">
+              <Activity className="h-3 w-3" />
+              <span>98% firmados electrónicamente</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Sales Transactions completed */}
+        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Transacciones Farma-Humana</span>
             <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
               <ShoppingBag className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-3">
             <h3 className="text-2xl font-bold text-white tracking-tight">{orders.length}</h3>
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
-              <span className="text-purple-400 font-medium">{completedOrders.length} entregados</span>
+            <div className="mt-1 flex items-center gap-1 text-2xs text-slate-450 font-medium">
+              <span>{completedOrders.length} retirados</span>
               <span>•</span>
-              <span>{activeOrders.length} activos</span>
+              <span className="text-amber-450">{pendingOrdersCount} en espera</span>
             </div>
           </div>
         </div>
 
-        {/* Pending Orders KPI */}
-        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Clock className="h-24 w-24 text-amber-500 -mr-6 -mt-6" />
-          </div>
+        {/* Treatment Effectiveness KPI */}
+        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pedidos Pendientes</span>
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${pendingOrdersCount > 0 ? 'bg-amber-500/15 text-amber-400' : 'bg-slate-800 text-slate-500'}`}>
-              <Clock className="h-4 w-4" />
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Efectividad Clínicas</span>
+            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-450 flex items-center justify-center">
+              <Award className="h-4 w-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-bold text-white tracking-tight">
-              {pendingOrdersCount + preparingOrdersCount}
-            </h3>
-            <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-400 font-medium">
-              <span>{pendingOrdersCount} en cola</span>
-              <span>•</span>
-              <span>{preparingOrdersCount} en producción</span>
+          <div className="mt-3">
+            <h3 className="text-2xl font-bold text-white tracking-tight">94.6%</h3>
+            <div className="mt-1 flex items-center gap-1 text-2xs text-emerald-400 font-semibold">
+              <CheckCircle className="h-3 w-3" />
+              <span>Control exitoso de pacientes activos</span>
             </div>
           </div>
         </div>
 
-        {/* Low Stock KPI (Clickable) */}
-        <button
-          onClick={() => onNavigate('products')}
-          className="w-full text-left relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md group hover:border-rose-500/50 hover:bg-slate-900/80 transition-all duration-300 cursor-pointer"
-        >
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <AlertTriangle className="h-24 w-24 text-rose-500 -mr-6 -mt-6" />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Alertas de Stock</span>
-            <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${lowStockProducts.length > 0 ? 'bg-rose-500/20 text-rose-400 animate-pulse' : 'bg-emerald-500/10 text-emerald-400'}`}>
-              <AlertTriangle className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-bold text-white tracking-tight">
-              {lowStockProducts.length}
-            </h3>
-            <div className="mt-2 flex items-center justify-between text-xs">
-              <span className={lowStockProducts.length > 0 ? 'text-rose-400 font-medium' : 'text-emerald-400'}>
-                {lowStockProducts.length > 0 ? 'Productos bajo stock mínimo' : 'Inventario óptimo'}
-              </span>
-              <span className="text-slate-500 flex items-center gap-0.5 group-hover:text-slate-300">
-                Ver todos <ChevronRight className="h-3 w-3" />
-              </span>
-            </div>
-          </div>
-        </button>
       </div>
 
-      {/* Charts Section */}
+      {/* Interactive Charts Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Sales Trend Chart (2/3 width) */}
-        <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col">
-          <div className="flex items-center justify-between mb-6">
+        
+        {/* Main Line Chart (2/3 width) */}
+        <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h4 className="font-bold text-white text-base">Tendencia de Ventas Semanal</h4>
-              <p className="text-xs text-slate-400">Ventas brutas diarias representadas en EUR.</p>
+              <h4 className="font-bold text-white text-base">Tendencia Operativa Semanal</h4>
+              <p className="text-xs text-slate-400">Filtre y visualice las estadísticas clave de rendimiento.</p>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full font-semibold">
-              <ArrowUpRight className="h-3.5 w-3.5" />
-              <span>Semana activa</span>
+            
+            {/* Interactive metric selectors */}
+            <div className="flex items-center gap-1 text-2xs font-bold bg-slate-950 border border-slate-850 rounded-xl p-1">
+              <button
+                onClick={() => setActiveMetricTab('sales')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'sales' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              >
+                Ventas
+              </button>
+              <button
+                onClick={() => setActiveMetricTab('recipes')}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'recipes' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              >
+                Récipes Emitidos
+              </button>
             </div>
           </div>
-          
-          {/* Custom SVG Line Chart */}
-          <div className="flex-1 w-full flex items-end relative min-h-[180px]">
+
+          {/* SVG line graph */}
+          <div className="flex-1 w-full flex items-end relative min-h-[160px] pt-4">
             <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible">
               <defs>
-                <linearGradient id="sales-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0.0" />
+                <linearGradient id="main-gradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
                 </linearGradient>
-                <linearGradient id="line-glow" x1="0" y1="0" x2="1" y2="0">
+                <linearGradient id="glow-line" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#6366f1" />
                   <stop offset="50%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#ec4899" />
+                  <stop offset="100%" stopColor="#d946ef" />
                 </linearGradient>
               </defs>
               
-              {/* Horizontal grid lines */}
-              <line x1="0" y1="20" x2={chartWidth} y2="20" stroke="#1e293b" strokeDasharray="4" />
-              <line x1="0" y1="65" x2={chartWidth} y2="65" stroke="#1e293b" strokeDasharray="4" />
-              <line x1="0" y1="110" x2={chartWidth} y2="110" stroke="#1e293b" strokeDasharray="4" />
+              <line x1="0" y1="20" x2={chartWidth} y2="20" stroke="#1e293b" strokeDasharray="3" />
+              <line x1="0" y1="70" x2={chartWidth} y2="70" stroke="#1e293b" strokeDasharray="3" />
+              <line x1="0" y1="120" x2={chartWidth} y2="120" stroke="#1e293b" strokeDasharray="3" />
               <line x1="0" y1={chartHeight} x2={chartWidth} y2={chartHeight} stroke="#334155" />
 
-              {/* Area under the path */}
               {areaPath && (
-                <path d={areaPath} fill="url(#sales-gradient)" className="transition-all duration-500" />
+                <path d={areaPath} fill="url(#main-gradient)" className="transition-all duration-300" />
               )}
-              
-              {/* Main Line */}
               {linePath && (
-                <path d={linePath} fill="none" stroke="url(#line-glow)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-500" />
+                <path d={linePath} fill="none" stroke="url(#glow-line)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
               )}
 
-              {/* Interactive Dots & Tooltips */}
               {points.map((p, idx) => (
                 <g key={idx} className="group/dot cursor-pointer">
-                  <circle 
-                    cx={p.x} 
-                    cy={p.y} 
-                    r="5" 
-                    fill="#1e1b4b" 
-                    stroke="#a5b4fc" 
-                    strokeWidth="2.5" 
-                    className="transition-all duration-200 hover:r-7 hover:fill-indigo-500" 
-                  />
-                  {/* Glowing halo on hover */}
-                  <circle 
-                    cx={p.x} 
-                    cy={p.y} 
-                    r="12" 
-                    fill="#6366f1" 
-                    fillOpacity="0"
-                    className="hover:fill-opacity-15 transition-all duration-200" 
-                  />
-                  {/* Mini Tooltip */}
-                  <text 
-                    x={p.x} 
-                    y={p.y - 12} 
-                    textAnchor="middle" 
-                    fill="#ffffff" 
-                    fontSize="10" 
-                    fontWeight="bold"
-                    className="opacity-0 group-hover/dot:opacity-100 transition-opacity bg-slate-950 px-1 py-0.5 rounded font-mono"
-                  >
-                    {chartData[idx].sales}€
+                  <circle cx={p.x} cy={p.y} r="5.5" fill="#0f172a" stroke="#818cf8" strokeWidth="2.5" className="transition-all duration-150 hover:r-7" />
+                  <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold" className="opacity-0 group-hover/dot:opacity-100 transition-opacity bg-slate-950 font-mono">
+                    {chartData[idx].value}{activeMetricTab === 'sales' ? '€' : ' r.'}
                   </text>
                 </g>
               ))}
             </svg>
           </div>
-          
-          {/* Chart X-axis Labels */}
-          <div className="flex justify-between mt-3 px-1.5 text-xs font-semibold text-slate-500">
+
+          <div className="flex justify-between mt-3 px-1 text-2xs font-bold text-slate-500">
             {chartData.map((d, idx) => (
-              <span key={idx} className="w-10 text-center">{d.day}</span>
+              <span key={idx} className="w-10 text-center">{d.label}</span>
             ))}
           </div>
         </div>
 
-        {/* Category Sales Distribution (1/3 width) */}
+        {/* Category breakdown (1/3 width) */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
           <div>
-            <h4 className="font-bold text-white text-base">Ventas por Categoría</h4>
-            <p className="text-xs text-slate-400">Distribución de ingresos acumulados.</p>
+            <h4 className="font-bold text-white text-base">Distribución por Categorías</h4>
+            <p className="text-xs text-slate-400">Ingresos consolidados por departamento.</p>
           </div>
           
-          <div className="my-6 space-y-4">
+          <div className="my-4 space-y-4 flex-1 pt-2">
             {categoryTotals.length > 0 ? (
               categoryTotals
                 .sort((a, b) => b.value - a.value)
                 .map((cat, idx) => {
                   const percentage = Math.round((cat.value / totalCatVal) * 100);
-                  const colors = [
-                    'bg-indigo-500 shadow-indigo-500/20',
-                    'bg-purple-500 shadow-purple-500/20',
-                    'bg-pink-500 shadow-pink-500/20',
-                    'bg-cyan-500 shadow-cyan-500/20',
-                  ];
+                  const colors = ['bg-indigo-500', 'bg-purple-550', 'bg-pink-500', 'bg-cyan-500'];
                   const barColor = colors[idx % colors.length];
                   
                   return (
                     <div key={cat.name} className="space-y-1.5">
-                      <div className="flex justify-between text-xs">
-                        <span className="font-medium text-slate-300">{cat.name}</span>
-                        <span className="font-mono text-slate-400 font-bold">{cat.value.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} ({percentage}%)</span>
+                      <div className="flex justify-between text-2xs">
+                        <span className="font-bold text-slate-300">{cat.name}</span>
+                        <span className="font-mono text-slate-450 font-bold">{cat.value.toFixed(2)}€ ({percentage}%)</span>
                       </div>
-                      <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-700 ${barColor}`} 
-                          style={{ width: `${percentage}%` }}
-                        ></div>
+                      <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${percentage}%` }}></div>
                       </div>
                     </div>
                   );
                 })
             ) : (
               <div className="text-center py-8 text-xs text-slate-500 font-medium">
-                No hay suficientes datos de ventas.
+                Sin movimientos financieros para clasificar.
               </div>
             )}
           </div>
 
-          <div className="border-t border-slate-850 pt-4 flex items-center justify-between text-xs text-slate-500 font-medium">
-            <span>Volumen Total Facturado:</span>
-            <span className="text-white font-bold font-mono">
+          <div className="border-t border-slate-850 pt-3 flex items-center justify-between text-xs text-slate-500 font-medium">
+            <span>Volumen Consolidado:</span>
+            <span className="text-white font-black font-mono">
               {totalRevenue.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
             </span>
           </div>
         </div>
+
       </div>
 
-      {/* Recent Activity & Low Stock alerts */}
+      {/* Advanced Database Search Engine (Buscador Avanzado) */}
+      <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
+        
+        {/* Database header with input */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-4">
+          <div className="flex items-center gap-2">
+            <Database className="h-5 w-5 text-indigo-400" />
+            <div>
+              <h4 className="font-bold text-white text-base">Buscador y Consultas de Base de Datos</h4>
+              <p className="text-xs text-slate-400">Consulte tablas relacionales en espejo con la sucursal Farma-Humana.</p>
+            </div>
+          </div>
+          
+          <div className="relative max-w-sm w-full">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Filtro rápido de búsqueda..."
+              value={dbSearchQuery}
+              onChange={(e) => setDbSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-700 focus:outline-none focus:border-rose-500"
+            />
+          </div>
+        </div>
+
+        {/* Database Search Tabs */}
+        <div className="flex items-center gap-1.5 text-2xs font-bold border-b border-slate-850 pb-1">
+          <button
+            onClick={() => { setDbSearchTab('medicos'); setDbSearchQuery(''); }}
+            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'medicos' ? 'text-white border-b-2 border-indigo-550' : 'text-slate-500 hover:text-slate-350'}`}
+          >
+            Médicos Colegiados ({filteredDoctors.length})
+          </button>
+          <button
+            onClick={() => { setDbSearchTab('pacientes'); setDbSearchQuery(''); }}
+            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'pacientes' ? 'text-white border-b-2 border-indigo-550' : 'text-slate-500 hover:text-slate-350'}`}
+          >
+            Pacientes Afiliados ({filteredPatients.length})
+          </button>
+          <button
+            onClick={() => { setDbSearchTab('movimientos'); setDbSearchQuery(''); }}
+            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'movimientos' ? 'text-white border-b-2 border-indigo-550' : 'text-slate-500 hover:text-slate-350'}`}
+          >
+            Movimientos de Stock ({filteredMovements.length})
+          </button>
+        </div>
+
+        {/* Tab content viewer */}
+        <div className="overflow-x-auto min-h-[180px]">
+          
+          {/* Doctors Table */}
+          {dbSearchTab === 'medicos' && (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-850 text-slate-500 uppercase font-bold tracking-wider">
+                  <th className="py-2.5">ID</th>
+                  <th>Médico</th>
+                  <th>Especialidad</th>
+                  <th>Registro Médico</th>
+                  <th>Récipes Emitidos</th>
+                  <th>Comisiones</th>
+                  <th className="text-right">Estado</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-850/60 text-slate-300">
+                {filteredDoctors.map(doc => (
+                  <tr key={doc.id} className="hover:bg-slate-950/20">
+                    <td className="py-3 font-mono font-bold text-slate-500">{doc.id}</td>
+                    <td className="font-semibold text-white flex items-center gap-1.5 py-3">
+                      <Stethoscope className="h-3.5 w-3.5 text-slate-500" />
+                      <span>{doc.name}</span>
+                    </td>
+                    <td>{doc.specialty}</td>
+                    <td className="font-mono text-slate-450">{doc.license}</td>
+                    <td className="font-semibold">{doc.recipesCount} r.</td>
+                    <td className="font-mono font-bold text-emerald-400">${doc.commissionsEarned.toFixed(2)}</td>
+                    <td className="text-right">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                        {doc.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* Patients Table */}
+          {dbSearchTab === 'pacientes' && (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-855 text-slate-500 uppercase font-bold tracking-wider">
+                  <th className="py-2.5">Cédula</th>
+                  <th>Nombre Paciente</th>
+                  <th>Edad</th>
+                  <th>Diagnóstico Activo</th>
+                  <th>Último Récipe</th>
+                  <th className="text-right">Estado Entrega</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-850/60 text-slate-300">
+                {filteredPatients.map(pat => (
+                  <tr key={pat.id} className="hover:bg-slate-950/20">
+                    <td className="py-3 font-mono font-bold text-slate-500">{pat.id}</td>
+                    <td className="font-semibold text-white py-3">{pat.name}</td>
+                    <td className="font-mono">{pat.age} años</td>
+                    <td className="italic text-slate-400">{pat.condition}</td>
+                    <td>{pat.lastRecipeDate}</td>
+                    <td className="text-right">
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                        pat.withdrawalStatus === 'Retirado' 
+                          ? 'bg-emerald-500/10 text-emerald-400' 
+                          : pat.withdrawalStatus === 'Listo para retirar' 
+                          ? 'bg-indigo-500/10 text-indigo-400' 
+                          : 'bg-amber-500/10 text-amber-400'
+                      }`}>
+                        {pat.withdrawalStatus}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* Stock Movements Table */}
+          {dbSearchTab === 'movimientos' && (
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-855 text-slate-500 uppercase font-bold tracking-wider">
+                  <th className="py-2.5">Movimiento</th>
+                  <th>Medicamento / Producto</th>
+                  <th>Tipo</th>
+                  <th>Cantidad</th>
+                  <th>Fecha</th>
+                  <th className="text-right">Origen / Destino</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-850/60 text-slate-300">
+                {filteredMovements.map(mov => (
+                  <tr key={mov.id} className="hover:bg-slate-950/20">
+                    <td className="py-3 font-mono font-bold text-slate-550">{mov.id}</td>
+                    <td className="font-semibold text-white py-3">{mov.medication}</td>
+                    <td>
+                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${mov.type === 'Entrada' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                        {mov.type}
+                      </span>
+                    </td>
+                    <td className="font-mono font-bold">{mov.quantity} u.</td>
+                    <td>{mov.date}</td>
+                    <td className="text-right text-slate-400">{mov.sourceDest}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+        </div>
+
+      </div>
+
+      {/* Recent Activity Table (2/3 width) & Stock Warning strip */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Orders Table (2/3 width) */}
+        
+        {/* Recent Orders Table */}
         <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -374,7 +633,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
             </div>
             <button 
               onClick={() => onNavigate('orders')} 
-              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-0.5 group"
+              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-0.5 group cursor-pointer"
             >
               Ver todos los pedidos <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
@@ -383,17 +642,16 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                  <th className="pb-3 pt-1">ID</th>
-                  <th className="pb-3 pt-1">Cliente</th>
-                  <th className="pb-3 pt-1">Total</th>
-                  <th className="pb-3 pt-1">Estado</th>
-                  <th className="pb-3 pt-1 text-right">Acción</th>
+                <tr className="border-b border-slate-805 text-xs font-bold text-slate-450 uppercase tracking-wider">
+                  <th className="pb-3">ID</th>
+                  <th>Cliente</th>
+                  <th>Total</th>
+                  <th>Estado</th>
+                  <th className="text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850">
+              <tbody className="divide-y divide-slate-850/60">
                 {recentOrders.map((order) => {
-                  // status colors
                   const statusColors: Record<string, string> = {
                     'Pendiente': 'bg-amber-500/10 text-amber-400 border-amber-500/25',
                     'En Preparación': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/25',
@@ -403,8 +661,8 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                   };
                   
                   return (
-                    <tr key={order.id} className="hover:bg-slate-850/30 transition-colors duration-150">
-                      <td className="py-3 font-mono font-bold text-slate-300">{order.id}</td>
+                    <tr key={order.id} className="hover:bg-slate-850/20 transition-colors duration-150">
+                      <td className="py-3 font-mono font-bold text-slate-350">{order.id}</td>
                       <td className="py-3 text-white font-medium">{order.customerName}</td>
                       <td className="py-3 font-mono font-bold text-slate-300">
                         {order.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
@@ -417,7 +675,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                       <td className="py-3 text-right">
                         <button
                           onClick={() => onSelectOrder(order)}
-                          className="px-2.5 py-1 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition-colors"
+                          className="px-2.5 py-1 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition-colors cursor-pointer"
                         >
                           Detalles
                         </button>
@@ -430,7 +688,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
           </div>
         </div>
 
-        {/* Inventory Warning Alerts (1/3 width) */}
+        {/* Inventory alerts */}
         <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col">
           <div className="mb-4">
             <h4 className="font-bold text-white text-base">Alertas de Inventario</h4>
@@ -444,16 +702,16 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                   key={prod.id} 
                   className="flex items-center gap-3 p-3 rounded-xl bg-slate-950/40 border border-rose-500/10"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-rose-500/20 to-red-500/20 text-rose-400 flex items-center justify-center font-bold text-xs">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-rose-500/20 to-red-500/20 text-rose-450 flex items-center justify-center font-bold text-xs">
                     {prod.stock}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 text-left">
                     <p className="text-xs font-semibold text-white truncate">{prod.name}</p>
                     <p className="text-[10px] text-slate-500 font-mono truncate">SKU: {prod.sku} • Min: {prod.minStock}</p>
                   </div>
                   <button
                     onClick={() => onNavigate('products')}
-                    className="px-2 py-1 text-[10px] font-bold text-rose-400 hover:text-rose-300 bg-rose-500/15 border border-rose-500/20 rounded-md transition-colors whitespace-nowrap"
+                    className="px-2 py-1 text-[10px] font-bold text-rose-400 hover:text-rose-300 bg-rose-500/15 border border-rose-500/20 rounded-md transition-colors whitespace-nowrap cursor-pointer"
                   >
                     Surtir
                   </button>
@@ -461,12 +719,12 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
               ))
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-slate-950/20 border border-dashed border-slate-800 rounded-xl">
-                <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mb-2">
+                <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-450 flex items-center justify-center mb-2">
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-xs font-semibold text-slate-300">Todo en orden</p>
+                <p className="text-xs font-semibold text-slate-350">Todo en orden</p>
                 <p className="text-[10px] text-slate-500 mt-1">No hay alertas de inventario en este momento.</p>
               </div>
             )}
@@ -474,14 +732,16 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
             {lowStockProducts.length > 3 && (
               <button
                 onClick={() => onNavigate('products')}
-                className="w-full text-center text-xs text-rose-400 font-semibold hover:text-rose-300 transition-colors pt-2"
+                className="w-full text-center text-xs text-rose-400 font-semibold hover:text-rose-300 transition-colors pt-2 cursor-pointer"
               >
                 Y {lowStockProducts.length - 3} alertas más. Administrar inventario
               </button>
             )}
           </div>
         </div>
+
       </div>
+
     </div>
   );
 }
