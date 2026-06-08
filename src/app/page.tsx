@@ -15,6 +15,7 @@ import LoginView from '../components/LoginView';
 import DoctorView from '../components/DoctorView';
 import PatientView from '../components/PatientView';
 import CmsView from '../components/CmsView';
+import DoctorsManagerView from '../components/DoctorsManagerView';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -346,6 +347,10 @@ export default function Home() {
 
             {activeTab === 'cms' && (
               <CmsView />
+            )}
+
+            {activeTab === 'doctors' && (
+              <DoctorsManagerView />
             )}
           </div>
         </main>
