@@ -228,8 +228,8 @@ export default function FinancialSettingsView() {
                     <td className="font-semibold text-white">{entry.adminName}</td>
                     <td className="font-mono text-surface-500">{entry.previousValue}</td>
                     <td className="font-mono font-bold text-primary-300">{entry.newValue}</td>
-                    <td className="text-right">
-                      <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-secondary-500/10 text-secondary-450">
+                    <td className="text-right whitespace-nowrap">
+                      <span className="inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[9px] font-bold bg-secondary-500/10 text-secondary-450">
                         {entry.status}
                       </span>
                     </td>

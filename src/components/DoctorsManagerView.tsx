@@ -395,8 +395,8 @@ export default function DoctorsManagerView() {
                         <p className="font-mono text-surface-300">{doc.dni}</p>
                         <p className="text-[10px] font-mono text-surface-500">{doc.licenseMpps}</p>
                       </td>
-                      <td>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                      <td className="whitespace-nowrap">
+                        <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${
                           doc.status === 'Verificado' 
                             ? 'bg-secondary-500/10 text-secondary-450' 
                             : doc.status === 'Pendiente' 

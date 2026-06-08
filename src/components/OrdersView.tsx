@@ -145,7 +145,7 @@ export default function OrdersView({ orders, onSelectOrder, onOpenNewOrder }: Or
                         {order.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
                       </td>
                       <td className="px-6 py-4.5 text-xs text-surface-400 font-medium">{order.paymentMethod}</td>
-                      <td className="px-6 py-4.5">
+                      <td className="px-6 py-4.5 whitespace-nowrap">
                         <Badge status={order.status}>{order.status}</Badge>
                       </td>
                       <td className="px-6 py-4.5 text-center">

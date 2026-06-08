@@ -20,7 +20,7 @@ export default function Badge({ status, variant = 'default', className, children
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 text-xs font-semibold border rounded-full',
+        'inline-flex items-center whitespace-nowrap px-2.5 py-0.5 text-xs font-semibold border rounded-full',
         status ? statusClass : variantClasses[variant],
         className
       )}

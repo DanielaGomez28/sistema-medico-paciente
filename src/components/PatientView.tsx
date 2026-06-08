@@ -520,8 +520,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                                 <span className="text-[10px] text-surface-500">{rec.specialty}</span>
                               </div>
                             </td>
-                            <td className="py-4">
-                              <span className={`px-2 py-0.5 text-2xs font-semibold border rounded-full ${
+                            <td className="py-4 whitespace-nowrap">
+                              <span className={`inline-flex whitespace-nowrap px-2 py-0.5 text-2xs font-semibold border rounded-full ${
                                 rec.status === 'Activo' 
                                   ? 'bg-secondary-500/10 text-secondary-400 border-secondary-500/20' 
                                   : 'bg-secondary-500/10 text-secondary-400 border-secondary-500/20'

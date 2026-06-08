@@ -510,8 +510,8 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                     <td className="font-mono text-surface-450">{doc.license}</td>
                     <td className="font-semibold">{doc.recipesCount} r.</td>
                     <td className="font-mono font-bold text-secondary-400">${doc.commissionsEarned.toFixed(2)}</td>
-                    <td className="text-right">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-surface-800 text-surface-500'}`}>
+                    <td className="text-right whitespace-nowrap">
+                      <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-surface-800 text-surface-500'}`}>
                         {doc.status}
                       </span>
                     </td>
@@ -542,8 +542,8 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                     <td className="font-mono">{pat.age} años</td>
                     <td className="italic text-surface-400">{pat.condition}</td>
                     <td>{pat.lastRecipeDate}</td>
-                    <td className="text-right">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    <td className="text-right whitespace-nowrap">
+                      <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${
                         pat.withdrawalStatus === 'Retirado' 
                           ? 'bg-secondary-500/10 text-secondary-400' 
                           : pat.withdrawalStatus === 'Listo para retirar' 
@@ -632,7 +632,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                     <td className="py-3 font-mono font-bold text-surface-300">
                       {order.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
                     </td>
-                    <td className="py-3">
+                    <td className="py-3 whitespace-nowrap">
                       <Badge status={order.status}>{order.status}</Badge>
                     </td>
                     <td className="py-3 text-right">
