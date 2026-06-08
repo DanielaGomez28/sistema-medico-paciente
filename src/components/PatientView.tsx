@@ -119,7 +119,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     { id: 'prop-1', medication: 'Ramipril 5mg (28 Comprimidos)', quantity: 1, unitPrice: 12.50, discountPercent: 20 },
     { id: 'prop-2', medication: 'Aspirina 100mg (30 Comprimidos)', quantity: 1, unitPrice: 6.00, discountPercent: 10 }
   ]);
-  const [selectedBranch, setSelectedBranch] = useState('Farmacia Central (Av. de la Castellana 210)');
+  const [selectedBranch, setSelectedBranch] = useState('Clínica Humana');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
@@ -705,9 +705,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           onChange={(e) => setSelectedBranch(e.target.value)}
                           className="w-full bg-surface-950/60 border border-surface-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary-500 cursor-pointer"
                         >
-                          <option value="Farmacia Central (Av. de la Castellana 210)">Farmacia Central (Av. Castellana 210)</option>
-                          <option value="Farmacia Norte (Calle Serrano 80)">Farmacia Norte (Calle Serrano 80)</option>
-                          <option value="Farmacia Sur (Av. de la Albufera 14)">Farmacia Sur (Av. Albufera 14)</option>
+                          <option value="Clínica Humana">Clínica Humana</option>
+                          <option value="Farmahumana">Farmahumana</option>
                         </select>
                       </div>
                     </div>
