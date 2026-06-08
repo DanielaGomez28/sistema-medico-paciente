@@ -16,6 +16,7 @@ import {
   BadgeAlert,
   ArrowRight
 } from 'lucide-react';
+import { PageHeader, Button } from './ui';
 
 interface DoctorProfile {
   id: string;
@@ -155,14 +156,13 @@ export default function DoctorsManagerView() {
   return (
     <div className="space-y-6">
       
-      {/* Title Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">Registro y Gestión de Médicos</h2>
-        <p className="text-sm text-slate-400">Administre los expedientes profesionales y autorice el alta médica en el sistema.</p>
-      </div>
+      <PageHeader
+        title="Registro y Gestión de Médicos"
+        description="Administre los expedientes profesionales y autorice el alta médica en el sistema."
+      />
 
       {successMsg && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex items-center gap-2.5 text-emerald-450 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-450 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
           <CheckCircle className="h-4.5 w-4.5 shrink-0" />
           <span>{successMsg}</span>
         </div>
@@ -172,83 +172,83 @@ export default function DoctorsManagerView() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Doctor Registration Form (5 cols) */}
-        <form onSubmit={handleSubmit} className="lg:col-span-5 bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-850 pb-3">
-            <UserPlus className="h-4.5 w-4.5 text-rose-455" />
+        <form onSubmit={handleSubmit} className="lg:col-span-5 bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-4">
+          <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
+            <UserPlus className="h-4.5 w-4.5 text-secondary-455" />
             <h3 className="font-bold text-white text-base">Dar de Alta Médico</h3>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-2xs font-bold text-slate-450 uppercase">Nombres *</label>
+              <label className="text-2xs font-bold text-surface-450 uppercase">Nombres *</label>
               <input
                 type="text"
                 required
                 value={firstName}
                 onChange={e => setFirstName(e.target.value)}
                 placeholder="Ej. Alejandro"
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500"
+                className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-2xs font-bold text-slate-450 uppercase">Apellidos *</label>
+              <label className="text-2xs font-bold text-surface-450 uppercase">Apellidos *</label>
               <input
                 type="text"
                 required
                 value={lastName}
                 onChange={e => setLastName(e.target.value)}
                 placeholder="Ej. Ríos"
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500"
+                className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs font-bold text-slate-450 uppercase">Correo Institucional *</label>
+            <label className="text-2xs font-bold text-surface-450 uppercase">Correo Institucional *</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-650" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-surface-650" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="ejemplo@zenith.com"
-                className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                className="w-full pl-9 pr-3 py-2 bg-surface-950 border border-surface-850 rounded-xl text-xs text-white focus:outline-none focus:border-secondary-500 font-mono"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-2xs font-bold text-slate-450 uppercase">Cédula de Identidad *</label>
+              <label className="text-2xs font-bold text-surface-450 uppercase">Cédula de Identidad *</label>
               <input
                 type="text"
                 required
                 value={dni}
                 onChange={e => setDni(e.target.value)}
                 placeholder="V-12.345.678"
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500 font-mono"
               />
             </div>
             <div className="space-y-1">
-              <label className="text-2xs font-bold text-slate-450 uppercase">Colegiatura / MPPS *</label>
+              <label className="text-2xs font-bold text-surface-450 uppercase">Colegiatura / MPPS *</label>
               <input
                 type="text"
                 required
                 value={licenseMpps}
                 onChange={e => setLicenseMpps(e.target.value)}
                 placeholder="MPPS-28490"
-                className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500 font-mono"
+                className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500 font-mono"
               />
             </div>
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs font-bold text-slate-450 uppercase">Especialidad Clínica</label>
+            <label className="text-2xs font-bold text-surface-450 uppercase">Especialidad Clínica</label>
             <select
               value={specialty}
               onChange={e => setSpecialty(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-rose-500"
+              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500"
             >
               <option value="Cardiología">Cardiología</option>
               <option value="Medicina General">Medicina General</option>
@@ -260,9 +260,9 @@ export default function DoctorsManagerView() {
 
           {/* Soportes probatorios drag and drop */}
           <div className="space-y-2">
-            <label className="text-2xs font-bold text-slate-455 uppercase flex justify-between">
+            <label className="text-2xs font-bold text-surface-455 uppercase flex justify-between">
               <span>Soportes Probatorios (Títulos/Diplomas)</span>
-              <span className="text-slate-500 font-normal">Obligatorio para verificación</span>
+              <span className="text-surface-500 font-normal">Obligatorio para verificación</span>
             </label>
             
             <div
@@ -271,7 +271,7 @@ export default function DoctorsManagerView() {
               onDragLeave={handleDrag}
               onDrop={handleDrop}
               className={`border border-dashed rounded-xl p-4 text-center cursor-pointer transition-colors ${
-                dragActive ? 'border-indigo-500 bg-indigo-500/5' : 'border-slate-850 bg-slate-950/20 hover:border-slate-800'
+                dragActive ? 'border-primary-500 bg-primary-500/5' : 'border-surface-850 bg-surface-950/20 hover:border-surface-800'
               }`}
             >
               <input 
@@ -281,17 +281,17 @@ export default function DoctorsManagerView() {
                 className="hidden" 
               />
               <label htmlFor="doc-cert-upload" className="cursor-pointer space-y-1">
-                <Upload className="h-5 w-5 text-slate-500 mx-auto" />
-                <p className="text-[10px] text-slate-400 font-semibold">Examine o arrastre su archivo probatorio (PDF, PNG)</p>
+                <Upload className="h-5 w-5 text-surface-500 mx-auto" />
+                <p className="text-[10px] text-surface-400 font-semibold">Examine o arrastre su archivo probatorio (PDF, PNG)</p>
               </label>
             </div>
 
             {attachments.length > 0 && (
               <div className="space-y-1.5 pt-1">
                 {attachments.map((file, i) => (
-                  <div key={i} className="flex justify-between items-center bg-slate-950/60 border border-slate-850 px-3 py-1.5 rounded-lg text-[10px]">
-                    <span className="font-mono text-slate-300 truncate max-w-[200px]">{file.name} ({file.size})</span>
-                    <button type="button" onClick={() => removeAttachment(i)} className="text-slate-500 hover:text-rose-400">
+                  <div key={i} className="flex justify-between items-center bg-surface-950/60 border border-surface-850 px-3 py-1.5 rounded-lg text-[10px]">
+                    <span className="font-mono text-surface-300 truncate max-w-[200px]">{file.name} ({file.size})</span>
+                    <button type="button" onClick={() => removeAttachment(i)} className="text-surface-500 hover:text-secondary-400">
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -302,7 +302,7 @@ export default function DoctorsManagerView() {
 
           <button
             type="submit"
-            className="w-full py-2.5 bg-gradient-to-r from-rose-500 to-red-650 hover:from-rose-600 hover:to-red-750 text-white rounded-xl text-xs font-black shadow-md shadow-rose-650/10 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 bg-gradient-to-r from-secondary to-secondary-650 hover:from-secondary-600 hover:to-secondary-750 text-white rounded-xl text-xs font-black shadow-md shadow-secondary-650/10 transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
             <span>Dar de Alta y Generar Credenciales</span>
           </button>
@@ -313,37 +313,37 @@ export default function DoctorsManagerView() {
 
           {/* Credentials modal inline block */}
           {generatedCreds && (
-            <div className="bg-slate-900 border border-indigo-500/30 rounded-3xl p-5 space-y-4 animate-in zoom-in-95 duration-200">
-              <div className="flex items-center gap-2 border-b border-slate-850 pb-2">
-                <Lock className="h-4.5 w-4.5 text-indigo-400" />
+            <div className="bg-surface-900 border border-primary-500/30 rounded-3xl p-5 space-y-4 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center gap-2 border-b border-surface-850 pb-2">
+                <Lock className="h-4.5 w-4.5 text-primary-400" />
                 <div>
                   <h4 className="font-bold text-white text-xs">Credenciales Provisionales Generadas</h4>
-                  <p className="text-[10px] text-slate-500">Envíe estos datos de acceso seguro al profesional.</p>
+                  <p className="text-[10px] text-surface-500">Envíe estos datos de acceso seguro al profesional.</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-slate-950/80 border border-slate-850 rounded-xl p-3 text-left">
-                  <p className="text-[9px] font-bold text-slate-550 uppercase">Nombre Profesional</p>
+                <div className="bg-surface-950/80 border border-surface-850 rounded-xl p-3 text-left">
+                  <p className="text-[9px] font-bold text-surface-550 uppercase">Nombre Profesional</p>
                   <p className="text-xs font-extrabold text-white">{generatedCreds.name}</p>
                 </div>
-                <div className="bg-slate-950/80 border border-slate-850 rounded-xl p-3 text-left">
-                  <p className="text-[9px] font-bold text-slate-550 uppercase">Usuario / E-mail</p>
-                  <p className="text-xs font-mono font-bold text-indigo-300">{generatedCreds.user}</p>
+                <div className="bg-surface-950/80 border border-surface-850 rounded-xl p-3 text-left">
+                  <p className="text-[9px] font-bold text-surface-550 uppercase">Usuario / E-mail</p>
+                  <p className="text-xs font-mono font-bold text-primary-300">{generatedCreds.user}</p>
                 </div>
-                <div className="bg-slate-950/80 border border-slate-850 rounded-xl p-3 md:col-span-2 text-left flex justify-between items-center">
+                <div className="bg-surface-950/80 border border-surface-850 rounded-xl p-3 md:col-span-2 text-left flex justify-between items-center">
                   <div>
-                    <p className="text-[9px] font-bold text-slate-550 uppercase">Contraseña Temporal</p>
-                    <p className="text-xs font-mono font-black text-emerald-400">{generatedCreds.pass}</p>
+                    <p className="text-[9px] font-bold text-surface-550 uppercase">Contraseña Temporal</p>
+                    <p className="text-xs font-mono font-black text-secondary-400">{generatedCreds.pass}</p>
                   </div>
-                  <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded font-extrabold">Listo para Enviar</span>
+                  <span className="text-[9px] bg-secondary-500/10 text-secondary-400 px-2 py-0.5 rounded font-extrabold">Listo para Enviar</span>
                 </div>
               </div>
 
               <div className="flex justify-end pt-1">
                 <button
                   onClick={() => setGeneratedCreds(null)}
-                  className="px-3.5 py-1.5 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-350 hover:text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                  className="px-3.5 py-1.5 bg-surface-950 hover:bg-surface-850 border border-surface-800 text-surface-350 hover:text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer"
                 >
                   Entendido / Limpiar
                 </button>
@@ -352,22 +352,22 @@ export default function DoctorsManagerView() {
           )}
 
           {/* Directory view list */}
-          <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md space-y-4">
+          <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-4">
             
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-850 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-3">
               <div>
                 <h3 className="font-bold text-white text-base">Directorio de Profesionales</h3>
-                <p className="text-xs text-slate-400">Lista completa de médicos y estado de vigencia.</p>
+                <p className="text-xs text-surface-400">Lista completa de médicos y estado de vigencia.</p>
               </div>
 
               <div className="relative max-w-[200px] w-full">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-surface-500" />
                 <input
                   type="text"
                   placeholder="Buscar médico..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-2.5 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-700 focus:outline-none focus:border-rose-500"
+                  className="w-full pl-8 pr-2.5 py-1.5 bg-surface-950 border border-surface-800 rounded-xl text-xs text-white placeholder-surface-700 focus:outline-none focus:border-secondary-500"
                 />
               </div>
             </div>
@@ -375,7 +375,7 @@ export default function DoctorsManagerView() {
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-850 text-slate-500 font-bold uppercase tracking-wider">
+                  <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
                     <th className="pb-2.5">Médico</th>
                     <th>Especialidad</th>
                     <th>Cédula / MPPS</th>
@@ -383,30 +383,30 @@ export default function DoctorsManagerView() {
                     <th className="text-right">Fecha Registro</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-850/60 text-slate-300">
+                <tbody className="divide-y divide-surface-850/60 text-surface-300">
                   {filteredDoctors.map(doc => (
-                    <tr key={doc.id} className="hover:bg-slate-950/10">
+                    <tr key={doc.id} className="hover:bg-surface-950/10">
                       <td className="py-3">
                         <p className="font-bold text-white">Dr. {doc.firstName} {doc.lastName}</p>
-                        <p className="text-[10px] text-slate-500 font-mono">{doc.email}</p>
+                        <p className="text-[10px] text-surface-500 font-mono">{doc.email}</p>
                       </td>
                       <td>{doc.specialty}</td>
                       <td>
-                        <p className="font-mono text-slate-300">{doc.dni}</p>
-                        <p className="text-[10px] font-mono text-slate-500">{doc.licenseMpps}</p>
+                        <p className="font-mono text-surface-300">{doc.dni}</p>
+                        <p className="text-[10px] font-mono text-surface-500">{doc.licenseMpps}</p>
                       </td>
                       <td>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                           doc.status === 'Verificado' 
-                            ? 'bg-emerald-500/10 text-emerald-450' 
+                            ? 'bg-secondary-500/10 text-secondary-450' 
                             : doc.status === 'Pendiente' 
-                            ? 'bg-amber-500/10 text-amber-450 border border-amber-500/10 animate-pulse'
-                            : 'bg-slate-800 text-slate-500'
+                            ? 'bg-primary-500/10 text-primary-450 border border-primary-500/10 animate-pulse'
+                            : 'bg-surface-800 text-surface-500'
                         }`}>
                           {doc.status}
                         </span>
                       </td>
-                      <td className="text-right text-slate-500 font-mono">{doc.registeredAt}</td>
+                      <td className="text-right text-surface-500 font-mono">{doc.registeredAt}</td>
                     </tr>
                   ))}
                 </tbody>

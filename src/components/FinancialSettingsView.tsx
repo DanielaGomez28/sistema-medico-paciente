@@ -11,6 +11,7 @@ import {
   CheckCircle,
   FileSpreadsheet
 } from 'lucide-react';
+import { PageHeader, Button } from './ui';
 
 interface AuditLogEntry {
   id: string;
@@ -90,14 +91,13 @@ export default function FinancialSettingsView() {
   return (
     <div className="space-y-6">
       
-      {/* Title Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-white tracking-tight">Políticas Financieras y Comisiones</h2>
-        <p className="text-sm text-slate-400">Establezca los incentivos de Farma-Humana y administre las comisiones de los médicos.</p>
-      </div>
+      <PageHeader
+        title="Políticas Financieras y Comisiones"
+        description="Establezca los incentivos de Farma-Humana y administre las comisiones de los médicos."
+      />
 
       {saveSuccess && (
-        <div className="p-4 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex items-center gap-2.5 text-emerald-455 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-455 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
           <CheckCircle className="h-4.5 w-4.5 shrink-0" />
           <span>¡Políticas financieras actualizadas y propagadas en caliente con éxito!</span>
         </div>
@@ -107,21 +107,21 @@ export default function FinancialSettingsView() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         {/* Financial Rules Form (5 cols) */}
-        <form onSubmit={handleUpdate} className="lg:col-span-5 bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
-          <div className="flex items-center gap-2 border-b border-slate-850 pb-3">
-            <Percent className="h-4.5 w-4.5 text-indigo-400" />
+        <form onSubmit={handleUpdate} className="lg:col-span-5 bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
+          <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
+            <Percent className="h-4.5 w-4.5 text-primary-400" />
             <h3 className="font-bold text-white text-base">Parámetros de Comisión</h3>
           </div>
 
           {/* Toggle Type */}
           <div className="space-y-1.5">
-            <label className="text-2xs font-bold text-slate-450 uppercase">Regla de Negocio / Formato</label>
-            <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-xl border border-slate-850">
+            <label className="text-2xs font-bold text-surface-450 uppercase">Regla de Negocio / Formato</label>
+            <div className="grid grid-cols-2 gap-2 bg-surface-950 p-1 rounded-xl border border-surface-850">
               <button
                 type="button"
                 onClick={() => setCommissionType('percent')}
                 className={`py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  commissionType === 'percent' ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 hover:text-slate-350'
+                  commissionType === 'percent' ? 'bg-primary-600 text-white shadow' : 'text-surface-500 hover:text-surface-350'
                 }`}
               >
                 Porcentual (%)
@@ -130,7 +130,7 @@ export default function FinancialSettingsView() {
                 type="button"
                 onClick={() => setCommissionType('fixed')}
                 className={`py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  commissionType === 'fixed' ? 'bg-indigo-600 text-white shadow' : 'text-slate-500 hover:text-slate-350'
+                  commissionType === 'fixed' ? 'bg-primary-600 text-white shadow' : 'text-surface-500 hover:text-surface-350'
                 }`}
               >
                 Monto Fijo ($)
@@ -140,11 +140,11 @@ export default function FinancialSettingsView() {
 
           {/* Commission rate input */}
           <div className="space-y-1.5">
-            <label className="text-2xs font-bold text-slate-450 uppercase">
+            <label className="text-2xs font-bold text-surface-450 uppercase">
               {commissionType === 'percent' ? 'Comisión del Médico (%)' : 'Comisión por Transacción ($)'}
             </label>
             <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-550 font-bold text-xs">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-550 font-bold text-xs">
                 {commissionType === 'percent' ? '%' : '$'}
               </div>
               <input
@@ -155,10 +155,10 @@ export default function FinancialSettingsView() {
                 required
                 value={commissionValue}
                 onChange={e => setCommissionValue(parseFloat(e.target.value) || 0)}
-                className="w-full pl-8 pr-3 py-2.5 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-rose-500"
+                className="w-full pl-8 pr-3 py-2.5 bg-surface-950 border border-surface-850 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-secondary-500"
               />
             </div>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-[10px] text-surface-500">
               {commissionType === 'percent' 
                 ? 'El porcentaje se calcula sobre el total neto de la venta de medicamentos en la receta.' 
                 : 'Monto plano fijo en divisas pagadero por cada ticket de venta efectiva.'}
@@ -167,31 +167,31 @@ export default function FinancialSettingsView() {
 
           {/* Minimal sale threshold */}
           <div className="space-y-1.5">
-            <label className="text-2xs font-bold text-slate-450 uppercase">Monto de Venta Mínimo para Comisión</label>
+            <label className="text-2xs font-bold text-surface-450 uppercase">Monto de Venta Mínimo para Comisión</label>
             <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-550 font-bold text-xs">$</div>
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-550 font-bold text-xs">$</div>
               <input
                 type="number"
                 step="0.01"
                 min="0"
                 value={minSaleThreshold}
                 onChange={e => setMinSaleThreshold(parseFloat(e.target.value) || 0)}
-                className="w-full pl-8 pr-3 py-2.5 bg-slate-950 border border-slate-850 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-rose-500"
+                className="w-full pl-8 pr-3 py-2.5 bg-surface-950 border border-surface-850 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-secondary-500"
               />
             </div>
-            <p className="text-[10px] text-slate-550">
+            <p className="text-[10px] text-surface-550">
               Ventas menores a este umbral no generarán incentivo financiero para el médico.
             </p>
           </div>
 
-          <div className="p-3 bg-indigo-500/5 border border-indigo-500/15 rounded-xl flex gap-2.5 text-[10px] text-slate-400">
-            <ShieldAlert className="h-4.5 w-4.5 text-indigo-400 shrink-0" />
+          <div className="p-3 bg-primary-500/5 border border-primary-500/15 rounded-xl flex gap-2.5 text-[10px] text-surface-400">
+            <ShieldAlert className="h-4.5 w-4.5 text-primary-400 shrink-0" />
             <span>Al actualizar la tasa, la plataforma notificará en espejo a Farma-Humana y los cálculos de comisiones médicas vigentes se recalcularán automáticamente en caliente.</span>
           </div>
 
           <button
             type="submit"
-            className="w-full py-2.5 bg-gradient-to-r from-rose-500 to-red-655 hover:from-rose-600 hover:to-red-755 text-white rounded-xl text-xs font-black shadow-md shadow-rose-650/10 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+            className="w-full py-2.5 bg-gradient-to-r from-secondary to-secondary-655 hover:from-secondary-600 hover:to-secondary-755 text-white rounded-xl text-xs font-black shadow-md shadow-secondary-650/10 transition-all cursor-pointer flex items-center justify-center gap-1.5"
           >
             <Save className="h-4 w-4" />
             <span>Actualizar Políticas Financieras</span>
@@ -199,19 +199,19 @@ export default function FinancialSettingsView() {
         </form>
 
         {/* Audit Log Panel (7 cols) */}
-        <div className="lg:col-span-7 bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md space-y-4">
-          <div className="flex items-center gap-2 border-b border-slate-850 pb-3">
-            <History className="h-4.5 w-4.5 text-rose-455" />
+        <div className="lg:col-span-7 bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-4">
+          <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
+            <History className="h-4.5 w-4.5 text-secondary-455" />
             <div>
               <h3 className="font-bold text-white text-base">Bitácora de Auditoría Financiera</h3>
-              <p className="text-xs text-slate-400">Historial completo de modificaciones de reglas contables.</p>
+              <p className="text-xs text-surface-400">Historial completo de modificaciones de reglas contables.</p>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-850 text-slate-500 font-bold uppercase tracking-wider">
+                <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
                   <th className="pb-2.5">ID</th>
                   <th>Fecha/Hora</th>
                   <th>Operador</th>
@@ -220,16 +220,16 @@ export default function FinancialSettingsView() {
                   <th className="text-right">Estatus</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850/60 text-slate-300">
+              <tbody className="divide-y divide-surface-850/60 text-surface-300">
                 {auditLog.map(entry => (
-                  <tr key={entry.id} className="hover:bg-slate-950/10">
-                    <td className="py-3 font-mono font-bold text-slate-550">{entry.id}</td>
-                    <td className="font-mono text-slate-400">{entry.timestamp}</td>
+                  <tr key={entry.id} className="hover:bg-surface-950/10">
+                    <td className="py-3 font-mono font-bold text-surface-550">{entry.id}</td>
+                    <td className="font-mono text-surface-400">{entry.timestamp}</td>
                     <td className="font-semibold text-white">{entry.adminName}</td>
-                    <td className="font-mono text-slate-500">{entry.previousValue}</td>
-                    <td className="font-mono font-bold text-indigo-300">{entry.newValue}</td>
+                    <td className="font-mono text-surface-500">{entry.previousValue}</td>
+                    <td className="font-mono font-bold text-primary-300">{entry.newValue}</td>
                     <td className="text-right">
-                      <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-450">
+                      <span className="px-2 py-0.5 rounded text-[9px] font-bold bg-secondary-500/10 text-secondary-450">
                         {entry.status}
                       </span>
                     </td>

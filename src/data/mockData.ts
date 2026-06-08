@@ -9,7 +9,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 89.99,
     stock: 25,
     minStock: 5,
-    imageColor: 'from-purple-500 to-indigo-600',
+    imageColor: 'from-primary to-secondary',
   },
   {
     id: 'prod-2',
@@ -19,7 +19,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 59.99,
     stock: 40,
     minStock: 8,
-    imageColor: 'from-blue-500 to-cyan-500',
+    imageColor: 'from-primary to-primary-600',
   },
   {
     id: 'prod-3',
@@ -29,7 +29,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 349.99,
     stock: 8,
     minStock: 3,
-    imageColor: 'from-indigo-600 to-pink-500',
+    imageColor: 'from-primary to-secondary',
   },
   {
     id: 'prod-4',
@@ -39,7 +39,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 129.99,
     stock: 15,
     minStock: 4,
-    imageColor: 'from-rose-500 to-red-600',
+    imageColor: 'from-secondary to-secondary-600',
   },
   {
     id: 'prod-5',
@@ -49,7 +49,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 249.99,
     stock: 4,
     minStock: 5, // Triggers alert since stock < minStock
-    imageColor: 'from-emerald-500 to-teal-600',
+    imageColor: 'from-secondary to-secondary-600',
   },
   {
     id: 'prod-6',
@@ -59,7 +59,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 399.99,
     stock: 6,
     minStock: 2,
-    imageColor: 'from-amber-500 to-orange-600',
+    imageColor: 'from-primary to-primary-600',
   },
   {
     id: 'prod-7',
@@ -69,7 +69,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 39.99,
     stock: 50,
     minStock: 10,
-    imageColor: 'from-yellow-400 to-amber-500',
+    imageColor: 'from-primary to-secondary',
   },
   {
     id: 'prod-8',
@@ -79,7 +79,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 45.99,
     stock: 3,
     minStock: 6, // Triggers alert
-    imageColor: 'from-violet-500 to-fuchsia-600',
+    imageColor: 'from-primary to-primary-600',
   },
   {
     id: 'prod-9',
@@ -89,7 +89,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 29.99,
     stock: 35,
     minStock: 10,
-    imageColor: 'from-slate-400 to-slate-600',
+    imageColor: 'from-secondary to-secondary-600',
   },
   {
     id: 'prod-10',
@@ -99,7 +99,7 @@ export const INITIAL_PRODUCTS: Product[] = [
     price: 79.99,
     stock: 12,
     minStock: 4,
-    imageColor: 'from-rose-600 to-pink-600',
+    imageColor: 'from-primary to-secondary',
   }
 ];
 

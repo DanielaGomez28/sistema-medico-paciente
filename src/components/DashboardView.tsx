@@ -23,6 +23,7 @@ import {
   Heart
 } from 'lucide-react';
 import { Order, Product } from '../types';
+import { PageHeader, Button, Badge, StatCard } from './ui';
 
 interface DashboardViewProps {
   orders: Order[];
@@ -219,151 +220,124 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
   return (
     <div className="space-y-6">
       
-      {/* Title Header with Export Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Panel Administrativo (Superadmin)</h2>
-          <p className="text-sm text-slate-400">Auditoría contable, estadísticas de efectividad e inteligencia de negocio.</p>
-        </div>
-        
-        {/* Export Buttons */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => handleExport('Excel')}
-            disabled={isExporting}
-            className="px-3.5 py-2 bg-emerald-600/10 hover:bg-emerald-600 border border-emerald-500/20 text-emerald-450 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            <span>Exportar Excel</span>
-          </button>
-          <button
-            onClick={() => handleExport('CSV')}
-            disabled={isExporting}
-            className="px-3.5 py-2 bg-slate-900 hover:bg-slate-855 border border-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-          >
-            <Download className="h-4 w-4" />
-            <span>Exportar CSV</span>
-          </button>
-        </div>
-      </div>
+      <PageHeader
+        title="Panel Administrativo (Superadmin)"
+        description="Auditoría contable, estadísticas de efectividad e inteligencia de negocio."
+        actions={
+          <>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => handleExport('Excel')}
+              disabled={isExporting}
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Exportar Excel
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('CSV')}
+              disabled={isExporting}
+            >
+              <Download className="h-4 w-4" />
+              Exportar CSV
+            </Button>
+          </>
+        }
+      />
 
       {/* Export progress banner */}
       {isExporting && (
-        <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl space-y-2 animate-in fade-in duration-200">
+        <div className="p-4 bg-surface-900 border border-surface-800 rounded-2xl space-y-2 animate-in fade-in duration-200">
           <div className="flex justify-between items-center text-xs">
-            <span className="text-indigo-400 font-semibold flex items-center gap-2">
+            <span className="text-primary-400 font-semibold flex items-center gap-2">
               <RefreshCw className="h-3.5 w-3.5 animate-spin" />
               <span>{exportMsg}</span>
             </span>
-            <span className="font-mono text-slate-400">{exportProgress}%</span>
+            <span className="font-mono text-surface-400">{exportProgress}%</span>
           </div>
-          <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-surface-950 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-indigo-500 transition-all duration-300"
+              className="h-full bg-primary-500 transition-all duration-300"
               style={{ width: `${exportProgress}%` }}
             ></div>
           </div>
         </div>
       )}
 
-      {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        
-        {/* Total Sales KPI */}
-        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ventas Totales</span>
-            <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-              <DollarSign className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <h3 className="text-2xl font-bold text-white tracking-tight">
-              {totalRevenue.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-            </h3>
-            <div className="mt-1 flex items-center gap-1 text-2xs text-emerald-400 font-semibold">
+        <StatCard
+          icon={DollarSign}
+          label="Ventas Totales"
+          value={totalRevenue.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+          hint={
+            <>
               <TrendingUp className="h-3 w-3" />
               <span>+12.4% vs. mes anterior</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Volume of Recipes Issued */}
-        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Récipes Emitidos</span>
-            <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
-              <Heart className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <h3 className="text-2xl font-bold text-white tracking-tight">338</h3>
-            <div className="mt-1 flex items-center gap-1 text-2xs text-indigo-400 font-semibold">
+            </>
+          }
+        />
+        <StatCard
+          icon={Heart}
+          label="Récipes Emitidos"
+          value="338"
+          accent="secondary"
+          hint={
+            <>
               <Activity className="h-3 w-3" />
               <span>98% firmados electrónicamente</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Sales Transactions completed */}
-        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Transacciones Farma-Humana</span>
-            <div className="h-8 w-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
-              <ShoppingBag className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <h3 className="text-2xl font-bold text-white tracking-tight">{orders.length}</h3>
-            <div className="mt-1 flex items-center gap-1 text-2xs text-slate-450 font-medium">
+            </>
+          }
+        />
+        <StatCard
+          icon={ShoppingBag}
+          label="Transacciones Farma-Humana"
+          value={orders.length}
+          hint={
+            <>
               <span>{completedOrders.length} retirados</span>
               <span>•</span>
-              <span className="text-amber-450">{pendingOrdersCount} en espera</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Treatment Effectiveness KPI */}
-        <div className="relative overflow-hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md group hover:border-slate-700 transition-all duration-300">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Efectividad Clínicas</span>
-            <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-450 flex items-center justify-center">
-              <Award className="h-4 w-4" />
-            </div>
-          </div>
-          <div className="mt-3">
-            <h3 className="text-2xl font-bold text-white tracking-tight">94.6%</h3>
-            <div className="mt-1 flex items-center gap-1 text-2xs text-emerald-400 font-semibold">
+              <span className="text-primary-450">{pendingOrdersCount} en espera</span>
+            </>
+          }
+        />
+        <StatCard
+          icon={Award}
+          label="Efectividad Clínicas"
+          value="94.6%"
+          accent="secondary"
+          hint={
+            <>
               <CheckCircle className="h-3 w-3" />
               <span>Control exitoso de pacientes activos</span>
-            </div>
-          </div>
-        </div>
-
+            </>
+          }
+        />
       </div>
 
       {/* Interactive Charts Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Main Line Chart (2/3 width) */}
-        <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h4 className="font-bold text-white text-base">Tendencia Operativa Semanal</h4>
-              <p className="text-xs text-slate-400">Filtre y visualice las estadísticas clave de rendimiento.</p>
+              <p className="text-xs text-surface-400">Filtre y visualice las estadísticas clave de rendimiento.</p>
             </div>
             
             {/* Interactive metric selectors */}
-            <div className="flex items-center gap-1 text-2xs font-bold bg-slate-950 border border-slate-850 rounded-xl p-1">
+            <div className="flex items-center gap-1 text-2xs font-bold bg-surface-950 border border-surface-850 rounded-xl p-1">
               <button
                 onClick={() => setActiveMetricTab('sales')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'sales' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'sales' ? 'bg-primary-600 text-white shadow' : 'text-surface-400 hover:text-white'}`}
               >
                 Ventas
               </button>
               <button
                 onClick={() => setActiveMetricTab('recipes')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'recipes' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'recipes' ? 'bg-primary-600 text-white shadow' : 'text-surface-400 hover:text-white'}`}
               >
                 Récipes Emitidos
               </button>
@@ -375,20 +349,20 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
             <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible">
               <defs>
                 <linearGradient id="main-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#50e9f8" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="#50e9f8" stopOpacity="0.0" />
                 </linearGradient>
                 <linearGradient id="glow-line" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="50%" stopColor="#8b5cf6" />
-                  <stop offset="100%" stopColor="#d946ef" />
+                  <stop offset="0%" stopColor="#50e9f8" />
+                  <stop offset="50%" stopColor="#179150" />
+                  <stop offset="100%" stopColor="#179150" />
                 </linearGradient>
               </defs>
               
-              <line x1="0" y1="20" x2={chartWidth} y2="20" stroke="#1e293b" strokeDasharray="3" />
-              <line x1="0" y1="70" x2={chartWidth} y2="70" stroke="#1e293b" strokeDasharray="3" />
-              <line x1="0" y1="120" x2={chartWidth} y2="120" stroke="#1e293b" strokeDasharray="3" />
-              <line x1="0" y1={chartHeight} x2={chartWidth} y2={chartHeight} stroke="#334155" />
+              <line x1="0" y1="20" x2={chartWidth} y2="20" stroke="var(--color-surface-800)" strokeDasharray="3" />
+              <line x1="0" y1="70" x2={chartWidth} y2="70" stroke="var(--color-surface-800)" strokeDasharray="3" />
+              <line x1="0" y1="120" x2={chartWidth} y2="120" stroke="var(--color-surface-800)" strokeDasharray="3" />
+              <line x1="0" y1={chartHeight} x2={chartWidth} y2={chartHeight} stroke="var(--color-surface-700)" />
 
               {areaPath && (
                 <path d={areaPath} fill="url(#main-gradient)" className="transition-all duration-300" />
@@ -399,8 +373,8 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
 
               {points.map((p, idx) => (
                 <g key={idx} className="group/dot cursor-pointer">
-                  <circle cx={p.x} cy={p.y} r="5.5" fill="#0f172a" stroke="#818cf8" strokeWidth="2.5" className="transition-all duration-150 hover:r-7" />
-                  <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold" className="opacity-0 group-hover/dot:opacity-100 transition-opacity bg-slate-950 font-mono">
+                  <circle cx={p.x} cy={p.y} r="5.5" fill="var(--color-surface-900)" stroke="#50e9f8" strokeWidth="2.5" className="transition-all duration-150 hover:r-7" />
+                  <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold" className="opacity-0 group-hover/dot:opacity-100 transition-opacity bg-surface-950 font-mono">
                     {chartData[idx].value}{activeMetricTab === 'sales' ? '€' : ' r.'}
                   </text>
                 </g>
@@ -408,7 +382,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
             </svg>
           </div>
 
-          <div className="flex justify-between mt-3 px-1 text-2xs font-bold text-slate-500">
+          <div className="flex justify-between mt-3 px-1 text-2xs font-bold text-surface-500">
             {chartData.map((d, idx) => (
               <span key={idx} className="w-10 text-center">{d.label}</span>
             ))}
@@ -416,10 +390,10 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
         </div>
 
         {/* Category breakdown (1/3 width) */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
+        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
           <div>
             <h4 className="font-bold text-white text-base">Distribución por Categorías</h4>
-            <p className="text-xs text-slate-400">Ingresos consolidados por departamento.</p>
+            <p className="text-xs text-surface-400">Ingresos consolidados por departamento.</p>
           </div>
           
           <div className="my-4 space-y-4 flex-1 pt-2">
@@ -428,29 +402,29 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                 .sort((a, b) => b.value - a.value)
                 .map((cat, idx) => {
                   const percentage = Math.round((cat.value / totalCatVal) * 100);
-                  const colors = ['bg-indigo-500', 'bg-purple-550', 'bg-pink-500', 'bg-cyan-500'];
+                  const colors = ['bg-primary-500', 'bg-secondary-500', 'bg-primary-550', 'bg-secondary-550'];
                   const barColor = colors[idx % colors.length];
                   
                   return (
                     <div key={cat.name} className="space-y-1.5">
                       <div className="flex justify-between text-2xs">
-                        <span className="font-bold text-slate-300">{cat.name}</span>
-                        <span className="font-mono text-slate-450 font-bold">{cat.value.toFixed(2)}€ ({percentage}%)</span>
+                        <span className="font-bold text-surface-300">{cat.name}</span>
+                        <span className="font-mono text-surface-450 font-bold">{cat.value.toFixed(2)}€ ({percentage}%)</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-950 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-surface-950 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${percentage}%` }}></div>
                       </div>
                     </div>
                   );
                 })
             ) : (
-              <div className="text-center py-8 text-xs text-slate-500 font-medium">
+              <div className="text-center py-8 text-xs text-surface-500 font-medium">
                 Sin movimientos financieros para clasificar.
               </div>
             )}
           </div>
 
-          <div className="border-t border-slate-850 pt-3 flex items-center justify-between text-xs text-slate-500 font-medium">
+          <div className="border-t border-surface-850 pt-3 flex items-center justify-between text-xs text-surface-500 font-medium">
             <span>Volumen Consolidado:</span>
             <span className="text-white font-black font-mono">
               {totalRevenue.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
@@ -461,47 +435,47 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
       </div>
 
       {/* Advanced Database Search Engine (Buscador Avanzado) */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
+      <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
         
         {/* Database header with input */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-surface-850 pb-4">
           <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-indigo-400" />
+            <Database className="h-5 w-5 text-primary-400" />
             <div>
               <h4 className="font-bold text-white text-base">Buscador y Consultas de Base de Datos</h4>
-              <p className="text-xs text-slate-400">Consulte tablas relacionales en espejo con la sucursal Farma-Humana.</p>
+              <p className="text-xs text-surface-400">Consulte tablas relacionales en espejo con la sucursal Farma-Humana.</p>
             </div>
           </div>
           
           <div className="relative max-w-sm w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
             <input
               type="text"
               placeholder="Filtro rápido de búsqueda..."
               value={dbSearchQuery}
               onChange={(e) => setDbSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-700 focus:outline-none focus:border-rose-500"
+              className="w-full pl-9 pr-3 py-2 bg-surface-950 border border-surface-800 rounded-xl text-xs text-white placeholder-surface-700 focus:outline-none focus:border-secondary-500"
             />
           </div>
         </div>
 
         {/* Database Search Tabs */}
-        <div className="flex items-center gap-1.5 text-2xs font-bold border-b border-slate-850 pb-1">
+        <div className="flex items-center gap-1.5 text-2xs font-bold border-b border-surface-850 pb-1">
           <button
             onClick={() => { setDbSearchTab('medicos'); setDbSearchQuery(''); }}
-            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'medicos' ? 'text-white border-b-2 border-indigo-550' : 'text-slate-500 hover:text-slate-350'}`}
+            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'medicos' ? 'text-white border-b-2 border-primary-550' : 'text-surface-500 hover:text-surface-350'}`}
           >
             Médicos Colegiados ({filteredDoctors.length})
           </button>
           <button
             onClick={() => { setDbSearchTab('pacientes'); setDbSearchQuery(''); }}
-            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'pacientes' ? 'text-white border-b-2 border-indigo-550' : 'text-slate-500 hover:text-slate-350'}`}
+            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'pacientes' ? 'text-white border-b-2 border-primary-550' : 'text-surface-500 hover:text-surface-350'}`}
           >
             Pacientes Afiliados ({filteredPatients.length})
           </button>
           <button
             onClick={() => { setDbSearchTab('movimientos'); setDbSearchQuery(''); }}
-            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'movimientos' ? 'text-white border-b-2 border-indigo-550' : 'text-slate-500 hover:text-slate-350'}`}
+            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'movimientos' ? 'text-white border-b-2 border-primary-550' : 'text-surface-500 hover:text-surface-350'}`}
           >
             Movimientos de Stock ({filteredMovements.length})
           </button>
@@ -514,7 +488,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
           {dbSearchTab === 'medicos' && (
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-850 text-slate-500 uppercase font-bold tracking-wider">
+                <tr className="border-b border-surface-850 text-surface-500 uppercase font-bold tracking-wider">
                   <th className="py-2.5">ID</th>
                   <th>Médico</th>
                   <th>Especialidad</th>
@@ -524,20 +498,20 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                   <th className="text-right">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850/60 text-slate-300">
+              <tbody className="divide-y divide-surface-850/60 text-surface-300">
                 {filteredDoctors.map(doc => (
-                  <tr key={doc.id} className="hover:bg-slate-950/20">
-                    <td className="py-3 font-mono font-bold text-slate-500">{doc.id}</td>
+                  <tr key={doc.id} className="hover:bg-surface-950/20">
+                    <td className="py-3 font-mono font-bold text-surface-500">{doc.id}</td>
                     <td className="font-semibold text-white flex items-center gap-1.5 py-3">
-                      <Stethoscope className="h-3.5 w-3.5 text-slate-500" />
+                      <Stethoscope className="h-3.5 w-3.5 text-surface-500" />
                       <span>{doc.name}</span>
                     </td>
                     <td>{doc.specialty}</td>
-                    <td className="font-mono text-slate-450">{doc.license}</td>
+                    <td className="font-mono text-surface-450">{doc.license}</td>
                     <td className="font-semibold">{doc.recipesCount} r.</td>
-                    <td className="font-mono font-bold text-emerald-400">${doc.commissionsEarned.toFixed(2)}</td>
+                    <td className="font-mono font-bold text-secondary-400">${doc.commissionsEarned.toFixed(2)}</td>
                     <td className="text-right">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-surface-800 text-surface-500'}`}>
                         {doc.status}
                       </span>
                     </td>
@@ -551,7 +525,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
           {dbSearchTab === 'pacientes' && (
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-855 text-slate-500 uppercase font-bold tracking-wider">
+                <tr className="border-b border-surface-855 text-surface-500 uppercase font-bold tracking-wider">
                   <th className="py-2.5">Cédula</th>
                   <th>Nombre Paciente</th>
                   <th>Edad</th>
@@ -560,21 +534,21 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                   <th className="text-right">Estado Entrega</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850/60 text-slate-300">
+              <tbody className="divide-y divide-surface-850/60 text-surface-300">
                 {filteredPatients.map(pat => (
-                  <tr key={pat.id} className="hover:bg-slate-950/20">
-                    <td className="py-3 font-mono font-bold text-slate-500">{pat.id}</td>
+                  <tr key={pat.id} className="hover:bg-surface-950/20">
+                    <td className="py-3 font-mono font-bold text-surface-500">{pat.id}</td>
                     <td className="font-semibold text-white py-3">{pat.name}</td>
                     <td className="font-mono">{pat.age} años</td>
-                    <td className="italic text-slate-400">{pat.condition}</td>
+                    <td className="italic text-surface-400">{pat.condition}</td>
                     <td>{pat.lastRecipeDate}</td>
                     <td className="text-right">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         pat.withdrawalStatus === 'Retirado' 
-                          ? 'bg-emerald-500/10 text-emerald-400' 
+                          ? 'bg-secondary-500/10 text-secondary-400' 
                           : pat.withdrawalStatus === 'Listo para retirar' 
-                          ? 'bg-indigo-500/10 text-indigo-400' 
-                          : 'bg-amber-500/10 text-amber-400'
+                          ? 'bg-primary-500/10 text-primary-400' 
+                          : 'bg-primary-500/10 text-primary-400'
                       }`}>
                         {pat.withdrawalStatus}
                       </span>
@@ -589,7 +563,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
           {dbSearchTab === 'movimientos' && (
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="border-b border-slate-855 text-slate-500 uppercase font-bold tracking-wider">
+                <tr className="border-b border-surface-855 text-surface-500 uppercase font-bold tracking-wider">
                   <th className="py-2.5">Movimiento</th>
                   <th>Medicamento / Producto</th>
                   <th>Tipo</th>
@@ -598,19 +572,19 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                   <th className="text-right">Origen / Destino</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850/60 text-slate-300">
+              <tbody className="divide-y divide-surface-850/60 text-surface-300">
                 {filteredMovements.map(mov => (
-                  <tr key={mov.id} className="hover:bg-slate-950/20">
-                    <td className="py-3 font-mono font-bold text-slate-550">{mov.id}</td>
+                  <tr key={mov.id} className="hover:bg-surface-950/20">
+                    <td className="py-3 font-mono font-bold text-surface-550">{mov.id}</td>
                     <td className="font-semibold text-white py-3">{mov.medication}</td>
                     <td>
-                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${mov.type === 'Entrada' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${mov.type === 'Entrada' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-secondary-500/10 text-secondary-400'}`}>
                         {mov.type}
                       </span>
                     </td>
                     <td className="font-mono font-bold">{mov.quantity} u.</td>
                     <td>{mov.date}</td>
-                    <td className="text-right text-slate-400">{mov.sourceDest}</td>
+                    <td className="text-right text-surface-400">{mov.sourceDest}</td>
                   </tr>
                 ))}
               </tbody>
@@ -625,15 +599,15 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Recent Orders Table */}
-        <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
+        <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h4 className="font-bold text-white text-base">Últimos Pedidos</h4>
-              <p className="text-xs text-slate-400">Monitoreo en tiempo real de transacciones.</p>
+              <p className="text-xs text-surface-400">Monitoreo en tiempo real de transacciones.</p>
             </div>
             <button 
               onClick={() => onNavigate('orders')} 
-              className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-0.5 group cursor-pointer"
+              className="text-xs font-semibold text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-0.5 group cursor-pointer"
             >
               Ver todos los pedidos <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
             </button>
@@ -642,7 +616,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="border-b border-slate-805 text-xs font-bold text-slate-450 uppercase tracking-wider">
+                <tr className="border-b border-surface-805 text-xs font-bold text-surface-450 uppercase tracking-wider">
                   <th className="pb-3">ID</th>
                   <th>Cliente</th>
                   <th>Total</th>
@@ -650,49 +624,37 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                   <th className="text-right">Acción</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-850/60">
-                {recentOrders.map((order) => {
-                  const statusColors: Record<string, string> = {
-                    'Pendiente': 'bg-amber-500/10 text-amber-400 border-amber-500/25',
-                    'En Preparación': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/25',
-                    'Enviado': 'bg-blue-500/10 text-blue-400 border-blue-500/25',
-                    'Entregado': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
-                    'Cancelado': 'bg-rose-500/10 text-rose-400 border-rose-500/25',
-                  };
-                  
-                  return (
-                    <tr key={order.id} className="hover:bg-slate-850/20 transition-colors duration-150">
-                      <td className="py-3 font-mono font-bold text-slate-350">{order.id}</td>
-                      <td className="py-3 text-white font-medium">{order.customerName}</td>
-                      <td className="py-3 font-mono font-bold text-slate-300">
-                        {order.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
-                      </td>
-                      <td className="py-3">
-                        <span className={`px-2 py-0.5 text-xs font-semibold border rounded-full ${statusColors[order.status]}`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="py-3 text-right">
-                        <button
-                          onClick={() => onSelectOrder(order)}
-                          className="px-2.5 py-1 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-md border border-slate-700 transition-colors cursor-pointer"
-                        >
-                          Detalles
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+              <tbody className="divide-y divide-surface-850/60">
+                {recentOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-surface-850/20 transition-colors duration-150">
+                    <td className="py-3 font-mono font-bold text-surface-350">{order.id}</td>
+                    <td className="py-3 text-white font-medium">{order.customerName}</td>
+                    <td className="py-3 font-mono font-bold text-surface-300">
+                      {order.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
+                    </td>
+                    <td className="py-3">
+                      <Badge status={order.status}>{order.status}</Badge>
+                    </td>
+                    <td className="py-3 text-right">
+                      <button
+                        onClick={() => onSelectOrder(order)}
+                        className="px-2.5 py-1 text-xs font-semibold text-surface-400 hover:text-white bg-surface-800 hover:bg-surface-700 rounded-md border border-surface-700 transition-colors cursor-pointer"
+                      >
+                        Detalles
+                      </button>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
 
         {/* Inventory alerts */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md flex flex-col">
+        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md flex flex-col">
           <div className="mb-4">
             <h4 className="font-bold text-white text-base">Alertas de Inventario</h4>
-            <p className="text-xs text-slate-400">Productos cercanos o bajo stock mínimo.</p>
+            <p className="text-xs text-surface-400">Productos cercanos o bajo stock mínimo.</p>
           </div>
           
           <div className="flex-1 space-y-3">
@@ -700,39 +662,39 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
               lowStockProducts.slice(0, 3).map((prod) => (
                 <div 
                   key={prod.id} 
-                  className="flex items-center gap-3 p-3 rounded-xl bg-slate-950/40 border border-rose-500/10"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-surface-950/40 border border-secondary-500/10"
                 >
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-rose-500/20 to-red-500/20 text-rose-450 flex items-center justify-center font-bold text-xs">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/20 text-secondary-450 flex items-center justify-center font-bold text-xs">
                     {prod.stock}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <p className="text-xs font-semibold text-white truncate">{prod.name}</p>
-                    <p className="text-[10px] text-slate-500 font-mono truncate">SKU: {prod.sku} • Min: {prod.minStock}</p>
+                    <p className="text-[10px] text-surface-500 font-mono truncate">SKU: {prod.sku} • Min: {prod.minStock}</p>
                   </div>
                   <button
                     onClick={() => onNavigate('products')}
-                    className="px-2 py-1 text-[10px] font-bold text-rose-400 hover:text-rose-300 bg-rose-500/15 border border-rose-500/20 rounded-md transition-colors whitespace-nowrap cursor-pointer"
+                    className="px-2 py-1 text-[10px] font-bold text-secondary-400 hover:text-secondary-300 bg-secondary-500/15 border border-secondary-500/20 rounded-md transition-colors whitespace-nowrap cursor-pointer"
                   >
                     Surtir
                   </button>
                 </div>
               ))
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-slate-950/20 border border-dashed border-slate-800 rounded-xl">
-                <div className="h-10 w-10 rounded-full bg-emerald-500/10 text-emerald-450 flex items-center justify-center mb-2">
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-surface-950/20 border border-dashed border-surface-800 rounded-xl">
+                <div className="h-10 w-10 rounded-full bg-secondary-500/10 text-secondary-450 flex items-center justify-center mb-2">
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <p className="text-xs font-semibold text-slate-350">Todo en orden</p>
-                <p className="text-[10px] text-slate-500 mt-1">No hay alertas de inventario en este momento.</p>
+                <p className="text-xs font-semibold text-surface-350">Todo en orden</p>
+                <p className="text-[10px] text-surface-500 mt-1">No hay alertas de inventario en este momento.</p>
               </div>
             )}
             
             {lowStockProducts.length > 3 && (
               <button
                 onClick={() => onNavigate('products')}
-                className="w-full text-center text-xs text-rose-400 font-semibold hover:text-rose-300 transition-colors pt-2 cursor-pointer"
+                className="w-full text-center text-xs text-secondary-400 font-semibold hover:text-secondary-300 transition-colors pt-2 cursor-pointer"
               >
                 Y {lowStockProducts.length - 3} alertas más. Administrar inventario
               </button>

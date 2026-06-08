@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
+import { AppShell, AppHeader, AppHeaderAction } from '../components/layout';
 import DashboardView from '../components/DashboardView';
 import OrdersView from '../components/OrdersView';
 import ProductsView from '../components/ProductsView';
@@ -10,7 +11,7 @@ import OrderDetailModal from '../components/OrderDetailModal';
 import NewOrderModal from '../components/NewOrderModal';
 import { Order, Product, Customer, OrderStatus } from '../types';
 import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_CUSTOMERS } from '../data/mockData';
-import { Bell, Search, Activity, User } from 'lucide-react';
+import { Bell, Activity } from 'lucide-react';
 import LoginView from '../components/LoginView';
 import DoctorView from '../components/DoctorView';
 import PatientView from '../components/PatientView';
@@ -243,7 +244,7 @@ export default function Home() {
 
   if (!isLoaded) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-slate-950 text-indigo-400 font-semibold gap-3 h-screen">
+      <div className="flex-1 flex items-center justify-center bg-surface-950 text-primary-400 font-semibold gap-3 h-screen">
         <Activity className="h-6 w-6 animate-pulse" />
         <span>Cargando Zenith OMS...</span>
       </div>
@@ -263,116 +264,70 @@ export default function Home() {
   }
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      
-      {/* Sidebar Navigation */}
-      <Sidebar 
-        activeTab={activeTab} 
-        setActiveTab={setActiveTab}
-        pendingOrdersCount={pendingCount}
-        lowStockCount={lowStockCount}
-        onLogout={handleLogout}
-      />
+    <AppShell
+      sidebar={
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          pendingOrdersCount={pendingCount}
+          lowStockCount={lowStockCount}
+          onLogout={handleLogout}
+        />
+      }
+      header={
+        <AppHeader
+          notificationCount={pendingCount + lowStockCount}
+          actions={
+            <AppHeaderAction onClick={() => setIsNewOrderOpen(true)}>+ Nuevo Pedido</AppHeaderAction>
+          }
+        />
+      }
+    >
+      {activeTab === 'dashboard' && (
+        <DashboardView
+          orders={orders}
+          products={products}
+          onNavigate={setActiveTab}
+          onSelectOrder={setSelectedOrder}
+        />
+      )}
 
-      {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        
-        {/* App Header */}
-        <header className="h-16 border-b border-slate-900 flex items-center justify-between px-8 bg-slate-950/80 backdrop-blur-md z-10">
-          <div className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span className="text-xs text-slate-400 font-semibold tracking-wider uppercase">Servicio Activo</span>
-          </div>
+      {activeTab === 'orders' && (
+        <OrdersView
+          orders={orders}
+          onSelectOrder={setSelectedOrder}
+          onOpenNewOrder={() => setIsNewOrderOpen(true)}
+        />
+      )}
 
-          <div className="flex items-center gap-5">
-            {/* Quick Create shortcut */}
-            <button
-              onClick={() => setIsNewOrderOpen(true)}
-              className="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 rounded-lg text-xs font-bold transition-all cursor-pointer"
-            >
-              + Nuevo Pedido
-            </button>
-            
-            {/* Notifications */}
-            <div className="relative cursor-pointer p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-900 transition-colors">
-              <Bell className="h-4.5 w-4.5" />
-              {(pendingCount > 0 || lowStockCount > 0) && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-rose-500 shadow-md shadow-rose-500/50"></span>
-              )}
-            </div>
+      {activeTab === 'products' && (
+        <ProductsView
+          products={products}
+          onUpdateStock={handleUpdateStock}
+          onAddProduct={handleAddProduct}
+        />
+      )}
 
-            {/* Profile Summary */}
-            <div className="flex items-center gap-2 border-l border-slate-850 pl-4">
-              <div className="h-7 w-7 rounded-full bg-indigo-600 flex items-center justify-center text-xs font-bold text-white">
-                CM
-              </div>
-              <span className="text-xs font-semibold text-slate-300 hidden md:inline">Carlos M.</span>
-            </div>
-          </div>
-        </header>
+      {activeTab === 'customers' && (
+        <CustomersView customers={customers} onAddCustomer={handleAddCustomer} />
+      )}
 
-        {/* Content Viewer Workspace */}
-        <main className="flex-1 overflow-y-auto p-8 bg-slate-950/20">
-          <div className="max-w-7xl mx-auto">
-            {activeTab === 'dashboard' && (
-              <DashboardView 
-                orders={orders} 
-                products={products} 
-                onNavigate={setActiveTab}
-                onSelectOrder={setSelectedOrder}
-              />
-            )}
-            
-            {activeTab === 'orders' && (
-              <OrdersView 
-                orders={orders} 
-                onSelectOrder={setSelectedOrder}
-                onOpenNewOrder={() => setIsNewOrderOpen(true)}
-              />
-            )}
-            
-            {activeTab === 'products' && (
-              <ProductsView 
-                products={products} 
-                onUpdateStock={handleUpdateStock}
-                onAddProduct={handleAddProduct}
-              />
-            )}
+      {activeTab === 'cms' && <CmsView />}
 
-            {activeTab === 'customers' && (
-              <CustomersView 
-                customers={customers} 
-                onAddCustomer={handleAddCustomer}
-              />
-            )}
+      {activeTab === 'doctors' && <DoctorsManagerView />}
 
-            {activeTab === 'cms' && (
-              <CmsView />
-            )}
+      {activeTab === 'financials' && <FinancialSettingsView />}
 
-            {activeTab === 'doctors' && (
-              <DoctorsManagerView />
-            )}
-
-            {activeTab === 'financials' && (
-              <FinancialSettingsView />
-            )}
-          </div>
-        </main>
-      </div>
-
-      {/* Persistent Order Details overlay */}
       {selectedOrder && (
-        <OrderDetailModal 
+        <OrderDetailModal
           order={selectedOrder}
           onClose={() => setSelectedOrder(null)}
           onUpdateStatus={handleUpdateOrderStatus}
         />
       )}
 
-      {/* Persistent Order Placement cart system */}
       {isNewOrderOpen && (
-        <NewOrderModal 
+        <NewOrderModal
           isOpen={isNewOrderOpen}
           onClose={() => setIsNewOrderOpen(false)}
           products={products}
@@ -381,7 +336,6 @@ export default function Home() {
           onCreateOrder={handleCreateOrder}
         />
       )}
-
-    </div>
+    </AppShell>
   );
 }

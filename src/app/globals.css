@@ -1,8 +1,26 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Helvetica Neue LT Std";
+  src:
+    local("Helvetica Neue LT Std 97 Black Condensed"),
+    local("HelveticaNeueLTStd-BlkCn"),
+    local("Helvetica Neue LT Std Black Condensed"),
+    url("/fonts/HelveticaNeueLTStd-BlkCn.woff2") format("woff2"),
+    url("/fonts/HelveticaNeueLTStd-BlkCn.woff") format("woff"),
+    url("/fonts/HelveticaNeueLTStd-BlkCn.otf") format("opentype");
+  font-weight: 900;
+  font-stretch: condensed;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --background: #020617; /* slate-950 */
-  --foreground: #f8fafc; /* slate-50 */
+  --color-primary: #50e9f8;
+  --color-secondary: #179150;
+  --background: color-mix(in srgb, var(--color-secondary) 8%, #000000);
+  --foreground: #f8fafc;
+  --font-heading-family: "Helvetica Neue LT Std", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 @theme inline {
@@ -10,6 +28,87 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  --font-heading: var(--font-heading-family);
+
+  --color-primary: #50e9f8;
+  --color-primary-300: color-mix(in srgb, var(--color-primary) 70%, #ffffff);
+  --color-primary-400: color-mix(in srgb, var(--color-primary) 85%, #ffffff);
+  --color-primary-450: color-mix(in srgb, var(--color-primary) 90%, #ffffff);
+  --color-primary-500: #50e9f8;
+  --color-primary-550: color-mix(in srgb, var(--color-primary) 92%, #000000);
+  --color-primary-600: color-mix(in srgb, var(--color-primary) 82%, #000000);
+  --color-primary-650: color-mix(in srgb, var(--color-primary) 72%, #000000);
+  --color-primary-700: color-mix(in srgb, var(--color-primary) 62%, #000000);
+  --color-primary-750: color-mix(in srgb, var(--color-primary) 52%, #000000);
+  --color-primary-900: color-mix(in srgb, var(--color-primary) 25%, #000000);
+  --color-primary-950: color-mix(in srgb, var(--color-primary) 12%, #000000);
+
+  --color-secondary: #179150;
+  --color-secondary-300: color-mix(in srgb, var(--color-secondary) 65%, #ffffff);
+  --color-secondary-400: color-mix(in srgb, var(--color-secondary) 80%, #ffffff);
+  --color-secondary-450: color-mix(in srgb, var(--color-secondary) 88%, #ffffff);
+  --color-secondary-455: color-mix(in srgb, var(--color-secondary) 86%, #ffffff);
+  --color-secondary-500: #179150;
+  --color-secondary-550: color-mix(in srgb, var(--color-secondary) 90%, #000000);
+  --color-secondary-600: color-mix(in srgb, var(--color-secondary) 82%, #000000);
+  --color-secondary-605: color-mix(in srgb, var(--color-secondary) 80%, #000000);
+  --color-secondary-650: color-mix(in srgb, var(--color-secondary) 72%, #000000);
+  --color-secondary-655: color-mix(in srgb, var(--color-secondary) 70%, #000000);
+  --color-secondary-700: color-mix(in srgb, var(--color-secondary) 62%, #000000);
+  --color-secondary-750: color-mix(in srgb, var(--color-secondary) 52%, #000000);
+  --color-secondary-755: color-mix(in srgb, var(--color-secondary) 48%, #000000);
+  --color-secondary-900: color-mix(in srgb, var(--color-secondary) 28%, #000000);
+  --color-secondary-950: color-mix(in srgb, var(--color-secondary) 14%, #000000);
+
+  --color-surface-950: color-mix(in srgb, var(--color-secondary) 8%, #000000);
+  --color-surface-900: color-mix(in srgb, var(--color-secondary) 14%, #030806);
+  --color-surface-855: color-mix(in srgb, var(--color-secondary) 17%, #060b08);
+  --color-surface-850: color-mix(in srgb, var(--color-secondary) 16%, #050a07);
+  --color-surface-805: color-mix(in srgb, var(--color-secondary) 21%, #08110a);
+  --color-surface-800: color-mix(in srgb, var(--color-secondary) 20%, #071009);
+  --color-surface-750: color-mix(in srgb, var(--color-secondary) 24%, #0a1510);
+  --color-surface-700: color-mix(in srgb, var(--color-secondary) 28%, #0d1a12);
+  --color-surface-650: color-mix(in srgb, var(--color-secondary) 32%, #101f15);
+  --color-surface-600: color-mix(in srgb, var(--color-secondary) 36%, #132418);
+  --color-surface-555: color-mix(in srgb, var(--color-secondary) 38%, #15271a);
+  --color-surface-550: color-mix(in srgb, var(--color-secondary) 40%, #172a1c);
+  --color-surface-500: color-mix(in srgb, var(--color-primary) 30%, #ffffff);
+  --color-surface-455: color-mix(in srgb, var(--color-primary) 38%, #ffffff);
+  --color-surface-450: color-mix(in srgb, var(--color-primary) 42%, #ffffff);
+  --color-surface-400: color-mix(in srgb, var(--color-primary) 48%, #ffffff);
+  --color-surface-350: color-mix(in srgb, var(--color-primary) 58%, #ffffff);
+  --color-surface-300: color-mix(in srgb, var(--color-primary) 68%, #ffffff);
+  --color-surface-200: color-mix(in srgb, var(--color-primary) 78%, #ffffff);
+  --color-surface-150: color-mix(in srgb, var(--color-primary) 84%, #ffffff);
+  --color-surface-100: color-mix(in srgb, var(--color-primary) 90%, #ffffff);
+
+  --color-muted: var(--color-surface-400);
+  --color-muted-foreground: var(--color-surface-500);
+
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+  --radius-section: 1.5rem;
+  --text-caption: 0.625rem;
+  --text-label: 0.6875rem;
+  --shadow-brand: 0 10px 25px color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+@layer components {
+  .zenith-card {
+    @apply bg-surface-900/60 border border-surface-800 rounded-2xl backdrop-blur-md;
+  }
+
+  .zenith-panel {
+    @apply bg-surface-900/40 border border-surface-850 rounded-2xl backdrop-blur-md p-4;
+  }
+
+  .zenith-input {
+    @apply w-full bg-surface-950/40 border border-surface-800 rounded-xl text-xs text-white placeholder-surface-500 focus:outline-none focus:border-primary-500 transition-colors;
+  }
+
+  .zenith-filter-bar {
+    @apply grid gap-4 bg-surface-900/40 p-4 border border-surface-850 rounded-2xl backdrop-blur-md;
+  }
 }
 
 body {
@@ -18,28 +117,47 @@ body {
   font-family: var(--font-sans);
 }
 
-/* Custom modern scrollbar styling */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617; /* slate-950 */
+  background: var(--color-surface-950);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b; /* slate-800 */
+  background: var(--color-surface-800);
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155; /* slate-700 */
+  background: var(--color-surface-700);
 }
 
-/* Glassmorphism utility helpers if needed */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.6);
+  background: color-mix(in srgb, var(--color-secondary) 18%, transparent);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(51, 65, 85, 0.5);
+  border: 1px solid color-mix(in srgb, var(--color-secondary) 35%, transparent);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading-family);
+  font-weight: 900;
+  font-stretch: condensed;
+}
+
+h1.font-mono,
+h2.font-mono,
+h3.font-mono,
+h4.font-mono,
+h5.font-mono,
+h6.font-mono {
+  font-family: var(--font-mono);
+  font-stretch: normal;
 }

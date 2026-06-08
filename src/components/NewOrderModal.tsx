@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { X, Search, Plus, Minus, User, PlusCircle, CreditCard, MapPin, Trash2, ShoppingBag } from 'lucide-react';
-import { Product, Customer, Order, OrderItem, OrderStatusHistory } from '../types';
+import { Product, Customer, Order, OrderItem } from '../types';
+import { Button, Modal, ModalBody } from './ui';
 
 interface NewOrderModalProps {
   isOpen: boolean;
@@ -43,8 +44,6 @@ export default function NewOrderModal({
   const [customAddress, setCustomAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<'Tarjeta' | 'Transferencia' | 'Efectivo'>('Tarjeta');
   const [discountAmount, setDiscountAmount] = useState<number>(0);
-
-  if (!isOpen) return null;
 
   // Filtered lists
   const filteredProducts = products.filter(p => 
@@ -169,45 +168,36 @@ export default function NewOrderModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm" onClick={onClose}></div>
-
-      {/* Modal Box */}
-      <form 
-        onSubmit={handleSubmit}
-        className="relative bg-slate-900 border border-slate-800 w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col text-slate-300 animate-in fade-in zoom-in-95 duration-200"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-850">
+    <Modal open={isOpen} onClose={onClose} size="xl" className="max-w-6xl">
+      <form onSubmit={handleSubmit} className="flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
           <div className="flex items-center gap-2">
-            <ShoppingBag className="h-5 w-5 text-indigo-400" />
+            <ShoppingBag className="h-5 w-5 text-primary-400" />
             <h3 className="text-lg font-bold text-white">Registrar Nuevo Pedido</h3>
           </div>
-          <button 
+          <button
             type="button"
-            onClick={onClose} 
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Form Body Split Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 flex-1">
+        <ModalBody className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1">
           
           {/* LEFT PANEL: PRODUCT SEARCH & ADD (7 cols) */}
           <div className="lg:col-span-7 flex flex-col space-y-4">
             
             {/* Search Bar */}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-slate-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-surface-500" />
               <input
                 type="text"
                 placeholder="Buscar por nombre, SKU o categoría..."
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-950/40 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
+                className="w-full pl-10 pr-4 py-2.5 bg-surface-950/40 border border-surface-800 rounded-xl text-sm text-white placeholder-surface-500 focus:outline-none focus:border-primary-500 transition-colors"
               />
             </div>
 
@@ -223,23 +213,23 @@ export default function NewOrderModal({
                     key={prod.id} 
                     className={`p-3.5 rounded-xl border flex flex-col justify-between space-y-3 transition-all ${
                       qtyInCart > 0 
-                        ? 'bg-indigo-500/5 border-indigo-500/40 shadow-indigo-500/5' 
-                        : 'bg-slate-950/20 border-slate-850 hover:border-slate-700'
+                        ? 'bg-primary-500/5 border-primary-500/40 shadow-primary-500/5' 
+                        : 'bg-surface-950/20 border-surface-850 hover:border-surface-700'
                     }`}
                   >
                     <div>
                       <div className="flex justify-between items-start gap-1">
-                        <span className="text-[10px] font-bold text-slate-500 font-mono tracking-wider uppercase">{prod.category}</span>
-                        <span className={`text-[10px] font-semibold font-mono ${prod.stock <= prod.minStock ? 'text-rose-400' : 'text-slate-400'}`}>
+                        <span className="text-[10px] font-bold text-surface-500 font-mono tracking-wider uppercase">{prod.category}</span>
+                        <span className={`text-[10px] font-semibold font-mono ${prod.stock <= prod.minStock ? 'text-secondary-400' : 'text-surface-400'}`}>
                           Stock: {prod.stock}
                         </span>
                       </div>
                       <h4 className="text-xs font-bold text-white mt-1 line-clamp-1">{prod.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">SKU: {prod.sku}</p>
+                      <p className="text-[10px] text-surface-400 font-semibold font-mono mt-0.5">SKU: {prod.sku}</p>
                     </div>
 
                     <div className="flex justify-between items-center">
-                      <span className="font-mono text-sm font-bold text-indigo-400">
+                      <span className="font-mono text-sm font-bold text-primary-400">
                         {prod.price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
                       </span>
                       <button
@@ -248,10 +238,10 @@ export default function NewOrderModal({
                         onClick={() => addToCart(prod.id)}
                         className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
                           isOutOfStock 
-                            ? 'bg-slate-800 text-slate-600 cursor-not-allowed' 
+                            ? 'bg-surface-800 text-surface-600 cursor-not-allowed' 
                             : isLimitReached
-                            ? 'bg-slate-850 text-slate-400'
-                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/10'
+                            ? 'bg-surface-850 text-surface-400'
+                            : 'bg-primary-600 hover:bg-primary-500 text-white shadow-md shadow-primary-600/10'
                         }`}
                       >
                         <Plus className="h-3 w-3" />
@@ -264,28 +254,28 @@ export default function NewOrderModal({
             </div>
 
             {/* Cart Items Summary */}
-            <div className="border border-slate-850 rounded-xl overflow-hidden flex flex-col flex-1 bg-slate-950/20">
-              <div className="px-4 py-3 bg-slate-950/40 border-b border-slate-850 flex items-center justify-between">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Productos Seleccionados</h4>
-                <span className="text-xs font-bold text-slate-500 font-mono">{cartItemsList.length} items</span>
+            <div className="border border-surface-850 rounded-xl overflow-hidden flex flex-col flex-1 bg-surface-950/20">
+              <div className="px-4 py-3 bg-surface-950/40 border-b border-surface-850 flex items-center justify-between">
+                <h4 className="text-xs font-bold text-surface-300 uppercase tracking-wider">Productos Seleccionados</h4>
+                <span className="text-xs font-bold text-surface-500 font-mono">{cartItemsList.length} items</span>
               </div>
 
-              <div className="flex-1 max-h-[200px] overflow-y-auto divide-y divide-slate-850/60 p-1">
+              <div className="flex-1 max-h-[200px] overflow-y-auto divide-y divide-surface-850/60 p-1">
                 {cartItemsList.length > 0 ? (
                   cartItemsList.map(({ product, quantity, lineTotal }) => (
-                    <div key={product.id} className="flex items-center justify-between p-3 hover:bg-slate-850/25 transition-colors">
+                    <div key={product.id} className="flex items-center justify-between p-3 hover:bg-surface-850/25 transition-colors">
                       <div className="min-w-0 flex-1 pr-3">
                         <p className="text-xs font-semibold text-white truncate">{product.name}</p>
-                        <p className="text-[10px] text-slate-500 font-mono">
+                        <p className="text-[10px] text-surface-500 font-mono">
                           {product.price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} c/u
                         </p>
                       </div>
                       <div className="flex items-center gap-4.5">
-                        <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+                        <div className="flex items-center bg-surface-900 border border-surface-800 rounded-lg p-0.5">
                           <button
                             type="button"
                             onClick={() => removeFromCart(product.id)}
-                            className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800"
+                            className="p-1 rounded text-surface-400 hover:text-white hover:bg-surface-800"
                           >
                             <Minus className="h-3 w-3" />
                           </button>
@@ -294,18 +284,18 @@ export default function NewOrderModal({
                             type="button"
                             disabled={quantity >= product.stock}
                             onClick={() => addToCart(product.id)}
-                            className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-50"
+                            className="p-1 rounded text-surface-400 hover:text-white hover:bg-surface-800 disabled:opacity-50"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
-                        <span className="text-xs font-bold font-mono text-slate-300 min-w-[70px] text-right">
+                        <span className="text-xs font-bold font-mono text-surface-300 min-w-[70px] text-right">
                           {lineTotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}
                         </span>
                         <button
                           type="button"
                           onClick={() => deleteFromCart(product.id)}
-                          className="p-1 text-slate-500 hover:text-rose-400 rounded transition-colors"
+                          className="p-1 text-surface-500 hover:text-secondary-400 rounded transition-colors"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -313,7 +303,7 @@ export default function NewOrderModal({
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-12 text-slate-500 text-xs font-medium">
+                  <div className="text-center py-12 text-surface-500 text-xs font-medium">
                     El carrito está vacío. Añada productos arriba.
                   </div>
                 )}
@@ -323,16 +313,16 @@ export default function NewOrderModal({
           </div>
 
           {/* RIGHT PANEL: CUSTOMER & LOGISTICS (5 cols) */}
-          <div className="lg:col-span-5 bg-slate-950/40 border border-slate-850 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
+          <div className="lg:col-span-5 bg-surface-950/40 border border-surface-850 rounded-2xl p-5 space-y-4 flex flex-col justify-between">
             
             {/* Customer Picker Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cliente del Pedido</label>
+                <label className="text-xs font-bold text-surface-400 uppercase tracking-wider">Cliente del Pedido</label>
                 <button
                   type="button"
                   onClick={() => setIsCreatingNewCustomer(!isCreatingNewCustomer)}
-                  className="text-xs font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer"
+                  className="text-xs font-semibold text-primary-400 hover:text-primary-300 flex items-center gap-1 cursor-pointer"
                 >
                   <PlusCircle className="h-3.5 w-3.5" />
                   <span>{isCreatingNewCustomer ? 'Seleccionar existente' : 'Nuevo cliente'}</span>
@@ -342,19 +332,19 @@ export default function NewOrderModal({
               {!isCreatingNewCustomer ? (
                 <div className="space-y-2">
                   <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-surface-500" />
                     <input
                       type="text"
                       placeholder="Filtrar clientes..."
                       value={customerSearch}
                       onChange={(e) => setCustomerSearch(e.target.value)}
-                      className="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                      className="w-full pl-8 pr-3 py-1.5 bg-surface-900 border border-surface-800 rounded-lg text-xs text-white placeholder-surface-500 focus:outline-none focus:border-primary-500"
                     />
                   </div>
                   <select
                     value={selectedCustomerId}
                     onChange={(e) => setSelectedCustomerId(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-surface-900 border border-surface-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary-500"
                   >
                     <option value="">-- Seleccionar Cliente --</option>
                     {filteredCustomers.map((cust) => (
@@ -366,62 +356,62 @@ export default function NewOrderModal({
                 </div>
               ) : (
                 /* Quick customer creation forms */
-                <div className="space-y-2.5 p-3.5 bg-slate-900 border border-slate-850 rounded-xl">
+                <div className="space-y-2.5 p-3.5 bg-surface-900 border border-surface-850 rounded-xl">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Nombre Completo *</label>
+                    <label className="text-[10px] font-bold text-surface-500 uppercase">Nombre Completo *</label>
                     <input
                       type="text"
                       required={isCreatingNewCustomer}
                       placeholder="Ej: Sofia Varela"
                       value={newCustomerForm.name}
                       onChange={(e) => setNewCustomerForm({ ...newCustomerForm, name: e.target.value })}
-                      className="w-full bg-slate-950 border border-slate-850 rounded-lg p-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 mt-1"
+                      className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Email *</label>
+                      <label className="text-[10px] font-bold text-surface-500 uppercase">Email *</label>
                       <input
                         type="email"
                         required={isCreatingNewCustomer}
                         placeholder="sofia@email.com"
                         value={newCustomerForm.email}
                         onChange={(e) => setNewCustomerForm({ ...newCustomerForm, email: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-850 rounded-lg p-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 mt-1"
+                        className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Teléfono</label>
+                      <label className="text-[10px] font-bold text-surface-500 uppercase">Teléfono</label>
                       <input
                         type="text"
                         placeholder="+34..."
                         value={newCustomerForm.phone}
                         onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-850 rounded-lg p-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 mt-1"
+                        className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <div className="col-span-2">
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Dirección *</label>
+                      <label className="text-[10px] font-bold text-surface-500 uppercase">Dirección *</label>
                       <input
                         type="text"
                         required={isCreatingNewCustomer}
                         placeholder="Calle, Número, Piso"
                         value={newCustomerForm.address}
                         onChange={(e) => setNewCustomerForm({ ...newCustomerForm, address: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-850 rounded-lg p-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 mt-1"
+                        className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-bold text-slate-500 uppercase">Ciudad *</label>
+                      <label className="text-[10px] font-bold text-surface-500 uppercase">Ciudad *</label>
                       <input
                         type="text"
                         required={isCreatingNewCustomer}
                         placeholder="Madrid"
                         value={newCustomerForm.city}
                         onChange={(e) => setNewCustomerForm({ ...newCustomerForm, city: e.target.value })}
-                        className="w-full bg-slate-950 border border-slate-850 rounded-lg p-2 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 mt-1"
+                        className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                       />
                     </div>
                   </div>
@@ -432,7 +422,7 @@ export default function NewOrderModal({
             {/* Shipping logistics and payment */}
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <label className="text-xs font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5" />
                   Dirección de Envío (Dejar vacío para usar predeterminada)
                 </label>
@@ -445,20 +435,20 @@ export default function NewOrderModal({
                   }
                   value={customAddress}
                   onChange={(e) => setCustomAddress(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 mt-1.5"
+                  className="w-full bg-surface-900 border border-surface-800 rounded-lg p-2.5 text-xs text-white placeholder-surface-500 focus:outline-none focus:border-primary-500 mt-1.5"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <label className="text-xs font-bold text-surface-400 uppercase tracking-wider flex items-center gap-1.5">
                     <CreditCard className="h-3.5 w-3.5" />
                     Pago
                   </label>
                   <select
                     value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value as any)}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 mt-1.5"
+                    onChange={(e) => setPaymentMethod(e.target.value as 'Tarjeta' | 'Transferencia' | 'Efectivo')}
+                    className="w-full bg-surface-900 border border-surface-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-primary-500 mt-1.5"
                   >
                     <option value="Tarjeta">Tarjeta de Crédito</option>
                     <option value="Transferencia">Transferencia Bancaria</option>
@@ -466,7 +456,7 @@ export default function NewOrderModal({
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <label className="text-xs font-bold text-surface-400 uppercase tracking-wider">
                     Descuento (€)
                   </label>
                   <input
@@ -476,56 +466,51 @@ export default function NewOrderModal({
                     placeholder="0.00"
                     value={discountAmount || ''}
                     onChange={(e) => setDiscountAmount(Math.max(parseFloat(e.target.value) || 0, 0))}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 mt-1.5 font-mono"
+                    className="w-full bg-surface-900 border border-surface-800 rounded-lg p-2.5 text-xs text-white placeholder-surface-500 focus:outline-none focus:border-primary-500 mt-1.5 font-mono"
                   />
                 </div>
               </div>
             </div>
 
             {/* Calculations and Checkout */}
-            <div className="border-t border-slate-805 pt-4 space-y-2 text-xs">
+            <div className="border-t border-surface-805 pt-4 space-y-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-500">Subtotal:</span>
-                <span className="font-mono text-slate-300">{subtotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                <span className="text-surface-500">Subtotal:</span>
+                <span className="font-mono text-surface-300">{subtotal.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">IVA (21%):</span>
-                <span className="font-mono text-slate-300">{tax.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                <span className="text-surface-500">IVA (21%):</span>
+                <span className="font-mono text-surface-300">{tax.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
               </div>
               {discount > 0 && (
-                <div className="flex justify-between text-rose-400">
+                <div className="flex justify-between text-secondary-400">
                   <span>Descuento:</span>
                   <span className="font-mono">-{discount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm font-bold border-t border-slate-800 pt-2 text-white">
+              <div className="flex justify-between text-sm font-bold border-t border-surface-800 pt-2 text-white">
                 <span>Total Pedido:</span>
-                <span className="font-mono text-indigo-400">{total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
+                <span className="font-mono text-primary-400">{total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</span>
               </div>
 
               {/* Submit Buttons */}
               <div className="grid grid-cols-2 gap-2 pt-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="py-2.5 text-xs font-semibold text-slate-400 hover:text-white bg-slate-900 border border-slate-800 hover:border-slate-700 rounded-xl transition-all cursor-pointer"
-                >
+                <Button type="button" variant="outline" onClick={onClose}>
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={cartItemsList.length === 0 || (!selectedCustomerId && !isCreatingNewCustomer)}
-                  className="py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 rounded-xl shadow-lg shadow-indigo-600/10 hover:shadow-indigo-600/25 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Crear Pedido
-                </button>
+                </Button>
               </div>
             </div>
 
           </div>
 
-        </div>
+        </ModalBody>
       </form>
-    </div>
+    </Modal>
   );
 }
