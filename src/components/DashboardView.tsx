@@ -210,22 +210,31 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
     m.type.toLowerCase().includes(dbSearchQuery.toLowerCase())
   );
 
-  const categorySales = products.reduce((acc, p) => {
-    const qty = orders
-      .filter(o => o.status !== 'Cancelado')
-      .flatMap(o => o.items)
-      .filter(item => item.productId === p.id)
-      .reduce((sum, item) => sum + item.quantity, 0);
+  const productCategoryById = new Map(products.map((product) => [product.id, product.category]));
 
-    const totalVal = qty * p.price;
-    if (totalVal > 0) {
-      acc[p.category] = (acc[p.category] || 0) + totalVal;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  const categorySales = orders
+    .filter((order) => order.status !== 'Cancelado')
+    .flatMap((order) => order.items)
+    .reduce((acc, item) => {
+      const category = productCategoryById.get(item.productId) ?? 'Sin categoría';
+      const lineTotal = item.price * item.quantity;
+      acc[category] = (acc[category] || 0) + lineTotal;
+      return acc;
+    }, {} as Record<string, number>);
 
-  const categoryTotals = Object.entries(categorySales).map(([name, value]) => ({ name, value }));
-  const totalCatVal = categoryTotals.reduce((sum, c) => sum + c.value, 0) || 1;
+  const categoryTotals = Object.entries(categorySales)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  const totalCatVal = categoryTotals.reduce((sum, category) => sum + category.value, 0);
+  const categoryBarColors = [
+    'bg-primary-500',
+    'bg-secondary-500',
+    'bg-primary-400',
+    'bg-secondary-400',
+    'bg-primary-600',
+    'bg-secondary-600',
+  ];
 
   const recentOrders = [...orders]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -404,44 +413,56 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
         </div>
 
         {/* Category breakdown (1/3 width) */}
-        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
-          <div>
+        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 sm:p-6 backdrop-blur-md flex flex-col">
+          <div className="mb-4">
             <h4 className="zenith-section-title">Distribución por Categorías</h4>
-            <p className="text-xs text-surface-400">Ingresos consolidados por categoría farmacéutica.</p>
+            <p className="text-xs text-surface-400">Ventas por línea terapéutica en pedidos activos.</p>
           </div>
-          
-          <div className="my-4 space-y-4 flex-1 pt-2">
+
+          <div className="flex-1 space-y-3.5">
             {categoryTotals.length > 0 ? (
-              categoryTotals
-                .sort((a, b) => b.value - a.value)
-                .map((cat, idx) => {
-                  const percentage = Math.round((cat.value / totalCatVal) * 100);
-                  const colors = ['bg-primary-500', 'bg-primary-400', 'bg-primary-600', 'bg-primary-550'];
-                  const barColor = colors[idx % colors.length];
-                  
-                  return (
-                    <div key={cat.name} className="space-y-1.5">
-                      <div className="flex justify-between text-2xs">
-                        <span className="font-bold text-surface-300">{cat.name}</span>
-                        <span className="font-mono text-surface-450 font-bold">{formatCurrency(cat.value)} ({percentage}%)</span>
-                      </div>
-                      <div className="h-1.5 w-full bg-surface-950 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all duration-700 ${barColor}`} style={{ width: `${percentage}%` }}></div>
-                      </div>
+              categoryTotals.map((cat, idx) => {
+                const percentage = totalCatVal > 0 ? (cat.value / totalCatVal) * 100 : 0;
+                const barColor = categoryBarColors[idx % categoryBarColors.length];
+
+                return (
+                  <div key={cat.name} className="space-y-1.5">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0.5">
+                      <span
+                        className="text-xs font-semibold leading-snug text-surface-200 break-words"
+                        title={cat.name}
+                      >
+                        {cat.name}
+                      </span>
+                      <span className="text-xs font-semibold text-surface-100 tabular-nums whitespace-nowrap">
+                        {formatCurrency(cat.value)}
+                      </span>
                     </div>
-                  );
-                })
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-2 min-w-0 flex-1 rounded-full bg-surface-850/80 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${barColor}`}
+                          style={{ width: `${Math.max(percentage, percentage > 0 ? 4 : 0)}%` }}
+                        />
+                      </div>
+                      <span className="w-9 shrink-0 text-right text-[10px] font-semibold text-surface-500 tabular-nums">
+                        {Math.round(percentage)}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
             ) : (
-              <div className="text-center py-8 text-xs text-surface-500 font-medium">
+              <div className="py-10 text-center text-xs font-medium text-surface-500">
                 Sin movimientos financieros para clasificar.
               </div>
             )}
           </div>
 
-          <div className="border-t border-surface-850 pt-3 flex items-center justify-between text-xs text-surface-500 font-medium">
-            <span>Volumen Consolidado:</span>
-            <span className="text-white font-semibold font-mono">
-              {formatCurrency(totalRevenue)}
+          <div className="mt-5 border-t border-surface-850 pt-3.5 flex items-center justify-between gap-3 text-xs">
+            <span className="font-medium text-surface-500">Total categorizado</span>
+            <span className="font-semibold text-white tabular-nums">
+              {formatCurrency(totalCatVal)}
             </span>
           </div>
         </div>
