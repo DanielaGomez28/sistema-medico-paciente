@@ -119,8 +119,16 @@ const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
 ];
 
 export default function DoctorView({ doctorName, doctorEmail, onLogout }: DoctorViewProps) {
-  // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions'
-  const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions'>('agenda');
+  // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'
+  const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'>('agenda');
+
+  // M.4 Profile & Banking state
+  const [bankHolder, setBankHolder] = useState('Dr. Alejandro Ríos García');
+  const [bankIBAN, setBankIBAN] = useState('ES76 0081 9293 0100 0100 1234');
+  const [bankBIC, setBankBIC] = useState('BSCHESMMXXX');
+  const [bankEntity, setBankEntity] = useState('Banco Santander');
+  const [profilePhone, setProfilePhone] = useState('+34 910 334 821');
+  const [profileSaveMsg, setProfileSaveMsg] = useState('');
 
   const [appointments, setAppointments] = useState([
     { id: 'CITA-201', patientName: 'Sofía Peralta', time: '09:00 AM', reason: 'Control Cardiológico', status: 'Atendido' },
@@ -413,6 +421,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
           >
             <TrendingUp className={`h-5 w-5 ${activeTab === 'commissions' ? 'text-rose-455' : ''}`} />
             <span>Comisiones e Historial (M.3)</span>
+          </button>
+
+          <button 
+            onClick={() => setActiveTab('profile')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'profile'
+                ? 'bg-gradient-to-r from-rose-500/10 to-red-500/10 text-white border-l-2 border-rose-500'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50 border-l-2 border-transparent'
+            }`}
+          >
+            <Users className={`h-5 w-5 ${activeTab === 'profile' ? 'text-rose-455' : ''}`} />
+            <span>Mi Perfil (M.4)</span>
           </button>
 
           <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850/50 border-l-2 border-transparent">
@@ -1287,6 +1307,187 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                 </div>
               );
             })()}
+
+            {/* VIEW TAB 5: PROFILE CONFIGURATION (Pantalla M.4) */}
+            {activeTab === 'profile' && (
+              <div className="space-y-6 animate-in fade-in duration-300 max-w-2xl mx-auto">
+                <div>
+                  <h2 className="text-2xl font-bold text-white tracking-tight">Configuración de Perfil</h2>
+                  <p className="text-sm text-slate-400">Credenciales validadas, datos bancarios para comisiones y cierre de sesión.</p>
+                </div>
+
+                {profileSaveMsg && (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl flex items-center gap-2.5 text-emerald-400 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
+                    <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
+                    <span>{profileSaveMsg}</span>
+                  </div>
+                )}
+
+                {/* Validated Credentials Card */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
+                  <h3 className="text-xs font-bold text-rose-400 uppercase tracking-widest border-b border-slate-850 pb-2">
+                    Credenciales Médicas Validadas
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    {/* Identity */}
+                    <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-10 w-10 rounded-xl bg-rose-500/10 flex items-center justify-center shrink-0">
+                          <BadgeCheck className="h-5 w-5 text-rose-400" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">Nombre Legal</p>
+                          <p className="text-sm font-extrabold text-white">{doctorName}</p>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-slate-850 text-xs">
+                        <div className="flex justify-between py-2">
+                          <span className="text-slate-500">Correo Institucional</span>
+                          <span className="text-slate-200 font-mono text-[10px]">{doctorEmail}</span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="text-slate-500">Teléfono Profesional</span>
+                          <input
+                            type="text"
+                            value={profilePhone}
+                            onChange={e => setProfilePhone(e.target.value)}
+                            className="bg-transparent text-slate-200 text-[10px] font-mono text-right w-36 focus:outline-none focus:text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Medical Registry */}
+                    <div className="bg-slate-950/60 border border-slate-850 rounded-2xl p-4 space-y-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="h-10 w-10 rounded-xl bg-indigo-500/10 flex items-center justify-center shrink-0">
+                          <Award className="h-5 w-5 text-indigo-400" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">Registro Profesional</p>
+                          <p className="text-sm font-extrabold text-white">M.P. 28.490/7</p>
+                        </div>
+                      </div>
+                      <div className="divide-y divide-slate-850 text-xs">
+                        <div className="flex justify-between py-2">
+                          <span className="text-slate-500">Especialidad Primaria</span>
+                          <span className="text-slate-200 font-semibold">Cardiología</span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="text-slate-500">Institución Certificadora</span>
+                          <span className="text-slate-200 font-semibold">Real Academia de Med.</span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="text-slate-500">Estado de Colegiatura</span>
+                          <span className="inline-flex items-center gap-1 text-emerald-400 font-bold text-[10px]">
+                            <ShieldCheck className="h-3 w-3" /> Activo / Vigente
+                          </span>
+                        </div>
+                        <div className="flex justify-between py-2">
+                          <span className="text-slate-500">Renovación</span>
+                          <span className="text-slate-200 font-mono text-[10px]">31 Dic, 2027</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Credential validity stamp */}
+                  <div className="flex items-center gap-3 p-3 bg-emerald-500/5 border border-emerald-500/15 rounded-xl">
+                    <ShieldCheck className="h-5 w-5 text-emerald-450 shrink-0" />
+                    <p className="text-[10px] text-emerald-400 leading-snug">
+                      <span className="font-bold">Verificación completada por Zenith OMS:</span> Las credenciales de este profesional han sido validadas contra el Registro Nacional de Especialistas y se encuentran vigentes a la fecha.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Banking Details Card */}
+                <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
+                  <h3 className="text-xs font-bold text-rose-400 uppercase tracking-widest border-b border-slate-850 pb-2">
+                    Datos Bancarios para Recepción de Comisiones
+                  </h3>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-2xs font-bold text-slate-400 uppercase">Titular de la Cuenta</label>
+                      <input
+                        type="text"
+                        value={bankHolder}
+                        onChange={e => setBankHolder(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-2xs font-bold text-slate-400 uppercase">Entidad Bancaria</label>
+                      <input
+                        type="text"
+                        value={bankEntity}
+                        onChange={e => setBankEntity(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-rose-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5 md:col-span-2">
+                      <label className="text-2xs font-bold text-slate-400 uppercase">IBAN / Número de Cuenta</label>
+                      <input
+                        type="text"
+                        value={bankIBAN}
+                        onChange={e => setBankIBAN(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-rose-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-2xs font-bold text-slate-400 uppercase">Código BIC / SWIFT</label>
+                      <input
+                        type="text"
+                        value={bankBIC}
+                        onChange={e => setBankBIC(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-rose-500"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-2xs font-bold text-slate-400 uppercase">Frecuencia de Acreditación</label>
+                      <select
+                        disabled
+                        className="w-full bg-slate-950/50 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-slate-500 cursor-not-allowed"
+                      >
+                        <option>Mensual (último día hábil)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-500/5 border border-amber-500/15 rounded-xl flex items-start gap-2 text-[10px] text-amber-400">
+                    <DollarSign className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span>Las comisiones se liquidan el último día hábil de cada mes. Asegúrese de que los datos bancarios sean correctos antes del día 25 de cada período.</span>
+                  </div>
+
+                  {/* Save / Logout actions */}
+                  <div className="pt-2 border-t border-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <button
+                      type="button"
+                      onClick={onLogout}
+                      className="px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer order-last sm:order-first"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Cerrar Sesión Seguro</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileSaveMsg('Datos bancarios actualizados correctamente. Los cambios surtirán efecto en el próximo período de liquidación.');
+                        setTimeout(() => setProfileSaveMsg(''), 4000);
+                      }}
+                      className="px-6 py-2.5 bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-rose-650/10 transition-all cursor-pointer"
+                    >
+                      Guardar Cambios
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            )}
 
           </div>
         </main>
