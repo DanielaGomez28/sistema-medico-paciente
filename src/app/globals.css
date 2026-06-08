@@ -92,16 +92,29 @@
   --zenith-surface-150: #070e18;
   --zenith-surface-100: #040a12;
 
-  --color-primary-300: color-mix(in srgb, var(--color-primary) 38%, #6b839c);
-  --color-primary-400: color-mix(in srgb, var(--color-primary) 48%, #4f677c);
-  --color-primary-450: color-mix(in srgb, var(--color-primary) 52%, #3f586d);
-  --color-primary-500: color-mix(in srgb, var(--color-primary) 58%, #2f4a5e);
-  --color-primary-550: color-mix(in srgb, var(--color-primary) 62%, #243d50);
-  --color-secondary-300: color-mix(in srgb, var(--color-secondary) 36%, #6d8f7c);
-  --color-secondary-400: color-mix(in srgb, var(--color-secondary) 48%, #4a7560);
-  --color-secondary-450: color-mix(in srgb, var(--color-secondary) 54%, #3a6650);
-  --color-secondary-500: color-mix(in srgb, var(--color-secondary) 62%, #285642);
-  --color-secondary-550: color-mix(in srgb, var(--color-secondary) 66%, #1f4a38);
+  --color-primary: #0a7f8f;
+  --color-secondary: #0a6b3c;
+
+  --color-primary-300: color-mix(in srgb, var(--color-primary) 52%, #4a6672);
+  --color-primary-400: color-mix(in srgb, var(--color-primary) 66%, #2f4f5c);
+  --color-primary-450: color-mix(in srgb, var(--color-primary) 72%, #24424f);
+  --color-primary-500: color-mix(in srgb, var(--color-primary) 78%, #1a3844);
+  --color-primary-550: color-mix(in srgb, var(--color-primary) 82%, #142f3a);
+  --color-primary-600: color-mix(in srgb, var(--color-primary) 88%, #0d252f);
+  --color-primary-650: #086b79;
+  --color-primary-700: #065a66;
+  --color-primary-900: color-mix(in srgb, var(--color-primary) 14%, #f1f5f9);
+
+  --color-secondary-300: color-mix(in srgb, var(--color-secondary) 50%, #3d6b52);
+  --color-secondary-400: color-mix(in srgb, var(--color-secondary) 64%, #2a5540);
+  --color-secondary-450: color-mix(in srgb, var(--color-secondary) 70%, #224836);
+  --color-secondary-455: color-mix(in srgb, var(--color-secondary) 72%, #1d4030);
+  --color-secondary-500: color-mix(in srgb, var(--color-secondary) 78%, #163528);
+  --color-secondary-550: color-mix(in srgb, var(--color-secondary) 82%, #112d22);
+  --color-secondary-600: color-mix(in srgb, var(--color-secondary) 90%, #0c2419);
+  --color-secondary-605: #085a33;
+  --color-secondary-650: #074f2d;
+  --color-secondary-655: #064628;
 }
 
 @theme inline {
