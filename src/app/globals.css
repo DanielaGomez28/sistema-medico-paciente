@@ -529,6 +529,154 @@ table th {
   background: color-mix(in srgb, var(--color-primary) 45%, #b8dde2);
 }
 
+/* Login — paleta de marca fija */
+.login-view {
+  --login-base: #0a6b75;
+  --login-base-deep: #084f57;
+  --login-base-soft: #0c7d88;
+  --login-surface: color-mix(in srgb, var(--login-base) 88%, #000000);
+  --login-border: color-mix(in srgb, var(--login-base) 65%, #ffffff);
+  --login-btn: #179150;
+  --login-btn-hover: #146b42;
+  --login-link: #50e9f8;
+  --login-link-hover: #8af4fc;
+  --login-text: #f0fbfb;
+  --login-text-muted: color-mix(in srgb, var(--login-text) 72%, var(--login-base));
+}
+
+.login-view {
+  background-color: var(--login-base);
+  color: var(--login-text);
+}
+
+.login-view__glow--primary {
+  background: color-mix(in srgb, var(--login-link) 18%, transparent);
+}
+
+.login-view__glow--secondary {
+  background: color-mix(in srgb, var(--login-base-soft) 40%, transparent);
+}
+
+.login-view__theme-toggle {
+  background: var(--login-surface) !important;
+  border-color: var(--login-border) !important;
+}
+
+.login-view__theme-toggle button[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--login-base) 55%, #ffffff) !important;
+  color: var(--login-text) !important;
+}
+
+.login-view__theme-toggle button[aria-pressed="false"] {
+  color: var(--login-text-muted) !important;
+}
+
+.login-view__theme-toggle button[aria-pressed="false"]:hover {
+  color: var(--login-link) !important;
+  background: color-mix(in srgb, var(--login-link) 12%, transparent) !important;
+}
+
+.login-view__card {
+  background: var(--login-surface) !important;
+  border-color: var(--login-border) !important;
+}
+
+.login-view__logo {
+  background: color-mix(in srgb, var(--login-base) 70%, #000000);
+  border-color: var(--login-border);
+  color: var(--login-link);
+}
+
+.login-view .zenith-page-title {
+  color: var(--login-text);
+}
+
+.login-view__subtitle {
+  color: var(--login-text-muted);
+}
+
+.login-view .zenith-field-label {
+  color: var(--login-text-muted);
+}
+
+.login-view__input {
+  background: color-mix(in srgb, var(--login-base-deep) 55%, #000000) !important;
+  border-color: var(--login-border) !important;
+  color: var(--login-text) !important;
+}
+
+.login-view__input::placeholder {
+  color: color-mix(in srgb, var(--login-text-muted) 80%, transparent);
+}
+
+.login-view__input:focus {
+  border-color: var(--login-link) !important;
+  outline: none;
+}
+
+.login-view .relative > .pointer-events-none {
+  color: var(--login-text-muted);
+}
+
+.login-view__icon-btn {
+  color: var(--login-text-muted);
+}
+
+.login-view__icon-btn:hover {
+  color: var(--login-link);
+}
+
+.login-view__hint {
+  color: var(--login-text-muted);
+}
+
+.login-view__submit {
+  background: var(--login-btn) !important;
+  border-color: var(--login-btn) !important;
+  color: #ffffff !important;
+}
+
+.login-view__submit:hover {
+  background: var(--login-btn-hover) !important;
+  border-color: var(--login-btn-hover) !important;
+}
+
+.login-view__divider {
+  border-color: var(--login-border);
+}
+
+.login-view__footer-label {
+  color: var(--login-text-muted);
+}
+
+.login-view__quick-fill {
+  background: color-mix(in srgb, var(--login-base-deep) 45%, #000000);
+  border-color: var(--login-border);
+  color: var(--login-text-muted);
+}
+
+.login-view__quick-fill:hover {
+  border-color: var(--login-link);
+  background: color-mix(in srgb, var(--login-link) 10%, var(--login-base-deep));
+  color: var(--login-link);
+}
+
+.login-view__link {
+  color: var(--login-link);
+}
+
+.login-view__quick-fill:hover .login-view__link {
+  color: var(--login-link-hover);
+}
+
+.login-view__mono {
+  color: color-mix(in srgb, var(--login-text-muted) 85%, transparent);
+}
+
+.login-view__quick-fill:hover .login-view__mono {
+  color: var(--login-link);
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

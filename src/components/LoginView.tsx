@@ -20,12 +20,12 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  
+
   // Validation and Error states
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [generalError, setGeneralError] = useState('');
-  
+
   // Auto-fill test accounts helper
   const handleQuickFill = (accEmail: string, accPass: string) => {
     setEmail(accEmail);
@@ -76,7 +76,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     } else {
       // Email not found in the database
       const userExistsInDb = MOCK_USERS.some((u) => u.email.toLowerCase() === email.toLowerCase());
-      
+
       if (!userExistsInDb) {
         setGeneralError('Usuario no registrado. Contacte al administrador para obtener acceso.');
       } else {
@@ -87,27 +87,27 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-950 p-4 relative overflow-hidden font-sans">
+    <div className="login-view min-h-screen flex items-center justify-center p-4 relative overflow-hidden font-sans">
       <div className="absolute top-4 right-4 z-20">
-        <ThemeToggle />
+        <ThemeToggle className="login-view__theme-toggle" />
       </div>
       {/* Decorative background glows */}
-      <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-white/5 blur-[100px] pointer-events-none"></div>
-      <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 rounded-full bg-white/[0.03] blur-[120px] pointer-events-none"></div>
+      <div className="login-view__glow--primary absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full blur-[100px] pointer-events-none" />
+      <div className="login-view__glow--secondary absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 rounded-full blur-[120px] pointer-events-none" />
 
-      <Card variant="section" className="w-full max-w-md p-4 sm:p-8 shadow-2xl relative z-10 space-y-6 bg-surface-900">
-        
+      <Card variant="section" className="login-view__card w-full max-w-md p-4 sm:p-8 shadow-2xl relative z-10 space-y-6">
         {/* Logo and header */}
         <div className="flex flex-col items-center text-center space-y-2">
-          <div className="h-12 w-12 rounded-xl bg-surface-800 border border-surface-700 flex items-center justify-center text-foreground">
+          <div className="login-view__logo h-12 w-12 rounded-xl border flex items-center justify-center">
             <Activity className="h-6 w-6" />
           </div>
           <h2 className="zenith-page-title mt-2">Médico-Paciente</h2>
-          <p className="text-xs text-surface-400">Inicio de Sesión Unificado para Médicos, Pacientes y Administradores</p>
+          <p className="login-view__subtitle text-xs">
+            Inicio de Sesión Unificado para Médicos, Pacientes y Administradores
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          
           {/* General Errors */}
           {generalError && (
             <div className="p-3.5 bg-secondary-500/10 border border-secondary-500/20 rounded-xl flex items-start gap-2.5 text-xs text-secondary-450">
@@ -126,7 +126,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               error={!!emailError}
-              className="text-sm py-2.5"
+              className="login-view__input text-sm py-2.5"
             />
             {emailError && <p className="text-xs text-secondary-450 font-medium">{emailError}</p>}
           </div>
@@ -134,7 +134,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           <div className="space-y-1.5">
             <div className="flex justify-between items-center">
               <Label>Contraseña</Label>
-              <span className="text-[10px] text-surface-500">Mín. 6 caracteres</span>
+              <span className="login-view__hint text-[10px]">Mín. 6 caracteres</span>
             </div>
             <div className="relative">
               <Input
@@ -144,12 +144,12 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 error={!!passwordError}
-                className="text-sm py-2.5 pr-10"
+                className="login-view__input text-sm py-2.5 pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500 hover:text-surface-300 p-0.5 rounded z-10"
+                className="login-view__icon-btn absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded z-10 transition-colors cursor-pointer"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -157,42 +157,49 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             {passwordError && <p className="text-xs text-secondary-450 font-medium">{passwordError}</p>}
           </div>
 
-          <Button type="submit" size="lg" className="w-full mt-4">
+          <Button type="submit" size="lg" className="login-view__submit w-full mt-4">
             Iniciar Sesión
           </Button>
         </form>
 
         {/* Footer credentials reminder */}
-        <div className="border-t border-surface-850 pt-4 text-[10px] text-surface-500 flex flex-col space-y-2 text-center">
-          <p className="font-semibold text-surface-450">Cuentas de Prueba (Haz clic para autorellenar):</p>
+        <div className="login-view__divider border-t pt-4 text-[10px] flex flex-col space-y-2 text-center">
+          <p className="login-view__footer-label font-semibold">
+            Cuentas de Prueba (Haz clic para autorellenar):
+          </p>
           <div className="grid grid-cols-1 gap-1.5 text-xs text-left max-w-sm mx-auto">
             <button
               type="button"
               onClick={() => handleQuickFill('admin@zenith.com', 'password123')}
-              className="px-3 py-1.5 bg-surface-950/50 border border-surface-850 hover:border-surface-750 hover:bg-surface-950 rounded-xl text-surface-400 hover:text-white flex items-center justify-between transition-all cursor-pointer font-sans"
+              className="login-view__quick-fill px-3 py-1.5 border rounded-xl flex items-center justify-between transition-all cursor-pointer font-sans"
             >
-              <span>Admin: <code className="text-primary-400">admin@zenith.com</code></span>
-              <span className="font-mono text-2xs text-surface-500">Clave: password123</span>
+              <span>
+                Admin: <code className="login-view__link">admin@zenith.com</code>
+              </span>
+              <span className="login-view__mono font-mono text-2xs">Clave: password123</span>
             </button>
             <button
               type="button"
               onClick={() => handleQuickFill('medico@clinica.com', 'medico123')}
-              className="px-3 py-1.5 bg-surface-950/50 border border-surface-850 hover:border-surface-750 hover:bg-surface-950 rounded-xl text-surface-400 hover:text-white flex items-center justify-between transition-all cursor-pointer font-sans"
+              className="login-view__quick-fill px-3 py-1.5 border rounded-xl flex items-center justify-between transition-all cursor-pointer font-sans"
             >
-              <span>Médico: <code className="text-primary-400">medico@clinica.com</code></span>
-              <span className="font-mono text-2xs text-surface-500">Clave: medico123</span>
+              <span>
+                Médico: <code className="login-view__link">medico@clinica.com</code>
+              </span>
+              <span className="login-view__mono font-mono text-2xs">Clave: medico123</span>
             </button>
             <button
               type="button"
               onClick={() => handleQuickFill('paciente@clinica.com', 'paciente123')}
-              className="px-3 py-1.5 bg-surface-950/50 border border-surface-850 hover:border-surface-750 hover:bg-surface-950 rounded-xl text-surface-400 hover:text-white flex items-center justify-between transition-all cursor-pointer font-sans"
+              className="login-view__quick-fill px-3 py-1.5 border rounded-xl flex items-center justify-between transition-all cursor-pointer font-sans"
             >
-              <span>Paciente: <code className="text-primary-400">paciente@clinica.com</code></span>
-              <span className="font-mono text-2xs text-surface-500">Clave: paciente123</span>
+              <span>
+                Paciente: <code className="login-view__link">paciente@clinica.com</code>
+              </span>
+              <span className="login-view__mono font-mono text-2xs">Clave: paciente123</span>
             </button>
           </div>
         </div>
-
       </Card>
     </div>
   );
