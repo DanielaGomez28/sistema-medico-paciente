@@ -98,8 +98,8 @@ interface ProposalItem {
 }
 
 export default function PatientView({ patientName, patientEmail, onLogout }: PatientViewProps) {
-  // Navigation Tabs: 'recipes' | 'proposals' | 'payment' | 'voucher'
-  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'proposals' | 'payment' | 'voucher'>('recipes');
+  // Navigation Tabs: 'recipes' | 'proposals' | 'payment' | 'voucher' | 'profile'
+  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'proposals' | 'payment' | 'voucher' | 'profile'>('recipes');
 
   const [recipes] = useState<Recipe[]>(MOCK_RECIPES);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
@@ -132,6 +132,14 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   // Voucher info
   const [voucherId, setVoucherId] = useState('');
 
+  // Profile Settings State (Pantalla P.5)
+  const [profileName, setProfileName] = useState(patientName);
+  const [profilePhone, setProfilePhone] = useState('+34 600 123 456');
+  const [deliveryAddress, setDeliveryAddress] = useState('Calle Mayor 12, Piso 4B');
+  const [deliveryPostalCode, setDeliveryPostalCode] = useState('28013');
+  const [deliveryCity, setDeliveryCity] = useState('Madrid');
+  const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
+
   // Calculations for Proposal
   const calculateItemSubtotal = (item: ProposalItem) => {
     const originalSub = item.unitPrice * item.quantity;
@@ -161,6 +169,21 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   };
 
   const totals = getProposalTotals();
+
+  // Load profile settings from localStorage if available
+  useEffect(() => {
+    const savedName = localStorage.getItem('zenith_patient_name');
+    const savedPhone = localStorage.getItem('zenith_patient_phone');
+    const savedAddr = localStorage.getItem('zenith_patient_address');
+    const savedPC = localStorage.getItem('zenith_patient_pc');
+    const savedCity = localStorage.getItem('zenith_patient_city');
+
+    if (savedName) setProfileName(savedName);
+    if (savedPhone) setProfilePhone(savedPhone);
+    if (savedAddr) setDeliveryAddress(savedAddr);
+    if (savedPC) setDeliveryPostalCode(savedPC);
+    if (savedCity) setDeliveryCity(savedCity);
+  }, []);
 
   // Rotate QR code token every 30 seconds
   useEffect(() => {
@@ -215,8 +238,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       alert('Debe aceptar los Términos y Condiciones de Farma-Humana.');
       return;
     }
-    // Proceed to Payment Gateway (P.3)
-    setPaymentTimeLeft(900); // Reset timer to 15:00
+    setPaymentTimeLeft(900);
     setPaymentError('');
     setReferenceNumber('');
     setCardNumber('');
@@ -227,7 +249,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     e.preventDefault();
     setPaymentError('');
 
-    // Form validations
     if (paymentMethod === 'card') {
       if (!cardNumber || !cardExpiry || !cardCVC) {
         setPaymentError('Por favor complete todos los datos de su tarjeta.');
@@ -248,11 +269,32 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       }
     }
 
-    // Success: Generate sales voucher
     const randVoucher = `VOU-2026-${Math.floor(100000 + Math.random() * 900000)}`;
     setVoucherId(randVoucher);
-    setLastOrderStatus('Listo para retirar'); // Set order status to ready to pick up!
+    setLastOrderStatus('Listo para retirar');
     setActiveSubTab('voucher');
+  };
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    setProfileSuccessMsg('');
+
+    if (!profileName || !profilePhone || !deliveryAddress || !deliveryPostalCode || !deliveryCity) {
+      alert('Por favor rellene todos los campos del perfil.');
+      return;
+    }
+
+    localStorage.setItem('zenith_patient_name', profileName);
+    localStorage.setItem('zenith_patient_phone', profilePhone);
+    localStorage.setItem('zenith_patient_address', deliveryAddress);
+    localStorage.setItem('zenith_patient_pc', deliveryPostalCode);
+    localStorage.setItem('zenith_patient_city', deliveryCity);
+
+    setProfileSuccessMsg('¡Perfil y dirección de delivery actualizados con éxito!');
+
+    setTimeout(() => {
+      setProfileSuccessMsg('');
+    }, 3000);
   };
 
   return (
@@ -302,7 +344,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
               <rect x="80" y="30" width="10" height="20" fill="currentColor" />
               <rect x="75" y="60" width="15" height="10" fill="currentColor" />
               <rect x="50" y="80" width="25" height="15" fill="currentColor" />
-              <rect x="85" y="85" width="10" height="10" fill="currentColor" />
+              <rect x="85" y="85" width="10" height="10" fill="white" />
             </svg>
             
             <div className="mt-2 text-center">
@@ -329,7 +371,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50 border-l-2 border-transparent'
             }`}
           >
-            <FileText className="h-5 w-5" />
+            <FileText className={`h-5 w-5 ${activeSubTab === 'recipes' || activeSubTab === 'voucher' ? 'text-indigo-400' : ''}`} />
             <span>Récipes Médicos</span>
           </button>
           
@@ -341,24 +383,31 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50 border-l-2 border-transparent'
             }`}
           >
-            <FileSpreadsheet className="h-5 w-5" />
+            <FileSpreadsheet className={`h-5 w-5 ${activeSubTab === 'proposals' || activeSubTab === 'payment' ? 'text-indigo-400' : ''}`} />
             <span>Propuestas de Compra</span>
           </button>
           
-          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850/50 border-l-2 border-transparent">
-            <Calendar className="h-5 w-5" />
-            <span>Consultas</span>
+          <button 
+            onClick={() => setActiveSubTab('profile')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+              activeSubTab === 'profile'
+                ? 'bg-gradient-to-r from-indigo-500/10 to-cyan-500/10 text-white border-l-2 border-indigo-500'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50 border-l-2 border-transparent'
+            }`}
+          >
+            <User className={`h-5 w-5 ${activeSubTab === 'profile' ? 'text-indigo-400' : ''}`} />
+            <span>Configuración Perfil</span>
           </button>
         </nav>
 
         {/* Footer Profile & Logout */}
-        <div className="p-4 border-t border-slate-850 bg-slate-950/20 space-y-3">
+        <div className="p-4 border-t border-slate-855 bg-slate-950/20 space-y-3">
           <div className="flex items-center gap-3 p-1">
             <div className="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-xs">
               SP
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white truncate">{patientName}</p>
+              <p className="text-xs font-bold text-white truncate">{profileName}</p>
               <p className="text-[10px] text-slate-500 truncate">Paciente ID #8849</p>
             </div>
           </div>
@@ -386,12 +435,12 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
         {/* Content body */}
         <main className="flex-1 overflow-y-auto p-8">
           <div className="max-w-5xl mx-auto">
-            
+
             {/* P.1: RECIPES VIEW */}
             {activeSubTab === 'recipes' && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-white tracking-tight">Historial de Récipes Médicos</h2>
+                  <h2 className="text-2xl font-bold text-white tracking-tight font-sans">Historial de Récipes Médicos</h2>
                   <p className="text-sm text-slate-400">Consulte, visualice e imprima sus recetas prescritas vigentes.</p>
                 </div>
 
@@ -703,7 +752,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
               </div>
             )}
 
-            {/* P.3: PAYMENT GATEWAY & COUNTDOWN TIMER */}
+            {/* P.3: PAYMENT GATEWAY */}
             {activeSubTab === 'payment' && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -712,7 +761,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     <p className="text-sm text-slate-400">Registre el pago de sus medicamentos reservados en el almacén de Farma-Humana.</p>
                   </div>
                   
-                  {/* Visual timer countdown */}
                   <div className="bg-rose-500/10 border border-rose-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-3 shrink-0">
                     <Clock className="h-5 w-5 text-rose-400 animate-pulse" />
                     <div>
@@ -731,7 +779,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       <p className="text-xs text-slate-400">Seleccione su método de pago y consigne los datos solicitados.</p>
                     </div>
 
-                    {/* Method Selector buttons */}
                     <div className="grid grid-cols-3 gap-3">
                       <button
                         onClick={() => setPaymentMethod('mobile')}
@@ -772,7 +819,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
                     <form onSubmit={handleRegisterPayment} className="space-y-4">
                       
-                      {/* Error panel */}
                       {paymentError && (
                         <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-xs flex items-center gap-2">
                           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -780,7 +826,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         </div>
                       )}
 
-                      {/* Dynamic form inputs based on selection */}
                       {paymentMethod === 'mobile' && (
                         <div className="p-4 bg-slate-950/50 border border-slate-850 rounded-xl space-y-4 text-xs">
                           <div className="grid grid-cols-2 gap-4 text-slate-450">
@@ -948,7 +993,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
               <div className="max-w-2xl mx-auto py-8 animate-in fade-in zoom-in-95 duration-200">
                 <div className="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
                   
-                  {/* Status Banner Header */}
                   <div className="bg-slate-950 text-white p-6 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center">
@@ -969,10 +1013,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     </button>
                   </div>
 
-                  {/* Voucher Bill Body */}
                   <div className="p-8 space-y-6 text-xs leading-relaxed">
                     
-                    {/* Header info */}
                     <div className="flex justify-between items-start border-b border-slate-200 pb-4">
                       <div>
                         <h4 className="text-sm font-bold text-slate-950">Farma-Humana España S.L.</h4>
@@ -984,21 +1026,19 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       </div>
                     </div>
 
-                    {/* Patient detail block */}
                     <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-2xs">
                       <div>
                         <span className="font-bold text-slate-450 uppercase block">Paciente</span>
-                        <span className="font-bold text-slate-800 text-xs mt-0.5 block">{patientName}</span>
+                        <span className="font-bold text-slate-800 text-xs mt-0.5 block">{profileName}</span>
                         <span className="text-slate-500 mt-0.5 block">{patientEmail}</span>
                       </div>
                       <div>
-                        <span className="font-bold text-slate-450 uppercase block">Retiro Autorizado en</span>
+                        <span className="font-bold text-slate-455 uppercase block">Retiro Autorizado en</span>
                         <span className="font-bold text-slate-800 text-xs mt-0.5 block">{selectedBranch}</span>
                         <span className="text-slate-500 mt-0.5 block">Presentar credencial QR física</span>
                       </div>
                     </div>
 
-                    {/* Items detail list */}
                     <div className="space-y-2">
                       <span className="font-bold text-indigo-950 uppercase tracking-widest block text-[9px]">Productos Adquiridos</span>
                       <div className="divide-y divide-slate-150 border-t border-b border-slate-200">
@@ -1014,7 +1054,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       </div>
                     </div>
 
-                    {/* Financial summary */}
                     <div className="flex justify-end pt-2">
                       <div className="w-56 space-y-2 text-2xs text-slate-500">
                         <div className="flex justify-between">
@@ -1032,8 +1071,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       </div>
                     </div>
 
-                    {/* Authorization & verification info */}
-                    <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-450 text-[10px]">
+                    <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-455 text-[10px]">
                       <div>
                         <p className="font-semibold text-slate-600">Referencia de Pago Registrada:</p>
                         <p className="font-mono text-slate-800 font-bold mt-0.5">
@@ -1041,7 +1079,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         </p>
                       </div>
                       
-                      <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
+                      <div className="flex items-center gap-1.5 text-emerald-605 font-bold">
                         <ShieldCheck className="h-4.5 w-4.5" />
                         <span>Reserva Confirmada en Almacén</span>
                       </div>
@@ -1049,9 +1087,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
                   </div>
 
-                  {/* Return block */}
                   <div className="bg-slate-50 px-8 py-4 border-t border-slate-200 flex justify-between items-center">
-                    <p className="text-[10px] text-slate-500">Guarde este recibo en su dispositivo móvil para retirar.</p>
+                    <p className="text-[10px] text-slate-550">Guarde este recibo en su dispositivo móvil para retirar.</p>
                     <button
                       onClick={() => setActiveSubTab('recipes')}
                       className="px-4.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
@@ -1060,6 +1097,137 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     </button>
                   </div>
 
+                </div>
+              </div>
+            )}
+
+            {/* P.5: PROFILE CONFIGURATION VIEW */}
+            {activeSubTab === 'profile' && (
+              <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
+                <div>
+                  <h2 className="text-2xl font-bold text-white tracking-tight">Configuración de Perfil</h2>
+                  <p className="text-sm text-slate-400">Modifique sus datos personales y actualice su dirección de delivery predeterminada.</p>
+                </div>
+
+                {profileSuccessMsg && (
+                  <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-2.5 text-emerald-450 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
+                    <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
+                    <span>{profileSuccessMsg}</span>
+                  </div>
+                )}
+
+                <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-8 backdrop-blur-md space-y-6">
+                  <form onSubmit={handleSaveProfile} className="space-y-6">
+                    
+                    {/* Sección 1: Datos Personales */}
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-widest border-b border-slate-850 pb-2">
+                        Información Personal
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-2xs font-bold text-slate-400 uppercase">Nombre Completo</label>
+                          <input
+                            type="text"
+                            value={profileName}
+                            onChange={(e) => setProfileName(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 placeholder-slate-800"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-2xs font-bold text-slate-400 uppercase">Correo Electrónico (No editable)</label>
+                          <input
+                            type="email"
+                            value={patientEmail}
+                            disabled
+                            className="w-full bg-slate-950/40 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-slate-550 focus:outline-none cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-2xs font-bold text-slate-400 uppercase">Teléfono de Contacto</label>
+                          <input
+                            type="text"
+                            value={profilePhone}
+                            onChange={(e) => setProfilePhone(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 placeholder-slate-800"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-2xs font-bold text-slate-400 uppercase">Documento de Identidad (DNI/CIF)</label>
+                          <input
+                            type="text"
+                            disabled
+                            value="12345678-SP"
+                            className="w-full bg-slate-950/40 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-slate-550 focus:outline-none cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Sección 2: Dirección de Delivery */}
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-bold text-indigo-400 uppercase tracking-widest border-b border-slate-850 pb-2">
+                        Dirección Predeterminada de Delivery
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="text-2xs font-bold text-slate-400 uppercase">Calle, Número, Piso/Puerta</label>
+                          <input
+                            type="text"
+                            value={deliveryAddress}
+                            onChange={(e) => setDeliveryAddress(e.target.value)}
+                            placeholder="Ej: Calle Mayor 12, Piso 4B"
+                            className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 placeholder-slate-800"
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="text-2xs font-bold text-slate-400 uppercase">Código Postal</label>
+                            <input
+                              type="text"
+                              value={deliveryPostalCode}
+                              onChange={(e) => setDeliveryPostalCode(e.target.value)}
+                              placeholder="Ej: 28013"
+                              className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 placeholder-slate-800"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="text-2xs font-bold text-slate-400 uppercase">Ciudad</label>
+                            <input
+                              type="text"
+                              value={deliveryCity}
+                              onChange={(e) => setDeliveryCity(e.target.value)}
+                              placeholder="Ej: Madrid"
+                              className="w-full bg-slate-950 border border-slate-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 placeholder-slate-800"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botones de Acción */}
+                    <div className="pt-4 border-t border-slate-850 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={onLogout}
+                        className="px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer order-last sm:order-first"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span>Cerrar Sesión Seguro</span>
+                      </button>
+
+                      <button
+                        type="submit"
+                        className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white rounded-xl text-xs font-extrabold shadow-md shadow-indigo-650/10 hover:shadow-indigo-650/20 transition-all cursor-pointer"
+                      >
+                        Guardar Cambios
+                      </button>
+                    </div>
+
+                  </form>
                 </div>
               </div>
             )}
@@ -1121,7 +1289,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
               <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                 <div>
                   <p className="text-slate-500 font-bold uppercase text-[9px]">Paciente</p>
-                  <p className="font-bold text-slate-850 text-sm mt-0.5">{patientName}</p>
+                  <p className="font-bold text-slate-850 text-sm mt-0.5">{profileName}</p>
                   <p className="text-slate-500 mt-1">ID: #8849-SP • Correo: {patientEmail}</p>
                 </div>
                 <div>
@@ -1170,7 +1338,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                 </div>
               </div>
 
-              <div className="border-t border-slate-200 pt-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500">
+              <div className="border-t border-slate-200 pt-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-550 text-[10px]">
                 <div className="flex flex-col gap-1 text-left">
                   <span className="text-[9px] font-bold uppercase text-slate-400">Código de Verificación Único</span>
                   <span className="text-2xs font-mono font-medium text-slate-600">
