@@ -18,6 +18,11 @@ import {
 } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
 import { formatCurrency } from '../lib/currency';
+import {
+  getDispatchSemaphore,
+  getDispatchStatusLabel,
+  getDispatchTransitionClassName,
+} from '../lib/statusColors';
 import { Badge, Modal, ModalBody, ListCard } from './ui';
 
 interface OrderDetailModalProps {
@@ -83,9 +88,7 @@ export default function OrderDetailModal({ order, onClose, onUpdateStatus }: Ord
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
           <div className="flex items-center gap-3">
             <h3 className="zenith-section-title font-mono">{order.id}</h3>
-            <Badge status={order.status}>
-              {order.status}
-            </Badge>
+            <Badge status={order.status}>{getDispatchStatusLabel(order.status)}</Badge>
           </div>
           <button
             onClick={onClose}
@@ -221,37 +224,34 @@ export default function OrderDetailModal({ order, onClose, onUpdateStatus }: Ord
             {/* Status updates control section */}
             {nextOptions.length > 0 ? (
               <div className="p-4 bg-surface-950/20 border border-surface-850 rounded-xl space-y-3">
-                <h4 className="zenith-field-label">
-                  Acciones de Transición de Estado
-                </h4>
+                <h4 className="zenith-field-label">Acciones de Despacho (Semáforo)</h4>
                 
                 {!showNoteField ? (
                   <div className="flex flex-wrap gap-2.5">
-                    {nextOptions.map((status) => {
-                      const colors: Record<string, string> = {
-                        'En Preparación': 'bg-surface-700 hover:bg-surface-600 text-white border border-surface-600',
-                        'Enviado': 'bg-surface-700 hover:bg-surface-600 text-white border border-surface-600',
-                        'Entregado':
-                          'bg-[var(--zenith-btn-solid-bg)] hover:bg-[var(--zenith-btn-solid-hover)] text-[var(--zenith-btn-solid-fg)] border border-[var(--zenith-btn-solid-border)]',
-                        'Cancelado': 'bg-surface-900 hover:bg-surface-800 text-surface-400 border border-surface-700',
-                      };
-                      return (
-                        <button
-                          key={status}
-                          onClick={() => handleStatusChangeClick(status)}
-                          className={`px-3 py-1.5 text-xs font-semibold rounded-lg shadow transition-colors flex items-center gap-1 cursor-pointer ${colors[status]}`}
-                        >
-                          {status === 'Cancelado' ? <XCircle className="h-3.5 w-3.5" /> : <PackageCheck className="h-3.5 w-3.5" />}
-                          <span>Pasar a {status}</span>
-                        </button>
-                      );
-                    })}
+                    {nextOptions.map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => handleStatusChangeClick(status)}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-lg border shadow transition-colors flex items-center gap-1 cursor-pointer ${getDispatchTransitionClassName(status)}`}
+                      >
+                        {status === 'Cancelado' ? (
+                          <XCircle className="h-3.5 w-3.5" />
+                        ) : (
+                          <PackageCheck className="h-3.5 w-3.5" />
+                        )}
+                        <span>Pasar a {getDispatchStatusLabel(status)}</span>
+                      </button>
+                    ))}
                   </div>
                 ) : (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-primary-400 font-semibold">
-                        Añadir nota para la transición a <span className="underline font-bold">{targetStatus}</span>:
+                        Añadir nota para la transición a{' '}
+                        <span className="underline font-bold">
+                          {targetStatus ? getDispatchStatusLabel(targetStatus) : ''}
+                        </span>
+                        :
                       </p>
                       <button 
                         onClick={() => setShowNoteField(false)} 
@@ -294,20 +294,23 @@ export default function OrderDetailModal({ order, onClose, onUpdateStatus }: Ord
                 {order.history.map((hist, idx) => {
                   const Icon = getTimelineIcon(hist.status);
                   const isLast = idx === order.history.length - 1;
-                  
+                  const semaphore = getDispatchSemaphore(hist.status);
+
                   return (
                     <div key={idx} className="relative">
-                      {/* Timeline Node Dot */}
-                      <span className={`absolute -left-[37px] top-0 h-6.5 w-6.5 rounded-full flex items-center justify-center border-2 border-surface-900 ${
-                        isLast ? 'bg-primary-500 text-white' : 'bg-surface-800 text-surface-400'
-                      }`}>
+                      <span
+                        className={`absolute -left-[37px] top-0 h-6.5 w-6.5 rounded-full flex items-center justify-center border-2 border-surface-900 dispatch-timeline-dot--${semaphore} ${
+                          isLast ? '' : 'opacity-80'
+                        }`}
+                      >
                         <Icon className="h-3 w-3" />
                       </span>
-                      
+
                       <div className="space-y-1">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                          <span className={`text-xs font-bold leading-none ${isLast ? 'text-white' : 'text-surface-400'}`}>
-                            {hist.status}
+                          <span className={`text-xs font-bold leading-none flex items-center gap-1.5 ${isLast ? 'text-white' : 'text-surface-400'}`}>
+                            <span className={`dispatch-badge__dot dispatch-badge__dot--${semaphore}`} aria-hidden />
+                            {getDispatchStatusLabel(hist.status)}
                           </span>
                           <span className="text-[9px] text-surface-500 font-mono">
                             {new Date(hist.timestamp).toLocaleDateString('es-ES', { 

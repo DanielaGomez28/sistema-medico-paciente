@@ -37,7 +37,7 @@ export default function Sidebar({
         { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
         {
           id: 'orders',
-          name: 'Pedidos',
+          name: 'Despacho',
           icon: ShoppingBag,
           badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
           badgeColor: 'portal-nav-badge',

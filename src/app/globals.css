@@ -833,6 +833,206 @@ table th {
   color: var(--color-primary-400);
 }
 
+/* Módulo de despacho — semáforo estricto */
+.dispatch-semaphore--red {
+  background: color-mix(in srgb, #ef4444 18%, transparent);
+  color: #fca5a5;
+  border-color: color-mix(in srgb, #ef4444 55%, transparent);
+}
+
+.dispatch-semaphore--yellow {
+  background: color-mix(in srgb, #eab308 20%, transparent);
+  color: #fde047;
+  border-color: color-mix(in srgb, #eab308 55%, transparent);
+}
+
+.dispatch-semaphore--green {
+  background: color-mix(in srgb, #22c55e 18%, transparent);
+  color: #86efac;
+  border-color: color-mix(in srgb, #22c55e 55%, transparent);
+}
+
+.dispatch-semaphore--neutral {
+  background: color-mix(in srgb, var(--zenith-surface-600) 35%, transparent);
+  color: var(--zenith-surface-400);
+  border-color: var(--zenith-surface-700);
+}
+
+.dispatch-badge__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.dispatch-badge__dot--red {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ef4444 35%, transparent);
+}
+
+.dispatch-badge__dot--yellow {
+  background: #eab308;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #eab308 35%, transparent);
+}
+
+.dispatch-badge__dot--green {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px color-mix(in srgb, #22c55e 35%, transparent);
+}
+
+.dispatch-badge__dot--neutral {
+  background: var(--zenith-surface-500);
+}
+
+.dispatch-row--red {
+  border-left: 4px solid #ef4444;
+}
+
+.dispatch-row--yellow {
+  border-left: 4px solid #eab308;
+}
+
+.dispatch-row--green {
+  border-left: 4px solid #22c55e;
+}
+
+.dispatch-row--neutral {
+  border-left: 4px solid var(--zenith-surface-700);
+}
+
+.dispatch-panel--red {
+  border-color: color-mix(in srgb, #ef4444 45%, transparent);
+  background: color-mix(in srgb, #ef4444 8%, var(--zenith-surface-900));
+}
+
+.dispatch-panel--yellow {
+  border-color: color-mix(in srgb, #eab308 45%, transparent);
+  background: color-mix(in srgb, #eab308 8%, var(--zenith-surface-900));
+}
+
+.dispatch-panel--green {
+  border-color: color-mix(in srgb, #22c55e 45%, transparent);
+  background: color-mix(in srgb, #22c55e 8%, var(--zenith-surface-900));
+}
+
+.dispatch-panel__count--red {
+  color: #fca5a5;
+}
+
+.dispatch-panel__count--yellow {
+  color: #fde047;
+}
+
+.dispatch-panel__count--green {
+  color: #86efac;
+}
+
+.dispatch-timeline-dot--red {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.dispatch-timeline-dot--yellow {
+  background: #eab308;
+  color: #0a0b0a;
+}
+
+.dispatch-timeline-dot--green {
+  background: #22c55e;
+  color: #ffffff;
+}
+
+.dispatch-timeline-dot--neutral {
+  background: var(--zenith-surface-700);
+  color: var(--zenith-surface-300);
+}
+
+.dispatch-action--red {
+  background: color-mix(in srgb, #ef4444 85%, #000000);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.dispatch-action--red:hover {
+  background: #dc2626;
+}
+
+.dispatch-action--yellow {
+  background: color-mix(in srgb, #ca8a04 90%, #000000);
+  border-color: #eab308;
+  color: #ffffff;
+}
+
+.dispatch-action--yellow:hover {
+  background: #a16207;
+}
+
+.dispatch-action--green {
+  background: color-mix(in srgb, #16a34a 90%, #000000);
+  border-color: #22c55e;
+  color: #ffffff;
+}
+
+.dispatch-action--green:hover {
+  background: #15803d;
+}
+
+.dispatch-action--neutral {
+  background: var(--zenith-surface-900);
+  border-color: var(--zenith-surface-700);
+  color: var(--zenith-surface-400);
+}
+
+.dispatch-action--neutral:hover {
+  background: var(--zenith-surface-800);
+  color: var(--zenith-surface-200);
+}
+
+[data-theme="light"] .dispatch-semaphore--red {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+[data-theme="light"] .dispatch-semaphore--yellow {
+  background: #fefce8;
+  color: #a16207;
+  border-color: #fde047;
+}
+
+[data-theme="light"] .dispatch-semaphore--green {
+  background: #f0fdf4;
+  color: #15803d;
+  border-color: #86efac;
+}
+
+[data-theme="light"] .dispatch-panel--red {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+[data-theme="light"] .dispatch-panel--yellow {
+  background: #fefce8;
+  border-color: #fde047;
+}
+
+[data-theme="light"] .dispatch-panel--green {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+[data-theme="light"] .dispatch-panel__count--red {
+  color: #b91c1c;
+}
+
+[data-theme="light"] .dispatch-panel__count--yellow {
+  color: #a16207;
+}
+
+[data-theme="light"] .dispatch-panel__count--green {
+  color: #15803d;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
