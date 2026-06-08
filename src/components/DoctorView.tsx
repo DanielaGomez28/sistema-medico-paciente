@@ -19,7 +19,6 @@ import {
   RefreshCw,
   AlertCircle,
   Activity,
-  UserCheck,
   ShieldCheck,
   Search,
   Sparkles,
@@ -35,7 +34,7 @@ import {
   Star
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
-import { PageHeader, Button } from './ui';
+import { PageHeader, Button, Modal, ModalBody } from './ui';
 
 interface DoctorViewProps {
   doctorName: string;
@@ -161,6 +160,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   ]);
 
   // Reception / QR scan states (M.1)
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [manualIdInput, setManualIdInput] = useState('');
@@ -225,6 +225,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
     // Auto-trigger Mirror data simulation after linking
     setIsMirroring(true);
+    setIsScannerModalOpen(false);
   };
 
   // Simulate scanning camera
@@ -522,7 +523,10 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                     </div>
 
                     <button 
-                      onClick={() => setActiveTab('reception')}
+                      onClick={() => {
+                        setActiveTab('reception');
+                        setIsScannerModalOpen(true);
+                      }}
                       className="w-full text-center text-xs text-secondary-400 font-semibold hover:text-secondary-300 transition-colors pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
                     >
                       <span>Abrir Escáner de Récipes</span>
@@ -537,92 +541,17 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
             {activeTab === 'reception' && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 <PageHeader
-                  title="Escáner y Recepción de Paciente"
-                  description="Escanee el código QR dinámico de la credencial del paciente para vincular el historial clínico en tiempo real."
+                  title="Recepción de Paciente"
+                  description="Vincule un paciente para cargar su expediente clínico y sincronizar la consulta en espejo."
+                  actions={
+                    <Button onClick={() => setIsScannerModalOpen(true)}>
+                      <QrCode className="h-4 w-4" />
+                      Escanear paciente
+                    </Button>
+                  }
                 />
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  
-                  {/* Left Column: QR Code simulated Scanner */}
-                  <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5 flex flex-col items-center text-center">
-                    <div className="w-full text-left">
-                      <h3 className="zenith-section-title">Módulo de Vinculación</h3>
-                      <p className="text-xs text-surface-400">Active la cámara o digite manualmente el ID del token.</p>
-                    </div>
-
-                    {/* Camera Simulation Box */}
-                    <div className="w-full max-w-[240px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4 group">
-                      
-                      {isScanning ? (
-                        <>
-                          <div className="absolute left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_8px_rgba(23,145,80,0.8)] laser-line"></div>
-                          
-                          <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-secondary-500"></div>
-                          <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-secondary-500"></div>
-                          <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-secondary-500"></div>
-                          <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-secondary-500"></div>
-
-                          <div className="space-y-2 text-center z-10">
-                            <Camera className="h-8 w-8 text-secondary-500 animate-pulse mx-auto" />
-                            <p className="text-[10px] text-secondary-400 font-mono font-bold tracking-wider">BUSCANDO QR ({scanProgress}%)</p>
-                          </div>
-                        </>
-                      ) : linkedPatient ? (
-                        <div className="space-y-2 text-center z-10 animate-in zoom-in-95 duration-200">
-                          <div className="h-12 w-12 rounded-full bg-secondary-500/10 text-secondary-450 border border-secondary-500/30 flex items-center justify-center mx-auto">
-                            <UserCheck className="h-6 w-6" />
-                          </div>
-                          <p className="text-xs font-bold text-white">Paciente Vinculado</p>
-                          <span className="text-[10px] text-surface-500 font-mono block">{linkedPatient.id}</span>
-                        </div>
-                      ) : (
-                        <div className="space-y-3 text-center z-10">
-                          <QrCode className="h-12 w-12 text-surface-600 mx-auto" />
-                          <p className="text-xs text-surface-400 font-medium">Cámara de Escáner Inactiva</p>
-                          <button
-                            onClick={triggerCameraScan}
-                            className="px-3.5 py-1.5 bg-secondary-600 hover:bg-secondary-500 text-white rounded-lg text-2xs font-bold transition-all shadow-md shadow-secondary-650/10 cursor-pointer"
-                          >
-                            Activar Escáner Cámara
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="w-full flex items-center justify-center gap-3 text-2xs font-bold text-surface-600 uppercase tracking-widest py-1">
-                      <span className="h-px bg-surface-800 flex-1"></span>
-                      <span>o</span>
-                      <span className="h-px bg-surface-800 flex-1"></span>
-                    </div>
-
-                    <form onSubmit={handleManualLinkSubmit} className="w-full space-y-3 text-left">
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">Ingresar ID Paciente Manualmente</label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            placeholder="Ej: PX-992-8849"
-                            value={manualIdInput}
-                            onChange={(e) => setManualIdInput(e.target.value)}
-                            className="flex-1 bg-surface-950 border border-surface-800 rounded-xl px-3 py-2 text-xs text-white placeholder-surface-750 focus:outline-none focus:border-secondary-500"
-                          />
-                          <button
-                            type="submit"
-                            className="px-3 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer border border-surface-700"
-                          >
-                            Vincular
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-surface-555 italic leading-snug">
-                        Tip de prueba: Digite <code className="text-secondary-400 font-mono">8849</code> para vincular directamente a Sofía Peralta.
-                      </p>
-                    </form>
-                  </div>
-
-                  {/* Right Column: Bidirectional panel */}
-                  <div className="lg:col-span-2 space-y-6">
-                    {linkedPatient ? (
+                {linkedPatient ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
                         {/* Bloque A: Demographic data and patient history */}
@@ -757,17 +686,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                       </div>
                     ) : (
-                      <div className="h-full bg-surface-900/60 border border-surface-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-3 min-h-[340px]">
+                      <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-8 flex flex-col items-center justify-center text-center space-y-4 min-h-[280px]">
                         <AlertCircle className="h-10 w-10 text-surface-650" />
                         <h4 className="zenith-section-title">Sin Paciente Vinculado</h4>
-                        <p className="text-xs text-surface-450 max-w-sm leading-relaxed">
-                          La sesión de consulta no se ha abierto. Escanee el código QR dinámico de la credencial de su paciente para cargar su historial clínico de forma segura.
+                        <p className="text-xs text-surface-450 max-w-md leading-relaxed">
+                          Abra el escáner para leer el código QR de la credencial del paciente o ingrese su ID manualmente.
                         </p>
+                        <Button onClick={() => setIsScannerModalOpen(true)}>
+                          <QrCode className="h-4 w-4" />
+                          Abrir escáner
+                        </Button>
                       </div>
                     )}
-                  </div>
-
-                </div>
               </div>
             )}
 
@@ -798,7 +728,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                   {!linkedPatient && (
                     <button
-                      onClick={() => setActiveTab('reception')}
+                      onClick={() => setIsScannerModalOpen(true)}
                       className="px-4 py-2 bg-secondary-600 hover:bg-secondary-500 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
                     >
                       Vincular Paciente
@@ -1430,6 +1360,83 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
               </div>
             )}
+
+      <Modal
+        open={isScannerModalOpen}
+        onClose={() => {
+          setIsScannerModalOpen(false);
+          setIsScanning(false);
+          setScanProgress(0);
+        }}
+        title="Escanear credencial del paciente"
+        size="md"
+      >
+        <ModalBody className="space-y-5">
+          <p className="text-xs text-surface-400">
+            Active la cámara o ingrese manualmente el ID del token para vincular el historial clínico.
+          </p>
+
+          <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
+            {isScanning ? (
+              <>
+                <div className="absolute left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_8px_rgba(23,145,80,0.8)] laser-line" />
+                <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-secondary-500" />
+                <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-secondary-500" />
+                <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-secondary-500" />
+                <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-secondary-500" />
+                <div className="space-y-2 text-center z-10">
+                  <Camera className="h-10 w-10 text-secondary-500 animate-pulse mx-auto" />
+                  <p className="text-xs text-secondary-400 font-mono font-bold tracking-wider">
+                    BUSCANDO QR ({scanProgress}%)
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="space-y-4 text-center z-10">
+                <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
+                <p className="text-sm text-surface-400 font-medium">Cámara de escáner inactiva</p>
+                <button
+                  type="button"
+                  onClick={triggerCameraScan}
+                  className="px-4 py-2 bg-secondary-600 hover:bg-secondary-500 text-white rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
+                >
+                  Activar escáner
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3 text-2xs font-bold text-surface-600 uppercase tracking-widest">
+            <span className="h-px bg-surface-800 flex-1" />
+            <span>o</span>
+            <span className="h-px bg-surface-800 flex-1" />
+          </div>
+
+          <form onSubmit={handleManualLinkSubmit} className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="zenith-field-label">ID del paciente</label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  placeholder="Ej: PX-992-8849"
+                  value={manualIdInput}
+                  onChange={(e) => setManualIdInput(e.target.value)}
+                  className="flex-1 bg-surface-950 border border-surface-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-surface-750 focus:outline-none focus:border-secondary-500"
+                />
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer border border-surface-700 sm:shrink-0"
+                >
+                  Vincular
+                </button>
+              </div>
+            </div>
+            <p className="text-[10px] text-surface-555 italic leading-snug">
+              Tip de prueba: digite <code className="text-secondary-400 font-mono">8849</code> para vincular a Sofía Peralta.
+            </p>
+          </form>
+        </ModalBody>
+      </Modal>
 
       </AppShell>
     </>
