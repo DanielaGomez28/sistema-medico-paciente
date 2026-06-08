@@ -79,9 +79,9 @@ const MOCK_PATIENTS: PatientRecord[] = [
 ];
 
 const MOCK_MOVEMENTS: StockMovement[] = [
-  { id: 'MOV-104', medication: 'Ramipril 5mg', type: 'Salida', quantity: 30, date: '08 Jun, 2026', sourceDest: 'Farmacia Central' },
-  { id: 'MOV-103', medication: 'Metformina 850mg', type: 'Salida', quantity: 60, date: '05 Jun, 2026', sourceDest: 'Farmacia Norte' },
-  { id: 'MOV-102', medication: 'Atorvastatina 20mg', type: 'Salida', quantity: 30, date: '01 Jun, 2026', sourceDest: 'Farmacia Sur' },
+  { id: 'MOV-104', medication: 'Ramipril 5mg', type: 'Salida', quantity: 30, date: '08 Jun, 2026', sourceDest: 'Farmahumana Caracas' },
+  { id: 'MOV-103', medication: 'Metformina 850mg', type: 'Salida', quantity: 60, date: '05 Jun, 2026', sourceDest: 'Clínica Humana Valencia' },
+  { id: 'MOV-102', medication: 'Atorvastatina 20mg', type: 'Salida', quantity: 30, date: '01 Jun, 2026', sourceDest: 'Farmahumana Maracaibo' },
   { id: 'MOV-101', medication: 'Ibuprofeno 600mg', type: 'Entrada', quantity: 500, date: '29 May, 2026', sourceDest: 'Laboratorio Proveedor S.A.' },
   { id: 'MOV-100', medication: 'Amoxicilina 875mg', type: 'Entrada', quantity: 200, date: '25 May, 2026', sourceDest: 'Droguería Médica S.A.' }
 ];
@@ -389,7 +389,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                 <g key={idx} className="group/dot cursor-pointer">
                   <circle cx={p.x} cy={p.y} r="5.5" fill="var(--color-surface-900)" stroke="#50e9f8" strokeWidth="2.5" className="transition-all duration-150 hover:r-7" />
                   <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold" className="opacity-0 group-hover/dot:opacity-100 transition-opacity bg-surface-950 font-mono">
-                    {chartData[idx].value}{activeMetricTab === 'sales' ? '$' : ' r.'}
+                    {activeMetricTab === 'sales' ? formatCurrency(chartData[idx].value) : `${chartData[idx].value} r.`}
                   </text>
                 </g>
               ))}
@@ -525,7 +525,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                     <td>{doc.specialty}</td>
                     <td className="font-mono text-surface-450">{doc.license}</td>
                     <td className="font-semibold">{doc.recipesCount} r.</td>
-                    <td className="font-mono font-bold text-secondary-400">${doc.commissionsEarned.toFixed(2)}</td>
+                    <td className="font-mono font-bold text-secondary-400">{formatCurrency(doc.commissionsEarned)}</td>
                     <td className="text-right whitespace-nowrap">
                       <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-surface-800 text-surface-500'}`}>
                         {doc.status}
@@ -551,7 +551,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                     { label: 'ID', value: doc.id },
                     { label: 'Registro', value: doc.license },
                     { label: 'Récipes', value: `${doc.recipesCount} r.` },
-                    { label: 'Comisiones', value: `$${doc.commissionsEarned.toFixed(2)}` },
+                    { label: 'Comisiones', value: formatCurrency(doc.commissionsEarned) },
                   ]}
                 />
               ))}

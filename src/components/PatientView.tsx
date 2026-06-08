@@ -33,6 +33,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader, useShell } from './layout';
+import { formatCurrency } from '../lib/currency';
 import { PageHeader, Button, ListCard, Modal, ModalBody, StatCard } from './ui';
 
 interface PatientViewProps {
@@ -275,10 +276,10 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
   // Profile Settings State (Pantalla P.5)
   const [profileName, setProfileName] = useState(patientName);
-  const [profilePhone, setProfilePhone] = useState('+34 600 123 456');
-  const [deliveryAddress, setDeliveryAddress] = useState('Calle Mayor 12, Piso 4B');
-  const [deliveryPostalCode, setDeliveryPostalCode] = useState('28013');
-  const [deliveryCity, setDeliveryCity] = useState('Madrid');
+  const [profilePhone, setProfilePhone] = useState('+58 412 600 1234');
+  const [deliveryAddress, setDeliveryAddress] = useState('Av. Francisco de Miranda, Edif. Parque Cristal, Piso 4B');
+  const [deliveryPostalCode, setDeliveryPostalCode] = useState('1060');
+  const [deliveryCity, setDeliveryCity] = useState('Caracas');
   const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
 
   // Calculations for Proposal
@@ -297,7 +298,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     });
 
     const netSubtotal = grossTotal - totalSavings;
-    const vat = netSubtotal * 0.21;
+    const vat = netSubtotal * 0.16;
     const netTotal = netSubtotal + vat;
 
     return {
@@ -606,7 +607,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         </div>
                         <h3 className="text-sm font-medium text-white">Retiro de Medicamentos (Receta Activa)</h3>
                         <p className="text-xs text-surface-400 leading-relaxed max-w-2xl">
-                          Retira en Farmacia Central (Sanatorio Zenith) • Pasillo B, Mostrador 3
+                          Retira en Farmahumana (Clínica Humana, Caracas) • Av. Francisco de Miranda, Mostrador 3
                         </p>
                       </div>
 
@@ -1106,7 +1107,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                               <p className="text-xs text-surface-550 flex items-center gap-2">
                                 <span>Cant: {item.quantity}</span>
                                 <span>•</span>
-                                <span>Precio Unitario: ${item.unitPrice.toFixed(2)}</span>
+                                <span>Precio Unitario: {formatCurrency(item.unitPrice)}</span>
                               </p>
                             </div>
                             
@@ -1116,13 +1117,13 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                                   <span className="text-[9px] bg-secondary-500/10 text-secondary-400 border border-secondary-500/20 px-1.5 py-0.5 rounded font-bold">
                                     -{item.discountPercent}% Médico
                                   </span>
-                                  <p className="text-[10px] text-secondary-400/80 font-medium">Ahorras: -${discountAmt.toFixed(2)}</p>
+                                  <p className="text-[10px] text-secondary-400/80 font-medium">Ahorras: -{formatCurrency(discountAmt)}</p>
                                 </div>
                               )}
                               <div>
-                                <p className="text-sm font-bold text-white">${finalSub.toFixed(2)}</p>
+                                <p className="text-sm font-bold text-white">{formatCurrency(finalSub)}</p>
                                 {item.discountPercent > 0 && (
-                                  <span className="text-2xs text-surface-500 line-through">${originalSub.toFixed(2)}</span>
+                                  <span className="text-2xs text-surface-500 line-through">{formatCurrency(originalSub)}</span>
                                 )}
                               </div>
                             </div>
@@ -1167,24 +1168,24 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       <div className="space-y-2.5 text-xs text-surface-400">
                         <div className="flex justify-between">
                           <span>Subtotal Bruto</span>
-                          <span className="font-medium text-surface-300">${totals.grossTotal.toFixed(2)}</span>
+                          <span className="font-medium text-surface-300">{formatCurrency(totals.grossTotal)}</span>
                         </div>
                         <div className="flex justify-between text-secondary-400">
                           <span>Ahorro Exclusivo</span>
-                          <span className="font-bold">-${totals.totalSavings.toFixed(2)}</span>
+                          <span className="font-bold">-{formatCurrency(totals.totalSavings)}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Subtotal Neto</span>
-                          <span className="font-medium text-surface-300">${totals.netSubtotal.toFixed(2)}</span>
+                          <span className="font-medium text-surface-300">{formatCurrency(totals.netSubtotal)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>IVA (21%)</span>
-                          <span className="font-medium text-surface-300">${totals.vat.toFixed(2)}</span>
+                          <span>IVA (16%)</span>
+                          <span className="font-medium text-surface-300">{formatCurrency(totals.vat)}</span>
                         </div>
                         
                         <div className="border-t border-surface-800 pt-3 flex justify-between items-baseline">
                           <span className="font-medium text-white text-sm">Total Neto</span>
-                          <span className="text-lg font-semibold text-white">${totals.netTotal.toFixed(2)}</span>
+                          <span className="text-lg font-semibold text-white">{formatCurrency(totals.netTotal)}</span>
                         </div>
                       </div>
                     </div>
@@ -1328,7 +1329,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                             <p className="font-semibold text-surface-200">{item.medication}</p>
                             <p className="text-[10px] text-surface-500">Cant: {item.quantity}</p>
                           </div>
-                          <span className="font-bold text-white">${calculateItemSubtotal(item).toFixed(2)}</span>
+                          <span className="font-bold text-white">{formatCurrency(calculateItemSubtotal(item))}</span>
                         </div>
                       ))}
                     </div>
@@ -1336,15 +1337,15 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     <div className="border-t border-surface-800 pt-4 space-y-2.5 text-xs text-surface-400">
                       <div className="flex justify-between">
                         <span>Ahorros aplicados</span>
-                        <span className="text-secondary-400">-${totals.totalSavings.toFixed(2)}</span>
+                        <span className="text-secondary-400">-{formatCurrency(totals.totalSavings)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>IVA (21%)</span>
-                        <span>${totals.vat.toFixed(2)}</span>
+                        <span>IVA (16%)</span>
+                        <span>{formatCurrency(totals.vat)}</span>
                       </div>
                       <div className="flex justify-between items-baseline font-bold text-white pt-2 border-t border-surface-850">
                         <span>Total Neto</span>
-                        <span className="text-base text-primary-400">${totals.netTotal.toFixed(2)}</span>
+                        <span className="text-base text-primary-400">{formatCurrency(totals.netTotal)}</span>
                       </div>
                     </div>
                   </div>
@@ -1383,8 +1384,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     
                     <div className="flex justify-between items-start border-b border-surface-200 pb-4">
                       <div>
-                        <h4 className="text-sm font-bold text-surface-950">Zenith Farmacia S.L.</h4>
-                        <p className="text-2xs text-surface-500">CIF: B-12994821 • Av. Castellana 210</p>
+                        <h4 className="text-sm font-bold text-surface-950">Farmahumana C.A.</h4>
+                        <p className="text-2xs text-surface-500">RIF: J-30123456-7 • Av. Francisco de Miranda, Caracas</p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-surface-850">CÓDIGO: {voucherId}</p>
@@ -1414,7 +1415,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                               <span className="font-bold text-surface-800">{item.medication}</span>
                               <span className="text-surface-500 block text-2xs">Cant: {item.quantity} • Descuento aplicado</span>
                             </div>
-                            <span className="font-bold text-surface-900">${calculateItemSubtotal(item).toFixed(2)}</span>
+                            <span className="font-bold text-surface-900">{formatCurrency(calculateItemSubtotal(item))}</span>
                           </div>
                         ))}
                       </div>
@@ -1424,15 +1425,15 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       <div className="w-56 space-y-2 text-2xs text-surface-500">
                         <div className="flex justify-between">
                           <span>Subtotal Neto</span>
-                          <span className="font-semibold text-surface-800">${totals.netSubtotal.toFixed(2)}</span>
+                          <span className="font-semibold text-surface-800">{formatCurrency(totals.netSubtotal)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span>IVA (21%)</span>
-                          <span className="font-semibold text-surface-800">${totals.vat.toFixed(2)}</span>
+                          <span>IVA (16%)</span>
+                          <span className="font-semibold text-surface-800">{formatCurrency(totals.vat)}</span>
                         </div>
                         <div className="flex justify-between items-baseline font-bold text-surface-950 border-t border-surface-200 pt-2 text-xs">
                           <span>Total Pagado</span>
-                          <span className="text-sm text-primary-700">${totals.netTotal.toFixed(2)}</span>
+                          <span className="text-sm text-primary-700">{formatCurrency(totals.netTotal)}</span>
                         </div>
                       </div>
                     </div>
@@ -1520,7 +1521,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Documento de Identidad (DNI/CIF)</label>
+                          <label className="zenith-field-label">Documento de Identidad (Cédula/RIF)</label>
                           <input
                             type="text"
                             disabled
@@ -1544,7 +1545,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                             type="text"
                             value={deliveryAddress}
                             onChange={(e) => setDeliveryAddress(e.target.value)}
-                            placeholder="Ej: Calle Mayor 12, Piso 4B"
+                            placeholder="Ej: Av. Francisco de Miranda, Edif. Parque Cristal, Piso 4B"
                             className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500 placeholder-surface-800"
                           />
                         </div>
@@ -1566,7 +1567,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                               type="text"
                               value={deliveryCity}
                               onChange={(e) => setDeliveryCity(e.target.value)}
-                              placeholder="Ej: Madrid"
+                              placeholder="Ej: Caracas"
                               className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500 placeholder-surface-800"
                             />
                           </div>
@@ -1634,7 +1635,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                   </div>
                   <p className="text-2xs text-surface-500 font-medium">
                     Servicios de Cardiología y Diagnóstico Especializado<br />
-                    Av. de la Castellana 210, Madrid • Tel: +34 912 345 678
+                    Av. Francisco de Miranda, Caracas • Tel: +58 212 345 6789
                   </p>
                 </div>
                 <div className="text-right">

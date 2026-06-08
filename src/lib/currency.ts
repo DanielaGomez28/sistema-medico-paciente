@@ -1,8 +1,6 @@
-const usdFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-});
-
 export function formatCurrency(value: number): string {
-  return usdFormatter.format(value);
+  return `Bs. ${value.toLocaleString('es-VE', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
 }

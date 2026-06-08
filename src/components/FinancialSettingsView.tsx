@@ -47,7 +47,7 @@ export default function FinancialSettingsView() {
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const prevRateText = commissionType === 'percent' ? `${commissionValue.toFixed(1)}%` : `$${commissionValue.toFixed(2)}`;
+    const prevRateText = commissionType === 'percent' ? `${commissionValue.toFixed(1)}%` : `Bs. ${commissionValue.toFixed(2)}`;
 
     localStorage.setItem('zenith_commission_rate', commissionValue.toString());
     localStorage.setItem('zenith_commission_type', commissionType);
@@ -62,7 +62,7 @@ export default function FinancialSettingsView() {
       adminName: 'Carlos Mendoza',
       action: 'Actualización Manual de Tasa de Comisión',
       previousValue: prevRateText,
-      newValue: commissionType === 'percent' ? `${commissionValue.toFixed(1)}%` : `$${commissionValue.toFixed(2)}`,
+      newValue: commissionType === 'percent' ? `${commissionValue.toFixed(1)}%` : `Bs. ${commissionValue.toFixed(2)}`,
       status: 'Aplicado',
     };
 
@@ -126,18 +126,18 @@ export default function FinancialSettingsView() {
                   commissionType === 'fixed' ? 'bg-white text-surface-950' : 'text-surface-500 hover:text-surface-350'
                 }`}
               >
-                Monto Fijo ($)
+                Monto Fijo (Bs.)
               </button>
             </div>
           </div>
 
           <div className="space-y-1.5">
             <label className="zenith-field-label">
-              {commissionType === 'percent' ? 'Comisión del Médico (%)' : 'Comisión por Transacción ($)'}
+              {commissionType === 'percent' ? 'Comisión del Médico (%)' : 'Comisión por Transacción (Bs.)'}
             </label>
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-550 font-bold text-xs">
-                {commissionType === 'percent' ? '%' : '$'}
+                {commissionType === 'percent' ? '%' : 'Bs.'}
               </div>
               <input
                 type="number"
@@ -153,14 +153,14 @@ export default function FinancialSettingsView() {
             <p className="text-[10px] text-surface-500">
               {commissionType === 'percent'
                 ? 'El porcentaje se calcula sobre el total neto de la venta de medicamentos en la receta.'
-                : 'Monto plano fijo en divisas pagadero por cada ticket de venta efectiva.'}
+                : 'Monto plano fijo en bolívares pagadero por cada ticket de venta efectiva.'}
             </p>
           </div>
 
           <div className="space-y-1.5">
             <label className="zenith-field-label">Monto de Venta Mínimo para Comisión</label>
             <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-550 font-bold text-xs">$</div>
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-550 font-bold text-[10px]">Bs.</div>
               <input
                 type="number"
                 step="0.01"

@@ -107,7 +107,7 @@ export default function NewOrderModal({
   }, [cart, medicationProducts]);
 
   const subtotal = cartItemsList.reduce((sum, item) => sum + item.lineTotal, 0);
-  const tax = subtotal * 0.21; // 21% IVA
+  const tax = subtotal * 0.16; // 16% IVA
   const discount = Math.min(discountAmount, subtotal + tax);
   const total = Math.max(subtotal + tax - discount, 0);
 
@@ -391,7 +391,7 @@ export default function NewOrderModal({
                       <label className="zenith-field-label">Teléfono</label>
                       <input
                         type="text"
-                        placeholder="+34..."
+                        placeholder="+58 412..."
                         value={newCustomerForm.phone}
                         onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })}
                         className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
@@ -415,7 +415,7 @@ export default function NewOrderModal({
                       <input
                         type="text"
                         required={isCreatingNewCustomer}
-                        placeholder="Madrid"
+                        placeholder="Caracas"
                         value={newCustomerForm.city}
                         onChange={(e) => setNewCustomerForm({ ...newCustomerForm, city: e.target.value })}
                         className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
@@ -464,7 +464,7 @@ export default function NewOrderModal({
                 </div>
                 <div className="space-y-1.5">
                   <label className="zenith-field-label flex items-center min-h-[14px]">
-                    Descuento ($)
+                    Descuento (Bs.)
                   </label>
                   <input
                     type="number"
@@ -486,7 +486,7 @@ export default function NewOrderModal({
                 <span className="font-mono text-surface-300">{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-surface-500">IVA (21%):</span>
+                <span className="text-surface-500">IVA (16%):</span>
                 <span className="font-mono text-surface-300">{formatCurrency(tax)}</span>
               </div>
               {discount > 0 && (

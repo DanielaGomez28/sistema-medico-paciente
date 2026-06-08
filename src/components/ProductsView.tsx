@@ -275,7 +275,7 @@ export default function ProductsView({ products, onUpdateStock, onAddProduct }: 
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="zenith-field-label">Precio ($) *</label>
+                  <label className="zenith-field-label">Precio (Bs.) *</label>
                   <input
                     type="number"
                     step="0.01"

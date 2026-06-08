@@ -242,7 +242,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
                 <label className="zenith-field-label">Teléfono de Contacto</label>
                 <input
                   type="text"
-                  placeholder="+34 600 000 000"
+                  placeholder="+58 412 000 0000"
                   value={newCustomerForm.phone}
                   onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })}
                   className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2.5 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
@@ -266,7 +266,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
                   <input
                     type="text"
                     required
-                    placeholder="Barcelona"
+                    placeholder="Caracas"
                     value={newCustomerForm.city}
                     onChange={(e) => setNewCustomerForm({ ...newCustomerForm, city: e.target.value })}
                     className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2.5 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"

@@ -33,6 +33,7 @@ import {
   Star
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
+import { formatCurrency } from '../lib/currency';
 import { PageHeader, Button, Modal, ModalBody } from './ui';
 
 interface DoctorViewProps {
@@ -115,10 +116,10 @@ const MOCK_COMMISSIONS: CommissionEntry[] = [
 ];
 
 const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
-  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientId: 'PX-992-8849', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmacia Central', status: 'Confirmado' },
-  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'PX-992-1029', medications: ['Metformina 850mg'], branch: 'Farmacia Norte', status: 'Retirado' },
-  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientId: 'PX-992-0344', medications: ['Atorvastatina 20mg'], branch: 'Farmacia Sur', status: 'Retirado' },
-  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientId: 'PX-992-0811', medications: ['Ibuprofeno 600mg'], branch: 'Farmacia Central', status: 'Enviado' },
+  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientId: 'PX-992-8849', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmahumana Caracas', status: 'Confirmado' },
+  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'PX-992-1029', medications: ['Metformina 850mg'], branch: 'Clínica Humana Valencia', status: 'Retirado' },
+  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientId: 'PX-992-0344', medications: ['Atorvastatina 20mg'], branch: 'Farmahumana Maracaibo', status: 'Retirado' },
+  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientId: 'PX-992-0811', medications: ['Ibuprofeno 600mg'], branch: 'Clínica Humana Caracas', status: 'Enviado' },
 ];
 
 const INITIAL_PATIENTS: LinkedPatient[] = [
@@ -128,7 +129,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     age: 28,
     gender: 'Femenino',
     bloodType: 'O+',
-    phone: '+34 600 123 456',
+    phone: '+58 412 600 1234',
     condition: 'Hipertensión Arterial Leve',
     allergies: 'Penicilina',
     lastVisit: '08 Jun, 2026',
@@ -140,7 +141,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     age: 45,
     gender: 'Masculino',
     bloodType: 'A-',
-    phone: '+34 699 987 654',
+    phone: '+58 424 699 9876',
     condition: 'Diabetes Tipo 2 (Controlada)',
     allergies: 'Ninguna conocida',
     lastVisit: '01 Jun, 2026',
@@ -152,7 +153,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     age: 34,
     gender: 'Femenino',
     bloodType: 'B+',
-    phone: '+34 611 222 333',
+    phone: '+58 414 611 2233',
     condition: 'Ninguna (Chequeo anual)',
     allergies: 'Ninguna conocida',
     lastVisit: '15 May, 2026',
@@ -164,7 +165,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     age: 52,
     gender: 'Masculino',
     bloodType: 'O-',
-    phone: '+34 622 333 444',
+    phone: '+58 416 622 3344',
     condition: 'Hipertensión controlada',
     allergies: 'Sulfonamidas',
     lastVisit: '28 May, 2026',
@@ -194,7 +195,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [bankIBAN, setBankIBAN] = useState('ES76 0081 9293 0100 0100 1234');
   const [bankBIC, setBankBIC] = useState('BSCHESMMXXX');
   const [bankEntity, setBankEntity] = useState('Banco Santander');
-  const [profilePhone, setProfilePhone] = useState('+34 910 334 821');
+  const [profilePhone, setProfilePhone] = useState('+58 212 910 3348');
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
 
   // Dynamic commission rate state
@@ -598,7 +599,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         <div className="mt-3 text-[10px] text-surface-400 line-clamp-2">{prod.description}</div>
                         <div className="mt-3 flex items-center justify-between text-[10px] text-surface-300">
                           <span>Stock: {prod.stock} u.</span>
-                          <span className="font-semibold text-secondary-400">${prod.price.toFixed(2)}</span>
+                          <span className="font-semibold text-secondary-400">{formatCurrency(prod.price)}</span>
                         </div>
                       </div>
                     ))}
@@ -857,7 +858,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                                 </div>
                                 <p className="text-[10px] text-surface-500 line-clamp-1">{prod.description}</p>
                                 <div className="flex items-center gap-2 text-[10px] text-surface-400 pt-0.5">
-                                  <span>Precio: ${prod.price.toFixed(2)}</span>
+                                  <span>Precio: {formatCurrency(prod.price)}</span>
                                   <span>•</span>
                                   <span className={prod.stock < 20 ? 'text-primary-500 font-medium' : ''}>
                                     Stock: {prod.stock} u.
@@ -997,7 +998,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                               <div className="flex justify-between text-2xs text-surface-400">
                                 <span>Estimación Subtotal Farmacia</span>
                                 <span className="font-mono text-surface-200">
-                                  ${cart.reduce((sum, item) => sum + item.product.price, 0).toFixed(2)}
+                                  {formatCurrency(cart.reduce((sum, item) => sum + item.product.price, 0))}
                                 </span>
                               </div>
                               <div className="flex justify-between text-2xs text-secondary-400 font-semibold">
@@ -1076,7 +1077,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         <DollarSign className="h-4.5 w-4.5" />
                       </div>
                       <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wider">Comisiones Acreditadas</p>
-                      <p className="text-lg font-semibold text-secondary-400">${totalAccredited.toFixed(2)}</p>
+                      <p className="text-lg font-semibold text-secondary-400">{formatCurrency(totalAccredited)}</p>
                       <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-secondary-500/5"></div>
                     </div>
 
@@ -1085,7 +1086,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         <Clock className="h-4.5 w-4.5" />
                       </div>
                       <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wider">Comisiones Pendientes</p>
-                      <p className="text-lg font-semibold text-primary-400">${totalPending.toFixed(2)}</p>
+                      <p className="text-lg font-semibold text-primary-400">{formatCurrency(totalPending)}</p>
                       <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-primary-500/5"></div>
                     </div>
 
@@ -1094,7 +1095,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         <BarChart3 className="h-4.5 w-4.5" />
                       </div>
                       <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wider">Ventas Generadas</p>
-                      <p className="text-lg font-semibold text-primary-400">${totalSales.toFixed(2)}</p>
+                      <p className="text-lg font-semibold text-primary-400">{formatCurrency(totalSales)}</p>
                       <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-primary-500/5"></div>
                     </div>
 
@@ -1131,7 +1132,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                               </div>
                               <div className="text-right shrink-0 pl-3">
                                 <span className={`font-semibold text-sm ${ entry.status === 'Acreditado' ? 'text-secondary-400' : 'text-primary-450' }`}>
-                                  +${entry.commissionAmount.toFixed(2)}
+                                  +{formatCurrency(entry.commissionAmount)}
                                 </span>
                                 <span className={`text-[9px] font-bold block ${ entry.status === 'Acreditado' ? 'text-secondary-500/70' : 'text-primary-500/70' }`}>
                                   {entry.status}
@@ -1152,7 +1153,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       {/* Totals row */}
                       <div className="border-t border-surface-850 pt-4 flex justify-between items-center text-xs">
                         <span className="text-surface-500 font-semibold">Total Período Actual (Jun 2026)</span>
-                        <span className="font-semibold text-white text-sm">${(totalAccredited + totalPending).toFixed(2)}</span>
+                        <span className="font-semibold text-white text-sm">{formatCurrency(totalAccredited + totalPending)}</span>
                       </div>
                     </div>
 
@@ -1232,7 +1233,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       <div className="h-8 w-px bg-surface-800"></div>
                       <div className="text-center">
                         <p className="text-[9px] text-surface-500 uppercase font-bold">Ventas</p>
-                        <p className="text-base font-semibold text-white">${totalSales.toFixed(0)}</p>
+                        <p className="text-base font-semibold text-white">{formatCurrency(totalSales)}</p>
                       </div>
                       <div className="h-8 w-px bg-surface-800"></div>
                       <div className="text-center">
