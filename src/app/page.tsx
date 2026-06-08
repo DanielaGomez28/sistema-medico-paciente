@@ -273,7 +273,7 @@ export default function Home() {
           notificationCount={pendingCount + lowStockCount}
           actions={
             <AppHeaderAction variant="admin" onClick={() => setIsNewOrderOpen(true)}>
-              + Nuevo Pedido
+              Nuevo Pedido
             </AppHeaderAction>
           }
         />

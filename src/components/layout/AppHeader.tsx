@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, Plus } from 'lucide-react';
 import Button from '../ui/Button';
 import { ThemeToggle } from '../theme';
 
@@ -80,10 +80,13 @@ export function AppHeaderAction({
   onClick?: () => void;
   variant?: 'outline' | 'admin';
 }) {
+  const label =
+    typeof children === 'string' ? children.trim().replace(/^\+\s*/, '') : children;
+
   return (
-    <Button variant={variant} size="sm" onClick={onClick}>
-      <span className="sm:hidden">+</span>
-      <span className="hidden sm:inline">{children}</span>
+    <Button variant={variant} size="sm" onClick={onClick} className="gap-1">
+      <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+      <span className="hidden sm:inline">{label}</span>
     </Button>
   );
 }
