@@ -127,6 +127,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   const [mobileSenderPhone, setMobileSenderPhone] = useState('');
   const [mobileAmountBs, setMobileAmountBs] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
+  const [transferAmountBs, setTransferAmountBs] = useState('');
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(900); // 15 minutes in seconds
   const [paymentError, setPaymentError] = useState('');
   
@@ -244,6 +245,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     setMobileSenderPhone('');
     setMobileAmountBs('');
     setReferenceNumber('');
+    setTransferAmountBs('');
     setActiveSubTab('payment');
   };
 
@@ -272,6 +274,15 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       }
       if (referenceNumber.length < 5) {
         setPaymentError('El número de referencia debe contener al menos 5 dígitos.');
+        return;
+      }
+      if (!transferAmountBs) {
+        setPaymentError('Por favor ingrese el monto en Bolívares (Bs.).');
+        return;
+      }
+      const transferAmount = parseFloat(transferAmountBs.replace(',', '.'));
+      if (isNaN(transferAmount) || transferAmount <= 0) {
+        setPaymentError('El monto en Bolívares no es válido.');
         return;
       }
     }
@@ -822,32 +833,25 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
                       {paymentMethod === 'transfer' && (
                         <div className="p-4 bg-surface-950/50 border border-surface-850 rounded-xl space-y-4 text-xs">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-surface-450">
-                            <div>
-                              <p className="font-semibold text-surface-500">Titular de la Cuenta</p>
-                              <p className="font-bold text-white mt-0.5">Zenith Farmacia S.L.</p>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-surface-500">IBAN de Cuenta</p>
-                              <p className="font-bold text-white mt-0.5">ES21 0030 1029 4812 0092</p>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-surface-500">Banco Receptor</p>
-                              <p className="font-bold text-white mt-0.5">Banco de España</p>
-                            </div>
-                            <div>
-                              <p className="font-semibold text-surface-500">Importe a Confirmar</p>
-                              <p className="font-bold text-primary-400 mt-0.5">${totals.netTotal.toFixed(2)}</p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-1.5 pt-2 border-t border-surface-850">
-                            <label className="zenith-field-label">Referencia Bancaria (Número de Operación)</label>
+                          <div className="space-y-1.5">
+                            <label className="zenith-field-label">Número de referencia</label>
                             <input
                               type="text"
                               placeholder="Ej: 290199482"
                               value={referenceNumber}
                               onChange={(e) => setReferenceNumber(e.target.value)}
+                              className="w-full bg-surface-950 border border-surface-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500 placeholder-surface-700"
+                            />
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label className="zenith-field-label">Monto en Bolívares (Bs.)</label>
+                            <input
+                              type="text"
+                              inputMode="decimal"
+                              placeholder="Ej: 1250.50"
+                              value={transferAmountBs}
+                              onChange={(e) => setTransferAmountBs(e.target.value)}
                               className="w-full bg-surface-950 border border-surface-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500 placeholder-surface-700"
                             />
                           </div>
@@ -1001,8 +1005,10 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           </>
                         ) : (
                           <>
-                            <p className="font-semibold text-surface-600">Referencia de Pago Registrada:</p>
+                            <p className="font-semibold text-surface-600">Número de referencia:</p>
                             <p className="font-mono text-surface-800 font-bold mt-0.5">{referenceNumber}</p>
+                            <p className="font-semibold text-surface-600 mt-2">Monto en Bolívares (Bs.):</p>
+                            <p className="font-mono text-surface-800 font-bold mt-0.5">{transferAmountBs} Bs.</p>
                           </>
                         )}
                       </div>
