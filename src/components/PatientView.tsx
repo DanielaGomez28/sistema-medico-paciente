@@ -539,7 +539,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
           items={[
             { id: 'recipes', name: 'Récipes Médicos', icon: FileText },
             { id: 'treatment', name: 'Seguimiento de Tratamiento', icon: Pill },
-            { id: 'proposals', name: 'Propuestas de Compra', icon: FileSpreadsheet },
+            { id: 'proposals', name: 'Confirmación de Pedido', icon: FileSpreadsheet },
             { id: 'profile', name: 'Configuración Perfil', icon: User },
           ]}
           activeId={activeNavId}
