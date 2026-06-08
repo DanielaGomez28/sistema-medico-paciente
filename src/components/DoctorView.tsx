@@ -486,6 +486,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
       `}</style>
 
       <AppShell
+        portal="doctor"
         contentClassName="max-w-6xl"
         sidebar={
           <AppSidebar
@@ -516,6 +517,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                 .toUpperCase(),
               name: doctorName,
               role: 'Cardiólogo (MPPS 28.490)',
+              avatarClassName: 'portal-profile-avatar',
             }}
             preProfile={
               <SidebarCredentialButton onOpen={() => setIsCredentialModalOpen(true)} />

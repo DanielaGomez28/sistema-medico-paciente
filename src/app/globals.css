@@ -71,15 +71,20 @@
   --zenith-nav-active-border: rgb(255 255 255 / 0.7);
   --zenith-nav-active-dot: rgb(255 255 255 / 0.8);
 
-  --portal-patient-btn-bg: #7c5cb7;
-  --portal-patient-btn-fg: #ffffff;
-  --portal-patient-btn-hover: #6b4aa6;
-  --portal-patient-btn-border: #6b4aa6;
+  --portal-btn-bg: #0a6b75;
+  --portal-btn-fg: #ffffff;
+  --portal-btn-hover: #095c67;
+  --portal-btn-border: #095c67;
 
-  --portal-doctor-btn-bg: #0a6b75;
-  --portal-doctor-btn-fg: #ffffff;
-  --portal-doctor-btn-hover: #095c67;
-  --portal-doctor-btn-border: #095c67;
+  --portal-patient-btn-bg: var(--portal-btn-bg);
+  --portal-patient-btn-fg: var(--portal-btn-fg);
+  --portal-patient-btn-hover: var(--portal-btn-hover);
+  --portal-patient-btn-border: var(--portal-btn-border);
+
+  --portal-doctor-btn-bg: var(--portal-btn-bg);
+  --portal-doctor-btn-fg: var(--portal-btn-fg);
+  --portal-doctor-btn-hover: var(--portal-btn-hover);
+  --portal-doctor-btn-border: var(--portal-btn-border);
 
   --zenith-surface-950: #0a0b0a;
   --zenith-surface-900: #121413;
@@ -145,15 +150,20 @@
   --color-primary: #0b7f8b;
   --color-secondary: #179150;
 
-  --portal-patient-btn-bg: #7c5cb7;
-  --portal-patient-btn-fg: #ffffff;
-  --portal-patient-btn-hover: #6b4aa6;
-  --portal-patient-btn-border: #6b4aa6;
+  --portal-btn-bg: #0a6b75;
+  --portal-btn-fg: #ffffff;
+  --portal-btn-hover: #095c67;
+  --portal-btn-border: #095c67;
 
-  --portal-doctor-btn-bg: #0a6b75;
-  --portal-doctor-btn-fg: #ffffff;
-  --portal-doctor-btn-hover: #095c67;
-  --portal-doctor-btn-border: #095c67;
+  --portal-patient-btn-bg: var(--portal-btn-bg);
+  --portal-patient-btn-fg: var(--portal-btn-fg);
+  --portal-patient-btn-hover: var(--portal-btn-hover);
+  --portal-patient-btn-border: var(--portal-btn-border);
+
+  --portal-doctor-btn-bg: var(--portal-btn-bg);
+  --portal-doctor-btn-fg: var(--portal-btn-fg);
+  --portal-doctor-btn-hover: var(--portal-btn-hover);
+  --portal-doctor-btn-border: var(--portal-btn-border);
 
   --color-primary-300: #064f58;
   --color-primary-400: #08616c;
@@ -675,6 +685,152 @@ table th {
 
 .login-view__quick-fill:hover .login-view__mono {
   color: var(--login-link);
+}
+
+/* Identidad por rol — médico (verde), paciente (cian), admin (azul) */
+[data-portal="doctor"] {
+  --color-primary: #179150;
+  --color-primary-300: color-mix(in srgb, #179150 52%, #3d6b52);
+  --color-primary-400: color-mix(in srgb, #179150 66%, #2a5540);
+  --color-primary-450: color-mix(in srgb, #179150 72%, #224836);
+  --color-primary-500: color-mix(in srgb, #179150 78%, #163528);
+  --color-primary-550: #179150;
+  --color-primary-600: #146b42;
+  --color-primary-650: #116b3d;
+  --color-primary-700: #0d5c36;
+  --portal-btn-bg: #179150;
+  --portal-btn-hover: #146b42;
+  --portal-btn-fg: #ffffff;
+  --portal-btn-border: #146b42;
+  --portal-doctor-btn-bg: var(--portal-btn-bg);
+  --portal-doctor-btn-hover: var(--portal-btn-hover);
+  --portal-doctor-btn-fg: var(--portal-btn-fg);
+  --portal-doctor-btn-border: var(--portal-btn-border);
+  --zenith-nav-active-bg: color-mix(in srgb, #179150 14%, transparent);
+  --zenith-nav-active-border: #179150;
+  --zenith-nav-active-dot: #3dba72;
+}
+
+[data-portal="patient"] {
+  --color-primary: #50e9f8;
+  --color-primary-300: color-mix(in srgb, #50e9f8 52%, #4a6672);
+  --color-primary-400: color-mix(in srgb, #50e9f8 66%, #2f4f5c);
+  --color-primary-450: color-mix(in srgb, #50e9f8 72%, #24424f);
+  --color-primary-500: color-mix(in srgb, #50e9f8 78%, #1a3844);
+  --color-primary-550: #50e9f8;
+  --color-primary-600: #3dd4e3;
+  --color-primary-650: #2ec9db;
+  --color-primary-700: #1fb8cc;
+  --portal-btn-bg: #50e9f8;
+  --portal-btn-hover: #3dd4e3;
+  --portal-btn-fg: #0a1220;
+  --portal-btn-border: #3dd4e3;
+  --portal-patient-btn-bg: var(--portal-btn-bg);
+  --portal-patient-btn-hover: var(--portal-btn-hover);
+  --portal-patient-btn-fg: var(--portal-btn-fg);
+  --portal-patient-btn-border: var(--portal-btn-border);
+  --zenith-nav-active-bg: color-mix(in srgb, #50e9f8 12%, transparent);
+  --zenith-nav-active-border: #50e9f8;
+  --zenith-nav-active-dot: #50e9f8;
+}
+
+[data-portal="admin"] {
+  --color-primary: #0a6b75;
+  --color-primary-300: color-mix(in srgb, #0a6b75 52%, #4a6672);
+  --color-primary-400: color-mix(in srgb, #0a6b75 66%, #2f4f5c);
+  --color-primary-450: color-mix(in srgb, #0a6b75 72%, #24424f);
+  --color-primary-500: color-mix(in srgb, #0a6b75 78%, #1a3844);
+  --color-primary-550: #0a6b75;
+  --color-primary-600: #095c67;
+  --color-primary-650: #085862;
+  --color-primary-700: #074f58;
+  --portal-btn-bg: #0a6b75;
+  --portal-btn-hover: #095c67;
+  --portal-btn-fg: #ffffff;
+  --portal-btn-border: #095c67;
+  --zenith-nav-active-bg: color-mix(in srgb, #0a6b75 14%, transparent);
+  --zenith-nav-active-border: #0a6b75;
+  --zenith-nav-active-dot: #0c8a97;
+  --zenith-btn-solid-bg: #0a6b75;
+  --zenith-btn-solid-fg: #ffffff;
+  --zenith-btn-solid-hover: #095c67;
+  --zenith-btn-solid-border: #095c67;
+}
+
+[data-portal] .portal-profile-avatar {
+  background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  color: var(--color-primary);
+}
+
+[data-portal] .portal-nav-badge {
+  background: var(--color-primary);
+  color: var(--portal-btn-fg);
+}
+
+[data-portal] .portal-stat-icon {
+  background: color-mix(in srgb, var(--color-primary) 16%, transparent);
+  color: var(--color-primary);
+}
+
+[data-portal] .portal-stat-hint {
+  color: color-mix(in srgb, var(--color-primary) 72%, #ffffff);
+}
+
+[data-portal] .zenith-page-title {
+  color: var(--color-primary-400);
+}
+
+[data-portal] .zenith-section-title {
+  color: var(--color-primary-450);
+}
+
+[data-theme="light"] [data-portal="doctor"] {
+  --color-primary: #179150;
+  --color-primary-300: #0d5c36;
+  --color-primary-400: #116b40;
+  --color-primary-450: #127646;
+  --color-primary-500: #14804c;
+  --color-primary-550: #179150;
+  --color-primary-600: #146b42;
+  --color-primary-650: #11623c;
+  --color-primary-700: #0d5735;
+}
+
+[data-theme="light"] [data-portal="patient"] {
+  --color-primary: #0b7f8b;
+  --color-primary-300: #064f58;
+  --color-primary-400: #08616c;
+  --color-primary-450: #096b77;
+  --color-primary-500: #0a7582;
+  --color-primary-550: #0b7f8b;
+  --color-primary-600: #054a54;
+  --color-primary-650: #044550;
+  --color-primary-700: #033a42;
+  --portal-btn-bg: #50e9f8;
+  --portal-btn-hover: #3dd4e3;
+  --portal-btn-fg: #0a1220;
+  --portal-btn-border: #3dd4e3;
+}
+
+[data-theme="light"] [data-portal="admin"] {
+  --color-primary: #0a6b75;
+  --color-primary-300: #064f58;
+  --color-primary-400: #08616c;
+  --color-primary-450: #096b77;
+  --color-primary-500: #0a7582;
+  --color-primary-550: #0a6b75;
+  --color-primary-600: #095c67;
+  --color-primary-650: #085862;
+  --color-primary-700: #074f58;
+}
+
+[data-theme="light"] [data-portal] .zenith-page-title {
+  color: var(--color-primary-300);
+}
+
+[data-theme="light"] [data-portal] .zenith-section-title {
+  color: var(--color-primary-400);
 }
 
 ::-webkit-scrollbar {

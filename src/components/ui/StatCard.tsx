@@ -19,8 +19,11 @@ export default function StatCard({
   accent = 'primary',
   className,
 }: StatCardProps) {
-  const accentBg = 'bg-surface-800 text-surface-300';
-  const hintColor = 'text-surface-400';
+  const accentBg =
+    accent === 'primary'
+      ? 'portal-stat-icon'
+      : 'bg-surface-800 text-surface-300';
+  const hintColor = accent === 'primary' ? 'portal-stat-hint' : 'text-surface-400';
 
   return (
     <div

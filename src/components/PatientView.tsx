@@ -477,6 +477,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
   return (
     <AppShell
+      portal="patient"
       contentClassName="max-w-5xl"
       sidebar={
         <AppSidebar
@@ -500,6 +501,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
               .toUpperCase(),
             name: profileName,
             role: 'Paciente ID #8849',
+            avatarClassName: 'portal-profile-avatar',
           }}
           preProfile={
             <SidebarCredentialButton onOpen={() => setIsCredentialModalOpen(true)} />

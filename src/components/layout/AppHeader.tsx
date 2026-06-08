@@ -71,9 +71,17 @@ export default function AppHeader({
   );
 }
 
-export function AppHeaderAction({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+export function AppHeaderAction({
+  children,
+  onClick,
+  variant = 'outline',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  variant?: 'outline' | 'admin';
+}) {
   return (
-    <Button variant="outline" size="sm" onClick={onClick}>
+    <Button variant={variant} size="sm" onClick={onClick}>
       <span className="sm:hidden">+</span>
       <span className="hidden sm:inline">{children}</span>
     </Button>

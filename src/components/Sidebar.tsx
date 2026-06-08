@@ -40,7 +40,7 @@ export default function Sidebar({
           name: 'Pedidos',
           icon: ShoppingBag,
           badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
-          badgeColor: 'bg-primary-500 text-foreground',
+          badgeColor: 'portal-nav-badge',
         },
         { id: 'customers', name: 'Clientes', icon: Users },
         { id: 'doctors', name: 'Gestión Médicos', icon: Stethoscope },
@@ -53,6 +53,7 @@ export default function Sidebar({
         initials: 'CM',
         name: 'Carlos Mendoza',
         role: 'Administrador',
+        avatarClassName: 'portal-profile-avatar',
       }}
       onLogout={onLogout}
       logoutVariant="icon"

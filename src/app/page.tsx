@@ -258,6 +258,7 @@ export default function Home() {
 
   return (
     <AppShell
+      portal="admin"
       sidebar={
         <Sidebar
           activeTab={activeTab}
@@ -271,7 +272,9 @@ export default function Home() {
           onMenuClick={onMenuClick}
           notificationCount={pendingCount + lowStockCount}
           actions={
-            <AppHeaderAction onClick={() => setIsNewOrderOpen(true)}>+ Nuevo Pedido</AppHeaderAction>
+            <AppHeaderAction variant="admin" onClick={() => setIsNewOrderOpen(true)}>
+              + Nuevo Pedido
+            </AppHeaderAction>
           }
         />
       )}

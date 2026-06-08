@@ -5,8 +5,10 @@ import { cn } from '../../lib/utils';
 import { ShellProvider } from './ShellContext';
 
 export type AppShellHeaderRender = (props: { onMenuClick: () => void }) => React.ReactNode;
+export type PortalRole = 'doctor' | 'patient' | 'admin';
 
 export interface AppShellProps {
+  portal?: PortalRole;
   sidebar: React.ReactNode;
   header?: React.ReactNode | AppShellHeaderRender;
   children: React.ReactNode;
@@ -14,7 +16,14 @@ export interface AppShellProps {
   contentClassName?: string;
 }
 
-export default function AppShell({ sidebar, header, children, className, contentClassName }: AppShellProps) {
+export default function AppShell({
+  portal,
+  sidebar,
+  header,
+  children,
+  className,
+  contentClassName,
+}: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
@@ -37,7 +46,10 @@ export default function AppShell({ sidebar, header, children, className, content
 
   return (
     <ShellProvider value={shellValue}>
-      <div className={cn('flex h-screen bg-surface-950 text-surface-100 overflow-hidden font-sans', className)}>
+      <div
+        data-portal={portal}
+        className={cn('flex h-screen bg-surface-950 text-surface-100 overflow-hidden font-sans', className)}
+      >
         {sidebarOpen && (
           <button
             type="button"

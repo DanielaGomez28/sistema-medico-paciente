@@ -272,10 +272,10 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
             <span className="font-mono text-surface-400">{exportProgress}%</span>
           </div>
           <div className="h-1.5 w-full bg-surface-950 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-surface-300 transition-all duration-300"
+            <div
+              className="h-full bg-primary-500 transition-all duration-300"
               style={{ width: `${exportProgress}%` }}
-            ></div>
+            />
           </div>
         </div>
       )}
@@ -296,7 +296,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
           icon={Heart}
           label="Récipes Emitidos"
           value="338"
-          accent="secondary"
+          accent="primary"
           hint={
             <>
               <Activity className="h-3 w-3" />
@@ -320,7 +320,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
           icon={Award}
           label="Efectividad de Tratamientos"
           value="94.6%"
-          accent="secondary"
+          accent="primary"
           hint={
             <>
               <CheckCircle className="h-3 w-3" />
@@ -363,13 +363,13 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
             <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible">
               <defs>
                 <linearGradient id="main-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#50e9f8" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="#50e9f8" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.45" />
+                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.0" />
                 </linearGradient>
                 <linearGradient id="glow-line" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#50e9f8" />
-                  <stop offset="50%" stopColor="#179150" />
-                  <stop offset="100%" stopColor="#179150" />
+                  <stop offset="0%" stopColor="var(--color-primary)" />
+                  <stop offset="50%" stopColor="var(--color-primary)" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.65" />
                 </linearGradient>
               </defs>
               
@@ -387,7 +387,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
 
               {points.map((p, idx) => (
                 <g key={idx} className="group/dot cursor-pointer">
-                  <circle cx={p.x} cy={p.y} r="5.5" fill="var(--color-surface-900)" stroke="#50e9f8" strokeWidth="2.5" className="transition-all duration-150 hover:r-7" />
+                  <circle cx={p.x} cy={p.y} r="5.5" fill="var(--color-surface-900)" stroke="var(--color-primary)" strokeWidth="2.5" className="transition-all duration-150 hover:r-7" />
                   <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold" className="opacity-0 group-hover/dot:opacity-100 transition-opacity bg-surface-950 font-mono">
                     {activeMetricTab === 'sales' ? formatCurrency(chartData[idx].value) : `${chartData[idx].value} r.`}
                   </text>
@@ -416,7 +416,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                 .sort((a, b) => b.value - a.value)
                 .map((cat, idx) => {
                   const percentage = Math.round((cat.value / totalCatVal) * 100);
-                  const colors = ['bg-surface-500', 'bg-surface-400', 'bg-surface-600', 'bg-surface-550'];
+                  const colors = ['bg-primary-500', 'bg-primary-400', 'bg-primary-600', 'bg-primary-550'];
                   const barColor = colors[idx % colors.length];
                   
                   return (
