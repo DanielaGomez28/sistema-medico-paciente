@@ -26,7 +26,13 @@ import {
   Percent,
   Send,
   Trash2,
-  Plus
+  Plus,
+  TrendingUp,
+  DollarSign,
+  Award,
+  BarChart3,
+  BadgeCheck,
+  Star
 } from 'lucide-react';
 
 interface DoctorViewProps {
@@ -74,9 +80,47 @@ const FARMA_HUMANA_CATALOG: MedicalProduct[] = [
   { id: 'med-6', name: 'Ibuprofeno 600mg', sku: 'RX-IBU-006', category: 'Antiinflamatorio', price: 4.50, stock: 500, description: 'Alivio del dolor moderado y reducción de procesos febriles o inflamatorios.' }
 ];
 
+// Commission entry record
+interface CommissionEntry {
+  id: string;
+  date: string;
+  patientName: string;
+  medication: string;
+  saleAmount: number;
+  commissionRate: number;
+  commissionAmount: number;
+  status: 'Acreditado' | 'Pendiente';
+}
+
+// Signed recipe log entry
+interface RecipeLogEntry {
+  id: string;
+  date: string;
+  patientName: string;
+  patientId: string;
+  medications: string[];
+  branch: string;
+  status: 'Enviado' | 'Confirmado' | 'Retirado';
+}
+
+const MOCK_COMMISSIONS: CommissionEntry[] = [
+  { id: 'COM-2026-041', date: '08 Jun, 2026', patientName: 'Sofía Peralta', medication: 'Ramipril 5mg + Aspirina 100mg', saleAmount: 18.50, commissionRate: 8, commissionAmount: 1.48, status: 'Acreditado' },
+  { id: 'COM-2026-038', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', medication: 'Metformina 850mg', saleAmount: 9.80, commissionRate: 8, commissionAmount: 0.78, status: 'Acreditado' },
+  { id: 'COM-2026-031', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', medication: 'Atorvastatina 20mg', saleAmount: 15.40, commissionRate: 8, commissionAmount: 1.23, status: 'Acreditado' },
+  { id: 'COM-2026-029', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', medication: 'Ibuprofeno 600mg', saleAmount: 4.50, commissionRate: 8, commissionAmount: 0.36, status: 'Pendiente' },
+  { id: 'COM-2026-022', date: '20 May, 2026', patientName: 'Sofía Peralta', medication: 'Aspirina 100mg', saleAmount: 6.00, commissionRate: 8, commissionAmount: 0.48, status: 'Acreditado' },
+];
+
+const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
+  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientId: 'PX-992-8849', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farma-Humana Central', status: 'Confirmado' },
+  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'PX-992-1029', medications: ['Metformina 850mg'], branch: 'Farma-Humana Norte', status: 'Retirado' },
+  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientId: 'PX-992-0344', medications: ['Atorvastatina 20mg'], branch: 'Farma-Humana Sur', status: 'Retirado' },
+  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientId: 'PX-992-0811', medications: ['Ibuprofeno 600mg'], branch: 'Farma-Humana Central', status: 'Enviado' },
+];
+
 export default function DoctorView({ doctorName, doctorEmail, onLogout }: DoctorViewProps) {
-  // Navigation active tab: 'agenda' | 'reception' | 'prescription'
-  const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription'>('agenda');
+  // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions'
+  const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions'>('agenda');
 
   const [appointments, setAppointments] = useState([
     { id: 'CITA-201', patientName: 'Sofía Peralta', time: '09:00 AM', reason: 'Control Cardiológico', status: 'Atendido' },
@@ -359,6 +403,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
             <span>Prescribir con IA (M.2)</span>
           </button>
           
+          <button 
+            onClick={() => setActiveTab('commissions')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+              activeTab === 'commissions'
+                ? 'bg-gradient-to-r from-rose-500/10 to-red-500/10 text-white border-l-2 border-rose-500'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/50 border-l-2 border-transparent'
+            }`}
+          >
+            <TrendingUp className={`h-5 w-5 ${activeTab === 'commissions' ? 'text-rose-455' : ''}`} />
+            <span>Comisiones e Historial (M.3)</span>
+          </button>
+
           <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-850/50 border-l-2 border-transparent">
             <Users className="h-5 w-5" />
             <span>Pacientes</span>
@@ -1032,6 +1088,205 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
               </div>
             )}
+
+            {/* VIEW TAB 4: COMMISSIONS & CLINICAL HISTORY (Pantalla M.3) */}
+            {activeTab === 'commissions' && (() => {
+              const totalAccredited = MOCK_COMMISSIONS
+                .filter(c => c.status === 'Acreditado')
+                .reduce((sum, c) => sum + c.commissionAmount, 0);
+              const totalPending = MOCK_COMMISSIONS
+                .filter(c => c.status === 'Pendiente')
+                .reduce((sum, c) => sum + c.commissionAmount, 0);
+              const totalSales = MOCK_COMMISSIONS.reduce((sum, c) => sum + c.saleAmount, 0);
+              const totalRecipes = MOCK_RECIPE_LOG.length;
+
+              return (
+                <div className="space-y-6 animate-in fade-in duration-300">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white tracking-tight">Comisiones e Historial Clínico</h2>
+                    <p className="text-sm text-slate-400">Seguimiento de ingresos por comisión y bitácora de récipes digitales firmados.</p>
+                  </div>
+
+                  {/* Financial KPI Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                        <DollarSign className="h-4.5 w-4.5" />
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Comisiones Acreditadas</p>
+                      <p className="text-2xl font-black text-emerald-400">${totalAccredited.toFixed(2)}</p>
+                      <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-emerald-500/5"></div>
+                    </div>
+
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                      <div className="h-8 w-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+                        <Clock className="h-4.5 w-4.5" />
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Comisiones Pendientes</p>
+                      <p className="text-2xl font-black text-amber-400">${totalPending.toFixed(2)}</p>
+                      <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-amber-500/5"></div>
+                    </div>
+
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                      <div className="h-8 w-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+                        <BarChart3 className="h-4.5 w-4.5" />
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ventas Generadas</p>
+                      <p className="text-2xl font-black text-indigo-400">${totalSales.toFixed(2)}</p>
+                      <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-indigo-500/5"></div>
+                    </div>
+
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
+                      <div className="h-8 w-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+                        <BadgeCheck className="h-4.5 w-4.5" />
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Récipes Emitidos</p>
+                      <p className="text-2xl font-black text-rose-400">{totalRecipes}</p>
+                      <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-rose-500/5"></div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                    {/* Commission Ledger */}
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <h3 className="font-bold text-white text-base">Libro de Comisiones</h3>
+                          <p className="text-xs text-slate-400">Incentivos asignados por venta efectiva en Farma-Humana.</p>
+                        </div>
+                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold">Tasa: 8%</span>
+                      </div>
+
+                      {/* Bar-chart style visualisation per entry */}
+                      <div className="space-y-3">
+                        {MOCK_COMMISSIONS.map((entry) => (
+                          <div key={entry.id} className="space-y-1.5">
+                            <div className="flex justify-between items-start text-xs">
+                              <div className="min-w-0">
+                                <span className="font-semibold text-slate-200 block truncate">{entry.patientName}</span>
+                                <span className="text-[10px] text-slate-500 truncate block">{entry.medication} • {entry.date}</span>
+                              </div>
+                              <div className="text-right shrink-0 pl-3">
+                                <span className={`font-black text-sm ${ entry.status === 'Acreditado' ? 'text-emerald-400' : 'text-amber-450' }`}>
+                                  +${entry.commissionAmount.toFixed(2)}
+                                </span>
+                                <span className={`text-[9px] font-bold block ${ entry.status === 'Acreditado' ? 'text-emerald-500/70' : 'text-amber-500/70' }`}>
+                                  {entry.status}
+                                </span>
+                              </div>
+                            </div>
+                            {/* Sale proportion bar */}
+                            <div className="h-1 w-full bg-slate-850 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${ entry.status === 'Acreditado' ? 'bg-emerald-500' : 'bg-amber-500' }`}
+                                style={{ width: `${Math.min((entry.saleAmount / 25) * 100, 100)}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Totals row */}
+                      <div className="border-t border-slate-850 pt-4 flex justify-between items-center text-xs">
+                        <span className="text-slate-500 font-semibold">Total Período Actual (Jun 2026)</span>
+                        <span className="font-black text-white text-base">${(totalAccredited + totalPending).toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {/* Signed Recipe Log */}
+                    <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+                      <div>
+                        <h3 className="font-bold text-white text-base">Bitácora de Récipes Firmados</h3>
+                        <p className="text-xs text-slate-400">Historial de recetas digitales emitidas y firmadas electrónicamente.</p>
+                      </div>
+
+                      <div className="divide-y divide-slate-850">
+                        {MOCK_RECIPE_LOG.map((rec) => (
+                          <div key={rec.id} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
+                            <div className="space-y-1 min-w-0">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-xs text-white">{rec.patientName}</span>
+                                <span className="text-[9px] font-mono text-slate-500 bg-slate-950 border border-slate-850 px-1.5 py-0.2 rounded">{rec.id}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1 pt-0.5">
+                                {rec.medications.map((med, idx) => (
+                                  <span key={idx} className="text-[9px] bg-slate-800 text-slate-350 px-1.5 py-0.5 rounded font-medium">{med}</span>
+                                ))}
+                              </div>
+                              <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                                <span>{rec.branch}</span>
+                                <span>•</span>
+                                <span>{rec.date}</span>
+                              </p>
+                            </div>
+                            <div className="shrink-0">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${
+                                rec.status === 'Retirado'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                  : rec.status === 'Confirmado'
+                                  ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+                                  : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                              }`}>
+                                {rec.status === 'Retirado' && <Check className="h-3 w-3" />}
+                                {rec.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Doctor signature block */}
+                      <div className="border-t border-slate-850 pt-4 flex items-center justify-between">
+                        <div className="text-xs space-y-0.5">
+                          <p className="font-bold text-white">{doctorName}</p>
+                          <p className="text-[10px] text-slate-500">M.P. 28.490/7 • Cardiología</p>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-emerald-450 font-bold">
+                          <ShieldCheck className="h-4 w-4" />
+                          <span>Firma Digital Activa</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Performance & Rating Strip */}
+                  <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-rose-500 to-red-600 flex items-center justify-center">
+                        <Award className="h-5 w-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-white">Rendimiento Mensual del Especialista</p>
+                        <p className="text-[10px] text-slate-400">Basado en récipes emitidos, ventas generadas y satisfacción del paciente.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 shrink-0">
+                      <div className="text-center">
+                        <p className="text-[9px] text-slate-500 uppercase font-bold">Récipes</p>
+                        <p className="text-lg font-black text-white">{totalRecipes}</p>
+                      </div>
+                      <div className="h-8 w-px bg-slate-800"></div>
+                      <div className="text-center">
+                        <p className="text-[9px] text-slate-500 uppercase font-bold">Ventas</p>
+                        <p className="text-lg font-black text-white">${totalSales.toFixed(0)}</p>
+                      </div>
+                      <div className="h-8 w-px bg-slate-800"></div>
+                      <div className="text-center">
+                        <p className="text-[9px] text-slate-500 uppercase font-bold">Valoración</p>
+                        <div className="flex items-center gap-0.5 mt-0.5 justify-center">
+                          {[1,2,3,4,5].map(s => (
+                            <Star key={s} className={`h-3.5 w-3.5 ${ s <= 4 ? 'text-amber-400 fill-amber-400' : 'text-slate-700' }`} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              );
+            })()}
 
           </div>
         </main>
