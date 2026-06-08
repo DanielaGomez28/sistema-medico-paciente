@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
   Calendar, 
@@ -11,6 +11,7 @@ import {
   Clock,
   Check,
   ChevronRight,
+  ArrowLeft,
   QrCode,
   Camera,
   CheckCircle2,
@@ -40,7 +41,7 @@ import {
 } from './CredentialQr';
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
-import { PageHeader, Button, Modal, ModalBody } from './ui';
+import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
 
 interface DoctorViewProps {
   doctorName: string;
@@ -234,10 +235,24 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   }, []);
 
   const [patients, setPatients] = useState<LinkedPatient[]>(INITIAL_PATIENTS);
+  const [patientViewMode, setPatientViewMode] = useState<'list' | 'detail'>('list');
+  const [patientListSearch, setPatientListSearch] = useState('');
   const [patientForm, setPatientForm] = useState<LinkedPatient>(createEmptyPatient());
   const [medicationsInput, setMedicationsInput] = useState('');
   const [isNewPatient, setIsNewPatient] = useState(false);
   const [patientSaveMsg, setPatientSaveMsg] = useState('');
+
+  const filteredPatients = useMemo(() => {
+    const query = patientListSearch.toLowerCase().trim();
+    if (!query) return patients;
+    return patients.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.id.toLowerCase().includes(query) ||
+        p.phone.includes(query) ||
+        p.condition.toLowerCase().includes(query)
+    );
+  }, [patients, patientListSearch]);
 
   // Reception / QR scan states (M.1)
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
@@ -257,6 +272,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setMedicationsInput(patient.medications.join(', '));
     setLinkedPatient(patient);
     setIsNewPatient(false);
+    setPatientViewMode('detail');
     setActiveTab('reception');
   };
 
@@ -266,7 +282,26 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setMedicationsInput('');
     setLinkedPatient(null);
     setIsNewPatient(true);
+    setPatientViewMode('detail');
     setActiveTab('reception');
+  };
+
+  const handleBackToPatientList = () => {
+    setPatientViewMode('list');
+    setIsNewPatient(false);
+    setPatientSaveMsg('');
+  };
+
+  const handleDeletePatient = () => {
+    if (!patientForm.id || isNewPatient) return;
+    if (!confirm(`¿Eliminar el expediente de ${patientForm.name}? Esta acción no se puede deshacer.`)) {
+      return;
+    }
+    setPatients((prev) => prev.filter((p) => p.id !== patientForm.id));
+    if (linkedPatient?.id === patientForm.id) {
+      setLinkedPatient(null);
+    }
+    handleBackToPatientList();
   };
 
   const handleSavePatient = (e: React.FormEvent) => {
@@ -464,9 +499,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               { id: 'profile', name: 'Mi Perfil', icon: Users },
             ]}
             activeId={activeTab}
-            onNavigate={(id) =>
-              setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile')
-            }
+            onNavigate={(id) => {
+              if (id === 'reception') {
+                setPatientViewMode('list');
+              }
+              setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile');
+            }}
             profile={{
               initials: doctorName
                 .replace(/^Dr\.\s*/i, '')
@@ -631,167 +669,348 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               </div>
             )}
 
-            {/* VIEW TAB 2: PATIENT MANAGEMENT (Pantalla M.1) */}
+            {/* VIEW TAB 2: PATIENT MANAGEMENT (CRUD) */}
             {activeTab === 'reception' && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                <PageHeader
-                  title="Gestión de Pacientes"
-                  description="Registre y modifique los datos clínicos del paciente. Las consultas no se gestionan desde este módulo."
-                  actions={
-                    <div className="flex flex-wrap gap-2">
-                      <Button variant="doctor" onClick={() => setIsScannerModalOpen(true)}>
-                        <QrCode className="h-4 w-4" />
-                        Buscar por credencial
-                      </Button>
-                      <Button variant="doctor" onClick={handleNewPatient}>
-                        <UserPlus className="h-4 w-4" />
-                        Nuevo paciente
-                      </Button>
-                    </div>
-                  }
-                />
+                {patientViewMode === 'list' ? (
+                  <>
+                    <PageHeader
+                      title="Gestión de Pacientes"
+                      description="Listado de pacientes vinculados al médico. Seleccione uno para ver o editar su expediente."
+                      actions={
+                        <div className="flex flex-wrap gap-2">
+                          <Button variant="doctor" onClick={() => setIsScannerModalOpen(true)}>
+                            <QrCode className="h-4 w-4" />
+                            Buscar por credencial
+                          </Button>
+                          <Button variant="doctor" onClick={handleNewPatient}>
+                            <UserPlus className="h-4 w-4" />
+                            Nuevo paciente
+                          </Button>
+                        </div>
+                      }
+                    />
 
-                {patientSaveMsg && (
-                  <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
-                    <CheckCircle2 className="h-5 w-5 shrink-0" />
-                    <span>{patientSaveMsg}</span>
-                  </div>
-                )}
+                    {patientSaveMsg && (
+                      <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        <span>{patientSaveMsg}</span>
+                      </div>
+                    )}
 
-                <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md">
-                  <form onSubmit={handleSavePatient} className="space-y-6">
-                    <div>
-                      <h3 className="zenith-section-title">
-                        {isNewPatient ? 'Registrar nuevo paciente' : 'Modificar datos del paciente'}
-                      </h3>
-                      <p className="text-xs text-surface-400">
-                        Complete o actualice la información del expediente clínico.
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">Nombre completo</label>
-                        <input
-                          type="text"
-                          value={patientForm.name}
-                          onChange={(e) => setPatientForm({ ...patientForm, name: e.target.value })}
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                        />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
+                          <Users className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <span className="zenith-field-label">Pacientes registrados</span>
+                          <p className="text-lg font-semibold text-white mt-0.5">{patients.length}</p>
+                        </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">ID del paciente</label>
-                        <input
-                          type="text"
-                          value={patientForm.id}
-                          disabled={!isNewPatient}
-                          placeholder="Se generará automáticamente"
-                          className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none disabled:cursor-not-allowed"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">Edad</label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={patientForm.age || ''}
-                          onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })}
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">Género</label>
-                        <select
-                          value={patientForm.gender}
-                          onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })}
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"
-                        >
-                          <option value="Masculino">Masculino</option>
-                          <option value="Femenino">Femenino</option>
-                          <option value="Otro">Otro</option>
-                        </select>
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">Grupo sanguíneo</label>
-                        <input
-                          type="text"
-                          value={patientForm.bloodType}
-                          onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })}
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">Teléfono móvil</label>
-                        <input
-                          type="tel"
-                          value={patientForm.phone}
-                          onChange={(e) => setPatientForm({ ...patientForm, phone: e.target.value })}
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                        />
-                      </div>
-                      <div className="space-y-1.5 md:col-span-2">
-                        <label className="zenith-field-label">Condición / diagnóstico de control</label>
-                        <input
-                          type="text"
-                          value={patientForm.condition}
-                          onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })}
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                        />
-                      </div>
-                      <div className="space-y-1.5 md:col-span-2">
-                        <label className="zenith-field-label">Alergias</label>
-                        <input
-                          type="text"
-                          value={patientForm.allergies}
-                          onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })}
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                        />
-                      </div>
-                      <div className="space-y-1.5 md:col-span-2">
-                        <label className="zenith-field-label">Tratamientos activos (separados por coma)</label>
-                        <input
-                          type="text"
-                          value={medicationsInput}
-                          onChange={(e) => setMedicationsInput(e.target.value)}
-                          placeholder="Ej: Ramipril 5mg, Aspirina 100mg"
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                        />
+                      <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center">
+                          <ShieldAlert className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <span className="zenith-field-label">Con alergias registradas</span>
+                          <p className="text-lg font-semibold text-white mt-0.5">
+                            {patients.filter((p) => p.allergies && p.allergies !== 'Ninguna conocida').length}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4 border-t border-surface-850">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPatientForm(createEmptyPatient());
-                          setMedicationsInput('');
-                          setIsNewPatient(false);
-                          setLinkedPatient(null);
-                        }}
-                        className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
-                      >
-                        Limpiar formulario
-                      </button>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                        {linkedPatient && (
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nombre, ID, teléfono o condición..."
+                        value={patientListSearch}
+                        onChange={(e) => setPatientListSearch(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2.5 bg-surface-900/40 border border-surface-800 rounded-xl text-xs text-white placeholder-surface-550 focus:outline-none focus:border-secondary-500"
+                      />
+                    </div>
+
+                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl overflow-hidden backdrop-blur-md">
+                      {filteredPatients.length > 0 ? (
+                        <>
+                          <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full text-left text-sm border-collapse">
+                              <thead>
+                                <tr className="border-b border-surface-850 bg-surface-950/20 text-xs font-semibold text-surface-400 uppercase tracking-wider">
+                                  <th className="px-6 py-4">Paciente</th>
+                                  <th className="px-6 py-4">Contacto</th>
+                                  <th className="px-6 py-4">Condición</th>
+                                  <th className="px-6 py-4">Última visita</th>
+                                  <th className="px-6 py-4 text-right">Acción</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-surface-850">
+                                {filteredPatients.map((patient) => (
+                                  <tr
+                                    key={patient.id}
+                                    onClick={() => openPatientForm(patient)}
+                                    className="hover:bg-surface-850/20 transition-colors cursor-pointer"
+                                  >
+                                    <td className="px-6 py-4.5">
+                                      <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-full bg-secondary-650 flex items-center justify-center font-bold text-white text-xs shrink-0">
+                                          {patient.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                          <p className="font-semibold text-surface-200 leading-none">{patient.name}</p>
+                                          <span className="text-[10px] text-surface-500 font-mono mt-1 block">{patient.id}</span>
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4.5">
+                                      <p className="text-xs text-surface-350">{patient.phone}</p>
+                                      <p className="text-[10px] text-surface-500 mt-0.5">
+                                        {patient.age} años • {patient.gender}
+                                      </p>
+                                    </td>
+                                    <td className="px-6 py-4.5">
+                                      <p className="text-xs text-surface-300">{patient.condition || 'Sin condición registrada'}</p>
+                                      {patient.allergies && patient.allergies !== 'Ninguna conocida' && (
+                                        <p className="text-[10px] text-secondary-455 mt-1 flex items-center gap-1">
+                                          <ShieldAlert className="h-3 w-3 shrink-0" />
+                                          {patient.allergies}
+                                        </p>
+                                      )}
+                                    </td>
+                                    <td className="px-6 py-4.5 text-xs text-surface-400 whitespace-nowrap">
+                                      {patient.lastVisit}
+                                    </td>
+                                    <td className="px-6 py-4.5 text-right">
+                                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-secondary-400">
+                                        Ver expediente
+                                        <ChevronRight className="h-3.5 w-3.5" />
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                          <div className="lg:hidden space-y-3 p-4">
+                            {filteredPatients.map((patient) => (
+                              <ListCard
+                                key={patient.id}
+                                title={patient.name}
+                                subtitle={patient.id}
+                                onClick={() => openPatientForm(patient)}
+                                badge={
+                                  patient.allergies && patient.allergies !== 'Ninguna conocida' ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-secondary-500/10 text-secondary-400 border border-secondary-500/25">
+                                      <ShieldAlert className="h-3 w-3" />
+                                      Alergia
+                                    </span>
+                                  ) : undefined
+                                }
+                                fields={[
+                                  { label: 'Teléfono', value: patient.phone },
+                                  { label: 'Edad', value: `${patient.age} años` },
+                                  { label: 'Condición', value: patient.condition || '—' },
+                                  { label: 'Última visita', value: patient.lastVisit },
+                                ]}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="text-center py-24 text-surface-500 flex flex-col items-center justify-center p-6">
+                          <div className="h-12 w-12 rounded-full bg-surface-950 border border-surface-800 flex items-center justify-center mb-3">
+                            <Users className="h-5 w-5 text-surface-600" />
+                          </div>
+                          <p className="font-semibold text-surface-400">
+                            {patients.length === 0 ? 'No hay pacientes registrados' : 'No se encontraron pacientes'}
+                          </p>
+                          <p className="text-xs text-surface-500 mt-1">
+                            {patients.length === 0
+                              ? 'Registre el primer paciente o búsquelo por credencial.'
+                              : 'Modifique los términos de búsqueda.'}
+                          </p>
+                          {patients.length === 0 && (
+                            <Button variant="doctor" className="mt-4" onClick={handleNewPatient}>
+                              <UserPlus className="h-4 w-4" />
+                              Nuevo paciente
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleBackToPatientList}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      Volver al listado
+                    </button>
+
+                    <PageHeader
+                      title={isNewPatient ? 'Nuevo paciente' : patientForm.name || 'Expediente del paciente'}
+                      description={
+                        isNewPatient
+                          ? 'Complete los datos para registrar un nuevo expediente clínico.'
+                          : `Expediente ${patientForm.id} — modifique los datos clínicos del paciente.`
+                      }
+                      actions={
+                        !isNewPatient && patientForm.id ? (
+                          <Button
+                            variant="ghost"
+                            onClick={handleDeletePatient}
+                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Eliminar
+                          </Button>
+                        ) : undefined
+                      }
+                    />
+
+                    {patientSaveMsg && (
+                      <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
+                        <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        <span>{patientSaveMsg}</span>
+                      </div>
+                    )}
+
+                    <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md">
+                      <form onSubmit={handleSavePatient} className="space-y-6">
+                        <div>
+                          <h3 className="zenith-section-title">
+                            {isNewPatient ? 'Datos del nuevo paciente' : 'Datos clínicos'}
+                          </h3>
+                          <p className="text-xs text-surface-400">
+                            Complete o actualice la información del expediente clínico.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label className="zenith-field-label">Nombre completo</label>
+                            <input
+                              type="text"
+                              value={patientForm.name}
+                              onChange={(e) => setPatientForm({ ...patientForm, name: e.target.value })}
+                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="zenith-field-label">ID del paciente</label>
+                            <input
+                              type="text"
+                              value={patientForm.id}
+                              disabled={!isNewPatient}
+                              placeholder="Se generará automáticamente"
+                              className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none disabled:cursor-not-allowed"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="zenith-field-label">Edad</label>
+                            <input
+                              type="number"
+                              min={0}
+                              value={patientForm.age || ''}
+                              onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })}
+                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="zenith-field-label">Género</label>
+                            <select
+                              value={patientForm.gender}
+                              onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })}
+                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"
+                            >
+                              <option value="Masculino">Masculino</option>
+                              <option value="Femenino">Femenino</option>
+                              <option value="Otro">Otro</option>
+                            </select>
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="zenith-field-label">Grupo sanguíneo</label>
+                            <input
+                              type="text"
+                              value={patientForm.bloodType}
+                              onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })}
+                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <label className="zenith-field-label">Teléfono móvil</label>
+                            <input
+                              type="tel"
+                              value={patientForm.phone}
+                              onChange={(e) => setPatientForm({ ...patientForm, phone: e.target.value })}
+                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
+                            />
+                          </div>
+                          <div className="space-y-1.5 md:col-span-2">
+                            <label className="zenith-field-label">Condición / diagnóstico de control</label>
+                            <input
+                              type="text"
+                              value={patientForm.condition}
+                              onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })}
+                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
+                            />
+                          </div>
+                          <div className="space-y-1.5 md:col-span-2">
+                            <label className="zenith-field-label">Alergias</label>
+                            <input
+                              type="text"
+                              value={patientForm.allergies}
+                              onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })}
+                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
+                            />
+                          </div>
+                          <div className="space-y-1.5 md:col-span-2">
+                            <label className="zenith-field-label">Tratamientos activos (separados por coma)</label>
+                            <input
+                              type="text"
+                              value={medicationsInput}
+                              onChange={(e) => setMedicationsInput(e.target.value)}
+                              placeholder="Ej: Ramipril 5mg, Aspirina 100mg"
+                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4 border-t border-surface-850">
                           <button
                             type="button"
-                            onClick={() => setActiveTab('prescription')}
-                            className="px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-surface-700"
+                            onClick={handleBackToPatientList}
+                            className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
                           >
-                            Generar Récipe
+                            Cancelar
                           </button>
-                        )}
-                        <button
-                          type="submit"
-                          className="px-6 py-2.5 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer"
-                        >
-                          {isNewPatient ? 'Registrar paciente' : 'Guardar cambios'}
-                        </button>
-                      </div>
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            {linkedPatient && !isNewPatient && (
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab('prescription')}
+                                className="px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-surface-700"
+                              >
+                                Generar Récipe
+                              </button>
+                            )}
+                            <button
+                              type="submit"
+                              className="px-6 py-2.5 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer"
+                            >
+                              {isNewPatient ? 'Registrar paciente' : 'Guardar cambios'}
+                            </button>
+                          </div>
+                        </div>
+                      </form>
                     </div>
-                  </form>
-                </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -822,7 +1041,10 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                   {!linkedPatient && (
                     <button
-                      onClick={() => setActiveTab('reception')}
+                      onClick={() => {
+                        setPatientViewMode('list');
+                        setActiveTab('reception');
+                      }}
                       className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer"
                     >
                       Seleccionar paciente
