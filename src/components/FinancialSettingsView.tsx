@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Percent, History, Save, ShieldAlert, CheckCircle, X } from 'lucide-react';
-import { PageHeader, Button, Modal, ModalBody } from './ui';
+import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
 
 interface AuditLogEntry {
   id: string;
@@ -184,7 +184,7 @@ export default function FinancialSettingsView() {
         </div>
 
         <div className="flex justify-end pt-2 border-t border-surface-850">
-          <Button type="submit" className="min-w-[240px]">
+          <Button type="submit" className="w-full sm:w-auto">
             <Save className="h-4 w-4" />
             Actualizar Políticas Financieras
           </Button>
@@ -208,7 +208,7 @@ export default function FinancialSettingsView() {
         </div>
 
         <ModalBody>
-          <div className="overflow-x-auto">
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
@@ -239,6 +239,26 @@ export default function FinancialSettingsView() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="lg:hidden space-y-3">
+            {auditLog.map((entry) => (
+              <ListCard
+                key={entry.id}
+                title={entry.adminName}
+                subtitle={entry.id}
+                badge={
+                  <span className="inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[9px] font-semibold bg-surface-800 text-surface-200 border border-surface-700">
+                    {entry.status}
+                  </span>
+                }
+                fields={[
+                  { label: 'Fecha', value: entry.timestamp },
+                  { label: 'Acción', value: entry.action },
+                  { label: 'Tasa anterior', value: entry.previousValue },
+                  { label: 'Tasa nueva', value: entry.newValue },
+                ]}
+              />
+            ))}
           </div>
         </ModalBody>
       </Modal>

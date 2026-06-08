@@ -10,3 +10,4 @@ export { default as PageHeader } from './PageHeader';
 export { default as Modal, ModalBody, ModalFooter } from './Modal';
 export { default as EmptyState } from './EmptyState';
 export { default as FilterBar } from './FilterBar';
+export { default as ListCard } from './ListCard';

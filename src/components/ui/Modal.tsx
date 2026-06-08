@@ -63,7 +63,7 @@ export default function Modal({ open, onClose, title, children, size = 'lg', cla
 
 export function ModalBody({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('p-6', className)} {...props}>
+    <div className={cn('p-4 md:p-6', className)} {...props}>
       {children}
     </div>
   );
@@ -71,7 +71,13 @@ export function ModalBody({ className, children, ...props }: React.HTMLAttribute
 
 export function ModalFooter({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('flex gap-3 px-6 py-4 border-t border-surface-850', className)} {...props}>
+    <div
+      className={cn(
+        'flex flex-col sm:flex-row gap-3 px-4 md:px-6 py-4 border-t border-surface-850 [&>button]:w-full [&>button]:sm:w-auto',
+        className
+      )}
+      {...props}
+    >
       {children}
     </div>
   );

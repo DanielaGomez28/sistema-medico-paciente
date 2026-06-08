@@ -263,14 +263,14 @@ export default function NewOrderModal({
               <div className="flex-1 max-h-[200px] overflow-y-auto divide-y divide-surface-850/60 p-1">
                 {cartItemsList.length > 0 ? (
                   cartItemsList.map(({ product, quantity, lineTotal }) => (
-                    <div key={product.id} className="flex items-center justify-between p-3 hover:bg-surface-850/25 transition-colors">
+                    <div key={product.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 hover:bg-surface-850/25 transition-colors">
                       <div className="min-w-0 flex-1 pr-3">
                         <p className="text-xs font-semibold text-white truncate">{product.name}</p>
                         <p className="text-[10px] text-surface-500 font-mono">
                           {product.price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })} c/u
                         </p>
                       </div>
-                      <div className="flex items-center gap-4.5">
+                      <div className="flex items-center justify-between sm:justify-end gap-4.5 w-full sm:w-auto">
                         <div className="flex items-center bg-surface-900 border border-surface-800 rounded-lg p-0.5">
                           <button
                             type="button"
@@ -368,7 +368,7 @@ export default function NewOrderModal({
                       className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="zenith-field-label">Email *</label>
                       <input
@@ -391,8 +391,8 @@ export default function NewOrderModal({
                       />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="sm:col-span-2">
                       <label className="zenith-field-label">Dirección *</label>
                       <input
                         type="text"
@@ -439,7 +439,7 @@ export default function NewOrderModal({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="zenith-field-label flex items-center gap-1.5 min-h-[14px]">
                     <CreditCard className="h-3.5 w-3.5 shrink-0" />
@@ -494,7 +494,7 @@ export default function NewOrderModal({
               </div>
 
               {/* Submit Buttons */}
-              <div className="grid grid-cols-2 gap-2 pt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3">
                 <Button type="button" variant="outline" onClick={onClose}>
                   Cancelar
                 </Button>

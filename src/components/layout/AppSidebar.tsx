@@ -4,6 +4,7 @@ import React from 'react';
 import { LucideIcon, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import NavItem, { AccentVariant, NavItemConfig } from './NavItem';
+import { useShell } from './ShellContext';
 
 export interface AppSidebarBrand {
   icon: LucideIcon;
@@ -53,11 +54,17 @@ export default function AppSidebar({
   className,
 }: AppSidebarProps) {
   const BrandIcon = brand.icon;
+  const { closeSidebar } = useShell();
+
+  const handleNavigate = (id: string) => {
+    onNavigate(id);
+    closeSidebar();
+  };
 
   return (
     <aside
       className={cn(
-        'w-64 bg-surface-950 border-r border-surface-900 flex flex-col h-full shrink-0 text-surface-300',
+        'w-full h-full bg-surface-950 border-r border-surface-900 flex flex-col text-surface-300',
         className
       )}
     >
@@ -92,7 +99,7 @@ export default function AppSidebar({
             item={item}
             isActive={activeId === item.id}
             accent={accent}
-            onClick={() => onNavigate(item.id)}
+            onClick={() => handleNavigate(item.id)}
           />
         ))}
       </nav>

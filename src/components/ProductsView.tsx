@@ -245,7 +245,7 @@ export default function ProductsView({ products, onUpdateStock, onAddProduct }: 
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="zenith-field-label">SKU / Código Único *</label>
                   <input
@@ -272,7 +272,7 @@ export default function ProductsView({ products, onUpdateStock, onAddProduct }: 
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="zenith-field-label">Precio (€) *</label>
                   <input
@@ -315,7 +315,7 @@ export default function ProductsView({ products, onUpdateStock, onAddProduct }: 
               {/* Image Color Gradient selector */}
               <div>
                 <label className="zenith-field-label">Preset de Visual (Color)</label>
-                <div className="grid grid-cols-3 gap-2 mt-1">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-1">
                   {colorPresets.map((preset) => (
                     <button
                       key={preset.value}

@@ -1,0 +1,62 @@
+import React from 'react';
+import { cn } from '../../lib/utils';
+
+export interface ListCardField {
+  label: string;
+  value: React.ReactNode;
+}
+
+export interface ListCardProps {
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  badge?: React.ReactNode;
+  fields?: ListCardField[];
+  actions?: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+}
+
+export default function ListCard({
+  title,
+  subtitle,
+  badge,
+  fields,
+  actions,
+  className,
+  onClick,
+}: ListCardProps) {
+  const Wrapper = onClick ? 'button' : 'div';
+
+  return (
+    <Wrapper
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+      className={cn(
+        'w-full text-left bg-surface-900/60 border border-surface-800 rounded-xl p-4 space-y-3',
+        onClick && 'hover:bg-surface-850/30 transition-colors cursor-pointer',
+        className
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="font-semibold text-surface-100 text-sm truncate">{title}</div>
+          {subtitle && <div className="text-xs text-surface-500 mt-0.5 truncate">{subtitle}</div>}
+        </div>
+        {badge && <div className="shrink-0">{badge}</div>}
+      </div>
+
+      {fields && fields.length > 0 && (
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          {fields.map((field) => (
+            <div key={field.label} className="min-w-0">
+              <div className="zenith-field-label">{field.label}</div>
+              <div className="text-xs text-surface-300 mt-0.5 truncate">{field.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {actions && <div className="flex items-center gap-2 pt-1">{actions}</div>}
+    </Wrapper>
+  );
+}

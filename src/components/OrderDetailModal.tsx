@@ -17,7 +17,7 @@ import {
   PackageCheck
 } from 'lucide-react';
 import { Order, OrderStatus } from '../types';
-import { Badge, Modal, ModalBody } from './ui';
+import { Badge, Modal, ModalBody, ListCard } from './ui';
 
 interface OrderDetailModalProps {
   order: Order | null;
@@ -136,7 +136,7 @@ export default function OrderDetailModal({ order, onClose, onUpdateStatus }: Ord
               <div className="px-4 py-3 bg-surface-950/25 border-b border-surface-850">
                 <h4 className="zenith-section-title">Artículos del Pedido</h4>
               </div>
-              <div className="overflow-x-auto">
+              <div className="hidden lg:block overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
                     <tr className="border-b border-surface-850 bg-surface-950/10 text-xs text-surface-400 font-bold uppercase">
@@ -164,6 +164,26 @@ export default function OrderDetailModal({ order, onClose, onUpdateStatus }: Ord
                     ))}
                   </tbody>
                 </table>
+              </div>
+              <div className="lg:hidden p-4 space-y-3">
+                {order.items.map((item, idx) => (
+                  <ListCard
+                    key={idx}
+                    title={item.productName}
+                    subtitle={`ID: ${item.productId}`}
+                    fields={[
+                      {
+                        label: 'Precio',
+                        value: item.price.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
+                      },
+                      { label: 'Cantidad', value: item.quantity },
+                      {
+                        label: 'Total',
+                        value: (item.price * item.quantity).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
+                      },
+                    ]}
+                  />
+                ))}
               </div>
 
               {/* Financial Breakdowns */}

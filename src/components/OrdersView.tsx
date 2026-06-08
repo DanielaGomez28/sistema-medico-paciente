@@ -12,6 +12,7 @@ import {
   Badge,
   EmptyState,
   Card,
+  ListCard,
 } from './ui';
 
 interface OrdersViewProps {
@@ -99,7 +100,8 @@ export default function OrdersView({ orders, onSelectOrder, onOpenNewOrder }: Or
 
       <Card className="p-0 overflow-hidden">
         {processedOrders.length > 0 ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr className="border-b border-surface-850 bg-surface-950/20 text-xs font-semibold text-surface-400 uppercase tracking-wider">
@@ -160,6 +162,39 @@ export default function OrdersView({ orders, onSelectOrder, onOpenNewOrder }: Or
               </tbody>
             </table>
           </div>
+          <div className="lg:hidden space-y-3 p-4">
+            {processedOrders.map((order) => {
+              const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+              const orderDate = new Date(order.createdAt).toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+
+              return (
+                <ListCard
+                  key={order.id}
+                  title={order.id}
+                  subtitle={order.customerName}
+                  badge={<Badge status={order.status}>{order.status}</Badge>}
+                  fields={[
+                    { label: 'Fecha', value: orderDate },
+                    { label: 'Artículos', value: `${totalItems} ${totalItems === 1 ? 'producto' : 'productos'}` },
+                    { label: 'Total', value: order.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) },
+                    { label: 'Pago', value: order.paymentMethod },
+                  ]}
+                  actions={
+                    <Button variant="outline" size="sm" onClick={() => onSelectOrder(order)}>
+                      <Eye className="h-3.5 w-3.5" />
+                      Ver
+                    </Button>
+                  }
+                />
+              );
+            })}
+          </div>
+          </>
         ) : (
           <EmptyState
             icon={Search}

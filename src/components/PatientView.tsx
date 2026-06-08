@@ -31,7 +31,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
-import { PageHeader, Button } from './ui';
+import { PageHeader, Button, ListCard } from './ui';
 
 interface PatientViewProps {
   patientName: string;
@@ -382,13 +382,18 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
           onLogout={onLogout}
         />
       }
-      header={
+      header={({ onMenuClick }) => (
         <AppHeader
+          onMenuClick={onMenuClick}
           statusLabel="Portal del Paciente Activo"
           showNotifications={false}
-          trailing={<span className="text-xs font-bold text-surface-350">{patientEmail}</span>}
+          trailing={
+            <span className="text-xs font-bold text-surface-350 truncate max-w-[120px] sm:max-w-none">
+              {patientEmail}
+            </span>
+          }
         />
-      }
+      )}
     >
             {activeSubTab === 'recipes' && (
               <div className="space-y-6">
@@ -491,7 +496,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     <p className="text-xs text-surface-400">Listado cronológico de recetas autorizadas.</p>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left text-sm border-collapse">
                       <thead>
                         <tr className="border-b border-surface-850 text-xs font-semibold text-surface-500 uppercase tracking-wider">
@@ -544,6 +549,35 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                  <div className="lg:hidden space-y-3">
+                    {recipes.map((rec) => (
+                      <ListCard
+                        key={rec.id}
+                        title={rec.medication}
+                        subtitle={rec.id}
+                        badge={
+                          <span className="inline-flex whitespace-nowrap px-2 py-0.5 text-2xs font-semibold border rounded-full bg-secondary-500/10 text-secondary-400 border-secondary-500/20">
+                            {rec.status}
+                          </span>
+                        }
+                        fields={[
+                          { label: 'Fecha', value: rec.date },
+                          { label: 'Dosis', value: rec.dosage },
+                          { label: 'Especialista', value: rec.doctor },
+                          { label: 'Especialidad', value: rec.specialty },
+                        ]}
+                        actions={
+                          <button
+                            onClick={() => setSelectedRecipe(rec)}
+                            className="px-3 py-1.5 text-xs font-semibold bg-primary-600 hover:bg-primary-500 text-white rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            Visualizar
+                          </button>
+                        }
+                      />
+                    ))}
                   </div>
                 </div>
               </div>
@@ -728,7 +762,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       <p className="text-xs text-surface-400">Seleccione su método de pago y consigne los datos solicitados.</p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <button
                         onClick={() => setPaymentMethod('mobile')}
                         className={`py-3 rounded-xl border font-bold text-xs flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
@@ -777,7 +811,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
                       {paymentMethod === 'mobile' && (
                         <div className="p-4 bg-surface-950/50 border border-surface-850 rounded-xl space-y-4 text-xs">
-                          <div className="grid grid-cols-2 gap-4 text-surface-450">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-surface-450">
                             <div>
                               <p className="font-semibold text-surface-500">Banco de Destino</p>
                               <p className="font-bold text-white mt-0.5">Banco de España (0030)</p>
@@ -811,7 +845,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
                       {paymentMethod === 'transfer' && (
                         <div className="p-4 bg-surface-950/50 border border-surface-850 rounded-xl space-y-4 text-xs">
-                          <div className="grid grid-cols-2 gap-4 text-surface-450">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-surface-450">
                             <div>
                               <p className="font-semibold text-surface-500">Titular de la Cuenta</p>
                               <p className="font-bold text-white mt-0.5">Farma-Humana España S.L.</p>
@@ -856,7 +890,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                             />
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                               <label className="zenith-field-label">Expiración (MM/AA)</label>
                               <input
@@ -1129,7 +1163,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           />
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <label className="zenith-field-label">Código Postal</label>
                             <input

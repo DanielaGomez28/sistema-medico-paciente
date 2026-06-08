@@ -12,7 +12,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import { PageHeader, Button, Modal, ModalBody } from './ui';
+import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
 
 interface DoctorProfile {
   id: string;
@@ -325,7 +325,7 @@ export default function DoctorsManagerView() {
         </div>
 
         <div className="flex justify-end pt-2 border-t border-surface-850">
-          <Button type="submit" className="min-w-[220px]">
+          <Button type="submit" className="w-full sm:w-auto">
             Dar de Alta y Generar Credenciales
           </Button>
         </div>
@@ -359,56 +359,84 @@ export default function DoctorsManagerView() {
             />
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
-                  <th className="pb-2.5">Médico</th>
-                  <th>Especialidad</th>
-                  <th>Cédula / MPPS</th>
-                  <th>Estado</th>
-                  <th className="text-right">Fecha Registro</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-850/60 text-surface-300">
-                {filteredDoctors.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-8 text-center text-surface-500">
-                      No se encontraron médicos con ese criterio.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDoctors.map(doc => (
-                    <tr key={doc.id} className="hover:bg-surface-950/10">
-                      <td className="py-3">
-                        <p className="font-semibold text-white">Dr. {doc.firstName} {doc.lastName}</p>
-                        <p className="text-[10px] text-surface-500 font-mono">{doc.email}</p>
-                      </td>
-                      <td>{doc.specialty}</td>
-                      <td>
-                        <p className="font-mono text-surface-300">{doc.dni}</p>
-                        <p className="text-[10px] font-mono text-surface-500">{doc.licenseMpps}</p>
-                      </td>
-                      <td className="whitespace-nowrap">
-                        <span
-                          className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${
-                            doc.status === 'Verificado'
-                              ? 'bg-surface-800 text-surface-200 border border-surface-700'
-                              : doc.status === 'Pendiente'
-                              ? 'bg-surface-800 text-white border border-surface-600'
-                              : 'bg-surface-800 text-surface-500 border border-surface-700'
-                          }`}
-                        >
-                          {doc.status}
-                        </span>
-                      </td>
-                      <td className="text-right text-surface-500 font-mono">{doc.registeredAt}</td>
+          {filteredDoctors.length === 0 ? (
+            <p className="py-8 text-center text-surface-500 text-sm">
+              No se encontraron médicos con ese criterio.
+            </p>
+          ) : (
+            <>
+              <div className="hidden lg:block overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
+                      <th className="pb-2.5">Médico</th>
+                      <th>Especialidad</th>
+                      <th>Cédula / MPPS</th>
+                      <th>Estado</th>
+                      <th className="text-right">Fecha Registro</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-surface-850/60 text-surface-300">
+                    {filteredDoctors.map(doc => (
+                      <tr key={doc.id} className="hover:bg-surface-950/10">
+                        <td className="py-3">
+                          <p className="font-semibold text-white">Dr. {doc.firstName} {doc.lastName}</p>
+                          <p className="text-[10px] text-surface-500 font-mono">{doc.email}</p>
+                        </td>
+                        <td>{doc.specialty}</td>
+                        <td>
+                          <p className="font-mono text-surface-300">{doc.dni}</p>
+                          <p className="text-[10px] font-mono text-surface-500">{doc.licenseMpps}</p>
+                        </td>
+                        <td className="whitespace-nowrap">
+                          <span
+                            className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${
+                              doc.status === 'Verificado'
+                                ? 'bg-surface-800 text-surface-200 border border-surface-700'
+                                : doc.status === 'Pendiente'
+                                ? 'bg-surface-800 text-white border border-surface-600'
+                                : 'bg-surface-800 text-surface-500 border border-surface-700'
+                            }`}
+                          >
+                            {doc.status}
+                          </span>
+                        </td>
+                        <td className="text-right text-surface-500 font-mono">{doc.registeredAt}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="lg:hidden space-y-3">
+                {filteredDoctors.map((doc) => (
+                  <ListCard
+                    key={doc.id}
+                    title={`Dr. ${doc.firstName} ${doc.lastName}`}
+                    subtitle={doc.email}
+                    badge={
+                      <span
+                        className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${
+                          doc.status === 'Verificado'
+                            ? 'bg-surface-800 text-surface-200 border border-surface-700'
+                            : doc.status === 'Pendiente'
+                            ? 'bg-surface-800 text-white border border-surface-600'
+                            : 'bg-surface-800 text-surface-500 border border-surface-700'
+                        }`}
+                      >
+                        {doc.status}
+                      </span>
+                    }
+                    fields={[
+                      { label: 'Especialidad', value: doc.specialty },
+                      { label: 'Cédula', value: doc.dni },
+                      { label: 'MPPS', value: doc.licenseMpps },
+                      { label: 'Registro', value: doc.registeredAt },
+                    ]}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </ModalBody>
       </Modal>
     </div>

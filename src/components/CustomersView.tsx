@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Plus, Users, Mail, Phone, MapPin, DollarSign, ShoppingBag, X } from 'lucide-react';
 import { Customer } from '../types';
-import { PageHeader, Button, Input, Modal, ModalBody, ModalFooter } from './ui';
+import { PageHeader, Button, Input, Modal, ModalBody, ModalFooter, ListCard } from './ui';
 
 interface CustomersViewProps {
   customers: Customer[];
@@ -114,7 +114,8 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
       {/* Customers Table List */}
       <div className="bg-surface-900/60 border border-surface-800 rounded-2xl overflow-hidden backdrop-blur-md">
         {filteredCustomers.length > 0 ? (
-          <div className="overflow-x-auto">
+          <>
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr className="border-b border-surface-850 bg-surface-950/20 text-xs font-semibold text-surface-400 uppercase tracking-wider">
@@ -168,6 +169,22 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
               </tbody>
             </table>
           </div>
+          <div className="lg:hidden space-y-3 p-4">
+            {filteredCustomers.map((c) => (
+              <ListCard
+                key={c.id}
+                title={c.name}
+                subtitle={c.email}
+                fields={[
+                  { label: 'Ciudad', value: c.city },
+                  { label: 'Pedidos', value: c.totalOrders },
+                  { label: 'Facturación', value: c.totalSpent.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }) },
+                  { label: 'Teléfono', value: c.phone || '—' },
+                ]}
+              />
+            ))}
+          </div>
+          </>
         ) : (
           <div className="text-center py-24 text-surface-500 flex flex-col items-center justify-center p-6 border-surface-800">
             <div className="h-12 w-12 rounded-full bg-surface-950 border border-surface-800 flex items-center justify-center mb-3">
@@ -231,8 +248,8 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
                   <label className="zenith-field-label">Dirección Principal *</label>
                   <input
                     type="text"

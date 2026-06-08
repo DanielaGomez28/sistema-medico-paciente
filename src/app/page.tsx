@@ -274,14 +274,15 @@ export default function Home() {
           onLogout={handleLogout}
         />
       }
-      header={
+      header={({ onMenuClick }) => (
         <AppHeader
+          onMenuClick={onMenuClick}
           notificationCount={pendingCount + lowStockCount}
           actions={
             <AppHeaderAction onClick={() => setIsNewOrderOpen(true)}>+ Nuevo Pedido</AppHeaderAction>
           }
         />
-      }
+      )}
     >
       {activeTab === 'dashboard' && (
         <DashboardView

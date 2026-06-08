@@ -23,7 +23,7 @@ import {
   Heart
 } from 'lucide-react';
 import { Order, Product } from '../types';
-import { PageHeader, Button, Badge, StatCard } from './ui';
+import { PageHeader, Button, Badge, StatCard, ListCard } from './ui';
 
 interface DashboardViewProps {
   orders: Order[];
@@ -321,14 +321,14 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
         
         {/* Main Line Chart (2/3 width) */}
         <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <div>
               <h4 className="zenith-section-title">Tendencia Operativa Semanal</h4>
               <p className="text-xs text-surface-400">Filtre y visualice las estadísticas clave de rendimiento.</p>
             </div>
             
             {/* Interactive metric selectors */}
-            <div className="flex items-center gap-1 text-2xs font-bold bg-surface-950 border border-surface-850 rounded-xl p-1">
+            <div className="flex items-center gap-1 text-2xs font-bold bg-surface-950 border border-surface-850 rounded-xl p-1 self-start sm:self-center">
               <button
                 onClick={() => setActiveMetricTab('sales')}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'sales' ? 'bg-white text-surface-950' : 'text-surface-400 hover:text-white'}`}
@@ -460,7 +460,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
         </div>
 
         {/* Database Search Tabs */}
-        <div className="flex items-center gap-1.5 text-2xs font-bold border-b border-surface-850 pb-1">
+        <div className="flex items-center gap-1.5 text-2xs font-bold border-b border-surface-850 pb-1 overflow-x-auto flex-nowrap">
           <button
             onClick={() => { setDbSearchTab('medicos'); setDbSearchQuery(''); }}
             className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'medicos' ? 'text-white border-b-2 border-primary-550' : 'text-surface-500 hover:text-surface-350'}`}
@@ -482,10 +482,12 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
         </div>
 
         {/* Tab content viewer */}
-        <div className="overflow-x-auto min-h-[180px]">
+        <div className="min-h-[180px]">
           
           {/* Doctors Table */}
           {dbSearchTab === 'medicos' && (
+            <>
+            <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-surface-850 text-surface-500 uppercase font-bold tracking-wider">
@@ -519,10 +521,34 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                 ))}
               </tbody>
             </table>
+            </div>
+            <div className="lg:hidden space-y-3">
+              {filteredDoctors.map((doc) => (
+                <ListCard
+                  key={doc.id}
+                  title={doc.name}
+                  subtitle={doc.specialty}
+                  badge={
+                    <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-surface-800 text-surface-500'}`}>
+                      {doc.status}
+                    </span>
+                  }
+                  fields={[
+                    { label: 'ID', value: doc.id },
+                    { label: 'Registro', value: doc.license },
+                    { label: 'Récipes', value: `${doc.recipesCount} r.` },
+                    { label: 'Comisiones', value: `$${doc.commissionsEarned.toFixed(2)}` },
+                  ]}
+                />
+              ))}
+            </div>
+            </>
           )}
 
           {/* Patients Table */}
           {dbSearchTab === 'pacientes' && (
+            <>
+            <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-surface-855 text-surface-500 uppercase font-bold tracking-wider">
@@ -557,10 +583,37 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                 ))}
               </tbody>
             </table>
+            </div>
+            <div className="lg:hidden space-y-3">
+              {filteredPatients.map((pat) => (
+                <ListCard
+                  key={pat.id}
+                  title={pat.name}
+                  subtitle={pat.id}
+                  badge={
+                    <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${
+                      pat.withdrawalStatus === 'Retirado'
+                        ? 'bg-secondary-500/10 text-secondary-400'
+                        : 'bg-primary-500/10 text-primary-400'
+                    }`}>
+                      {pat.withdrawalStatus}
+                    </span>
+                  }
+                  fields={[
+                    { label: 'Edad', value: `${pat.age} años` },
+                    { label: 'Diagnóstico', value: pat.condition },
+                    { label: 'Último récipe', value: pat.lastRecipeDate },
+                  ]}
+                />
+              ))}
+            </div>
+            </>
           )}
 
           {/* Stock Movements Table */}
           {dbSearchTab === 'movimientos' && (
+            <>
+            <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-surface-855 text-surface-500 uppercase font-bold tracking-wider">
@@ -589,6 +642,27 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                 ))}
               </tbody>
             </table>
+            </div>
+            <div className="lg:hidden space-y-3">
+              {filteredMovements.map((mov) => (
+                <ListCard
+                  key={mov.id}
+                  title={mov.medication}
+                  subtitle={mov.id}
+                  badge={
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${mov.type === 'Entrada' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-secondary-500/10 text-secondary-400'}`}>
+                      {mov.type}
+                    </span>
+                  }
+                  fields={[
+                    { label: 'Cantidad', value: `${mov.quantity} u.` },
+                    { label: 'Fecha', value: mov.date },
+                    { label: 'Origen/Destino', value: mov.sourceDest },
+                  ]}
+                />
+              ))}
+            </div>
+            </>
           )}
 
         </div>
@@ -613,7 +687,7 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
             </button>
           </div>
           
-          <div className="overflow-x-auto">
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
                 <tr className="border-b border-surface-805 text-xs font-bold text-surface-450 uppercase tracking-wider">
@@ -647,6 +721,30 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="lg:hidden space-y-3">
+            {recentOrders.map((order) => (
+              <ListCard
+                key={order.id}
+                title={order.id}
+                subtitle={order.customerName}
+                badge={<Badge status={order.status}>{order.status}</Badge>}
+                fields={[
+                  {
+                    label: 'Total',
+                    value: order.total.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' }),
+                  },
+                ]}
+                actions={
+                  <button
+                    onClick={() => onSelectOrder(order)}
+                    className="px-2.5 py-1 text-xs font-semibold text-surface-400 hover:text-white bg-surface-800 hover:bg-surface-700 rounded-md border border-surface-700 transition-colors cursor-pointer"
+                  >
+                    Detalles
+                  </button>
+                }
+              />
+            ))}
           </div>
         </div>
 

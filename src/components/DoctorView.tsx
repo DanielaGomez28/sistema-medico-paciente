@@ -401,13 +401,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
             onLogout={onLogout}
           />
         }
-        header={
+        header={({ onMenuClick }) => (
           <AppHeader
+            onMenuClick={onMenuClick}
             statusLabel="Consulta en Curso"
             showNotifications={false}
-            trailing={<span className="text-xs font-bold text-surface-350">{doctorEmail}</span>}
+            trailing={
+              <span className="text-xs font-bold text-surface-350 truncate max-w-[120px] sm:max-w-none">
+                {doctorEmail}
+              </span>
+            }
           />
-        }
+        )}
       >
             {/* VIEW TAB 1: DAILY AGENDA & METRICS */}
             {activeTab === 'agenda' && (
@@ -460,7 +465,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                     <div className="divide-y divide-surface-850">
                       {appointments.map((app) => (
-                        <div key={app.id} className="py-3.5 flex items-center justify-between first:pt-0 last:pb-0">
+                        <div key={app.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 first:pt-0 last:pb-0">
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-white">{app.patientName}</p>
@@ -965,7 +970,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                                       <span>Asignación de Incentivo / Descuento Exclusivo</span>
                                     </span>
                                     
-                                    <div className="grid grid-cols-5 gap-1.5">
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
                                       {[0, 10, 15, 20, 30].map((disc) => (
                                         <button
                                           key={disc}

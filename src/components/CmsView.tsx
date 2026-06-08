@@ -283,7 +283,7 @@ export default function CmsView() {
               <div className="space-y-3.5">
                 <div className="space-y-1.5">
                   <label className="zenith-field-label">Gama de Color Temático</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {[
                       { id: 'primary' as const, name: 'Turquesa', color: 'bg-primary-600' },
                       { id: 'secondary' as const, name: 'Verde Bosque', color: 'bg-secondary-600' },
@@ -304,7 +304,7 @@ export default function CmsView() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="zenith-field-label">Logotipo Oficial (Path)</label>
                     <input 
