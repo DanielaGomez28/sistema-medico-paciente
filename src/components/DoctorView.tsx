@@ -510,7 +510,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                 .join('')
                 .toUpperCase(),
               name: doctorName,
-              role: 'Cardiólogo (MPPS 28.490)',
               avatarClassName: 'portal-profile-avatar',
             }}
             preProfile={
@@ -1281,7 +1280,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                           <h3 className="zenith-section-title">Libro de Comisiones</h3>
                           <p className="text-xs text-surface-400">Incentivos asignados por venta efectiva en la red de farmacias.</p>
                         </div>
-                        <span className="text-[10px] bg-secondary-500/10 text-secondary-400 border border-secondary-500/20 px-2 py-0.5 rounded font-bold">Tasa: {commissionRate}%</span>
+                        <span className="text-[10px] bg-secondary-500/10 text-[#2b2d2b] border border-secondary-500/20 px-2 py-0.5 rounded font-bold">Tasa: {commissionRate}%</span>
                       </div>
 
                       {/* Bar-chart style visualisation per entry */}
@@ -1294,7 +1293,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                                 <span className="text-[10px] text-surface-500 truncate block">{entry.medication} • {entry.date}</span>
                               </div>
                               <div className="text-right shrink-0 pl-3">
-                                <span className={`font-semibold text-sm ${ entry.status === 'Acreditado' ? 'text-secondary-400' : 'text-primary-450' }`}>
+                                <span className="font-bold text-sm text-black">
                                   +{formatCurrency(entry.commissionAmount)}
                                 </span>
                                 <span className={`text-[9px] font-bold block ${ entry.status === 'Acreditado' ? 'text-secondary-500/70' : 'text-primary-500/70' }`}>
@@ -1305,7 +1304,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                             {/* Sale proportion bar */}
                             <div className="h-1 w-full bg-surface-850 rounded-full overflow-hidden">
                               <div
-                                className={`h-full rounded-full ${ entry.status === 'Acreditado' ? 'bg-secondary-500' : 'bg-primary-500' }`}
+                                className="h-full rounded-full bg-[#179150]"
                                 style={{ width: `${Math.min((entry.saleAmount / 25) * 100, 100)}%` }}
                               ></div>
                             </div>
@@ -1316,7 +1315,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       {/* Totals row */}
                       <div className="border-t border-surface-850 pt-4 flex justify-between items-center text-xs">
                         <span className="text-surface-500 font-semibold">Total Período Actual (Jun 2026)</span>
-                        <span className="font-semibold text-white text-sm">{formatCurrency(totalAccredited + totalPending)}</span>
+                        <span className="font-bold text-black text-sm">{formatCurrency(totalAccredited + totalPending)}</span>
                       </div>
                     </div>
 
