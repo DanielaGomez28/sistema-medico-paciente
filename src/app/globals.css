@@ -1301,9 +1301,6 @@ table th {
   --zenith-nav-active-bg: color-mix(in srgb, #179150 14%, transparent);
   --zenith-nav-active-border: #179150;
   --zenith-nav-active-dot: #3dba72;
-  --portal-canvas: var(--zenith-surface-950);
-  --portal-card-bg: #ffffff;
-  --portal-card-fg: #0a1220;
 }
 
 [data-portal="patient"] {
@@ -1331,12 +1328,29 @@ table th {
   --text-label: 0.875rem;
   --text-title: 1.3125rem;
   --text-subtitle: 0.9375rem;
-  --patient-canvas: var(--zenith-surface-950);
-  --patient-card-bg: #ffffff;
-  --patient-card-fg: #0a1220;
-  --portal-canvas: var(--patient-canvas);
-  --portal-card-bg: var(--patient-card-bg);
-  --portal-card-fg: var(--patient-card-fg);
+}
+
+/* Canvas y tarjetas — paciente, médico y admin */
+[data-portal="patient"],
+[data-portal="doctor"],
+[data-portal="admin"] {
+  --portal-canvas: var(--zenith-surface-950);
+  --portal-card-bg: color-mix(in srgb, var(--zenith-surface-900) 60%, var(--zenith-surface-950));
+  --portal-card-fg: var(--foreground);
+}
+
+[data-theme="light"] [data-portal="patient"],
+[data-theme="light"] [data-portal="doctor"],
+[data-theme="light"] [data-portal="admin"] {
+  --portal-canvas: color-mix(in srgb, var(--zenith-surface-900) 60%, var(--zenith-surface-950));
+  --portal-card-bg: #ffffff;
+  --portal-card-fg: #0a1220;
+}
+
+[data-portal="patient"] {
+  --patient-canvas: var(--portal-canvas);
+  --patient-card-bg: var(--portal-card-bg);
+  --patient-card-fg: var(--portal-card-fg);
 }
 
 /* Tipografía compartida — paciente, médico y admin */
@@ -1566,7 +1580,7 @@ table th {
 }
 
 [data-theme="dark"] [data-portal="patient"] .patient-medication-name {
-  color: #033a42;
+  color: var(--foreground);
 }
 
 [data-portal="patient"] .patient-recipe-view-btn {
@@ -1596,23 +1610,21 @@ table th {
 [data-portal="patient"] header,
 [data-portal="doctor"].flex.h-screen,
 [data-portal="doctor"] main,
-[data-portal="doctor"] header {
+[data-portal="doctor"] header,
+[data-portal="admin"].flex.h-screen,
+[data-portal="admin"] main,
+[data-portal="admin"] header {
   background-color: var(--portal-canvas) !important;
 }
 
 [data-portal="patient"] header,
-[data-portal="doctor"] header {
+[data-portal="doctor"] header,
+[data-portal="admin"] header {
   backdrop-filter: none;
 }
 
-[data-theme="dark"] [data-portal="patient"],
-[data-theme="dark"] [data-portal="doctor"] {
-  --portal-canvas: var(--zenith-surface-950);
-  --portal-card-bg: #ffffff;
-  --portal-card-fg: #0a1220;
-}
-
 [data-portal="patient"] main :is(
+  .bg-surface-900\/40,
   .bg-surface-900\/60,
   .bg-surface-900\/65,
   .bg-primary-500\/5,
@@ -1621,6 +1633,16 @@ table th {
   .bg-surface-950\/50
 ),
 [data-portal="doctor"] main :is(
+  .bg-surface-900\/40,
+  .bg-surface-900\/60,
+  .bg-surface-900\/65,
+  .bg-primary-500\/5,
+  .bg-secondary-500\/5,
+  .bg-amber-500\/5,
+  .bg-surface-950\/50
+),
+[data-portal="admin"] main :is(
+  .bg-surface-900\/40,
   .bg-surface-900\/60,
   .bg-surface-900\/65,
   .bg-primary-500\/5,
@@ -1634,6 +1656,7 @@ table th {
 }
 
 [data-portal="patient"] main :is(
+  .bg-surface-900\/40,
   .bg-surface-900\/60,
   .bg-surface-900\/65,
   .bg-primary-500\/5,
@@ -1657,6 +1680,31 @@ table th {
   dd
 ):is(.text-white, .text-surface-200),
 [data-portal="doctor"] main :is(
+  .bg-surface-900\/40,
+  .bg-surface-900\/60,
+  .bg-surface-900\/65,
+  .bg-primary-500\/5,
+  .bg-secondary-500\/5,
+  .bg-amber-500\/5,
+  .bg-surface-950\/50
+) :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  td,
+  th,
+  li,
+  label,
+  dt,
+  dd
+):is(.text-white, .text-surface-200),
+[data-portal="admin"] main :is(
+  .bg-surface-900\/40,
   .bg-surface-900\/60,
   .bg-surface-900\/65,
   .bg-primary-500\/5,
@@ -1682,26 +1730,24 @@ table th {
   color: var(--portal-card-fg) !important;
 }
 
-[data-portal="patient"] main .bg-surface-900\/60,
-[data-portal="patient"] main .bg-surface-900\/65,
-[data-portal="doctor"] main .bg-surface-900\/60,
-[data-portal="doctor"] main .bg-surface-900\/65 {
+[data-portal="patient"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65),
+[data-portal="doctor"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65),
+[data-portal="admin"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) {
   background-color: var(--portal-card-bg) !important;
   backdrop-filter: blur(12px);
   border-color: var(--zenith-surface-800) !important;
 }
 
-[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60,
-[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/65,
-[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/60,
-[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/65 {
+[data-theme="light"] [data-portal="patient"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65),
+[data-theme="light"] [data-portal="doctor"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65),
+[data-theme="light"] [data-portal="admin"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) {
   background-color: var(--portal-card-bg) !important;
   backdrop-filter: none;
   border-color: var(--zenith-surface-850) !important;
   color: var(--portal-card-fg);
 }
 
-[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 :is(
+[data-theme="light"] [data-portal="patient"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) :is(
   h1,
   h2,
   h3,
@@ -1717,7 +1763,7 @@ table th {
   dt,
   dd
 ):is(.text-white, .text-surface-200),
-[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/65 :is(
+[data-theme="light"] [data-portal="doctor"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) :is(
   h1,
   h2,
   h3,
@@ -1733,23 +1779,7 @@ table th {
   dt,
   dd
 ):is(.text-white, .text-surface-200),
-[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/60 :is(
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  p,
-  span,
-  td,
-  th,
-  li,
-  label,
-  dt,
-  dd
-):is(.text-white, .text-surface-200),
-[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/65 :is(
+[data-theme="light"] [data-portal="admin"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) :is(
   h1,
   h2,
   h3,
@@ -1768,24 +1798,21 @@ table th {
   color: var(--portal-card-fg) !important;
 }
 
-[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 .text-black,
-[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/65 .text-black,
-[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/60 .text-black,
-[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/65 .text-black {
+[data-theme="light"] [data-portal="patient"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) .text-black,
+[data-theme="light"] [data-portal="doctor"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) .text-black,
+[data-theme="light"] [data-portal="admin"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) .text-black {
   color: var(--portal-card-fg) !important;
 }
 
-[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/60,
-[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/65,
-[data-theme="dark"] [data-portal="doctor"] main .bg-surface-900\/60,
-[data-theme="dark"] [data-portal="doctor"] main .bg-surface-900\/65 {
+[data-theme="dark"] [data-portal="patient"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65),
+[data-theme="dark"] [data-portal="doctor"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65),
+[data-theme="dark"] [data-portal="admin"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) {
   color: var(--foreground);
 }
 
-[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/60 .text-black,
-[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/65 .text-black,
-[data-theme="dark"] [data-portal="doctor"] main .bg-surface-900\/60 .text-black,
-[data-theme="dark"] [data-portal="doctor"] main .bg-surface-900\/65 .text-black {
+[data-theme="dark"] [data-portal="patient"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) .text-black,
+[data-theme="dark"] [data-portal="doctor"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) .text-black,
+[data-theme="dark"] [data-portal="admin"] main :is(.bg-surface-900\/40, .bg-surface-900\/60, .bg-surface-900\/65) .text-black {
   color: var(--foreground) !important;
 }
 
@@ -1859,9 +1886,6 @@ table th {
   --color-primary-600: #146b42;
   --color-primary-650: #11623c;
   --color-primary-700: #0d5735;
-  --portal-canvas: color-mix(in srgb, var(--zenith-surface-900) 60%, var(--zenith-surface-950));
-  --portal-card-bg: #ffffff;
-  --portal-card-fg: #0a1220;
 }
 
 [data-theme="light"] [data-portal="patient"] {
@@ -1878,12 +1902,9 @@ table th {
   --portal-btn-hover: #095c67;
   --portal-btn-fg: #ffffff;
   --portal-btn-border: #095c67;
-  --patient-canvas: color-mix(in srgb, var(--zenith-surface-900) 60%, var(--zenith-surface-950));
-  --patient-card-bg: #ffffff;
-  --patient-card-fg: #0a1220;
-  --portal-canvas: var(--patient-canvas);
-  --portal-card-bg: var(--patient-card-bg);
-  --portal-card-fg: var(--patient-card-fg);
+  --patient-canvas: var(--portal-canvas);
+  --patient-card-bg: var(--portal-card-bg);
+  --patient-card-fg: var(--portal-card-fg);
 }
 
 [data-theme="light"] [data-portal="admin"] {
@@ -1909,7 +1930,9 @@ table th {
 [data-theme="light"] [data-portal="patient"] .zenith-page-title,
 [data-theme="light"] [data-portal="patient"] .zenith-section-title,
 [data-theme="light"] [data-portal="doctor"] .zenith-page-title,
-[data-theme="light"] [data-portal="doctor"] .zenith-section-title {
+[data-theme="light"] [data-portal="doctor"] .zenith-section-title,
+[data-theme="light"] [data-portal="admin"] .zenith-page-title,
+[data-theme="light"] [data-portal="admin"] .zenith-section-title {
   color: #000000;
 }
 
