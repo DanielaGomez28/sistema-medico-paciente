@@ -31,7 +31,6 @@ import {
   Award,
   BarChart3,
   BadgeCheck,
-  Star
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
 import {
@@ -50,7 +49,7 @@ interface DoctorViewProps {
 }
 
 interface LinkedPatient {
-  id: string;
+  cedula: string;
   name: string;
   age: number;
   gender: string;
@@ -108,7 +107,7 @@ interface RecipeLogEntry {
   id: string;
   date: string;
   patientName: string;
-  patientId: string;
+  patientCedula: string;
   medications: string[];
   branch: string;
   status: 'Enviado' | 'Confirmado' | 'Retirado';
@@ -123,15 +122,15 @@ const MOCK_COMMISSIONS: CommissionEntry[] = [
 ];
 
 const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
-  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientId: 'PX-992-8849', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmahumana Caracas', status: 'Confirmado' },
-  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'PX-992-1029', medications: ['Metformina 850mg'], branch: 'Clínica Humana Valencia', status: 'Retirado' },
-  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientId: 'PX-992-0344', medications: ['Atorvastatina 20mg'], branch: 'Farmahumana Maracaibo', status: 'Retirado' },
-  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientId: 'PX-992-0811', medications: ['Ibuprofeno 600mg'], branch: 'Clínica Humana Caracas', status: 'Enviado' },
+  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientCedula: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmahumana Caracas', status: 'Confirmado' },
+  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientCedula: 'V-15234891', medications: ['Metformina 850mg'], branch: 'Clínica Humana Valencia', status: 'Retirado' },
+  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientCedula: 'V-22341567', medications: ['Atorvastatina 20mg'], branch: 'Farmahumana Maracaibo', status: 'Retirado' },
+  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientCedula: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Clínica Humana Caracas', status: 'Enviado' },
 ];
 
 const INITIAL_PATIENTS: LinkedPatient[] = [
   {
-    id: 'PX-992-8849',
+    cedula: 'V-28450123',
     name: 'Sofía Peralta',
     age: 28,
     gender: 'Femenino',
@@ -143,7 +142,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     medications: ['Ramipril 5mg', 'Aspirina 100mg'],
   },
   {
-    id: 'PX-992-1029',
+    cedula: 'V-15234891',
     name: 'Carlos Mendoza',
     age: 45,
     gender: 'Masculino',
@@ -155,7 +154,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     medications: ['Metformina 850mg'],
   },
   {
-    id: 'PX-992-0344',
+    cedula: 'V-22341567',
     name: 'Ana Gómez Román',
     age: 34,
     gender: 'Femenino',
@@ -167,7 +166,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     medications: [],
   },
   {
-    id: 'PX-992-0811',
+    cedula: 'V-18765432',
     name: 'Luis Rodríguez Silva',
     age: 52,
     gender: 'Masculino',
@@ -181,7 +180,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
 ];
 
 const createEmptyPatient = (): LinkedPatient => ({
-  id: '',
+  cedula: '',
   name: '',
   age: 0,
   gender: 'Masculino',
@@ -248,9 +247,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     return patients.filter(
       (p) =>
         p.name.toLowerCase().includes(query) ||
-        p.id.toLowerCase().includes(query) ||
-        p.phone.includes(query) ||
-        p.condition.toLowerCase().includes(query)
+        p.cedula.toLowerCase().includes(query)
     );
   }, [patients, patientListSearch]);
 
@@ -258,7 +255,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
-  const [manualIdInput, setManualIdInput] = useState('');
+  const [manualCedulaInput, setManualCedulaInput] = useState('');
   const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
 
   // Prescription states (M.2)
@@ -293,12 +290,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   };
 
   const handleDeletePatient = () => {
-    if (!patientForm.id || isNewPatient) return;
+    if (!patientForm.cedula || isNewPatient) return;
     if (!confirm(`¿Eliminar el expediente de ${patientForm.name}? Esta acción no se puede deshacer.`)) {
       return;
     }
-    setPatients((prev) => prev.filter((p) => p.id !== patientForm.id));
-    if (linkedPatient?.id === patientForm.id) {
+    setPatients((prev) => prev.filter((p) => p.cedula !== patientForm.cedula));
+    if (linkedPatient?.cedula === patientForm.cedula) {
       setLinkedPatient(null);
     }
     handleBackToPatientList();
@@ -306,8 +303,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
   const handleSavePatient = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientForm.name.trim() || !patientForm.phone.trim()) {
-      alert('El nombre y el teléfono del paciente son obligatorios.');
+    if (!patientForm.name.trim() || !patientForm.phone.trim() || !patientForm.cedula.trim()) {
+      alert('El nombre, la cédula y el teléfono del paciente son obligatorios.');
       return;
     }
 
@@ -319,7 +316,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     if (isNewPatient) {
       const newPatient: LinkedPatient = {
         ...patientForm,
-        id: `PX-992-${Math.floor(1000 + Math.random() * 9000)}`,
+        cedula: patientForm.cedula.trim().toUpperCase(),
         medications,
         lastVisit: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
       };
@@ -329,7 +326,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
       setIsNewPatient(false);
     } else {
       const updatedPatient: LinkedPatient = { ...patientForm, medications };
-      setPatients((prev) => prev.map((p) => (p.id === updatedPatient.id ? updatedPatient : p)));
+      setPatients((prev) => prev.map((p) => (p.cedula === updatedPatient.cedula ? updatedPatient : p)));
       setLinkedPatient(updatedPatient);
       setPatientForm(updatedPatient);
     }
@@ -338,13 +335,10 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setTimeout(() => setPatientSaveMsg(''), 3000);
   };
 
-  const linkPatientMock = (idType: string) => {
-    const normalized = idType.toLowerCase();
-    const found = patients.find(
-      (p) =>
-        p.id.toLowerCase().includes(normalized) ||
-        (normalized.includes('8849') && p.id.includes('8849')) ||
-        (normalized.includes('1029') && p.id.includes('1029'))
+  const linkPatientMock = (cedulaQuery: string) => {
+    const normalized = cedulaQuery.toLowerCase().replace(/\s/g, '');
+    const found = patients.find((p) =>
+      p.cedula.toLowerCase().replace(/\s/g, '').includes(normalized)
     );
 
     if (found) {
@@ -370,7 +364,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
         setScanProgress((prev) => {
           if (prev >= 100) {
             setIsScanning(false);
-            linkPatientMock('8849'); // Auto link main patient Sofia
+            linkPatientMock('V-28450123'); // Auto link main patient Sofia
             return 0;
           }
           return prev + 25;
@@ -382,12 +376,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
   const handleManualLinkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualIdInput) {
-      alert('Por favor ingrese un ID de paciente.');
+    if (!manualCedulaInput) {
+      alert('Por favor ingrese la cédula del paciente.');
       return;
     }
-    linkPatientMock(manualIdInput);
-    setManualIdInput('');
+    linkPatientMock(manualCedulaInput);
+    setManualCedulaInput('');
   };
 
   // Cart operations
@@ -562,12 +556,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                     <div className="divide-y divide-surface-850">
                       {patients.map((patient) => (
-                        <div key={patient.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 first:pt-0 last:pb-0">
+                        <div key={patient.cedula} className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 first:pt-0 last:pb-0">
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-white">{patient.name}</p>
                               <span className="text-[9px] font-mono text-surface-500 bg-surface-950 px-1.5 py-0.5 rounded border border-surface-850">
-                                {patient.id}
+                                {patient.cedula}
                               </span>
                             </div>
                             <p className="text-xs text-surface-400 mt-1">
@@ -594,7 +588,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                     <div className="space-y-3 flex-1 pt-2">
                       {patients.map((patient) => (
-                        <div key={patient.id} className="p-3 bg-surface-950/40 border border-surface-850 rounded-xl space-y-1">
+                        <div key={patient.cedula} className="p-3 bg-surface-950/40 border border-surface-850 rounded-xl space-y-1">
                           <div className="flex justify-between items-center text-xs">
                             <span className="font-semibold text-white">{patient.name}</span>
                             <span className="text-surface-555 text-[10px] font-medium">Edad: {patient.age} años</span>
@@ -692,22 +686,23 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       </div>
                     </div>
 
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
-                      <input
-                        type="text"
-                        placeholder="Buscar por nombre, ID, teléfono o condición..."
-                        value={patientListSearch}
-                        onChange={(e) => setPatientListSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-surface-900/40 border border-surface-800 rounded-xl text-xs text-white placeholder-surface-550 focus:outline-none focus:border-secondary-500"
-                      />
-                    </div>
+                    <div className="space-y-0.5">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
+                        <input
+                          type="text"
+                          placeholder="Buscar por nombre o cédula"
+                          value={patientListSearch}
+                          onChange={(e) => setPatientListSearch(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2.5 bg-white border border-surface-850 rounded-xl text-xs text-[#0a1220] placeholder:text-surface-500 focus:outline-none focus:border-secondary-500"
+                        />
+                      </div>
 
-                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl overflow-hidden backdrop-blur-md">
+                      <div className="bg-surface-900/60 border border-surface-800 rounded-2xl overflow-hidden backdrop-blur-md">
                       {filteredPatients.length > 0 ? (
                         <>
                           <div className="zenith-table-wrap hidden lg:block">
-                            <table className="zenith-table text-sm">
+                            <table className="zenith-table zenith-table--divided text-sm">
                               <thead>
                                 <tr className="border-b border-surface-850 bg-surface-950/20 text-xs font-semibold text-surface-400 uppercase tracking-wider">
                                   <th className="px-6 py-4 zenith-table__stack">Paciente</th>
@@ -720,7 +715,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                               <tbody className="divide-y divide-surface-850">
                                 {filteredPatients.map((patient) => (
                                   <tr
-                                    key={patient.id}
+                                    key={patient.cedula}
                                     onClick={() => openPatientForm(patient)}
                                     className="hover:bg-surface-850/20 transition-colors cursor-pointer"
                                   >
@@ -731,7 +726,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                                         </div>
                                         <div>
                                           <p className="font-semibold text-surface-200 leading-none">{patient.name}</p>
-                                          <span className="text-[10px] text-surface-500 font-mono mt-1 block">{patient.id}</span>
+                                          <span className="text-[10px] text-surface-500 font-mono mt-1 block">{patient.cedula}</span>
                                         </div>
                                       </div>
                                     </td>
@@ -767,9 +762,9 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                           <div className="lg:hidden space-y-3 p-4">
                             {filteredPatients.map((patient) => (
                               <ListCard
-                                key={patient.id}
+                                key={patient.cedula}
                                 title={patient.name}
-                                subtitle={patient.id}
+                                subtitle={patient.cedula}
                                 onClick={() => openPatientForm(patient)}
                                 badge={
                                   patient.allergies && patient.allergies !== 'Ninguna conocida' ? (
@@ -811,6 +806,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         </div>
                       )}
                     </div>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -823,7 +819,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       Volver al listado
                     </button>
 
-                    {!isNewPatient && patientForm.id ? (
+                    {!isNewPatient && patientForm.cedula ? (
                       <div className="flex justify-end">
                         <Button
                           variant="ghost"
@@ -865,13 +861,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="zenith-field-label">ID del paciente</label>
+                            <label className="zenith-field-label">Cédula</label>
                             <input
                               type="text"
-                              value={patientForm.id}
+                              value={patientForm.cedula}
+                              onChange={(e) => setPatientForm({ ...patientForm, cedula: e.target.value })}
                               disabled={!isNewPatient}
-                              placeholder="Se generará automáticamente"
-                              className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none disabled:cursor-not-allowed"
+                              placeholder="Ej: V-28450123"
+                              className={`w-full border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-secondary-500 uppercase ${
+                                isNewPatient
+                                  ? 'bg-surface-950 text-white'
+                                  : 'bg-surface-950/40 text-surface-550 disabled:cursor-not-allowed'
+                              }`}
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -1263,55 +1264,14 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               });
 
               const totalAccredited = dynamicCommissions
-                .filter(c => c.status === 'Acreditado')
+                .filter((c) => c.status === 'Acreditado')
                 .reduce((sum, c) => sum + c.commissionAmount, 0);
               const totalPending = dynamicCommissions
-                .filter(c => c.status === 'Pendiente')
+                .filter((c) => c.status === 'Pendiente')
                 .reduce((sum, c) => sum + c.commissionAmount, 0);
-              const totalSales = dynamicCommissions.reduce((sum, c) => sum + c.saleAmount, 0);
-              const totalRecipes = MOCK_RECIPE_LOG.length;
 
               return (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                  {/* Financial KPI Cards */}
-                  <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-4">
-                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
-                      <div className="h-8 w-8 rounded-lg bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
-                        <DollarSign className="h-4.5 w-4.5" />
-                      </div>
-                      <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wider">Comisiones Acreditadas</p>
-                      <p className="text-lg font-semibold text-secondary-400">{formatCurrency(totalAccredited)}</p>
-                      <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-secondary-500/5"></div>
-                    </div>
-
-                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
-                      <div className="h-8 w-8 rounded-lg bg-primary-500/10 text-primary-400 flex items-center justify-center">
-                        <Clock className="h-4.5 w-4.5" />
-                      </div>
-                      <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wider">Comisiones Pendientes</p>
-                      <p className="text-lg font-semibold text-primary-400">{formatCurrency(totalPending)}</p>
-                      <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-primary-500/5"></div>
-                    </div>
-
-                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
-                      <div className="h-8 w-8 rounded-lg bg-primary-500/10 text-primary-400 flex items-center justify-center">
-                        <BarChart3 className="h-4.5 w-4.5" />
-                      </div>
-                      <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wider">Ventas Generadas</p>
-                      <p className="text-lg font-semibold text-primary-400">{formatCurrency(totalSales)}</p>
-                      <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-primary-500/5"></div>
-                    </div>
-
-                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
-                      <div className="h-8 w-8 rounded-lg bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
-                        <BadgeCheck className="h-4.5 w-4.5" />
-                      </div>
-                      <p className="text-[10px] font-bold text-surface-500 uppercase tracking-wider">Récipes Emitidos</p>
-                      <p className="text-lg font-semibold text-secondary-400">{totalRecipes}</p>
-                      <div className="absolute -bottom-3 -right-3 h-14 w-14 rounded-full bg-secondary-500/5"></div>
-                    </div>
-                  </div>
-
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
                     {/* Commission Ledger */}
@@ -1415,39 +1375,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       </div>
                     </div>
 
-                  </div>
-
-                  {/* Performance & Rating Strip */}
-                  <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 backdrop-blur-md flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-secondary to-secondary-600 flex items-center justify-center">
-                        <Award className="h-5 w-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-white">Rendimiento Mensual del Especialista</p>
-                        <p className="text-[10px] text-surface-400">Basado en récipes emitidos, ventas generadas y satisfacción del paciente.</p>
-                      </div>
-                    </div>
-                    <div className="grid w-full grid-cols-3 gap-3 sm:flex sm:w-auto sm:items-center sm:gap-4 sm:shrink-0">
-                      <div className="text-center">
-                        <p className="text-[9px] text-surface-500 uppercase font-bold">Récipes</p>
-                        <p className="text-base font-semibold text-white">{totalRecipes}</p>
-                      </div>
-                      <div className="hidden h-8 w-px bg-surface-800 sm:block"></div>
-                      <div className="text-center">
-                        <p className="text-[9px] text-surface-500 uppercase font-bold">Ventas</p>
-                        <p className="text-base font-semibold text-white">{formatCurrency(totalSales)}</p>
-                      </div>
-                      <div className="hidden h-8 w-px bg-surface-800 sm:block"></div>
-                      <div className="text-center">
-                        <p className="text-[9px] text-surface-500 uppercase font-bold">Valoración</p>
-                        <div className="flex items-center gap-0.5 mt-0.5 justify-center">
-                          {[1,2,3,4,5].map(s => (
-                            <Star key={s} className={`h-3.5 w-3.5 ${ s <= 4 ? 'text-primary-400 fill-primary-400' : 'text-surface-700' }`} />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
                   </div>
 
                 </div>
@@ -1726,7 +1653,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
       >
         <ModalBody className="space-y-5">
           <p className="text-xs text-surface-400">
-            Active la cámara o ingrese manualmente el ID del paciente para cargar su expediente y editar sus datos.
+            Active la cámara o ingrese manualmente la cédula del paciente para cargar su expediente y editar sus datos.
           </p>
 
           <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
@@ -1767,13 +1694,13 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
           <form onSubmit={handleManualLinkSubmit} className="space-y-3">
             <div className="space-y-1.5">
-              <label className="zenith-field-label">ID del paciente</label>
+              <label className="zenith-field-label">Cédula del paciente</label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
-                  placeholder="Ej: PX-992-8849"
-                  value={manualIdInput}
-                  onChange={(e) => setManualIdInput(e.target.value)}
+                  placeholder="Ej: V-28450123"
+                  value={manualCedulaInput}
+                  onChange={(e) => setManualCedulaInput(e.target.value)}
                   className="flex-1 bg-surface-950 border border-surface-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-surface-750 focus:outline-none focus:border-secondary-500"
                 />
                 <button
@@ -1785,7 +1712,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               </div>
             </div>
             <p className="text-[10px] text-surface-555 italic leading-snug">
-              Tip de prueba: digite <code className="text-secondary-400 font-mono">8849</code> para vincular a Sofía Peralta.
+              Tip de prueba: digite <code className="text-secondary-400 font-mono">V-28450123</code> para vincular a Sofía Peralta.
             </p>
           </form>
         </ModalBody>

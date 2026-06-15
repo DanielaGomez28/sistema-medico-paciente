@@ -1003,18 +1003,44 @@ table th {
 }
 
 .login-view__field-icon {
-  color: var(--login-muted);
+  color: #424442;
 }
 
 .login-view__field {
   background: var(--login-field);
   border: 1px solid transparent;
-  color: var(--login-foreground);
+  color: #424442;
   font-size: 1rem;
 }
 
 .login-view__field::placeholder {
+  color: #424442;
+  opacity: 1;
+}
+
+.login-view__field:-webkit-autofill,
+.login-view__field:-webkit-autofill:hover,
+.login-view__field:-webkit-autofill:focus {
+  -webkit-text-fill-color: #424442;
+}
+
+[data-theme="dark"] .login-view__field-icon {
   color: var(--login-muted);
+}
+
+[data-theme="dark"] .login-view__field {
+  color: var(--login-foreground);
+}
+
+[data-theme="dark"] .login-view__field::placeholder {
+  color: var(--login-muted);
+  opacity: 1;
+}
+
+[data-theme="dark"] .login-view__field:-webkit-autofill,
+[data-theme="dark"] .login-view__field:-webkit-autofill:hover,
+[data-theme="dark"] .login-view__field:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--login-foreground);
 }
 
 .login-view__field:focus {
@@ -1040,10 +1066,19 @@ table th {
 }
 
 .login-view__icon-btn {
-  color: var(--login-muted);
+  color: #424442;
 }
 
 .login-view__icon-btn:hover {
+  color: #424442;
+  background: color-mix(in srgb, #424442 5%, transparent);
+}
+
+[data-theme="dark"] .login-view__icon-btn {
+  color: var(--login-muted);
+}
+
+[data-theme="dark"] .login-view__icon-btn:hover {
   color: var(--login-foreground);
   background: color-mix(in srgb, var(--login-foreground) 5%, transparent);
 }
@@ -1266,6 +1301,9 @@ table th {
   --zenith-nav-active-bg: color-mix(in srgb, #179150 14%, transparent);
   --zenith-nav-active-border: #179150;
   --zenith-nav-active-dot: #3dba72;
+  --portal-canvas: var(--zenith-surface-950);
+  --portal-card-bg: #ffffff;
+  --portal-card-fg: #0a1220;
 }
 
 [data-portal="patient"] {
@@ -1296,6 +1334,9 @@ table th {
   --patient-canvas: var(--zenith-surface-950);
   --patient-card-bg: #ffffff;
   --patient-card-fg: #0a1220;
+  --portal-canvas: var(--patient-canvas);
+  --portal-card-bg: var(--patient-card-bg);
+  --portal-card-fg: var(--patient-card-fg);
 }
 
 /* Tipografía compartida — paciente, médico y admin */
@@ -1552,34 +1593,72 @@ table th {
 
 [data-portal="patient"].flex.h-screen,
 [data-portal="patient"] main,
-[data-portal="patient"] header {
-  background-color: var(--patient-canvas) !important;
+[data-portal="patient"] header,
+[data-portal="doctor"].flex.h-screen,
+[data-portal="doctor"] main,
+[data-portal="doctor"] header {
+  background-color: var(--portal-canvas) !important;
 }
 
-[data-portal="patient"] header {
+[data-portal="patient"] header,
+[data-portal="doctor"] header {
   backdrop-filter: none;
 }
 
-[data-theme="dark"] [data-portal="patient"] {
-  --patient-canvas: var(--zenith-surface-950);
-  --patient-card-bg: #ffffff;
-  --patient-card-fg: #0a1220;
+[data-theme="dark"] [data-portal="patient"],
+[data-theme="dark"] [data-portal="doctor"] {
+  --portal-canvas: var(--zenith-surface-950);
+  --portal-card-bg: #ffffff;
+  --portal-card-fg: #0a1220;
 }
 
 [data-portal="patient"] main :is(
   .bg-surface-900\/60,
+  .bg-surface-900\/65,
+  .bg-primary-500\/5,
+  .bg-secondary-500\/5,
+  .bg-amber-500\/5,
+  .bg-surface-950\/50
+),
+[data-portal="doctor"] main :is(
+  .bg-surface-900\/60,
+  .bg-surface-900\/65,
   .bg-primary-500\/5,
   .bg-secondary-500\/5,
   .bg-amber-500\/5,
   .bg-surface-950\/50
 ) {
-  background-color: var(--patient-card-bg) !important;
+  background-color: var(--portal-card-bg) !important;
   backdrop-filter: none;
-  color: var(--patient-card-fg);
+  color: var(--portal-card-fg);
 }
 
 [data-portal="patient"] main :is(
   .bg-surface-900\/60,
+  .bg-surface-900\/65,
+  .bg-primary-500\/5,
+  .bg-secondary-500\/5,
+  .bg-amber-500\/5,
+  .bg-surface-950\/50
+) :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  td,
+  th,
+  li,
+  label,
+  dt,
+  dd
+):is(.text-white, .text-surface-200),
+[data-portal="doctor"] main :is(
+  .bg-surface-900\/60,
+  .bg-surface-900\/65,
   .bg-primary-500\/5,
   .bg-secondary-500\/5,
   .bg-amber-500\/5,
@@ -1600,20 +1679,26 @@ table th {
   dt,
   dd
 ):is(.text-white, .text-surface-200) {
-  color: var(--patient-card-fg) !important;
+  color: var(--portal-card-fg) !important;
 }
 
-[data-portal="patient"] main .bg-surface-900\/60 {
-  background-color: var(--patient-card-bg) !important;
+[data-portal="patient"] main .bg-surface-900\/60,
+[data-portal="patient"] main .bg-surface-900\/65,
+[data-portal="doctor"] main .bg-surface-900\/60,
+[data-portal="doctor"] main .bg-surface-900\/65 {
+  background-color: var(--portal-card-bg) !important;
   backdrop-filter: blur(12px);
   border-color: var(--zenith-surface-800) !important;
 }
 
-[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 {
-  background-color: var(--patient-card-bg) !important;
+[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60,
+[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/65,
+[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/60,
+[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/65 {
+  background-color: var(--portal-card-bg) !important;
   backdrop-filter: none;
   border-color: var(--zenith-surface-850) !important;
-  color: var(--patient-card-fg);
+  color: var(--portal-card-fg);
 }
 
 [data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 :is(
@@ -1631,19 +1716,76 @@ table th {
   label,
   dt,
   dd
+):is(.text-white, .text-surface-200),
+[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/65 :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  td,
+  th,
+  li,
+  label,
+  dt,
+  dd
+):is(.text-white, .text-surface-200),
+[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/60 :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  td,
+  th,
+  li,
+  label,
+  dt,
+  dd
+):is(.text-white, .text-surface-200),
+[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/65 :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  td,
+  th,
+  li,
+  label,
+  dt,
+  dd
 ):is(.text-white, .text-surface-200) {
-  color: var(--patient-card-fg) !important;
+  color: var(--portal-card-fg) !important;
 }
 
-[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 .text-black {
-  color: var(--patient-card-fg) !important;
+[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 .text-black,
+[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/65 .text-black,
+[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/60 .text-black,
+[data-theme="light"] [data-portal="doctor"] main .bg-surface-900\/65 .text-black {
+  color: var(--portal-card-fg) !important;
 }
 
-[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/60 {
+[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/60,
+[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/65,
+[data-theme="dark"] [data-portal="doctor"] main .bg-surface-900\/60,
+[data-theme="dark"] [data-portal="doctor"] main .bg-surface-900\/65 {
   color: var(--foreground);
 }
 
-[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/60 .text-black {
+[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/60 .text-black,
+[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/65 .text-black,
+[data-theme="dark"] [data-portal="doctor"] main .bg-surface-900\/60 .text-black,
+[data-theme="dark"] [data-portal="doctor"] main .bg-surface-900\/65 .text-black {
   color: var(--foreground) !important;
 }
 
@@ -1717,6 +1859,9 @@ table th {
   --color-primary-600: #146b42;
   --color-primary-650: #11623c;
   --color-primary-700: #0d5735;
+  --portal-canvas: color-mix(in srgb, var(--zenith-surface-900) 60%, var(--zenith-surface-950));
+  --portal-card-bg: #ffffff;
+  --portal-card-fg: #0a1220;
 }
 
 [data-theme="light"] [data-portal="patient"] {
@@ -1736,6 +1881,9 @@ table th {
   --patient-canvas: color-mix(in srgb, var(--zenith-surface-900) 60%, var(--zenith-surface-950));
   --patient-card-bg: #ffffff;
   --patient-card-fg: #0a1220;
+  --portal-canvas: var(--patient-canvas);
+  --portal-card-bg: var(--patient-card-bg);
+  --portal-card-fg: var(--patient-card-fg);
 }
 
 [data-theme="light"] [data-portal="admin"] {
@@ -1759,7 +1907,9 @@ table th {
 }
 
 [data-theme="light"] [data-portal="patient"] .zenith-page-title,
-[data-theme="light"] [data-portal="patient"] .zenith-section-title {
+[data-theme="light"] [data-portal="patient"] .zenith-section-title,
+[data-theme="light"] [data-portal="doctor"] .zenith-page-title,
+[data-theme="light"] [data-portal="doctor"] .zenith-section-title {
   color: #000000;
 }
 

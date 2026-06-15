@@ -497,7 +497,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
               .join('')
               .toUpperCase(),
             name: profileName,
-            role: 'Paciente ID #8849',
             avatarClassName: 'portal-profile-avatar',
           }}
           preProfile={

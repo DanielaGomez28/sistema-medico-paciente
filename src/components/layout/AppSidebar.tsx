@@ -15,7 +15,7 @@ export interface AppSidebarBrand {
 export interface AppSidebarProfile {
   initials: string;
   name: string;
-  role: string;
+  role?: string;
   avatarClassName?: string;
 }
 
@@ -123,7 +123,9 @@ export default function AppSidebar({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{profile.name}</p>
-                <p className="text-xs text-surface-500 truncate">{profile.role}</p>
+                {profile.role ? (
+                  <p className="text-xs text-surface-500 truncate">{profile.role}</p>
+                ) : null}
               </div>
               {onLogout && logoutVariant === 'icon' && (
                 <button
