@@ -419,6 +419,28 @@
     vertical-align: top;
   }
 
+  .zenith-table--divided {
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  .zenith-table--divided :is(thead th, tbody td) {
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+
+  .zenith-table--divided :is(thead th, tbody td):not(:last-child) {
+    border-right: 1px solid var(--zenith-surface-850);
+  }
+
+  .zenith-table--divided tbody tr {
+    border-bottom: 1px solid var(--zenith-surface-850);
+  }
+
+  .zenith-table--divided tbody tr:last-child {
+    border-bottom: none;
+  }
+
   .zenith-section-title {
     font-family: var(--font-primary-family);
     font-weight: var(--font-weight-medium);
@@ -562,7 +584,7 @@ table th {
 [data-theme="light"] [class*="bg-gradient-to-r"].text-white,
 [data-theme="light"] [class*="from-secondary"].text-white,
 [data-theme="light"] .zenith-on-dark {
-  color: #ffffff;
+  color: #ffffff; 
 }
 
 [data-theme="light"] .glass-panel {
@@ -663,50 +685,291 @@ table th {
   background: color-mix(in srgb, var(--color-primary) 45%, #b8dde2);
 }
 
-/* Login — split layout (inspirado en aeg-core-admin) */
+/* Login — tarjeta centrada sobre fondo claro */
 .login-view {
-  --login-hero-foreground: #f0fbfb;
-  --login-hero-muted: color-mix(in srgb, #f0fbfb 68%, #0a6b75);
-  --login-panel: #f8f9fa;
-  --login-field: var(--zenith-white-surface);
+  position: relative;
+  overflow: hidden;
+  background: #f8fafc;
+  --login-bg: #f8fafc;
+  --login-card: #ffffff;
+  --login-title: #0a6b75;
+  --login-text-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --login-field: #f1f5f9;
   --login-field-border: #e2e8f0;
-  --login-foreground: #0a1220;
-  --login-muted: #64748b;
-  --login-accent: #179150;
-  --login-accent-hover: #146b42;
-  --login-focus: #0a6b75;
+  --login-foreground: #424442;
+  --login-muted: #424442;
+  --login-focus: #334155;
   --login-link: #0a6b75;
   --login-link-hover: #084f57;
-  --login-brand-accent: #50e9f8;
+  --login-card-shadow:
+    0 18px 45px rgba(23, 145, 80, 0.2),
+    0 8px 24px rgba(10, 107, 117, 0.16);
+  --login-icon-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+.login-view__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.login-view__line {
+  position: absolute;
+  top: -30%;
+  display: block;
+  width: 4px;
+  border-radius: 9999px;
+  opacity: 0.42;
+  will-change: transform;
+  background: linear-gradient(180deg, #179150 0%, #0a6b75 100%);
+}
+
+.login-view__line--1 {
+  left: 4%;
+  height: 10rem;
+  width: 3px;
+  animation: login-line-fall 11s linear infinite;
+  animation-delay: 0s;
+}
+
+.login-view__line--2 {
+  left: 12%;
+  height: 14rem;
+  width: 4px;
+  animation: login-line-fall 13s linear infinite;
+  animation-delay: -1.8s;
+}
+
+.login-view__line--3 {
+  left: 20%;
+  height: 9rem;
+  width: 3px;
+  animation: login-line-fall 10s linear infinite;
+  animation-delay: -3.6s;
+}
+
+.login-view__line--4 {
+  left: 28%;
+  height: 16rem;
+  width: 4px;
+  animation: login-line-fall 15s linear infinite;
+  animation-delay: -5.2s;
+}
+
+.login-view__line--5 {
+  left: 36%;
+  height: 12rem;
+  width: 3px;
+  animation: login-line-fall 12s linear infinite;
+  animation-delay: -2.4s;
+}
+
+.login-view__line--6 {
+  left: 44%;
+  height: 18rem;
+  width: 4px;
+  animation: login-line-fall 16s linear infinite;
+  animation-delay: -6.8s;
+}
+
+.login-view__line--7 {
+  left: 52%;
+  height: 11rem;
+  width: 3px;
+  animation: login-line-fall 11.5s linear infinite;
+  animation-delay: -4.1s;
+}
+
+.login-view__line--8 {
+  left: 60%;
+  height: 15rem;
+  width: 4px;
+  animation: login-line-fall 14s linear infinite;
+  animation-delay: -7.5s;
+}
+
+.login-view__line--9 {
+  left: 68%;
+  height: 10rem;
+  width: 3px;
+  animation: login-line-fall 10.5s linear infinite;
+  animation-delay: -1.2s;
+}
+
+.login-view__line--10 {
+  left: 76%;
+  height: 13rem;
+  width: 4px;
+  animation: login-line-fall 13.5s linear infinite;
+  animation-delay: -5.9s;
+}
+
+.login-view__line--11 {
+  left: 84%;
+  height: 17rem;
+  width: 3px;
+  animation: login-line-fall 15.5s linear infinite;
+  animation-delay: -3.3s;
+}
+
+.login-view__line--12 {
+  left: 92%;
+  height: 12rem;
+  width: 4px;
+  animation: login-line-fall 12.5s linear infinite;
+  animation-delay: -6.4s;
+}
+
+@keyframes login-line-fall {
+  0% {
+    transform: translateY(-120%);
+  }
+  100% {
+    transform: translateY(125vh);
+  }
+}
+
+[data-theme="dark"] .login-view__line {
+  opacity: 0.58;
+  background: linear-gradient(180deg, #179150 0%, #0a6b75 100%);
+}
+
+[data-theme="dark"] .login-view__line--1 {
+  animation-duration: 7s;
+}
+
+[data-theme="dark"] .login-view__line--2 {
+  animation-duration: 8.5s;
+}
+
+[data-theme="dark"] .login-view__line--3 {
+  animation-duration: 6.5s;
+}
+
+[data-theme="dark"] .login-view__line--4 {
+  animation-duration: 10s;
+}
+
+[data-theme="dark"] .login-view__line--5 {
+  animation-duration: 7.5s;
+}
+
+[data-theme="dark"] .login-view__line--6 {
+  animation-duration: 10.5s;
+}
+
+[data-theme="dark"] .login-view__line--7 {
+  animation-duration: 7.2s;
+}
+
+[data-theme="dark"] .login-view__line--8 {
+  animation-duration: 9s;
+}
+
+[data-theme="dark"] .login-view__line--9 {
+  animation-duration: 6.8s;
+}
+
+[data-theme="dark"] .login-view__line--10 {
+  animation-duration: 8.8s;
+}
+
+[data-theme="dark"] .login-view__line--11 {
+  animation-duration: 10.2s;
+}
+
+[data-theme="dark"] .login-view__line--12 {
+  animation-duration: 8s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-view__line {
+    animation: none;
+  }
 }
 
 [data-theme="dark"] .login-view {
-  --login-panel: #0f172a;
-  --login-field: #1e293b;
-  --login-field-border: #334155;
+  background: #0f172a;
+  --login-bg: #0f172a;
+  --login-card: #1e293b;
+  --login-title: #6ee7f9;
+  --login-field: #334155;
+  --login-field-border: #475569;
   --login-foreground: #f1f5f9;
   --login-muted: #94a3b8;
-  --login-accent: #179150;
-  --login-accent-hover: #1ea35f;
-  --login-focus: #50e9f8;
-  --login-link: #50e9f8;
-  --login-link-hover: #8af4fc;
+  --login-focus: #cbd5e1;
+  --login-card-shadow:
+    0 18px 45px rgba(23, 145, 80, 0.28),
+    0 8px 24px rgba(10, 107, 117, 0.22);
+  --login-icon-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
 }
 
-.login-view__panel {
-  background: var(--login-panel);
+.login-view__card {
+  background: var(--login-card);
+  border-radius: 1.5rem;
+  padding: 2rem 1.75rem 1.75rem;
+  box-shadow: var(--login-card-shadow);
+  text-align: center;
+  font-family: var(--login-text-family);
+  font-weight: 400;
+  color: #424442;
+}
+
+.login-view__card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1.25rem;
+  border-radius: 0.875rem;
+  background: #ffffff;
+  color: #334155;
+  box-shadow: var(--login-icon-shadow);
+}
+
+[data-theme="dark"] .login-view__card-icon {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .login-view__card {
   color: var(--login-foreground);
 }
 
-.login-view__panel-subtitle,
-.login-view__panel-footnote {
+[data-theme="dark"] .login-view__subtitle {
   color: var(--login-muted);
-  font-size: var(--text-subtitle);
-  font-weight: var(--font-weight-light);
 }
 
-.login-view__panel-subtitle {
-  font-size: 0.9375rem;
+.login-view__title {
+  color: var(--login-title);
+  font-family: var(--login-text-family);
+  font-size: 1.875rem;
+  font-weight: 900;
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+}
+
+[data-theme="dark"] .login-view__title {
+  color: #6ee7f9;
+}
+
+.login-view__subtitle {
+  margin-top: 0.625rem;
+  color: #424442;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.55;
+  max-width: 20rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.login-view__form {
+  margin-top: 1.625rem;
+  text-align: left;
 }
 
 .login-view__panel-brand .login-view__brand-mark {
@@ -739,29 +1002,41 @@ table th {
   color: var(--login-muted);
 }
 
+.login-view__field-icon {
+  color: var(--login-muted);
+}
+
 .login-view__field {
   background: var(--login-field);
-  border-color: color-mix(in srgb, var(--login-field-border) 80%, transparent);
+  border: 1px solid transparent;
   color: var(--login-foreground);
+  font-size: 1rem;
 }
 
 .login-view__field::placeholder {
-  color: color-mix(in srgb, var(--login-muted) 75%, transparent);
+  color: var(--login-muted);
 }
 
 .login-view__field:focus {
-  border-color: var(--login-focus);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--login-focus) 18%, transparent);
+  border-color: transparent;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--login-focus) 35%, transparent);
 }
 
 .login-view__field--error {
-  border-color: color-mix(in srgb, #ef4444 55%, var(--login-field-border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, #ef4444 45%, transparent);
 }
 
 .login-view__alert {
   border-color: color-mix(in srgb, #ef4444 25%, transparent);
-  background: color-mix(in srgb, #ef4444 8%, var(--login-panel));
+  background: color-mix(in srgb, #ef4444 8%, var(--login-card));
   color: color-mix(in srgb, #ef4444 75%, var(--login-foreground));
+  font-size: 1rem;
+}
+
+.login-view__field-error {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: #e11d48;
 }
 
 .login-view__icon-btn {
@@ -780,17 +1055,22 @@ table th {
 }
 
 .login-view__submit {
-  background: var(--login-accent);
+  background: linear-gradient(90deg, #179150 0%, #0a6b75 100%);
   color: #ffffff;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(23, 145, 80, 0.28);
 }
 
 .login-view__submit:hover:not(:disabled) {
-  background: var(--login-accent-hover);
+  filter: brightness(1.05);
+  box-shadow: 0 8px 24px rgba(23, 145, 80, 0.34);
 }
 
 .login-view__theme-toggle {
-  background: var(--login-field) !important;
+  background: var(--login-card) !important;
   border-color: var(--login-field-border) !important;
+  box-shadow: var(--login-icon-shadow);
 }
 
 .login-view__theme-toggle button[aria-pressed="true"] {
@@ -818,8 +1098,8 @@ table th {
 }
 
 .login-view__demo-toggle {
-  color: var(--login-muted);
-  font-size: var(--text-subtitle);
+  color: var(--login-foreground);
+  font-size: 0.9375rem;
   font-weight: var(--font-weight-light);
 }
 
@@ -831,29 +1111,30 @@ table th {
 .login-view__quick-fill {
   background: var(--login-field);
   border-color: var(--login-field-border);
-  color: var(--login-muted);
+  color: var(--login-foreground);
+  font-size: 0.875rem;
 }
 
 .login-view__quick-fill:hover {
   border-color: var(--login-focus);
-  background: color-mix(in srgb, var(--login-focus) 6%, var(--login-field));
+  background: color-mix(in srgb, var(--login-focus) 8%, var(--login-field));
   color: var(--login-foreground);
 }
 
 .login-view__link {
-  color: var(--login-link);
+  color: var(--login-foreground);
 }
 
 .login-view__quick-fill:hover .login-view__link {
-  color: var(--login-link-hover);
+  color: var(--login-foreground);
 }
 
 .login-view__mono {
-  color: color-mix(in srgb, var(--login-muted) 85%, transparent);
+  color: var(--login-foreground);
 }
 
 .login-view__quick-fill:hover .login-view__mono {
-  color: var(--login-muted);
+  color: var(--login-foreground);
 }
 
 /* Panel izquierdo — animación suave */
@@ -997,10 +1278,10 @@ table th {
   --color-primary-600: #3dd4e3;
   --color-primary-650: #2ec9db;
   --color-primary-700: #1fb8cc;
-  --portal-btn-bg: #50e9f8;
-  --portal-btn-hover: #3dd4e3;
-  --portal-btn-fg: #0a1220;
-  --portal-btn-border: #3dd4e3;
+  --portal-btn-bg: #0a6b75;
+  --portal-btn-hover: #095c67;
+  --portal-btn-fg: #ffffff;
+  --portal-btn-border: #095c67;
   --portal-patient-btn-bg: var(--portal-btn-bg);
   --portal-patient-btn-hover: var(--portal-btn-hover);
   --portal-patient-btn-fg: var(--portal-btn-fg);
@@ -1008,6 +1289,371 @@ table th {
   --zenith-nav-active-bg: color-mix(in srgb, #50e9f8 12%, transparent);
   --zenith-nav-active-border: #50e9f8;
   --zenith-nav-active-dot: #50e9f8;
+  --text-caption: 0.8125rem;
+  --text-label: 0.875rem;
+  --text-title: 1.3125rem;
+  --text-subtitle: 0.9375rem;
+  --patient-canvas: var(--zenith-surface-950);
+  --patient-card-bg: #ffffff;
+  --patient-card-fg: #0a1220;
+}
+
+/* Tipografía compartida — paciente, médico y admin */
+[data-portal="patient"],
+[data-portal="doctor"],
+[data-portal="admin"] {
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+}
+
+[data-portal="patient"] .text-2xs,
+[data-portal="doctor"] .text-2xs,
+[data-portal="admin"] .text-2xs {
+  font-size: 0.75rem;
+}
+
+[data-portal="patient"] .text-xs,
+[data-portal="doctor"] .text-xs,
+[data-portal="admin"] .text-xs {
+  font-size: 0.875rem;
+}
+
+[data-portal="patient"] .text-sm,
+[data-portal="doctor"] .text-sm,
+[data-portal="admin"] .text-sm {
+  font-size: 1rem;
+}
+
+[data-portal="patient"] .text-base,
+[data-portal="doctor"] .text-base,
+[data-portal="admin"] .text-base {
+  font-size: 1.125rem;
+}
+
+[data-portal="patient"] .text-lg,
+[data-portal="doctor"] .text-lg,
+[data-portal="admin"] .text-lg {
+  font-size: 1.25rem;
+}
+
+[data-portal="patient"] .text-xl,
+[data-portal="doctor"] .text-xl,
+[data-portal="admin"] .text-xl {
+  font-size: 1.375rem;
+}
+
+[data-portal="patient"] .text-2xl,
+[data-portal="doctor"] .text-2xl,
+[data-portal="admin"] .text-2xl {
+  font-size: 1.625rem;
+}
+
+[data-portal="patient"] .text-\[7px\],
+[data-portal="doctor"] .text-\[7px\],
+[data-portal="admin"] .text-\[7px\] {
+  font-size: 9px;
+}
+
+[data-portal="patient"] .text-\[9px\],
+[data-portal="doctor"] .text-\[9px\],
+[data-portal="admin"] .text-\[9px\] {
+  font-size: 11px;
+}
+
+[data-portal="patient"] .text-\[10px\],
+[data-portal="doctor"] .text-\[10px\],
+[data-portal="admin"] .text-\[10px\] {
+  font-size: 12px;
+}
+
+[data-portal="patient"] .text-\[11px\],
+[data-portal="doctor"] .text-\[11px\],
+[data-portal="admin"] .text-\[11px\] {
+  font-size: 13px;
+}
+
+[data-portal="patient"] .zenith-field-label,
+[data-portal="patient"] .zenith-clinical-data,
+[data-portal="doctor"] .zenith-field-label,
+[data-portal="doctor"] .zenith-clinical-data,
+[data-portal="admin"] .zenith-field-label,
+[data-portal="admin"] .zenith-clinical-data {
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+}
+
+[data-portal="patient"] .zenith-page-subtitle,
+[data-portal="doctor"] .zenith-page-subtitle,
+[data-portal="admin"] .zenith-page-subtitle {
+  font-family: var(--font-primary-family);
+  font-weight: var(--font-weight-light);
+  letter-spacing: 0.005em;
+  font-size: 0.9375rem;
+}
+
+[data-portal="patient"] .zenith-section-title,
+[data-portal="doctor"] .zenith-section-title,
+[data-portal="admin"] .zenith-section-title {
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  font-size: calc(1.0625rem + 2px);
+}
+
+[data-portal="patient"] .zenith-nav-label,
+[data-portal="patient"] .zenith-nav-label--active,
+[data-portal="doctor"] .zenith-nav-label,
+[data-portal="doctor"] .zenith-nav-label--active,
+[data-portal="admin"] .zenith-nav-label,
+[data-portal="admin"] .zenith-nav-label--active {
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+[data-portal="patient"] .zenith-page-title,
+[data-portal="doctor"] .zenith-page-title,
+[data-portal="admin"] .zenith-page-title {
+  font-size: calc(1.3125rem + 2px);
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+[data-portal="patient"] .zenith-field-label,
+[data-portal="doctor"] .zenith-field-label,
+[data-portal="admin"] .zenith-field-label {
+  font-size: 0.9375rem;
+}
+
+[data-portal="patient"] .zenith-nav-label,
+[data-portal="doctor"] .zenith-nav-label,
+[data-portal="admin"] .zenith-nav-label {
+  font-size: 0.9375rem;
+}
+
+[data-portal="patient"] :is(p, span, td, th, li, label, dt, dd, div).font-medium,
+[data-portal="patient"] :is(p, span, td, th, li, label, dt, dd, div).font-semibold,
+[data-portal="patient"] :is(p, span, td, th, li, label, dt, dd, div).font-bold,
+[data-portal="doctor"] :is(p, span, td, th, li, label, dt, dd, div).font-medium,
+[data-portal="doctor"] :is(p, span, td, th, li, label, dt, dd, div).font-semibold,
+[data-portal="doctor"] :is(p, span, td, th, li, label, dt, dd, div).font-bold,
+[data-portal="admin"] :is(p, span, td, th, li, label, dt, dd, div).font-medium,
+[data-portal="admin"] :is(p, span, td, th, li, label, dt, dd, div).font-semibold,
+[data-portal="admin"] :is(p, span, td, th, li, label, dt, dd, div).font-bold {
+  font-weight: 400;
+}
+
+[data-portal="patient"] h1,
+[data-portal="patient"] h2,
+[data-portal="patient"] h3,
+[data-portal="patient"] h4,
+[data-portal="patient"] h5,
+[data-portal="patient"] h6,
+[data-portal="doctor"] h1,
+[data-portal="doctor"] h2,
+[data-portal="doctor"] h3,
+[data-portal="doctor"] h4,
+[data-portal="doctor"] h5,
+[data-portal="doctor"] h6,
+[data-portal="admin"] h1,
+[data-portal="admin"] h2,
+[data-portal="admin"] h3,
+[data-portal="admin"] h4,
+[data-portal="admin"] h5,
+[data-portal="admin"] h6 {
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+[data-portal="patient"] h1,
+[data-portal="doctor"] h1,
+[data-portal="admin"] h1 {
+  font-size: calc(1.375rem + 2px);
+}
+
+[data-portal="patient"] h2,
+[data-portal="doctor"] h2,
+[data-portal="admin"] h2 {
+  font-size: calc(1.25rem + 2px);
+}
+
+[data-portal="patient"] h3,
+[data-portal="doctor"] h3,
+[data-portal="admin"] h3 {
+  font-size: calc(1.0625rem + 2px);
+}
+
+[data-portal="patient"] h4,
+[data-portal="doctor"] h4,
+[data-portal="admin"] h4 {
+  font-size: calc(1rem + 2px);
+}
+
+[data-portal="patient"] h5,
+[data-portal="doctor"] h5,
+[data-portal="admin"] h5 {
+  font-size: calc(0.9375rem + 2px);
+}
+
+[data-portal="patient"] h6,
+[data-portal="doctor"] h6,
+[data-portal="admin"] h6 {
+  font-size: calc(0.875rem + 2px);
+}
+
+[data-portal="patient"] .patient-progress-bar__fill {
+  background-color: #50e9f8;
+}
+
+[data-portal="patient"] .patient-alert-title {
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+}
+
+[data-portal="patient"] .patient-alert-card--renovacion {
+  background-color: #50e9f8 !important;
+}
+
+[data-portal="patient"] .patient-alert-card--renovacion .patient-alert-title,
+[data-portal="patient"] .patient-alert-card--renovacion .patient-alert-date,
+[data-portal="patient"] .patient-alert-card--renovacion .patient-alert-message {
+  color: #033a42 !important;
+}
+
+[data-portal="patient"] .patient-medication-name {
+  color: #033a42;
+  font-weight: 700;
+}
+
+[data-theme="dark"] [data-portal="patient"] .patient-medication-name {
+  color: #033a42;
+}
+
+[data-portal="patient"] .patient-recipe-view-btn {
+  background-color: #0a6b75;
+  color: #ffffff;
+}
+
+[data-portal="patient"] .patient-recipe-view-btn:hover {
+  background-color: #095c67;
+}
+
+[data-portal="patient"] .patient-treatment-tab--active {
+  background-color: #0a6b75;
+  color: #ffffff;
+}
+
+[data-portal="patient"] .zenith-table thead th {
+  color: #0a0b0a;
+}
+
+[data-theme="dark"] [data-portal="patient"] .zenith-table thead th {
+  color: var(--foreground);
+}
+
+[data-portal="patient"].flex.h-screen,
+[data-portal="patient"] main,
+[data-portal="patient"] header {
+  background-color: var(--patient-canvas) !important;
+}
+
+[data-portal="patient"] header {
+  backdrop-filter: none;
+}
+
+[data-theme="dark"] [data-portal="patient"] {
+  --patient-canvas: var(--zenith-surface-950);
+  --patient-card-bg: #ffffff;
+  --patient-card-fg: #0a1220;
+}
+
+[data-portal="patient"] main :is(
+  .bg-surface-900\/60,
+  .bg-primary-500\/5,
+  .bg-secondary-500\/5,
+  .bg-amber-500\/5,
+  .bg-surface-950\/50
+) {
+  background-color: var(--patient-card-bg) !important;
+  backdrop-filter: none;
+  color: var(--patient-card-fg);
+}
+
+[data-portal="patient"] main :is(
+  .bg-surface-900\/60,
+  .bg-primary-500\/5,
+  .bg-secondary-500\/5,
+  .bg-amber-500\/5,
+  .bg-surface-950\/50
+) :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  td,
+  th,
+  li,
+  label,
+  dt,
+  dd
+):is(.text-white, .text-surface-200) {
+  color: var(--patient-card-fg) !important;
+}
+
+[data-portal="patient"] main .bg-surface-900\/60 {
+  background-color: var(--patient-card-bg) !important;
+  backdrop-filter: blur(12px);
+  border-color: var(--zenith-surface-800) !important;
+}
+
+[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 {
+  background-color: var(--patient-card-bg) !important;
+  backdrop-filter: none;
+  border-color: var(--zenith-surface-850) !important;
+  color: var(--patient-card-fg);
+}
+
+[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  td,
+  th,
+  li,
+  label,
+  dt,
+  dd
+):is(.text-white, .text-surface-200) {
+  color: var(--patient-card-fg) !important;
+}
+
+[data-theme="light"] [data-portal="patient"] main .bg-surface-900\/60 .text-black {
+  color: var(--patient-card-fg) !important;
+}
+
+[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/60 {
+  color: var(--foreground);
+}
+
+[data-theme="dark"] [data-portal="patient"] main .bg-surface-900\/60 .text-black {
+  color: var(--foreground) !important;
+}
+
+[data-theme="dark"] [data-portal="patient"] .zenith-page-title,
+[data-theme="dark"] [data-portal="patient"] .zenith-section-title,
+[data-theme="dark"] [data-portal="doctor"] .zenith-page-title,
+[data-theme="dark"] [data-portal="doctor"] .zenith-section-title,
+[data-theme="dark"] [data-portal="admin"] .zenith-page-title,
+[data-theme="dark"] [data-portal="admin"] .zenith-section-title {
+  color: var(--foreground);
 }
 
 [data-portal="admin"] {
@@ -1083,10 +1729,13 @@ table th {
   --color-primary-600: #054a54;
   --color-primary-650: #044550;
   --color-primary-700: #033a42;
-  --portal-btn-bg: #50e9f8;
-  --portal-btn-hover: #3dd4e3;
-  --portal-btn-fg: #0a1220;
-  --portal-btn-border: #3dd4e3;
+  --portal-btn-bg: #0a6b75;
+  --portal-btn-hover: #095c67;
+  --portal-btn-fg: #ffffff;
+  --portal-btn-border: #095c67;
+  --patient-canvas: color-mix(in srgb, var(--zenith-surface-900) 60%, var(--zenith-surface-950));
+  --patient-card-bg: #ffffff;
+  --patient-card-fg: #0a1220;
 }
 
 [data-theme="light"] [data-portal="admin"] {
@@ -1107,6 +1756,11 @@ table th {
 
 [data-theme="light"] [data-portal] .zenith-section-title {
   color: var(--color-primary-400);
+}
+
+[data-theme="light"] [data-portal="patient"] .zenith-page-title,
+[data-theme="light"] [data-portal="patient"] .zenith-section-title {
+  color: #000000;
 }
 
 /* Módulo de despacho — semáforo estricto */

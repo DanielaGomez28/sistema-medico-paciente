@@ -41,7 +41,7 @@ import {
 } from './CredentialQr';
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
-import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
+import { Button, Modal, ModalBody, ListCard } from './ui';
 
 interface DoctorViewProps {
   doctorName: string;
@@ -491,13 +491,13 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
         sidebar={
           <AppSidebar
             accent="primary"
-            brand={{ icon: Activity, title: 'Portal Médico', subtitle: 'Sistema de Salud' }}
+            brand={{ icon: Activity, title: 'Médico' }}
             items={[
               { id: 'agenda', name: 'Panel', icon: Calendar },
-              { id: 'reception', name: 'Gestión de Pacientes', icon: Users },
-              { id: 'prescription', name: 'Generar Récipe', icon: FileText },
+              { id: 'reception', name: 'Pacientes', icon: Users },
+              { id: 'prescription', name: 'Generar récipe', icon: FileText },
               { id: 'commissions', name: 'Comisiones', icon: TrendingUp },
-              { id: 'profile', name: 'Mi Perfil', icon: Users },
+              { id: 'profile', name: 'Perfil', icon: Users },
             ]}
             activeId={activeTab}
             onNavigate={(id) => {
@@ -529,6 +529,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
         header={({ onMenuClick }) => (
           <AppHeader
             onMenuClick={onMenuClick}
+            statusLabel=""
+            showNotifications={false}
             profileInitials={doctorName
               .replace(/^Dr\.\s*/i, '')
               .split(' ')
@@ -544,38 +546,11 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
             {/* VIEW TAB 1: DAILY AGENDA & METRICS */}
             {activeTab === 'agenda' && (
               <div className="space-y-6">
-                <PageHeader
-                  title={`Bienvenido de nuevo, ${doctorName}`}
-                  description="Resumen de pacientes registrados y acceso rápido a la gestión de expedientes."
-                  actions={
-                    <Button variant="doctor" onClick={handleNewPatient}>
-                      <UserPlus className="h-4 w-4" />
-                      Nuevo paciente
-                    </Button>
-                  }
-                />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
-                      <Users className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <span className="zenith-field-label">Pacientes Registrados</span>
-                      <p className="text-lg font-semibold text-white mt-0.5">{patients.length}</p>
-                    </div>
-                  </div>
-                  <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 flex items-center gap-4">
-                    <div className="h-10 w-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center">
-                      <ShieldAlert className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <span className="zenith-field-label">Con Alergias Registradas</span>
-                      <p className="text-lg font-semibold text-white mt-0.5">
-                        {patients.filter((p) => p.allergies && p.allergies !== 'Ninguna conocida').length}
-                      </p>
-                    </div>
-                  </div>
+                <div className="flex justify-end">
+                  <Button variant="doctor" onClick={handleNewPatient}>
+                    <UserPlus className="h-4 w-4" />
+                    Nuevo paciente
+                  </Button>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -676,22 +651,16 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               <div className="space-y-6 animate-in fade-in duration-300">
                 {patientViewMode === 'list' ? (
                   <>
-                    <PageHeader
-                      title="Gestión de Pacientes"
-                      description="Listado de pacientes vinculados al médico. Seleccione uno para ver o editar su expediente."
-                      actions={
-                        <div className="flex flex-wrap gap-2">
-                          <Button variant="doctor" onClick={() => setIsScannerModalOpen(true)}>
-                            <QrCode className="h-4 w-4" />
-                            Buscar por credencial
-                          </Button>
-                          <Button variant="doctor" onClick={handleNewPatient}>
-                            <UserPlus className="h-4 w-4" />
-                            Nuevo paciente
-                          </Button>
-                        </div>
-                      }
-                    />
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button variant="doctor" onClick={() => setIsScannerModalOpen(true)}>
+                        <QrCode className="h-4 w-4" />
+                        Buscar por credencial
+                      </Button>
+                      <Button variant="doctor" onClick={handleNewPatient}>
+                        <UserPlus className="h-4 w-4" />
+                        Nuevo paciente
+                      </Button>
+                    </div>
 
                     {patientSaveMsg && (
                       <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
@@ -854,26 +823,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       Volver al listado
                     </button>
 
-                    <PageHeader
-                      title={isNewPatient ? 'Nuevo paciente' : patientForm.name || 'Expediente del paciente'}
-                      description={
-                        isNewPatient
-                          ? 'Complete los datos para registrar un nuevo expediente clínico.'
-                          : `Expediente ${patientForm.id} — modifique los datos clínicos del paciente.`
-                      }
-                      actions={
-                        !isNewPatient && patientForm.id ? (
-                          <Button
-                            variant="ghost"
-                            onClick={handleDeletePatient}
-                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Eliminar
-                          </Button>
-                        ) : undefined
-                      }
-                    />
+                    {!isNewPatient && patientForm.id ? (
+                      <div className="flex justify-end">
+                        <Button
+                          variant="ghost"
+                          onClick={handleDeletePatient}
+                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Eliminar
+                        </Button>
+                      </div>
+                    ) : null}
 
                     {patientSaveMsg && (
                       <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
@@ -1312,11 +1273,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
               return (
                 <div className="space-y-6 animate-in fade-in duration-300">
-                  <PageHeader
-                    title="Comisiones e Historial Clínico"
-                    description="Seguimiento de ingresos por comisión y bitácora de récipes digitales firmados."
-                  />
-
                   {/* Financial KPI Cards */}
                   <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 md:grid-cols-4">
                     <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 space-y-2 relative overflow-hidden">
@@ -1501,11 +1457,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
             {/* VIEW TAB 5: PROFILE CONFIGURATION (Pantalla M.4) */}
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-in fade-in duration-300 max-w-2xl mx-auto">
-                <PageHeader
-                  title="Configuración de Perfil"
-                  description="Credenciales MPPS, consultorio, datos bancarios venezolanos y cierre de sesión."
-                />
-
                 {profileSaveMsg && (
                   <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-400 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
                     <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />

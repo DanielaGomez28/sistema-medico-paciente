@@ -8,7 +8,6 @@ import {
   Download, 
   MapPin, 
   Phone, 
-  LogOut,
   User,
   Heart,
   Clock,
@@ -25,7 +24,6 @@ import {
   Building,
   Info,
   DollarSign,
-  ExternalLink,
   Pill,
   Bell,
   TrendingUp,
@@ -44,7 +42,7 @@ import {
 } from './CredentialQr';
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
-import { PageHeader, Button, ListCard } from './ui';
+import { Button, ListCard } from './ui';
 
 interface PatientViewProps {
   patientName: string;
@@ -193,36 +191,12 @@ const MOCK_DOSE_LOGS: DoseLog[] = [
 
 const MOCK_TREATMENT_ALERTS: TreatmentAlert[] = [
   {
-    id: 'alert-1',
-    type: 'control',
-    title: 'Control cardiológico de seguimiento',
-    message: 'Cita de control con el Dr. Alejandro Ríos para evaluar respuesta al tratamiento antihipertensivo.',
-    date: '15 Jun, 2026',
-  },
-  {
-    id: 'alert-2',
-    type: 'recordatorio',
-    title: 'Registro de presión arterial',
-    message: 'Registrar lectura matutina de presión arterial en el cuaderno de seguimiento.',
-    date: '09 Jun, 2026',
-  },
-  {
     id: 'alert-3',
     type: 'renovacion',
     title: 'Renovación de receta Ramipril',
     message: 'La receta REC-2026-904 vence el 06 Dic, 2026. Solicite renovación con 15 días de anticipación.',
     date: '21 Nov, 2026',
   },
-];
-
-const WEEKLY_ADHERENCE = [
-  { day: 'Lun', percent: 100 },
-  { day: 'Mar', percent: 100 },
-  { day: 'Mié', percent: 50 },
-  { day: 'Jue', percent: 100 },
-  { day: 'Vie', percent: 100 },
-  { day: 'Sáb', percent: 100 },
-  { day: 'Dom', percent: 50 },
 ];
 
 const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout';
@@ -263,8 +237,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
   // Payment States (Pantalla P.3)
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(900); // 15 minutes in seconds
-  const [isRedirectSimulating, setIsRedirectSimulating] = useState(false);
-  const [redirectCountdown, setRedirectCountdown] = useState(3);
   const [simulatedPaymentReference, setSimulatedPaymentReference] = useState('');
   
   // Voucher info
@@ -277,7 +249,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   const [deliveryAddress, setDeliveryAddress] = useState('Av. Francisco de Miranda, Urb. Campo Alegre, Edif. Parque Cristal, Piso 4B');
   const [deliveryState, setDeliveryState] = useState('Distrito Capital');
   const [deliveryMunicipio, setDeliveryMunicipio] = useState('Chacao');
-  const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
 
   // Calculations for Proposal
   const calculateItemSubtotal = (item: ProposalItem) => {
@@ -328,10 +299,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
   const getTreatmentProgress = (treatment: TreatmentMedication) =>
     Math.round((treatment.takenDoses / treatment.totalDoses) * 100);
-
-  const weeklyAdherencePercent = Math.round(
-    WEEKLY_ADHERENCE.reduce((sum, day) => sum + day.percent, 0) / WEEKLY_ADHERENCE.length
-  );
 
   const sortedTodayDoses = [...todayDoses].sort((a, b) =>
     a.scheduledTime.localeCompare(b.scheduledTime)
@@ -390,8 +357,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       return {
         Icon: RefreshCw,
         label: 'Renovación',
-        cardClass: 'border-secondary-500/25 bg-secondary-500/5',
-        iconClass: 'text-secondary-400',
+        cardClass: 'patient-alert-card--renovacion border-[#3dd4e3]/50',
+        iconClass: 'text-[#0a6b75]',
         badgeClass: 'bg-secondary-500/10 text-secondary-400 border-secondary-500/20',
       };
     }
@@ -434,27 +401,20 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     return () => clearInterval(timer);
   }, [activeSubTab, paymentTimeLeft]);
 
-  // Simulación de redirección a la pasarela externa del cliente
-  useEffect(() => {
-    if (isRedirectSimulating && redirectCountdown > 0) {
-      const timer = setTimeout(() => setRedirectCountdown(redirectCountdown - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-    if (isRedirectSimulating && redirectCountdown === 0) {
-      const randVoucher = `VOU-2026-${Math.floor(100000 + Math.random() * 900000)}`;
-      setVoucherId(randVoucher);
-      setSimulatedPaymentReference(`PAY-EXT-EXAMPLE-${Math.floor(100000 + Math.random() * 900000)}`);
-      setLastOrderStatus('Listo para retirar');
-      setIsRedirectSimulating(false);
-      setRedirectCountdown(3);
-      setActiveSubTab('voucher');
-    }
-  }, [isRedirectSimulating, redirectCountdown]);
-
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const getDoseStatusBadgeClass = (status: DoseLog['status']) => {
+    if (status === 'Tomada') {
+      return 'bg-[#179150]/15 text-[#179150] border-[#179150]/35';
+    }
+    if (status === 'Omitida') {
+      return 'bg-red-500/20 text-red-600 border-red-500/35';
+    }
+    return 'bg-amber-500/20 text-amber-600 border-amber-500/35';
   };
 
   const cycleOrderStatus = () => {
@@ -464,9 +424,24 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   };
 
   const orderDeliverySteps = [
-    { id: 'Pendiente por retirar', label: 'Pendiente' },
-    { id: 'Listo para retirar', label: 'Listo para Retirar' },
-    { id: 'Retirado', label: 'Retirado' },
+    {
+      id: 'Pendiente por retirar',
+      label: 'Pendiente',
+      circleActive: 'bg-red-500 text-white',
+      circleComplete: 'bg-red-500 text-white',
+    },
+    {
+      id: 'Listo para retirar',
+      label: 'Listo para retirar',
+      circleActive: 'bg-amber-500 text-surface-950',
+      circleComplete: 'bg-amber-500 text-surface-950',
+    },
+    {
+      id: 'Retirado',
+      label: 'Retirado',
+      circleActive: 'bg-secondary-500 text-white',
+      circleComplete: 'bg-secondary-500 text-white',
+    },
   ] as const;
 
   const activeOrderStepIndex = orderDeliverySteps.findIndex((step) => step.id === lastOrderStatus);
@@ -477,37 +452,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       return;
     }
     setPaymentTimeLeft(900);
-    setIsRedirectSimulating(false);
-    setRedirectCountdown(3);
     setSimulatedPaymentReference('');
     setActiveSubTab('payment');
-  };
-
-  const handleSimulatePaymentRedirect = () => {
-    setIsRedirectSimulating(true);
-    setRedirectCountdown(3);
-  };
-
-  const handleSaveProfile = (e: React.FormEvent) => {
-    e.preventDefault();
-    setProfileSuccessMsg('');
-
-    if (!profileName || !profilePhone || !deliveryAddress || !deliveryState || !deliveryMunicipio) {
-      alert('Por favor rellene todos los campos del perfil.');
-      return;
-    }
-
-    localStorage.setItem('zenith_patient_name', profileName);
-    localStorage.setItem('zenith_patient_phone', profilePhone);
-    localStorage.setItem('zenith_patient_address', deliveryAddress);
-    localStorage.setItem('zenith_patient_state', deliveryState);
-    localStorage.setItem('zenith_patient_municipio', deliveryMunicipio);
-
-    setProfileSuccessMsg('¡Perfil y dirección de delivery actualizados con éxito!');
-
-    setTimeout(() => {
-      setProfileSuccessMsg('');
-    }, 3000);
   };
 
   const activeNavId =
@@ -533,12 +479,12 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       sidebar={
         <AppSidebar
           accent="primary"
-          brand={{ icon: Activity, title: 'Mi Salud', subtitle: 'Portal de Pacientes' }}
+          brand={{ icon: Activity, title: 'Pacientes' }}
           items={[
-            { id: 'treatment', name: 'Seguimiento de Tratamiento', icon: Pill },
-            { id: 'recipes', name: 'Récipes Médicos', icon: FileText },
-            { id: 'proposals', name: 'Confirmación de Pedido', icon: FileSpreadsheet },
-            { id: 'profile', name: 'Configuración Perfil', icon: User },
+            { id: 'treatment', name: 'Seguimiento', icon: Pill },
+            { id: 'recipes', name: 'Récipes médicos', icon: FileText },
+            { id: 'proposals', name: 'Confirmar pedido', icon: FileSpreadsheet },
+            { id: 'profile', name: 'Perfil', icon: User },
           ]}
           activeId={activeNavId}
           onNavigate={handleNav}
@@ -564,6 +510,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       header={({ onMenuClick }) => (
         <AppHeader
           onMenuClick={onMenuClick}
+          statusLabel=""
+          showNotifications={false}
           profileInitials={profileName
             .split(' ')
             .filter(Boolean)
@@ -581,21 +529,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     >
             {activeSubTab === 'recipes' && (
               <div className="space-y-6">
-                <PageHeader
-                  title="Historial de Récipes Médicos"
-                  description="Consulte, visualice e imprima sus recetas prescritas vigentes."
-                />
-
                 {/* Progress Stepper for last order */}
                 <div className="bg-surface-900/60 border border-surface-800 rounded-2xl backdrop-blur-md relative overflow-hidden">
-                  <div
-                    className={`absolute top-0 left-0 h-1 w-full bg-gradient-to-r ${
-                      lastOrderStatus === 'Retirado'
-                        ? 'from-secondary-500 to-secondary-600'
-                        : 'from-primary-500/70 to-secondary-500/70'
-                    }`}
-                  />
-
                   <div className="p-5 space-y-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0 space-y-2">
@@ -605,19 +540,16 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           </span>
                           <span className="text-xs font-mono font-semibold text-surface-500">ID: #ORD-9923</span>
                         </div>
-                        <h3 className="text-sm font-medium text-white">Retiro de Medicamentos (Receta Activa)</h3>
-                        <p className="text-xs text-surface-400 leading-relaxed max-w-2xl">
-                          Retira en Farmahumana (Clínica Humana, Caracas) • Av. Francisco de Miranda, Mostrador 3
-                        </p>
+                        <h3 className="text-sm !font-bold text-foreground">Retiro de medicamentos en farmacia</h3>
                       </div>
 
                       <span
                         className={`inline-flex self-start shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                           lastOrderStatus === 'Retirado'
-                            ? 'bg-secondary-500/10 text-secondary-400 border-secondary-500/25'
+                            ? 'bg-secondary-500/10 text-secondary-500 border-secondary-500/25'
                             : lastOrderStatus === 'Listo para retirar'
-                              ? 'bg-primary-500/10 text-primary-400 border-primary-500/25'
-                              : 'bg-surface-800 text-surface-300 border-surface-700'
+                              ? 'bg-amber-500/10 text-amber-500 border-amber-500/25'
+                              : 'bg-red-500/10 text-red-500 border-red-500/25'
                         }`}
                       >
                         {lastOrderStatus}
@@ -660,9 +592,9 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                                 <span
                                   className={`mx-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
                                     isComplete
-                                      ? 'bg-secondary-500/15 text-secondary-400'
+                                      ? step.circleComplete
                                       : isActive
-                                        ? 'bg-white text-surface-950'
+                                        ? step.circleActive
                                         : 'bg-surface-800 text-surface-500'
                                   }`}
                                 >
@@ -680,15 +612,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                                 )}
                               </div>
 
-                              <span
-                                className={`text-[10px] font-semibold leading-tight ${
-                                  isActive
-                                    ? 'text-white'
-                                    : isComplete
-                                      ? 'text-secondary-400'
-                                      : 'text-surface-500'
-                                }`}
-                              >
+                              <span className="text-[10px] font-semibold leading-tight text-foreground">
                                 {step.label}
                               </span>
                             </li>
@@ -703,52 +627,48 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                 <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
                   <div>
                     <h3 className="zenith-section-title">Récipes Emitidos por Especialistas</h3>
-                    <p className="text-xs text-surface-400">Listado cronológico de recetas autorizadas.</p>
                   </div>
 
                   <div className="zenith-table-wrap hidden lg:block">
-                    <table className="zenith-table text-sm">
+                    <table className="zenith-table zenith-table--divided text-sm">
+                      <colgroup>
+                        <col className="w-[13%]" />
+                        <col className="w-[14%]" />
+                        <col className="w-[32%]" />
+                        <col className="w-[24%]" />
+                        <col className="w-[17%]" />
+                      </colgroup>
                       <thead>
                         <tr className="border-b border-surface-850 text-xs font-semibold text-surface-500 uppercase tracking-wider">
                           <th className="pb-3">Código</th>
-                          <th className="pb-3">Fecha de Emisión</th>
-                          <th className="pb-3">Medicamento</th>
-                          <th className="pb-3">Especialista</th>
-                          <th className="pb-3">Estado</th>
+                          <th className="pb-3">Emisión</th>
+                          <th className="pb-3 zenith-table__wrap">Medicamento</th>
+                          <th className="pb-3 zenith-table__wrap">Especialista</th>
                           <th className="pb-3 text-right">Acciones</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-surface-850">
+                      <tbody>
                         {recipes.map((rec) => (
                           <tr key={rec.id} className="hover:bg-surface-850/25 transition-colors group">
                             <td className="py-4 font-mono font-bold text-xs text-white">{rec.id}</td>
                             <td className="py-4 text-xs text-surface-400">{rec.date}</td>
-                            <td className="py-4">
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-surface-200">{rec.medication}</span>
+                            <td className="py-4 zenith-table__wrap">
+                              <div className="flex flex-col gap-0.5 min-w-0">
+                                <span className="font-semibold text-surface-200 break-words">{rec.medication}</span>
                                 <span className="text-[10px] text-surface-500">{rec.dosage}</span>
                               </div>
                             </td>
-                            <td className="py-4">
-                              <div className="flex flex-col">
-                                <span className="text-xs text-surface-200 font-semibold">{rec.doctor}</span>
+                            <td className="py-4 zenith-table__wrap">
+                              <div className="flex flex-col gap-0.5 min-w-0">
+                                <span className="text-xs text-surface-200 font-semibold break-words">{rec.doctor}</span>
                                 <span className="text-[10px] text-surface-500">{rec.specialty}</span>
                               </div>
-                            </td>
-                            <td className="py-4 whitespace-nowrap">
-                              <span className={`inline-flex whitespace-nowrap px-2 py-0.5 text-2xs font-semibold border rounded-full ${
-                                rec.status === 'Activo' 
-                                  ? 'bg-secondary-500/10 text-secondary-400 border-secondary-500/20' 
-                                  : 'bg-secondary-500/10 text-secondary-400 border-secondary-500/20'
-                              }`}>
-                                {rec.status}
-                              </span>
                             </td>
                             <td className="py-4 text-right">
                               <div className="inline-flex gap-2">
                                 <button
                                   onClick={() => setSelectedRecipe(rec)}
-                                  className="px-3 py-1.5 text-xs font-semibold bg-primary-600 hover:bg-primary-500 text-white rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer"
+                                  className="patient-recipe-view-btn px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
                                   <span>Visualizar / PDF</span>
@@ -766,13 +686,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         key={rec.id}
                         title={rec.medication}
                         subtitle={rec.id}
-                        badge={
-                          <span className="inline-flex whitespace-nowrap px-2 py-0.5 text-2xs font-semibold border rounded-full bg-secondary-500/10 text-secondary-400 border-secondary-500/20">
-                            {rec.status}
-                          </span>
-                        }
                         fields={[
-                          { label: 'Fecha', value: rec.date },
+                          { label: 'Emisión', value: rec.date },
                           { label: 'Dosis', value: rec.dosage },
                           { label: 'Especialista', value: rec.doctor },
                           { label: 'Especialidad', value: rec.specialty },
@@ -780,7 +695,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         actions={
                           <button
                             onClick={() => setSelectedRecipe(rec)}
-                            className="px-3 py-1.5 text-xs font-semibold bg-primary-600 hover:bg-primary-500 text-white rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer"
+                            className="patient-recipe-view-btn px-3 py-1.5 text-xs font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             <Eye className="h-3.5 w-3.5" />
                             Visualizar
@@ -796,11 +711,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
             {/* P.T: TREATMENT TRACKING */}
             {activeSubTab === 'treatment' && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                <PageHeader
-                  title="Seguimiento de Tratamiento"
-                  description="Registre sus tomas del día y consulte el progreso de su plan terapéutico."
-                />
-
                 {doseSuccessMsg && (
                   <div className="p-4 bg-secondary-500/10 border border-secondary-500/30 rounded-2xl flex items-center gap-2.5 text-secondary-450 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
                     <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
@@ -816,7 +726,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         <Calendar className="h-4 w-4 shrink-0" />
                         <span className="text-xs font-semibold">{todayLabel}</span>
                       </div>
-                      <h3 className="text-lg sm:text-xl font-semibold text-white">
+                      <h3 className="text-lg sm:text-xl font-bold text-white">
                         {todayTotalCount === 0
                           ? 'Sin tomas programadas hoy'
                           : todayCompletedCount === todayTotalCount
@@ -830,16 +740,9 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         </p>
                       )}
                     </div>
-                    <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full sm:w-auto sm:min-w-[22rem] shrink-0">
+                    <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full sm:w-auto sm:min-w-[16rem] shrink-0">
                       <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-surface-950/50 border border-surface-850 rounded-xl min-w-0">
-                        <TrendingUp className="h-4 w-4 text-secondary-400 shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-[10px] text-surface-500 truncate">Adherencia semanal</p>
-                          <p className="text-sm font-semibold text-white tabular-nums">{weeklyAdherencePercent}%</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-surface-950/50 border border-surface-850 rounded-xl min-w-0">
-                        <Pill className="h-4 w-4 text-primary-400 shrink-0" />
+                        <Pill className="h-4 w-4 text-[#179150] shrink-0" />
                         <div className="min-w-0">
                           <p className="text-[10px] text-surface-500 truncate">Medicamentos activos</p>
                           <p className="text-sm font-semibold text-white tabular-nums">{activeTreatments.length}</p>
@@ -862,7 +765,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       </div>
                       <div className="h-2 w-full bg-surface-800 rounded-full overflow-hidden">
                         <div
-                          className="h-full bg-primary-500 transition-all duration-500 rounded-full"
+                          className="patient-progress-bar__fill h-full transition-all duration-500 rounded-full"
                           style={{ width: `${todayProgressPercent}%` }}
                         />
                       </div>
@@ -886,7 +789,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         onClick={() => setTreatmentPanel(tab.id)}
                         className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${
                           isActive
-                            ? 'bg-primary-600 text-white shadow-sm'
+                            ? 'patient-treatment-tab--active shadow-sm'
                             : 'text-surface-400 hover:text-surface-200 hover:bg-surface-850'
                         }`}
                       >
@@ -921,12 +824,12 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         return (
                           <div
                             key={dose.id}
-                            className={`p-5 sm:p-6 rounded-2xl border backdrop-blur-md transition-colors ${
+                            className={`p-5 sm:p-6 rounded-2xl border backdrop-blur-md transition-colors bg-surface-900/60 ${
                               isPending
-                                ? 'bg-primary-500/5 border-primary-500/30'
+                                ? 'border-primary-500/30'
                                 : isTaken
-                                  ? 'bg-secondary-500/5 border-secondary-500/25'
-                                  : 'bg-surface-900/60 border-surface-800'
+                                  ? 'border-secondary-500/25'
+                                  : 'border-surface-800'
                             }`}
                           >
                             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -989,7 +892,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         >
                           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                             <div className="space-y-1 min-w-0">
-                              <h4 className="text-base font-bold text-white">{treatment.name}</h4>
+                              <h4 className="patient-medication-name text-base">{treatment.name}</h4>
                               <p className="text-xs text-surface-400">
                                 {treatment.dosage} · {treatment.frequency}
                               </p>
@@ -998,7 +901,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                               </p>
                             </div>
                             <div className="text-left sm:text-right shrink-0">
-                              <p className="text-2xl font-semibold text-white tabular-nums">{progress}%</p>
+                              <p className="text-2xl font-bold text-white tabular-nums">{progress}%</p>
                               <p className="text-[10px] text-surface-500">
                                 {treatment.takenDoses} de {treatment.totalDoses} tomas
                               </p>
@@ -1007,7 +910,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
                           <div className="h-2 w-full bg-surface-800 rounded-full overflow-hidden">
                             <div
-                              className="h-full bg-primary-500 transition-all duration-500 rounded-full"
+                              className="patient-progress-bar__fill h-full transition-all duration-500 rounded-full"
                               style={{ width: `${progress}%` }}
                             />
                           </div>
@@ -1035,49 +938,15 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                 {/* Panel: Progreso */}
                 {treatmentPanel === 'progress' && (
                   <div className="space-y-6">
-                    <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-5">
-                      <div>
-                        <h3 className="zenith-section-title">Adherencia de la semana</h3>
-                        <p className="text-xs text-surface-400">
-                          Promedio semanal: <span className="text-white font-semibold tabular-nums">{weeklyAdherencePercent}%</span>
-                        </p>
-                      </div>
-
-                      <div className="flex items-end justify-between gap-2 sm:gap-3 h-32">
-                        {WEEKLY_ADHERENCE.map((day) => (
-                          <div key={day.day} className="flex-1 flex flex-col items-center gap-2 min-w-0">
-                            <span className="text-[10px] font-semibold text-surface-300 tabular-nums">{day.percent}%</span>
-                            <div className="w-full bg-surface-800 rounded-lg relative flex items-end h-24">
-                              <div
-                                className={`w-full rounded-lg transition-all ${
-                                  day.percent >= 80
-                                    ? 'bg-secondary-500/80'
-                                    : day.percent >= 50
-                                      ? 'bg-primary-500/80'
-                                      : 'bg-amber-500/70'
-                                }`}
-                                style={{ height: `${day.percent}%` }}
-                              />
-                            </div>
-                            <span className="text-[10px] text-surface-500 font-bold">{day.day}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-[10px] text-surface-500 text-center">
-                        Verde: ≥80% · Azul: 50–79% · Ámbar: &lt;50%
-                      </p>
-                    </div>
-
                     {treatmentAlerts.length > 0 && (
                       <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
                         <div>
                           <h3 className="zenith-section-title">Alertas y recordatorios</h3>
-                          <p className="text-xs text-surface-400">Controles médicos, recordatorios y renovaciones de receta.</p>
                         </div>
 
                         <div className="space-y-3">
                           {treatmentAlerts.map((alert) => {
-                            const { Icon: AlertIcon, label, cardClass, iconClass, badgeClass } = getAlertMeta(alert.type);
+                            const { Icon: AlertIcon, cardClass, iconClass } = getAlertMeta(alert.type);
                             return (
                               <div
                                 key={alert.id}
@@ -1086,16 +955,11 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                                 <div className="flex items-start gap-3">
                                   <AlertIcon className={`h-4 w-4 shrink-0 mt-0.5 ${iconClass}`} />
                                   <div className="min-w-0 flex-1">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="text-sm font-bold text-white">{alert.title}</p>
-                                      <span className={`inline-flex px-2 py-0.5 text-[9px] font-semibold border rounded-full ${badgeClass}`}>
-                                        {label}
-                                      </span>
-                                    </div>
-                                    <p className="text-[10px] text-surface-500 mt-0.5">{alert.date}</p>
+                                    <p className="patient-alert-title text-sm">{alert.title}</p>
+                                    <p className="text-[10px] text-surface-500 mt-0.5 patient-alert-date">{alert.date}</p>
                                   </div>
                                 </div>
-                                <p className="text-xs text-surface-400 leading-relaxed pl-7">{alert.message}</p>
+                                <p className="text-xs text-surface-400 leading-relaxed pl-7 patient-alert-message">{alert.message}</p>
                               </div>
                             );
                           })}
@@ -1108,36 +972,38 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         <History className="h-4 w-4 text-surface-500" />
                         <div>
                           <h3 className="zenith-section-title">Historial de tomas</h3>
-                          <p className="text-xs text-surface-400">Registro cronológico de adherencia al tratamiento.</p>
                         </div>
                       </div>
 
                       <div className="zenith-table-wrap hidden lg:block">
-                        <table className="zenith-table text-sm">
+                        <table className="zenith-table zenith-table--divided text-sm">
+                          <colgroup>
+                            <col className="w-[18%]" />
+                            <col className="w-[32%]" />
+                            <col className="w-[16%]" />
+                            <col className="w-[16%]" />
+                            <col className="w-[18%]" />
+                          </colgroup>
                           <thead>
                             <tr className="border-b border-surface-850 text-xs font-semibold text-surface-500 uppercase tracking-wider">
                               <th className="pb-3">Fecha</th>
-                              <th className="pb-3">Medicamento</th>
+                              <th className="pb-3 zenith-table__wrap">Medicamento</th>
                               <th className="pb-3">Programada</th>
                               <th className="pb-3">Tomada</th>
                               <th className="pb-3">Estado</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-surface-850">
+                          <tbody>
                             {doseLogs.map((dose) => (
                               <tr key={dose.id} className="hover:bg-surface-850/25 transition-colors">
                                 <td className="py-3 text-xs text-surface-400">{dose.date}</td>
-                                <td className="py-3 text-xs font-semibold text-surface-200">{dose.medicationName}</td>
+                                <td className="py-3 zenith-table__wrap text-xs font-semibold text-surface-200 break-words">
+                                  {dose.medicationName}
+                                </td>
                                 <td className="py-3 text-xs text-surface-400 font-mono">{dose.scheduledTime}</td>
                                 <td className="py-3 text-xs text-surface-400 font-mono">{dose.takenAt ?? '—'}</td>
                                 <td className="py-3">
-                                  <span className={`inline-flex px-2 py-0.5 text-2xs font-semibold border rounded-full ${
-                                    dose.status === 'Tomada'
-                                      ? 'bg-secondary-500/10 text-secondary-400 border-secondary-500/20'
-                                      : dose.status === 'Pendiente'
-                                        ? 'bg-primary-500/10 text-primary-400 border-primary-500/20'
-                                        : 'bg-surface-800 text-surface-500 border-surface-700'
-                                  }`}>
+                                  <span className={`inline-flex px-2 py-0.5 text-2xs font-semibold border rounded-full ${getDoseStatusBadgeClass(dose.status)}`}>
                                     {dose.status}
                                   </span>
                                 </td>
@@ -1154,13 +1020,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                             title={dose.medicationName}
                             subtitle={dose.date}
                             badge={
-                              <span className={`inline-flex px-2 py-0.5 text-2xs font-semibold border rounded-full ${
-                                dose.status === 'Tomada'
-                                  ? 'bg-secondary-500/10 text-secondary-400 border-secondary-500/20'
-                                  : dose.status === 'Pendiente'
-                                    ? 'bg-primary-500/10 text-primary-400 border-primary-500/20'
-                                    : 'bg-surface-800 text-surface-500 border-surface-700'
-                              }`}>
+                              <span className={`inline-flex px-2 py-0.5 text-2xs font-semibold border rounded-full ${getDoseStatusBadgeClass(dose.status)}`}>
                                 {dose.status}
                               </span>
                             }
@@ -1180,23 +1040,12 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
             {/* P.2: COMMERCIAL PROPOSAL & BILLING */}
             {activeSubTab === 'proposals' && (
               <div className="space-y-6">
-                <PageHeader
-                  title="Confirmación de Pedido y Facturación"
-                  description="Valide la propuesta comercial enviada desde la consulta de su médico especialista."
-                />
-
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
                   {/* Proposal Breakdown Table */}
                   <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="zenith-section-title">Desglose de Medicamentos Recetados</h3>
-                        <p className="text-xs text-surface-400">Descuentos exclusivos aplicados por su médico.</p>
-                      </div>
-                      <span className="text-[10px] bg-primary-500/10 text-primary-400 border border-primary-500/25 px-2 py-0.5 rounded font-bold">
-                        PROPUESTA #PR-2026
-                      </span>
+                    <div>
+                      <h3 className="zenith-section-title">Medicamentos recetados</h3>
                     </div>
 
                     <div className="divide-y divide-surface-850">
@@ -1255,12 +1104,14 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         </span>
                       </div>
 
-                      <button
+                      <Button
+                        variant="patient"
+                        size="sm"
                         onClick={() => setIsTermsModalOpen(true)}
-                        className="px-3.5 py-1.5 bg-surface-800 hover:bg-surface-700 text-primary-400 hover:text-white rounded-lg text-xs font-bold border border-surface-700 transition-colors cursor-pointer"
+                        className="font-bold !h-auto px-3.5 py-2"
                       >
                         {termsAccepted ? 'Ver Términos' : 'Aceptar Términos'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
 
@@ -1313,6 +1164,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     </div>
 
                     <Button
+                      variant="patient"
                       onClick={handleConfirmOrder}
                       disabled={!termsAccepted}
                       className="w-full"
@@ -1332,19 +1184,15 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
             {/* P.3: PAYMENT GATEWAY */}
             {activeSubTab === 'payment' && (
               <div className="space-y-6 animate-in fade-in duration-300">
-                <PageHeader
-                  title="Preparación de Pago"
-                  description="Documentación y simulación del flujo de redirección hacia la pasarela externa del cliente."
-                  actions={
-                    <div className="bg-secondary-500/10 border border-secondary-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-3 shrink-0">
-                      <Clock className="h-5 w-5 text-secondary-400 animate-pulse" />
-                      <div>
-                        <span className="text-[9px] font-bold text-secondary-450 uppercase leading-none block">Reserva de Inventario</span>
-                        <span className="text-base font-mono font-semibold text-white">{formatTime(paymentTimeLeft)}</span>
-                      </div>
+                <div className="flex justify-end">
+                  <div className="bg-secondary-500/10 border border-secondary-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-3 shrink-0">
+                    <Clock className="h-5 w-5 text-secondary-400 animate-pulse" />
+                    <div>
+                      <span className="text-[9px] font-bold text-secondary-450 uppercase leading-none block">Reserva de Inventario</span>
+                      <span className="text-base font-mono font-semibold text-white">{formatTime(paymentTimeLeft)}</span>
                     </div>
-                  }
-                />
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
@@ -1360,9 +1208,6 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
                     <div className="space-y-3">
                       <h3 className="zenith-section-title">Ejemplo de redirección</h3>
-                      <p className="text-xs text-surface-400">
-                        Al confirmar el pedido, el paciente sería enviado a la URL de la pasarela del cliente con los parámetros del pedido.
-                      </p>
                       <div className="p-3 bg-surface-950/60 border border-surface-850 rounded-xl">
                         <p className="text-[10px] font-bold text-surface-500 uppercase mb-1.5">URL de ejemplo</p>
                         <p className="text-[11px] font-mono text-primary-300 break-all leading-relaxed">
@@ -1382,44 +1227,15 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       </div>
                     </div>
 
-                    {isRedirectSimulating ? (
-                      <div className="p-5 bg-surface-800 border border-surface-700 rounded-2xl space-y-4 text-center">
-                        <div className="flex justify-center text-surface-300">
-                          <ExternalLink className="h-10 w-10 animate-pulse" />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="zenith-section-title">Simulando redirección</h4>
-                          <p className="text-xs text-surface-400 leading-relaxed">
-                            El usuario sería redirigido a la pasarela externa del cliente para completar el pago.
-                          </p>
-                        </div>
-                        <div className="space-y-1.5 pt-2">
-                          <div className="h-1.5 w-full bg-surface-800 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary-500 transition-all duration-1000 ease-linear"
-                              style={{ width: `${(redirectCountdown / 3) * 100}%` }}
-                            />
-                          </div>
-                          <p className="text-[10px] text-surface-500 font-mono">
-                            Simulación en {redirectCountdown} segundos...
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-3 justify-end pt-2">
-                        <button
-                          type="button"
-                          onClick={() => setActiveSubTab('proposals')}
-                          className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
-                        >
-                          Volver a Propuesta
-                        </button>
-                        <Button onClick={handleSimulatePaymentRedirect}>
-                          <span>Simular redirección (ejemplo)</span>
-                          <ExternalLink className="h-4.5 w-4.5" />
-                        </Button>
-                      </div>
-                    )}
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubTab('proposals')}
+                        className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Volver a Propuesta
+                      </button>
+                    </div>
                   </div>
 
                   {/* Summary of checkout */}
@@ -1575,20 +1391,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
             {/* P.5: PROFILE CONFIGURATION VIEW */}
             {activeSubTab === 'profile' && (
               <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
-                <PageHeader
-                  title="Configuración de Perfil"
-                  description="Actualice sus datos personales y la dirección de entrega predeterminada en Venezuela."
-                />
-
-                {profileSuccessMsg && (
-                  <div className="p-4 bg-secondary-500/10 border border-secondary-500/30 rounded-2xl flex items-center gap-2.5 text-secondary-450 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
-                    <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
-                    <span>{profileSuccessMsg}</span>
-                  </div>
-                )}
-
                 <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-8 backdrop-blur-md space-y-6">
-                  <form onSubmit={handleSaveProfile} className="space-y-6">
+                  <div className="space-y-6">
                     
                     {/* Sección 1: Datos Personales */}
                     <div className="space-y-4">
@@ -1602,12 +1406,13 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           <input
                             type="text"
                             value={profileName}
-                            onChange={(e) => setProfileName(e.target.value)}
-                            className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500 placeholder-surface-800"
+                            readOnly
+                            disabled
+                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none cursor-not-allowed"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Correo Electrónico (No editable)</label>
+                          <label className="zenith-field-label">Correo Electrónico</label>
                           <input
                             type="email"
                             value={patientEmail}
@@ -1620,9 +1425,9 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           <input
                             type="text"
                             value={profilePhone}
-                            onChange={(e) => setProfilePhone(e.target.value)}
-                            placeholder="0412-6001234"
-                            className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-primary-500 placeholder-surface-800"
+                            readOnly
+                            disabled
+                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 font-mono focus:outline-none cursor-not-allowed"
                           />
                         </div>
                         <div className="space-y-1.5">
@@ -1649,9 +1454,9 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           <input
                             type="text"
                             value={deliveryAddress}
-                            onChange={(e) => setDeliveryAddress(e.target.value)}
-                            placeholder="Ej: Av. Francisco de Miranda, Urb. Campo Alegre, Edif. Parque Cristal, Piso 4B"
-                            className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500 placeholder-surface-800"
+                            readOnly
+                            disabled
+                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none cursor-not-allowed"
                           />
                         </div>
 
@@ -1661,6 +1466,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                             <VenezuelanStateSelect
                               value={deliveryState}
                               onChange={setDeliveryState}
+                              disabled
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -1668,32 +1474,16 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                             <input
                               type="text"
                               value={deliveryMunicipio}
-                              onChange={(e) => setDeliveryMunicipio(e.target.value)}
-                              placeholder="Ej: Chacao"
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-primary-500 placeholder-surface-800"
+                              readOnly
+                              disabled
+                              className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none cursor-not-allowed"
                             />
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Botones de Acción */}
-                    <div className="pt-4 border-t border-surface-850 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <button
-                        type="button"
-                        onClick={onLogout}
-                        className="zenith-logout-btn order-last sm:order-first"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span>Cerrar Sesión</span>
-                      </button>
-
-                      <Button type="submit">
-                        Guardar Cambios
-                      </Button>
-                    </div>
-
-                  </form>
+                  </div>
                 </div>
               </div>
             )}
@@ -1911,11 +1701,11 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     setTermsAccepted(false);
                     setIsTermsModalOpen(false);
                   }}
-                  className="px-4 py-2 bg-surface-900 hover:bg-surface-850 text-surface-400 hover:text-white rounded-lg text-xs font-semibold border border-surface-800 transition-all cursor-pointer"
+                  className="px-4 py-2 bg-[#e11d48] hover:bg-[#c91840] !text-[#ffffff] rounded-lg text-xs font-semibold border border-[#c91840] transition-all cursor-pointer"
                 >
                   Rechazar
                 </button>
-                <Button onClick={() => setIsTermsModalOpen(false)}>
+                <Button variant="patient" onClick={() => setIsTermsModalOpen(false)}>
                   Aceptar y Continuar
                 </Button>
               </div>

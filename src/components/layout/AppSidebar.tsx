@@ -9,7 +9,7 @@ import { useShell } from './ShellContext';
 export interface AppSidebarBrand {
   icon: LucideIcon;
   title: string;
-  subtitle: string;
+  subtitle?: string;
 }
 
 export interface AppSidebarProfile {
@@ -81,9 +81,11 @@ export default function AppSidebar({
         </div>
         <div className="min-w-0 flex-1">
           <h1 className="text-foreground tracking-tight text-base leading-none truncate">{brand.title}</h1>
-          <span className="zenith-field-label tracking-wider uppercase truncate block">
-            {brand.subtitle}
-          </span>
+          {brand.subtitle ? (
+            <span className="zenith-field-label tracking-wider uppercase truncate block">
+              {brand.subtitle}
+            </span>
+          ) : null}
         </div>
       </div>
 

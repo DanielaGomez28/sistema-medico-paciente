@@ -7,6 +7,7 @@ interface VenezuelanStateSelectProps {
   value: string;
   onChange: (value: string) => void;
   required?: boolean;
+  disabled?: boolean;
   className?: string;
   allowEmpty?: boolean;
   emptyLabel?: string;
@@ -22,6 +23,7 @@ export default function VenezuelanStateSelect({
   value,
   onChange,
   required,
+  disabled,
   className,
   allowEmpty = false,
   emptyLabel = 'Seleccione un estado',
@@ -30,11 +32,13 @@ export default function VenezuelanStateSelect({
   return (
     <select
       required={required}
+      disabled={disabled}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className={cn(
         'w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none',
-        focusAccentClass[accent],
+        disabled && 'bg-surface-950/40 text-surface-550 cursor-not-allowed',
+        !disabled && focusAccentClass[accent],
         className
       )}
     >

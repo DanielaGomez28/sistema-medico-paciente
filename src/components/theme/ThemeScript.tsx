@@ -11,5 +11,11 @@ export default function ThemeScript() {
   } catch (e) {}
 })();`;
 
-  return <script dangerouslySetInnerHTML={{ __html: script }} />;
+  return (
+    <script
+      id="zenith-theme-script"
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: script }}
+    />
+  );
 }

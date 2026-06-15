@@ -39,12 +39,14 @@ export default function AppHeader({
             <Menu className="h-5 w-5" />
           </button>
         )}
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="h-2 w-2 rounded-full bg-surface-300 shrink-0" />
-          <span className="text-xs text-surface-400 font-medium tracking-wider uppercase truncate">
-            {statusLabel}
-          </span>
-        </div>
+        {statusLabel ? (
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="h-2 w-2 rounded-full bg-surface-300 shrink-0" />
+            <span className="text-xs text-surface-400 font-medium tracking-wider uppercase truncate">
+              {statusLabel}
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
