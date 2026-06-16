@@ -37,12 +37,12 @@ export default function ListCard({
         className
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
         <div className="min-w-0 flex-1">
-          <div className="font-semibold text-foreground text-sm break-words">{title}</div>
-          {subtitle && <div className="text-xs text-surface-500 mt-0.5 break-words">{subtitle}</div>}
+          <div className="font-semibold text-foreground text-sm whitespace-nowrap truncate">{title}</div>
+          {subtitle && <div className="text-xs text-surface-500 mt-0.5 whitespace-nowrap truncate">{subtitle}</div>}
         </div>
-        {badge && <div className="shrink-0">{badge}</div>}
+        {badge && <div className="shrink-0 self-start sm:self-auto">{badge}</div>}
       </div>
 
       {fields && fields.length > 0 && (
