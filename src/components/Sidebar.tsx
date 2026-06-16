@@ -30,8 +30,7 @@ export default function Sidebar({
       accent="primary"
       brand={{
         icon: Activity,
-        title: 'Médico-Paciente',
-        subtitle: 'Gestión de Pedidos',
+        title: 'Admin',
       }}
       items={[
         { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },

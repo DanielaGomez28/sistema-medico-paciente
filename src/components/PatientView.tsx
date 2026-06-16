@@ -479,7 +479,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       sidebar={
         <AppSidebar
           accent="primary"
-          brand={{ icon: Activity, title: 'Pacientes' }}
+          brand={{ icon: Activity, title: 'Paciente' }}
           items={[
             { id: 'treatment', name: 'Seguimiento', icon: Pill },
             { id: 'recipes', name: 'Récipes médicos', icon: FileText },
