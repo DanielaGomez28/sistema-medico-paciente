@@ -1,12 +1,8 @@
-export type ThemeMode = 'light' | 'dark' | 'system';
+export type ThemeMode = 'light' | 'dark';
 
 export const THEME_STORAGE_KEY = 'zenith-theme';
 
 export function resolveTheme(mode: ThemeMode): 'light' | 'dark' {
-  if (mode === 'system') {
-    if (typeof window === 'undefined') return 'dark';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
   return mode;
 }
 
@@ -16,8 +12,8 @@ export function applyTheme(mode: ThemeMode) {
 }
 
 export function getStoredTheme(): ThemeMode {
-  if (typeof window === 'undefined') return 'system';
+  if (typeof window === 'undefined') return 'dark';
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
-  return 'system';
+  if (stored === 'light' || stored === 'dark') return stored;
+  return 'dark';
 }

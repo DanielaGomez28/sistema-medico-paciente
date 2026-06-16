@@ -245,7 +245,6 @@ export default function Home() {
 
   // Calculations for Badges
   const pendingCount = orders.filter(o => o.status === 'Pendiente').length;
-  const lowStockCount = products.filter(p => p.stock <= p.minStock).length;
 
   if (!isLoaded) {
     return (
@@ -282,7 +281,8 @@ export default function Home() {
       header={({ onMenuClick }) => (
         <AppHeader
           onMenuClick={onMenuClick}
-          notificationCount={pendingCount + lowStockCount}
+          statusLabel=""
+          showNotifications={false}
           actions={
             <AppHeaderAction variant="admin" onClick={() => setIsNewOrderOpen(true)}>
               Nuevo Pedido

@@ -16,7 +16,7 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>('system');
+  const [theme, setThemeState] = useState<ThemeMode>('dark');
 
   useEffect(() => {
     setThemeState(getStoredTheme());
@@ -25,13 +25,6 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     applyTheme(theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
-
-    if (theme !== 'system') return;
-
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const onChange = () => applyTheme('system');
-    media.addEventListener('change', onChange);
-    return () => media.removeEventListener('change', onChange);
   }, [theme]);
 
   const setTheme = useCallback((mode: ThemeMode) => {

@@ -51,7 +51,6 @@ export default function Sidebar({
       profile={{
         initials: 'CM',
         name: 'Carlos Mendoza',
-        role: 'Administrador',
         avatarClassName: 'portal-profile-avatar',
       }}
       onLogout={onLogout}

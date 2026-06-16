@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { ThemeMode } from '../../lib/theme';
 import { useTheme } from './ThemeProvider';
@@ -9,7 +9,6 @@ import { useTheme } from './ThemeProvider';
 const options: { mode: ThemeMode; label: string; icon: React.ElementType }[] = [
   { mode: 'light', label: 'Claro', icon: Sun },
   { mode: 'dark', label: 'Oscuro', icon: Moon },
-  { mode: 'system', label: 'Sistema', icon: Monitor },
 ];
 
 export default function ThemeToggle({ className }: { className?: string }) {
