@@ -48,7 +48,7 @@ export default function AppShell({
     <ShellProvider value={shellValue}>
       <div
         data-portal={portal}
-        className={cn('flex h-screen bg-surface-950 text-foreground overflow-hidden font-sans', className)}
+        className={cn('flex h-[100dvh] bg-surface-950 text-foreground overflow-hidden font-sans', className)}
       >
         {sidebarOpen && (
           <button
@@ -66,9 +66,9 @@ export default function AppShell({
         >
           {sidebar}
         </div>
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
           {headerContent}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8 bg-surface-950">
+          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8 bg-surface-950 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
             <div className={cn('w-full max-w-[96rem] mx-auto', contentClassName)}>{children}</div>
           </main>
         </div>
