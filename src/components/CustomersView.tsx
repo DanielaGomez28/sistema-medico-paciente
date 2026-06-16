@@ -6,7 +6,7 @@ import { Customer } from '../types';
 import { formatCurrency } from '../lib/currency';
 import { formatCustomerAddress, formatCustomerLocation } from '../lib/customerLocation';
 import VenezuelanStateSelect from './VenezuelanStateSelect';
-import { PageHeader, Button, Input, Modal, ModalBody, ModalFooter, ListCard } from './ui';
+import { PageHeader, Button, Modal, ModalBody, ModalFooter, ListCard } from './ui';
 
 interface CustomersViewProps {
   customers: Customer[];
@@ -59,8 +59,6 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Directorio de Clientes"
-        description="Listado, datos de contacto y estadísticas de consumo."
         actions={
           <Button onClick={() => setIsAddModalOpen(true)}>
             <Plus className="h-4 w-4" />

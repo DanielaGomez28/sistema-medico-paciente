@@ -55,6 +55,7 @@ export default function CmsView() {
     const localCms = localStorage.getItem('zenith_cms_settings');
     if (localCms) {
       const parsed = JSON.parse(localCms) as Partial<CmsSettings> & { themeColor?: string };
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSettings((prev) => ({
         ...prev,
         logoUrl: parsed.logoUrl ?? prev.logoUrl,
@@ -87,8 +88,6 @@ export default function CmsView() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Configuración Global"
-        description="Define la apariencia y los textos que verán médicos y pacientes."
         actions={
           <Button size="sm" variant="patient" onClick={handlePublish}>
             <Save className="h-4 w-4" />

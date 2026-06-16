@@ -61,8 +61,6 @@ export default function OrdersView({ orders, onSelectOrder, onOpenNewOrder }: Or
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Módulo de Despacho"
-        description="Control operativo con semáforo estricto: rojo pendientes, amarillo preparados y verde despachados."
         actions={
           <Button onClick={onOpenNewOrder}>
             <Plus className="h-4 w-4" />

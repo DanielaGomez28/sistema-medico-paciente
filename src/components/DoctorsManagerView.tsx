@@ -55,6 +55,7 @@ export default function DoctorsManagerView() {
   useEffect(() => {
     const localDocs = localStorage.getItem('zenith_doctors_directory');
     if (localDocs) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDoctors(JSON.parse(localDocs));
     } else {
       localStorage.setItem('zenith_doctors_directory', JSON.stringify(INITIAL_DOCTORS));
@@ -153,8 +154,6 @@ export default function DoctorsManagerView() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Registro y Gestión de Médicos"
-        description="Administre los expedientes profesionales y autorice el alta médica en el sistema."
         actions={
           <Button variant="outline" onClick={() => setIsDirectoryOpen(true)}>
             <Stethoscope className="h-4 w-4" />
