@@ -1286,7 +1286,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                           <h3 className="zenith-section-title">Libro de Comisiones</h3>
                           <p className="text-xs text-surface-400">Incentivos asignados por venta efectiva en la red de farmacias.</p>
                         </div>
-                        <span className="text-[10px] bg-secondary-500/10 text-[#2b2d2b] border border-secondary-500/20 px-2 py-0.5 rounded font-bold">Tasa: {commissionRate}%</span>
+                        <span className="text-[10px] bg-secondary-500/20 text-white border border-secondary-400/40 px-2 py-0.5 rounded font-bold shadow-sm">Tasa: {commissionRate}%</span>
                       </div>
 
                       {/* Bar-chart style visualisation per entry */}
