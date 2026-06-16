@@ -617,20 +617,24 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {PHARMACY_PRODUCTS.slice(0, 4).map((prod) => (
-                      <div key={prod.id} className="bg-surface-950/50 border border-surface-850 rounded-2xl p-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-semibold text-white truncate">{prod.name}</p>
-                            <p className="text-[10px] text-surface-500 mt-1">{prod.category}</p>
+                      <div key={prod.id} className="overflow-hidden bg-surface-950/50 border border-surface-850 rounded-2xl p-4 space-y-3">
+                        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-white leading-snug break-words line-clamp-2">
+                              {prod.name}
+                            </p>
+                            <p className="mt-1 text-[10px] text-surface-500 break-words">
+                              {prod.category}
+                            </p>
                           </div>
-                          <span className="text-[9px] text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
+                          <span className="w-fit max-w-full shrink-0 truncate whitespace-nowrap text-[9px] text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
                             Farmacia
                           </span>
                         </div>
-                        <div className="mt-3 text-[10px] text-surface-400 line-clamp-2">{prod.description}</div>
-                        <div className="mt-3 flex items-center justify-between text-[10px] text-surface-300">
-                          <span>Stock: {prod.stock} u.</span>
-                          <span className="font-semibold text-secondary-400">{formatCurrency(prod.price)}</span>
+                        <div className="text-[10px] text-surface-400 break-words line-clamp-3">{prod.description}</div>
+                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] text-surface-300">
+                          <span className="whitespace-nowrap">Stock: {prod.stock} u.</span>
+                          <span className="font-semibold text-secondary-400 whitespace-nowrap">{formatCurrency(prod.price)}</span>
                         </div>
                       </div>
                     ))}
@@ -693,7 +697,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                           placeholder="Buscar por nombre o cédula"
                           value={patientListSearch}
                           onChange={(e) => setPatientListSearch(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2.5 bg-white border border-surface-850 rounded-xl text-xs text-[#0a1220] placeholder:text-surface-500 focus:outline-none focus:border-secondary-500"
+                          className="zenith-input pl-10 pr-4 py-2.5"
                         />
                       </div>
 
@@ -1051,21 +1055,23 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                           return (
                             <div 
                               key={prod.id} 
-                              className={`p-3 border rounded-xl flex items-start justify-between gap-2.5 transition-all ${
+                              className={`overflow-hidden p-3 border rounded-xl flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-2.5 transition-all ${
                                 isAlreadySelected
                                   ? 'bg-surface-950/60 border-surface-800 opacity-60'
                                   : 'bg-surface-950/40 border-surface-850 hover:border-surface-800'
                               }`}
                             >
-                              <div className="space-y-1 text-left min-w-0">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="font-bold text-xs text-white truncate">{prod.name}</span>
-                                  <span className="text-[8px] bg-surface-850 text-surface-400 px-1.5 py-0.2 rounded font-medium">
+                              <div className="space-y-1 text-left min-w-0 flex-1">
+                                <div className="flex w-full min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-1.5">
+                                  <span className="block min-w-0 flex-1 max-w-full font-bold text-xs text-white leading-snug break-words line-clamp-2">
+                                    {prod.name}
+                                  </span>
+                                  <span className="max-w-full shrink-0 truncate overflow-hidden whitespace-nowrap text-[8px] bg-surface-850 text-surface-400 px-1.5 py-0.2 rounded font-medium">
                                     {prod.category}
                                   </span>
                                 </div>
-                                <p className="text-[10px] text-surface-500 line-clamp-1">{prod.description}</p>
-                                <div className="flex items-center gap-2 text-[10px] text-surface-400 pt-0.5">
+                                <p className="text-[10px] text-surface-500 break-words line-clamp-2">{prod.description}</p>
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-surface-400 pt-0.5">
                                   <span>Precio: {formatCurrency(prod.price)}</span>
                                   <span>•</span>
                                   <span className={prod.stock < 20 ? 'text-primary-500 font-medium' : ''}>
