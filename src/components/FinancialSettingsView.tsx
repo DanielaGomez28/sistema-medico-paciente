@@ -34,6 +34,7 @@ export default function FinancialSettingsView() {
     const localThreshold = localStorage.getItem('zenith_commission_threshold');
     const localLog = localStorage.getItem('zenith_commission_audit_log');
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (localRate) setCommissionValue(parseFloat(localRate));
     if (localType) setCommissionType(localType as 'percent' | 'fixed');
     if (localThreshold) setMinSaleThreshold(parseFloat(localThreshold));
@@ -79,8 +80,6 @@ export default function FinancialSettingsView() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Políticas Financieras y Comisiones"
-        description="Establezca los incentivos comerciales y administre las comisiones de los médicos."
         actions={
           <Button variant="outline" onClick={() => setIsAuditLogOpen(true)}>
             <History className="h-4 w-4" />

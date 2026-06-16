@@ -4,17 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { 
   DollarSign, 
   ShoppingBag, 
-  Clock, 
-  AlertTriangle, 
-  ArrowUpRight, 
   TrendingUp, 
   ChevronRight,
-  TrendingDown,
   Search,
   FileSpreadsheet,
   Download,
   Activity,
-  User,
   Database,
   CheckCircle,
   RefreshCw,
@@ -102,13 +97,11 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
 
   // Calculations for static metrics
   const completedOrders = orders.filter(o => o.status === 'Entregado');
-  const activeOrders = orders.filter(o => o.status === 'Pendiente' || o.status === 'En Preparación' || o.status === 'Enviado');
   
   const revenueOrders = orders.filter(o => o.status !== 'Cancelado');
   const totalRevenue = revenueOrders.reduce((sum, o) => sum + o.total, 0);
   
   const pendingOrdersCount = orders.filter(o => o.status === 'Pendiente').length;
-  const preparingOrdersCount = orders.filter(o => o.status === 'En Preparación').length;
   
   const lowStockProducts = products.filter(p => p.stock <= p.minStock);
 
@@ -244,8 +237,6 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
     <div className="space-y-6">
       
       <PageHeader
-        title="Panel Administrativo (Superadmin)"
-        description="Auditoría contable, estadísticas de efectividad e inteligencia de negocio."
         actions={
           <>
             <Button
