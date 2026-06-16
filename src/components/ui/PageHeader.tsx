@@ -10,7 +10,12 @@ export interface PageHeaderProps {
 
 export default function PageHeader({ title, description, actions, className }: PageHeaderProps) {
   return (
-    <div className={cn('flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4', className)}>
+    <div
+      className={cn(
+        'sticky top-0 z-20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-surface-950/95 backdrop-blur-md py-4',
+        className
+      )}
+    >
       {(title || description) && (
         <div>
           {title && <h2 className="zenith-page-title">{title}</h2>}
