@@ -12,7 +12,7 @@ export default function PageHeader({ title, description, actions, className }: P
   return (
     <div
       className={cn(
-        'sticky top-0 z-20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-surface-950/95 backdrop-blur-md py-4',
+        'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4',
         className
       )}
     >
