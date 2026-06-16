@@ -61,7 +61,7 @@
   --zenith-white-surface: #f4f7f6;
   --color-primary: #50e9f8;
   --color-secondary: #179150;
-  --background: #0a0b0a;
+  --background: #041a1d;
   --foreground: #f8fafc;
 
   --zenith-btn-solid-bg: var(--zenith-white-surface);
@@ -87,18 +87,18 @@
   --portal-doctor-btn-hover: var(--portal-btn-hover);
   --portal-doctor-btn-border: var(--portal-btn-border);
 
-  --zenith-surface-950: #0a0b0a;
-  --zenith-surface-900: #121413;
-  --zenith-surface-855: #161816;
-  --zenith-surface-850: #1a1c1a;
-  --zenith-surface-805: #1e201e;
-  --zenith-surface-800: #242624;
-  --zenith-surface-750: #2b2d2b;
-  --zenith-surface-700: #333533;
-  --zenith-surface-650: #3a3c3a;
-  --zenith-surface-600: #424442;
-  --zenith-surface-555: #474947;
-  --zenith-surface-550: #4c4e4c;
+  --zenith-surface-950: #041a1d;
+  --zenith-surface-900: #06242a;
+  --zenith-surface-855: #072f35;
+  --zenith-surface-850: #08333a;
+  --zenith-surface-805: #093942;
+  --zenith-surface-800: #0b4149;
+  --zenith-surface-750: #0d4952;
+  --zenith-surface-700: #11515b;
+  --zenith-surface-650: #175b66;
+  --zenith-surface-600: #1e6671;
+  --zenith-surface-555: #246f79;
+  --zenith-surface-550: #2b7882;
   --zenith-surface-500: #8b9194;
   --zenith-surface-455: #9aa0a4;
   --zenith-surface-450: #a8adb1;
@@ -108,7 +108,7 @@
   --zenith-surface-200: #e8eaec;
   --zenith-surface-150: #f1f3f4;
   --zenith-surface-100: #f8fafc;
-  --zenith-canvas: #0a0b0a;
+  --zenith-canvas: #041a1d;
   --zenith-card-surface: var(--zenith-surface-900);
 }
 
