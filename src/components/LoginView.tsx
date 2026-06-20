@@ -75,22 +75,28 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
     setSubmitting(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 280));
+    try {
+      // 🚀 Llamada real al Backend que configuramos
+      const response = await fetch('http://localhost:4000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }), // Enviamos los datos
+      });
 
-    const matchedUser = MOCK_USERS.find(
-      (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-    );
+      const data = await response.json();
 
-    if (matchedUser) {
-      onLoginSuccess(matchedUser.role, matchedUser.email);
-    } else {
-      const userExistsInDb = MOCK_USERS.some((u) => u.email.toLowerCase() === email.toLowerCase());
-
-      if (!userExistsInDb) {
-        setGeneralError('Usuario no registrado. Contacte al administrador para obtener acceso.');
+      if (response.ok) {
+        // Si el backend dice que todo está bien, iniciamos sesión con los datos reales
+        onLoginSuccess(data.role, data.email);
       } else {
-        setGeneralError('Contraseña incorrecta. Por favor intente de nuevo.');
+        // Si tu middleware o el controlador del backend rechazan la petición, mostramos el error
+        setGeneralError(data.error || 'Credenciales incorrectas.');
       }
+    } catch (error) {
+      // Por si el servidor backend está apagado o no responde
+      setGeneralError('No se pudo conectar con el servidor. Verifica que el Backend esté encendido.');
     }
 
     setSubmitting(false);
