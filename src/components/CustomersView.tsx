@@ -8,11 +8,26 @@ import { formatCustomerAddress, formatCustomerLocation } from '../lib/customerLo
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { PageHeader, Button, Modal, ModalBody, ModalFooter, ListCard } from './ui';
 
+/**
+ * Propiedades de la vista de Clientes.
+ * @interface CustomersViewProps
+ * @property {Customer[]} customers - Lista de clientes activos.
+ * @property {(customer: Omit<Customer, 'id' | 'totalOrders' | 'totalSpent'>) => Customer} onAddCustomer - Acción invocada al registrar un cliente a través del modal.
+ */
 interface CustomersViewProps {
   customers: Customer[];
   onAddCustomer: (customer: Omit<Customer, 'id' | 'totalOrders' | 'totalSpent'>) => Customer;
 }
 
+/**
+ * Vista de administración de Clientes.
+ * Exhibe resúmenes analíticos (gasto medio, cliente principal),
+ * barra de búsqueda en tiempo real, tabla detallada de clientes y
+ * un Modal con formulario integrado para el registro de nuevos usuarios, utilizando selects geográficos estandarizados.
+ *
+ * @param {CustomersViewProps} props - Propiedades de la vista.
+ * @returns {JSX.Element}
+ */
 export default function CustomersView({ customers, onAddCustomer }: CustomersViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

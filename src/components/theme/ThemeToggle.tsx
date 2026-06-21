@@ -11,6 +11,14 @@ const options: { mode: ThemeMode; label: string; icon: React.ElementType }[] = [
   { mode: 'dark', label: 'Oscuro', icon: Moon },
 ];
 
+/**
+ * Componente visual interactivo para alternar el tema visual (Claro/Oscuro).
+ * Se conecta automáticamente al ThemeProvider y actualiza el estado global.
+ *
+ * @param {object} props - Propiedades del componente.
+ * @param {string} [props.className] - Clases CSS adicionales para el contenedor principal.
+ * @returns {JSX.Element} Grupo de botones para alternar el tema.
+ */
 export default function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
 

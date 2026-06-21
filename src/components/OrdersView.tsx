@@ -17,12 +17,28 @@ import {
   ListCard,
 } from './ui';
 
+/**
+ * Propiedades de la vista de Gestión de Pedidos/Despachos.
+ * @interface OrdersViewProps
+ * @property {Order[]} orders - Lista global de órdenes actuales.
+ * @property {(order: Order) => void} onSelectOrder - Acción para visualizar en detalle una orden (ej. abre Modal).
+ * @property {() => void} onOpenNewOrder - Acción para abrir el formulario de creación manual de pedidos.
+ */
 interface OrdersViewProps {
   orders: Order[];
   onSelectOrder: (order: Order) => void;
   onOpenNewOrder: () => void;
 }
 
+/**
+ * Vista del módulo "Despacho" (Órdenes).
+ * Ofrece un panel de conteos rápidos estructurado por colores (Pendientes/Rojo, Preparados/Amarillo, Despachados/Verde).
+ * Proporciona filtros dinámicos (estado, pago, búsqueda textual) y ordenamiento,
+ * mostrando los resultados en una tabla o lista según el dispositivo.
+ *
+ * @param {OrdersViewProps} props - Propiedades de la vista.
+ * @returns {JSX.Element}
+ */
 export default function OrdersView({ orders, onSelectOrder, onOpenNewOrder }: OrdersViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');

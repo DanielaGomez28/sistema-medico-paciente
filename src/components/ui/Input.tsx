@@ -1,11 +1,26 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
+/**
+ * Propiedades del componente Input.
+ * Extiende las propiedades nativas de un input HTML.
+ *
+ * @interface InputProps
+ * @property {React.ReactNode} [icon] - Ícono a renderizar en el lado izquierdo del input.
+ * @property {boolean} [error] - Si es `true`, aplica estilos visuales de error (borde rojo/secundario).
+ */
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   icon?: React.ReactNode;
   error?: boolean;
 }
 
+/**
+ * Componente de campo de texto estándar.
+ * Soporta renderizado de ícono embebido y estado visual de error.
+ * Envuelto en forwardRef para permitir su uso con react-hook-form u otras librerías.
+ *
+ * @type {React.ForwardRefExoticComponent<InputProps & React.RefAttributes<HTMLInputElement>>}
+ */
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, icon, error, ...props }, ref) => {
     return (

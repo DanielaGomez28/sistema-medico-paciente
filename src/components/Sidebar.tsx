@@ -12,6 +12,14 @@ import {
 } from 'lucide-react';
 import { AppSidebar } from './layout';
 
+/**
+ * Propiedades del componente Sidebar de Administración.
+ * @interface SidebarProps
+ * @property {string} activeTab - ID de la pestaña o ruta actualmente activa en la vista.
+ * @property {(tab: string) => void} setActiveTab - Función ejecutada para cambiar de vista.
+ * @property {number} pendingOrdersCount - Cantidad de órdenes pendientes (usada para la insignia/badge).
+ * @property {() => void} onLogout - Función que maneja el cierre de sesión del admin.
+ */
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -19,6 +27,13 @@ interface SidebarProps {
   onLogout: () => void;
 }
 
+/**
+ * Componente contenedor que implementa el `AppSidebar` genérico con la configuración
+ * específica para el portal de Administrador. Define los ítems de navegación y el perfil.
+ *
+ * @param {SidebarProps} props - Propiedades y acciones de navegación.
+ * @returns {JSX.Element} Sidebar configurado para admin.
+ */
 export default function Sidebar({
   activeTab,
   setActiveTab,

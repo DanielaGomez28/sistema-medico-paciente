@@ -2,6 +2,17 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { LucideIcon } from 'lucide-react';
 
+/**
+ * Propiedades de la tarjeta de estadística (KPI).
+ *
+ * @interface StatCardProps
+ * @property {LucideIcon} icon - Ícono de la biblioteca lucide-react.
+ * @property {string} label - Etiqueta superior descriptiva (ej: "Pacientes Activos").
+ * @property {React.ReactNode} value - Valor numérico o texto principal a destacar.
+ * @property {React.ReactNode} [hint] - Texto indicativo secundario (ej: "+5% vs mes anterior").
+ * @property {'primary' | 'secondary'} [accent='primary'] - Acento de color para el ícono.
+ * @property {string} [className] - Clases adicionales.
+ */
 export interface StatCardProps {
   icon: LucideIcon;
   label: string;
@@ -11,6 +22,13 @@ export interface StatCardProps {
   className?: string;
 }
 
+/**
+ * Tarjeta para mostrar estadísticas de alto nivel y KPIs.
+ * Ampliamente utilizada en los dashboards para resumir métricas críticas.
+ *
+ * @param {StatCardProps} props - Propiedades de la tarjeta.
+ * @returns {JSX.Element} Tarjeta renderizada.
+ */
 export default function StatCard({
   icon: Icon,
   label,

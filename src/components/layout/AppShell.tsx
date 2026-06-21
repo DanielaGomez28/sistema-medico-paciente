@@ -4,9 +4,29 @@ import React, { useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { ShellProvider } from './ShellContext';
 
+/**
+ * Función de renderizado para inyectar métodos del AppShell (como abrir el menú) en la cabecera.
+ * @type {AppShellHeaderRender}
+ */
 export type AppShellHeaderRender = (props: { onMenuClick: () => void }) => React.ReactNode;
+
+/**
+ * Roles soportados para los portales de la aplicación.
+ * @type {PortalRole}
+ */
 export type PortalRole = 'doctor' | 'patient' | 'admin';
 
+/**
+ * Propiedades del componente AppShell.
+ *
+ * @interface AppShellProps
+ * @property {PortalRole} [portal] - Rol actual, usado para atributos de datos y estilos condicionales.
+ * @property {React.ReactNode} sidebar - Componente de la barra lateral (AppSidebar).
+ * @property {React.ReactNode | AppShellHeaderRender} [header] - Componente de la cabecera, o función render que inyecta `onMenuClick`.
+ * @property {React.ReactNode} children - Contenido principal o vistas hijas renderizadas dentro del shell.
+ * @property {string} [className] - Clases CSS adicionales para el contenedor raíz.
+ * @property {string} [contentClassName] - Clases CSS adicionales para el área de contenido principal.
+ */
 export interface AppShellProps {
   portal?: PortalRole;
   sidebar: React.ReactNode;
@@ -16,6 +36,13 @@ export interface AppShellProps {
   contentClassName?: string;
 }
 
+/**
+ * Layout principal y envolvente de la aplicación.
+ * Orquesta la barra lateral, la cabecera y el área de contenido. Además, gestiona la visibilidad del menú en dispositivos móviles.
+ *
+ * @param {AppShellProps} props - Propiedades de configuración del layout.
+ * @returns {JSX.Element} Estructura principal de la aplicación.
+ */
 export default function AppShell({
   portal,
   sidebar,

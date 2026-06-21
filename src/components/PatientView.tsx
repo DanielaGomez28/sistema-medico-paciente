@@ -44,12 +44,23 @@ import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, ListCard } from './ui';
 
+/**
+ * Propiedades de la vista de portal del Paciente.
+ * @interface PatientViewProps
+ * @property {string} patientName - Nombre del paciente.
+ * @property {string} patientEmail - Correo del paciente.
+ * @property {() => void} onLogout - Función para cerrar sesión.
+ */
 interface PatientViewProps {
   patientName: string;
   patientEmail: string;
   onLogout: () => void;
 }
 
+/**
+ * Interfaz para representar un récipe/prescripción médica emitido a favor del paciente.
+ * @interface Recipe
+ */
 interface Recipe {
   id: string;
   date: string;
@@ -102,6 +113,10 @@ const MOCK_RECIPES: Recipe[] = [
   }
 ];
 
+/**
+ * Interfaz para representar un ítem de propuesta comercial dentro del módulo de checkout de farmacia.
+ * @interface ProposalItem
+ */
 interface ProposalItem {
   id: string;
   medication: string;
@@ -110,6 +125,10 @@ interface ProposalItem {
   discountPercent: number;
 }
 
+/**
+ * Interfaz para el seguimiento de adherencia y control de tratamiento médico del paciente.
+ * @interface TreatmentMedication
+ */
 interface TreatmentMedication {
   id: string;
   name: string;
@@ -127,6 +146,10 @@ interface TreatmentMedication {
   instructions: string;
 }
 
+/**
+ * Interfaz del registro de toma o log individual de dosis (Tracker).
+ * @interface DoseLog
+ */
 interface DoseLog {
   id: string;
   medicationId: string;
@@ -137,6 +160,10 @@ interface DoseLog {
   date: string;
 }
 
+/**
+ * Interfaz para las alertas proactivas automatizadas de la salud del paciente.
+ * @interface TreatmentAlert
+ */
 interface TreatmentAlert {
   id: string;
   type: 'recordatorio' | 'control' | 'renovacion';
@@ -201,6 +228,17 @@ const MOCK_TREATMENT_ALERTS: TreatmentAlert[] = [
 
 const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout';
 
+/**
+ * Vista principal y portal exclusivo para Pacientes (Portal B2C).
+ * Integra un tablero integral con múltiples módulos enfocados en el paciente:
+ * - Seguimiento de dosis de tratamientos con marcadores interactivos (tracker de adherencia).
+ * - Historial y visor de Récipes Médicos (Emitidos por sus médicos).
+ * - Módulo transaccional de Checkout y Pasarela de Pagos (Simulada) para propuestas comerciales aprobadas.
+ * - Perfil y credencial dinámica por QR para validación rápida en sucursales o consultorios.
+ *
+ * @param {PatientViewProps} props - Propiedades de la vista.
+ * @returns {JSX.Element}
+ */
 export default function PatientView({ patientName, patientEmail, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'
   const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('treatment');

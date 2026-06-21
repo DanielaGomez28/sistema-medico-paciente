@@ -7,12 +7,27 @@ import { formatCurrency } from '../lib/currency';
 import { DEFAULT_PHARMACY_CATEGORY, PHARMACY_CATEGORIES } from '../lib/productCatalog';
 import { PageHeader, Button, FilterBar, Input, Select, Modal, ModalBody, ModalFooter } from './ui';
 
+/**
+ * Propiedades de la vista de Catálogo de Productos / Farmacia.
+ * @interface ProductsViewProps
+ * @property {Product[]} products - Lista de productos registrados en catálogo.
+ * @property {(productId: string, newStock: number) => void} onUpdateStock - Callback para modificar el inventario actual.
+ * @property {(product: Omit<Product, 'id'>) => void} onAddProduct - Callback para crear y guardar un nuevo producto.
+ */
 interface ProductsViewProps {
   products: Product[];
   onUpdateStock: (productId: string, newStock: number) => void;
   onAddProduct: (product: Omit<Product, 'id'>) => void;
 }
 
+/**
+ * Vista del Catálogo de Farmacia (Inventario Interno).
+ * Permite a los administradores gestionar los medicamentos, realizar ajustes rápidos de
+ * inventario (entradas/salidas) de forma visual, filtrarlos y dar de alta nuevos productos.
+ *
+ * @param {ProductsViewProps} props - Propiedades de la vista.
+ * @returns {JSX.Element}
+ */
 export default function ProductsView({ products, onUpdateStock, onAddProduct }: ProductsViewProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');

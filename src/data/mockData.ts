@@ -1,5 +1,10 @@
 import { Product, Customer, Order } from '../types';
 
+/**
+ * Colección inicial de productos o medicamentos de prueba.
+ * Utilizado para sembrar la base de datos o el almacenamiento local.
+ * @constant {Product[]}
+ */
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'med-1',
@@ -69,6 +74,10 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
 ];
 
+/**
+ * Colección inicial de clientes o pacientes de prueba.
+ * @constant {Customer[]}
+ */
 export const INITIAL_CUSTOMERS: Customer[] = [
   {
     id: 'cust-1',
@@ -127,6 +136,10 @@ export const INITIAL_CUSTOMERS: Customer[] = [
   }
 ];
 
+/**
+ * Colección inicial de pedidos de prueba.
+ * @constant {Order[]}
+ */
 export const INITIAL_ORDERS: Order[] = [
   {
     id: 'PED-1001',

@@ -1,4 +1,11 @@
-/** Fondo animado del panel izquierdo en login (solo decoración). */
+/**
+ * Fondo animado del panel izquierdo en la vista de login.
+ * Muestra esferas (orbes) con efecto de desenfoque flotando sobre una grilla,
+ * utilizando clases CSS globales para las animaciones.
+ * Es un elemento puramente decorativo.
+ *
+ * @returns {JSX.Element} Contenedor con elementos decorativos.
+ */
 export function LoginAnimatedBackdrop() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>

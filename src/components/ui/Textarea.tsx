@@ -1,8 +1,19 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
+/**
+ * Propiedades del componente Textarea.
+ * Extiende las propiedades nativas de un textarea HTML.
+ * @type {TextareaProps}
+ */
 export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
+/**
+ * Componente de área de texto estandarizado.
+ * Soporta ref-forwarding para integración sencilla con librerías de formularios.
+ *
+ * @type {React.ForwardRefExoticComponent<TextareaProps & React.RefAttributes<HTMLTextAreaElement>>}
+ */
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, ...props }, ref) => {
   return (
     <textarea

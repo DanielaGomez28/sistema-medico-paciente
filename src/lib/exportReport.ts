@@ -66,12 +66,26 @@ function buildReportRows(orders: Order[], products: Product[]): string[][] {
   return rows;
 }
 
+/**
+ * Construye el contenido de un archivo CSV con el reporte de auditoría.
+ *
+ * @param {Order[]} orders - Lista de pedidos a incluir en el reporte.
+ * @param {Product[]} products - Lista de productos para verificar alertas de stock.
+ * @returns {string} El contenido del archivo CSV con BOM (Byte Order Mark) para correcta codificación.
+ */
 export function buildAuditCsv(orders: Order[], products: Product[]): string {
   const rows = buildReportRows(orders, products);
   const body = rows.map((row) => row.map(escapeCsv).join(',')).join('\r\n');
   return `\uFEFF${body}`;
 }
 
+/**
+ * Construye el contenido de un archivo Excel (XML Spreadsheet 2003) con el reporte de auditoría.
+ *
+ * @param {Order[]} orders - Lista de pedidos a incluir en el reporte.
+ * @param {Product[]} products - Lista de productos para verificar alertas de stock.
+ * @returns {string} El contenido XML del archivo Excel.
+ */
 export function buildAuditExcel(orders: Order[], products: Product[]): string {
   const rows = buildReportRows(orders, products);
   const tableRows = rows
@@ -107,6 +121,14 @@ function getExportFilename(format: ExportFormat): string {
     : `auditoria-zenith-prueba-${dateStamp}.xls`;
 }
 
+/**
+ * Inicia la descarga en el navegador del reporte de auditoría generado.
+ *
+ * @param {ExportFormat} format - El formato deseado para la exportación ('csv' o 'excel').
+ * @param {Order[]} orders - Lista de pedidos a incluir.
+ * @param {Product[]} products - Lista de productos a auditar.
+ * @returns {void}
+ */
 export function downloadAuditReport(
   format: ExportFormat,
   orders: Order[],

@@ -14,6 +14,10 @@ import {
 } from 'lucide-react';
 import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
 
+/**
+ * Interfaz de un perfil médico en el directorio y sistema de registro.
+ * @interface DoctorProfile
+ */
 interface DoctorProfile {
   id: string;
   firstName: string;
@@ -33,6 +37,14 @@ const INITIAL_DOCTORS: DoctorProfile[] = [
   { id: 'MED-103', firstName: 'Juan', lastName: 'Pérez', email: 'juan.perez@zenith.com', dni: 'V-12.334.892', specialty: 'Pediatría', licenseMpps: 'MPPS 10.293', colegioMedico: 'CMC-05.441', status: 'Verificado', registeredAt: '2026-06-01' },
 ];
 
+/**
+ * Vista de Gestión de Médicos (Panel Administrativo).
+ * Permite dar de alta a nuevos profesionales de la salud afiliados al sistema.
+ * Genera automáticamente credenciales seguras (usuario/clave) en la fase de alta
+ * y ofrece un directorio (modal) para buscar y verificar el estatus de las licencias y registros médicos.
+ *
+ * @returns {JSX.Element}
+ */
 export default function DoctorsManagerView() {
   const [doctors, setDoctors] = useState<DoctorProfile[]>(INITIAL_DOCTORS);
   const [searchQuery, setSearchQuery] = useState('');

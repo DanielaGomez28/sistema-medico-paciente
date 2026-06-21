@@ -3,6 +3,18 @@
 import { cn } from '../lib/utils';
 import { VENEZUELAN_STATES, isVenezuelanState } from '../lib/venezuelanStates';
 
+/**
+ * Propiedades del componente select de estados de Venezuela.
+ * @interface VenezuelanStateSelectProps
+ * @property {string} value - Estado actualmente seleccionado.
+ * @property {(value: string) => void} onChange - Callback invocado al seleccionar otro estado.
+ * @property {boolean} [required] - Define si el input es obligatorio.
+ * @property {boolean} [disabled] - Define si el input está deshabilitado.
+ * @property {string} [className] - Clases adicionales.
+ * @property {boolean} [allowEmpty=false] - Si es `true`, renderiza una opción vacía ("Seleccione...").
+ * @property {string} [emptyLabel='Seleccione un estado'] - Texto a mostrar para la opción vacía.
+ * @property {'primary' | 'secondary'} [accent='primary'] - Tema visual a usar (focus).
+ */
 interface VenezuelanStateSelectProps {
   value: string;
   onChange: (value: string) => void;
@@ -19,6 +31,14 @@ const focusAccentClass = {
   secondary: 'focus:border-secondary-500',
 };
 
+/**
+ * Select estandarizado para elegir un Estado/Entidad Federal de Venezuela.
+ * Asegura la compatibilidad hacia atrás: si el `value` existente no es un estado válido
+ * (ej. datos legacy de España o internacionales), se renderiza igual para no perder la data existente.
+ *
+ * @param {VenezuelanStateSelectProps} props - Propiedades del select.
+ * @returns {JSX.Element}
+ */
 export default function VenezuelanStateSelect({
   value,
   onChange,

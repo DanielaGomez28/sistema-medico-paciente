@@ -25,12 +25,28 @@ import {
 } from '../lib/statusColors';
 import { Badge, Modal, ModalBody, ListCard } from './ui';
 
+/**
+ * Propiedades del modal de Detalles de Pedido.
+ * @interface OrderDetailModalProps
+ * @property {Order | null} order - Datos del pedido a mostrar.
+ * @property {() => void} onClose - Función para cerrar el modal.
+ * @property {(orderId: string, nextStatus: OrderStatus, note: string) => void} onUpdateStatus - Callback para avanzar el estado de la orden.
+ */
 interface OrderDetailModalProps {
   order: Order | null;
   onClose: () => void;
   onUpdateStatus: (orderId: string, nextStatus: OrderStatus, note: string) => void;
 }
 
+/**
+ * Modal de Detalle de Pedido (Semáforo de Despacho).
+ * Muestra el resumen logístico de una orden de compra, sus productos e incluye un
+ * mecanismo visual (semáforo) para avanzar secuencialmente el estado logístico del pedido, dejando
+ * una nota obligatoria en la línea de tiempo inmutable.
+ *
+ * @param {OrderDetailModalProps} props - Propiedades del modal.
+ * @returns {JSX.Element | null}
+ */
 export default function OrderDetailModal({ order, onClose, onUpdateStatus }: OrderDetailModalProps) {
   const [transitionNote, setTransitionNote] = useState('');
   const [showNoteField, setShowNoteField] = useState(false);

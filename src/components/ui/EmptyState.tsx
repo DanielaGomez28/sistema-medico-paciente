@@ -2,6 +2,15 @@ import React from 'react';
 import { cn } from '../../lib/utils';
 import { LucideIcon } from 'lucide-react';
 
+/**
+ * Propiedades del componente de estado vacío.
+ *
+ * @interface EmptyStateProps
+ * @property {LucideIcon} icon - Componente de ícono (ej. de lucide-react) a mostrar.
+ * @property {string} title - Título principal descriptivo del estado vacío.
+ * @property {string} [description] - Descripción secundaria adicional (opcional).
+ * @property {string} [className] - Clases CSS adicionales.
+ */
 export interface EmptyStateProps {
   icon: LucideIcon;
   title: string;
@@ -9,6 +18,13 @@ export interface EmptyStateProps {
   className?: string;
 }
 
+/**
+ * Componente visual para mostrar cuando no hay datos disponibles en una lista, tabla o sección.
+ * Muestra un ícono circular centrado con texto descriptivo.
+ *
+ * @param {EmptyStateProps} props - Propiedades del componente.
+ * @returns {JSX.Element} Contenedor con el estado vacío.
+ */
 export default function EmptyState({ icon: Icon, title, description, className }: EmptyStateProps) {
   return (
     <div

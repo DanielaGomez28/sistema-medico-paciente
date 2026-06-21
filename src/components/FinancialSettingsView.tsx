@@ -4,6 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { Percent, History, Save, ShieldAlert, CheckCircle, X } from 'lucide-react';
 import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
 
+/**
+ * Interfaz para representar un registro en el historial de auditoría financiera.
+ * @interface AuditLogEntry
+ */
 interface AuditLogEntry {
   id: string;
   timestamp: string;
@@ -19,6 +23,16 @@ const DEFAULT_AUDIT_LOG: AuditLogEntry[] = [
   { id: 'AUD-302', timestamp: '2026-05-28 14:22:05', adminName: 'Carlos Mendoza', action: 'Actualización por Acuerdo Comercial', previousValue: '8.0%', newValue: '8.0%', status: 'Aplicado' },
 ];
 
+/**
+ * Vista de Configuración Financiera (Comisiones).
+ * Exclusiva del panel de Administrador. Sirve para definir las reglas de negocio base:
+ * - Tipo de comisión (Porcentaje o Monto Fijo).
+ * - Monto o porcentaje pagadero por transacción exitosa a los médicos.
+ * - Umbral mínimo de venta.
+ * Todas las modificaciones generan una huella inmutable en el historial de auditoría.
+ *
+ * @returns {JSX.Element}
+ */
 export default function FinancialSettingsView() {
   const [commissionType, setCommissionType] = useState<'percent' | 'fixed'>('percent');
   const [commissionValue, setCommissionValue] = useState<number>(8.0);

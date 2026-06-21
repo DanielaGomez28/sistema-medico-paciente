@@ -1,3 +1,8 @@
+/**
+ * @fileoverview Componentes de Layout Estructural
+ * Exporta los componentes principales de la "cáscara" (AppShell) de la aplicación,
+ * junto con la barra lateral (AppSidebar) y la cabecera superior (AppHeader).
+ */
 export { default as AppShell } from './AppShell';
 export type { AppShellHeaderRender, PortalRole } from './AppShell';
 export { useShell } from './ShellContext';
