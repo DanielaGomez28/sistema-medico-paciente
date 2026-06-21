@@ -25,7 +25,7 @@ interface LoginViewProps {
 
 const MOCK_USERS = [
   { email: 'admin@sistema.local', password: 'admin123', role: 'superadmin', name: 'Administrador Sistema' },
-  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'médico', name: 'Dr. Roberto Gómez' },
+  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'medico', name: 'Dr. Roberto Gómez' },
   { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: 'Ana Martínez' },
 ];
 

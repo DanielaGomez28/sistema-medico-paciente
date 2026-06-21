@@ -269,11 +269,13 @@ export default function Home() {
     return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
-  if (currentUser.role === 'médico') {
+  const normalizedRole = currentUser.role.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+  if (normalizedRole === 'medico') {
     return <DoctorView doctorName="Dr. Alejandro Ríos" doctorEmail={currentUser.email} onLogout={handleLogout} />;
   }
 
-  if (currentUser.role === 'paciente') {
+  if (normalizedRole === 'paciente') {
     return <PatientView patientName="Sofía Peralta" patientEmail={currentUser.email} onLogout={handleLogout} />;
   }
 
