@@ -88,8 +88,11 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       const data = await response.json();
 
       if (response.ok) {
-        // Si el backend dice que todo está bien, iniciamos sesión con los datos reales
-        onLoginSuccess(data.role, data.email);
+        // 🚀 Ommran unifica roles (inglés/español) y correos de respaldo para el login exitoso
+        const userRole = data.role || data.rol || 'Paciente';
+        const userEmail = data.email || data.correo || email;
+
+        onLoginSuccess(userRole, userEmail);
       } else {
         // Si tu middleware o el controlador del backend rechazan la petición, mostramos el error
         setGeneralError(data.error || 'Credenciales incorrectas.');
