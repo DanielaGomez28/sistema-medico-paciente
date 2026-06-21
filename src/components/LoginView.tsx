@@ -19,9 +19,9 @@ interface LoginViewProps {
 }
 
 const MOCK_USERS = [
-  { email: 'admin@zenith.com', password: 'password123', role: 'superadmin', name: 'Administrador General' },
-  { email: 'medico@clinica.com', password: 'medico123', role: 'médico', name: 'Dr. Alejandro Ríos' },
-  { email: 'paciente@clinica.com', password: 'paciente123', role: 'paciente', name: 'Sofía Peralta' },
+  { email: 'admin@sistema.local', password: 'admin123', role: 'superadmin', name: 'Administrador Sistema' },
+  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'médico', name: 'Dr. Roberto Gómez' },
+  { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: 'Ana Martínez' },
 ];
 
 const TEST_ACCOUNT_LABELS: Record<string, string> = {
