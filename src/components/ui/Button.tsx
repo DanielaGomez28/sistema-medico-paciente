@@ -1,9 +1,26 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
+/**
+ * Variantes visuales soportadas por el botón.
+ * @type {ButtonVariant}
+ */
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'patient' | 'doctor' | 'admin';
+
+/**
+ * Tamaños disponibles para el botón.
+ * @type {ButtonSize}
+ */
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
+/**
+ * Propiedades del componente Button.
+ * Extiende las propiedades nativas de un botón HTML.
+ *
+ * @interface ButtonProps
+ * @property {ButtonVariant} [variant='primary'] - Estilo visual del botón.
+ * @property {ButtonSize} [size='md'] - Tamaño del botón.
+ */
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
@@ -32,6 +49,13 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: 'h-11 px-6 text-sm rounded-xl',
 };
 
+/**
+ * Componente de botón principal del sistema.
+ * Reutilizable, accesible y con soporte para múltiples variantes del tema (paciente, doctor, admin, etc).
+ *
+ * @param {ButtonProps} props - Propiedades del componente.
+ * @returns {JSX.Element} Botón de React estilizado.
+ */
 export default function Button({
   variant = 'primary',
   size = 'md',

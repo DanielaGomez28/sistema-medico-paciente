@@ -9,6 +9,16 @@ import { formatCurrency } from '../lib/currency';
 import { isMedicationProduct } from '../lib/products';
 import { Button, Modal, ModalBody } from './ui';
 
+/**
+ * Propiedades del modal de Nuevo Pedido.
+ * @interface NewOrderModalProps
+ * @property {boolean} isOpen - Estado de visibilidad del modal.
+ * @property {() => void} onClose - Función para cerrar el modal.
+ * @property {Product[]} products - Lista de productos (medicamentos) disponibles.
+ * @property {Customer[]} customers - Lista de clientes/pacientes registrados.
+ * @property {(customer: Omit<Customer, 'id' | 'totalOrders' | 'totalSpent'>) => Customer} onAddCustomer - Callback para agregar cliente express.
+ * @property {(order: Omit<Order, 'id' | 'createdAt' | 'history'>) => void} onCreateOrder - Callback para crear pedido en base de datos.
+ */
 interface NewOrderModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +28,14 @@ interface NewOrderModalProps {
   onCreateOrder: (order: Omit<Order, 'id' | 'createdAt' | 'history'>) => void;
 }
 
+/**
+ * Modal complejo para crear y procesar nuevos pedidos de farmacia de forma manual.
+ * Incluye búsqueda de pacientes (o creación express), catálogo de medicamentos en inventario
+ * con validación estricta de stock y cálculo de impuestos y subtotales en carrito de compras.
+ *
+ * @param {NewOrderModalProps} props - Propiedades del componente.
+ * @returns {JSX.Element}
+ */
 export default function NewOrderModal({ 
   isOpen, 
   onClose, 

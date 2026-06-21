@@ -23,6 +23,14 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+/**
+ * Root Layout principal de la aplicación Next.js.
+ * Configura la estructura base del DOM (HTML/Body), la inyección de fuentes globales (Geist y Inter),
+ * aplica variables globales CSS y envuelve a la aplicación con los proveedores de contexto (ThemeProvider).
+ * 
+ * @param {Readonly<{ children: React.ReactNode }>} props - Propiedades, contiene los hijos a renderizar.
+ * @returns {JSX.Element}
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

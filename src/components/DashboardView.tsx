@@ -22,6 +22,14 @@ import { formatCurrency } from '../lib/currency';
 import { downloadAuditReport } from '../lib/exportReport';
 import { PageHeader, Button, Badge, StatCard, ListCard } from './ui';
 
+/**
+ * Propiedades de la vista del Dashboard (Panel de Control Principal).
+ * @interface DashboardViewProps
+ * @property {Order[]} orders - Lista global de órdenes/pedidos del sistema.
+ * @property {Product[]} products - Lista global de productos/inventario.
+ * @property {(tab: string) => void} onNavigate - Función para navegar hacia otras pestañas principales.
+ * @property {(order: Order) => void} onSelectOrder - Acción para abrir el detalle de una orden desde "Últimos Pedidos".
+ */
 interface DashboardViewProps {
   orders: Order[];
   products: Product[];
@@ -29,6 +37,10 @@ interface DashboardViewProps {
   onSelectOrder: (order: Order) => void;
 }
 
+/**
+ * Modelo interno para representar registros médicos en la tabla mock.
+ * @interface DoctorRecord
+ */
 interface DoctorRecord {
   id: string;
   name: string;
@@ -39,6 +51,10 @@ interface DoctorRecord {
   status: 'Activo' | 'Inactivo';
 }
 
+/**
+ * Modelo interno para representar pacientes en la tabla mock.
+ * @interface PatientRecord
+ */
 interface PatientRecord {
   id: string;
   name: string;
@@ -48,6 +64,10 @@ interface PatientRecord {
   withdrawalStatus: string;
 }
 
+/**
+ * Modelo interno para representar movimientos de inventario en la tabla mock.
+ * @interface StockMovement
+ */
 interface StockMovement {
   id: string;
   medication: string;
@@ -81,6 +101,18 @@ const MOCK_MOVEMENTS: StockMovement[] = [
   { id: 'MOV-100', medication: 'Amoxicilina 875mg', type: 'Entrada', quantity: 200, date: '25 May, 2026', sourceDest: 'Droguería Médica S.A.' }
 ];
 
+/**
+ * Vista de administración general ("Dashboard").
+ * Contiene:
+ * - KPIs financieros y operativos.
+ * - Gráficos interactivos de tendencias (Ventas y Récipes).
+ * - Distribución de ventas por categorías.
+ * - Buscador avanzado interconectado con tablas simuladas de base de datos (Médicos, Pacientes, Movimientos).
+ * - Monitoreo de pedidos recientes y alertas de stock bajo.
+ *
+ * @param {DashboardViewProps} props - Propiedades de la vista.
+ * @returns {JSX.Element}
+ */
 export default function DashboardView({ orders, products, onNavigate, onSelectOrder }: DashboardViewProps) {
   // Navigation active metric tab for sales line chart
   const [activeMetricTab, setActiveMetricTab] = useState<'sales' | 'recipes'>('sales');

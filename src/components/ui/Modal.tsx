@@ -4,6 +4,17 @@ import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+/**
+ * Propiedades principales del componente Modal.
+ *
+ * @interface ModalProps
+ * @property {boolean} open - Si es `true`, el modal es visible.
+ * @property {() => void} onClose - Callback ejecutado al intentar cerrar el modal (clic en X, overlay, o tecla ESC).
+ * @property {React.ReactNode} [title] - Título opcional que se muestra en la cabecera.
+ * @property {React.ReactNode} children - Contenido interno del modal.
+ * @property {'md' | 'lg' | 'xl'} [size='lg'] - Tamaño máximo horizontal del modal.
+ * @property {string} [className] - Clases CSS adicionales.
+ */
 export interface ModalProps {
   open: boolean;
   onClose: () => void;
@@ -19,6 +30,13 @@ const sizeClasses = {
   xl: 'max-w-4xl',
 };
 
+/**
+ * Componente principal de Modal/Diálogo.
+ * Proporciona un overlay opaco, manejo automático de la tecla ESC, cierre al hacer clic fuera y animaciones.
+ *
+ * @param {ModalProps} props - Propiedades del modal.
+ * @returns {JSX.Element | null} Elemento renderizado o `null` si está cerrado.
+ */
 export default function Modal({ open, onClose, title, children, size = 'lg', className }: ModalProps) {
   useEffect(() => {
     if (!open) return;
@@ -61,6 +79,13 @@ export default function Modal({ open, onClose, title, children, size = 'lg', cla
   );
 }
 
+/**
+ * Contenedor para el cuerpo principal del Modal.
+ * Aplica padding estandarizado alrededor del contenido.
+ *
+ * @param {React.HTMLAttributes<HTMLDivElement>} props - Propiedades del contenedor.
+ * @returns {JSX.Element}
+ */
 export function ModalBody({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn('p-4 md:p-6', className)} {...props}>
@@ -69,6 +94,13 @@ export function ModalBody({ className, children, ...props }: React.HTMLAttribute
   );
 }
 
+/**
+ * Contenedor para el pie del Modal (generalmente botones de acción).
+ * Coloca los elementos alineados a la derecha (en pantallas grandes) con separación visual arriba.
+ *
+ * @param {React.HTMLAttributes<HTMLDivElement>} props - Propiedades del contenedor.
+ * @returns {JSX.Element}
+ */
 export function ModalFooter({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div

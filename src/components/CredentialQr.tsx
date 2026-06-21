@@ -5,13 +5,32 @@ import { QrCode, RefreshCw } from 'lucide-react';
 import { useShell } from './layout';
 import { Button, Modal, ModalBody } from './ui';
 
+/**
+ * Constante que define el tiempo de expiración (en segundos) de una credencial QR antes de rotar.
+ * @constant
+ */
 const QR_ROTATION_SECONDS = 30;
 
+/**
+ * Genera un token pseudo-aleatorio con el prefijo dado.
+ * Utilizado para crear los códigos numéricos de los códigos QR.
+ *
+ * @param {string} prefix - Prefijo (ej. 'DR', 'PAT').
+ * @returns {string} Token generado con sufijo aleatorio.
+ */
 function generateToken(prefix: string) {
   const rand = Math.floor(1000 + Math.random() * 9000);
   return `${prefix}-${rand}`;
 }
 
+/**
+ * Hook para manejar la lógica y el estado de una credencial QR dinámica.
+ * Expone el estado del modal, el token actual y la cuenta regresiva antes de rotar.
+ *
+ * @param {string} tokenPrefix - Prefijo estático del token.
+ * @param {string} initialSuffix - Sufijo inicial predeterminado.
+ * @returns {object} Objeto con propiedades y métodos para controlar la credencial y el modal.
+ */
 export function useCredentialQr(tokenPrefix: string, initialSuffix: string) {
   const [qrToken, setQrToken] = useState(`${tokenPrefix}-${initialSuffix}`);
   const [qrSecondsLeft, setQrSecondsLeft] = useState(QR_ROTATION_SECONDS);
@@ -44,6 +63,12 @@ export function useCredentialQr(tokenPrefix: string, initialSuffix: string) {
   };
 }
 
+/**
+ * Componente SVG que simula la apariencia de un código QR a nivel decorativo.
+ * Adaptado a los colores de la aplicación.
+ *
+ * @returns {JSX.Element} SVG de un QR abstracto.
+ */
 export function CredentialQrSvg() {
   return (
     <svg viewBox="0 0 100 100" className="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 text-[#0a1220]">
@@ -68,6 +93,14 @@ export function CredentialQrSvg() {
   );
 }
 
+/**
+ * Botón auxiliar para renderizar en el sidebar (`sidebarExtra`) que dispara la apertura
+ * del modal de la credencial QR. Cierra el menú lateral automáticamente en vista móvil.
+ *
+ * @param {object} props - Propiedades del componente.
+ * @param {() => void} props.onOpen - Función para abrir el modal del QR.
+ * @returns {JSX.Element}
+ */
 export function SidebarCredentialButton({ onOpen }: { onOpen: () => void }) {
   const { closeSidebar } = useShell();
 
@@ -86,6 +119,18 @@ export function SidebarCredentialButton({ onOpen }: { onOpen: () => void }) {
   );
 }
 
+/**
+ * Propiedades del modal de credencial QR interactivo.
+ * @interface CredentialQrModalProps
+ * @property {boolean} open - Visibilidad del modal.
+ * @property {() => void} onClose - Acción al cerrar.
+ * @property {string} description - Texto descriptivo (ej: 'Muestre este código en recepción').
+ * @property {string} displayName - Nombre del doctor o paciente.
+ * @property {string} [credentialLine] - Línea adicional debajo del nombre (ej: Especialidad o CI).
+ * @property {string} qrToken - Token de seguridad actual visible.
+ * @property {number} qrSecondsLeft - Segundos restantes antes de la rotación automática.
+ * @property {() => void} onRefresh - Acción para forzar una rotación manual.
+ */
 export interface CredentialQrModalProps {
   open: boolean;
   onClose: () => void;
@@ -97,6 +142,13 @@ export interface CredentialQrModalProps {
   onRefresh: () => void;
 }
 
+/**
+ * Modal que muestra la credencial digital (código QR), nombre del titular,
+ * token de seguridad en vivo y cuenta regresiva.
+ *
+ * @param {CredentialQrModalProps} props - Propiedades del modal de credencial.
+ * @returns {JSX.Element}
+ */
 export function CredentialQrModal({
   open,
   onClose,

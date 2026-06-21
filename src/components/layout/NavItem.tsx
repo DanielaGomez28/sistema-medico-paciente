@@ -2,8 +2,21 @@ import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
+/**
+ * Variantes de color de acento soportadas para los elementos de navegación.
+ * @type {AccentVariant}
+ */
 export type AccentVariant = 'primary' | 'secondary';
 
+/**
+ * Configuración de un elemento de menú en el sidebar.
+ * @interface NavItemConfig
+ * @property {string} id - Identificador único de la ruta o vista.
+ * @property {string} name - Etiqueta a mostrar.
+ * @property {LucideIcon} icon - Componente de ícono de Lucide.
+ * @property {number | null} [badge] - Contador o valor para mostrar una insignia numérica.
+ * @property {string} [badgeColor] - Clases CSS (ej. 'bg-red-500 text-white') para la insignia.
+ */
 export interface NavItemConfig {
   id: string;
   name: string;
@@ -12,6 +25,10 @@ export interface NavItemConfig {
   badgeColor?: string;
 }
 
+/**
+ * Propiedades internas para el componente NavItem.
+ * @interface NavItemProps
+ */
 interface NavItemProps {
   item: NavItemConfig;
   isActive: boolean;
@@ -36,6 +53,13 @@ const accentDotClasses: Record<AccentVariant, string> = {
   secondary: 'bg-[var(--zenith-nav-active-dot)]',
 };
 
+/**
+ * Componente individual de elemento de menú en la barra lateral.
+ * Renderiza un botón interactivo con estado de activo/inactivo y animaciones de hover.
+ *
+ * @param {NavItemProps} props - Propiedades del ítem de navegación.
+ * @returns {JSX.Element}
+ */
 export default function NavItem({ item, isActive, accent, onClick }: NavItemProps) {
   const Icon = item.icon;
 

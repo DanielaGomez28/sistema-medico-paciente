@@ -13,6 +13,15 @@ import {
 import { PageHeader, Button } from './ui';
 import { cn } from '../lib/utils';
 
+/**
+ * Estructura de configuración global del CMS (Content Management System).
+ * @interface CmsSettings
+ * @property {string} logoUrl - URL o ruta del logotipo del portal de pacientes.
+ * @property {string} bannerUrl - URL o ruta del banner principal.
+ * @property {string} termsAndConditions - Contenido en texto de términos de servicio.
+ * @property {string} privacyPolicy - Contenido de políticas de privacidad.
+ * @property {string} deliveryPolicy - Contenido de políticas de entrega.
+ */
 interface CmsSettings {
   logoUrl: string;
   bannerUrl: string;
@@ -36,6 +45,13 @@ const sectionTabs: { id: CmsSection; label: string; icon: React.ElementType }[] 
   { id: 'legal', label: 'Textos legales', icon: FileText },
 ];
 
+/**
+ * Vista de Configuración Global (CMS) para el panel de Administración.
+ * Proporciona un gestor de contenidos para cambiar dinámicamente recursos visuales
+ * (logotipos, banners) y actualizar textos legales mostrados en toda la plataforma.
+ * 
+ * @returns {JSX.Element}
+ */
 export default function CmsView() {
   const [settings, setSettings] = useState<CmsSettings>({
     logoUrl: '/images/default-logo.png',

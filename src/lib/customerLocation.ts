@@ -1,6 +1,10 @@
 import { Customer } from '../types';
 import { INITIAL_CUSTOMERS } from '../data/mockData';
 
+/**
+ * Versión actual del esquema de datos de clientes.
+ * @constant {number}
+ */
 export const CUSTOMERS_DATA_VERSION = 2;
 
 const SEED_CUSTOMER_BY_ID = Object.fromEntries(
@@ -21,14 +25,34 @@ const SPANISH_CITIES = new Set([
 const SPANISH_ADDRESS_PATTERN =
   /Calle de|º[A-Z]|Ático|Avenida Diagonal|Paseo de la Castellana|Plaza Mayor|Bajo C|Calle Betis/i;
 
+/**
+ * Formatea la ubicación de un cliente (municipio y estado).
+ *
+ * @param {Pick<Customer, 'municipio' | 'state'>} customer - Objeto parcial del cliente con municipio y estado.
+ * @returns {string} La ubicación formateada (ej: "Libertador, Distrito Capital").
+ */
 export function formatCustomerLocation(customer: Pick<Customer, 'municipio' | 'state'>) {
   return `${customer.municipio}, ${customer.state}`;
 }
 
+/**
+ * Formatea la dirección completa de un cliente, incluyendo su ubicación.
+ *
+ * @param {Pick<Customer, 'address' | 'municipio' | 'state'>} customer - Objeto parcial del cliente.
+ * @returns {string} Dirección completa formateada.
+ */
 export function formatCustomerAddress(customer: Pick<Customer, 'address' | 'municipio' | 'state'>) {
   return `${customer.address} — ${formatCustomerLocation(customer)}`;
 }
 
+/**
+ * Determina si un cliente tiene un formato de datos heredado (legacy).
+ * Esto incluye números con formato de España (+34) o direcciones españolas, 
+ * así como la ausencia de municipio o estado.
+ *
+ * @param {Customer & { city?: string }} raw - Objeto de cliente en bruto, potencialmente con campo `city` heredado.
+ * @returns {boolean} `true` si el cliente usa formato legacy, de lo contrario `false`.
+ */
 export function isLegacyCustomer(raw: Customer & { city?: string }): boolean {
   const legacyCity = raw.city ?? '';
   const municipio = raw.municipio ?? '';
@@ -44,7 +68,12 @@ export function isLegacyCustomer(raw: Customer & { city?: string }): boolean {
   return false;
 }
 
-/** Migra registros antiguos (formato español o campo `city`) al esquema venezolano. */
+/**
+ * Migra registros antiguos (formato español o con campo `city`) al nuevo esquema venezolano.
+ * 
+ * @param {Customer & { city?: string }} raw - Objeto cliente crudo con datos legacy.
+ * @returns {Customer} El cliente migrado y validado bajo el esquema actual.
+ */
 export function migrateCustomer(raw: Customer & { city?: string }): Customer {
   const legacy = isLegacyCustomer(raw);
   const seed = SEED_CUSTOMER_BY_ID[raw.id];
@@ -82,6 +111,13 @@ export function migrateCustomer(raw: Customer & { city?: string }): Customer {
   };
 }
 
+/**
+ * Carga la lista de clientes desde el almacenamiento local o una cadena JSON.
+ * Si no hay datos, retorna los clientes semilla por defecto. Migra automáticamente.
+ *
+ * @param {string | null} stored - Cadena JSON con los clientes guardados en almacenamiento.
+ * @returns {Customer[]} Lista de clientes validados y listos para uso.
+ */
 export function loadCustomersFromStorage(stored: string | null): Customer[] {
   if (!stored) {
     return INITIAL_CUSTOMERS;
@@ -91,6 +127,13 @@ export function loadCustomersFromStorage(stored: string | null): Customer[] {
   return parsed.map(migrateCustomer);
 }
 
+/**
+ * Verifica si es necesario actualizar el almacenamiento de clientes
+ * porque la versión guardada es anterior a la actual de la aplicación.
+ *
+ * @param {number | null} storedVersion - Versión actual en el almacenamiento.
+ * @returns {boolean} `true` si debe refrescarse, `false` en caso contrario.
+ */
 export function shouldRefreshCustomersStorage(storedVersion: number | null): boolean {
   return storedVersion === null || storedVersion < CUSTOMERS_DATA_VERSION;
 }

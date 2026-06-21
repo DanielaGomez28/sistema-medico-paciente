@@ -14,14 +14,19 @@ import {
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
 
+/**
+ * Propiedades de la vista de Login.
+ * @interface LoginViewProps
+ * @property {(role: string, email: string) => void} onLoginSuccess - Callback invocado tras una autenticación exitosa.
+ */
 interface LoginViewProps {
   onLoginSuccess: (role: string, email: string) => void;
 }
 
 const MOCK_USERS = [
-  { email: 'admin@zenith.com', password: 'password123', role: 'superadmin', name: 'Administrador General' },
-  { email: 'medico@clinica.com', password: 'medico123', role: 'médico', name: 'Dr. Alejandro Ríos' },
-  { email: 'paciente@clinica.com', password: 'paciente123', role: 'paciente', name: 'Sofía Peralta' },
+  { email: 'admin@sistema.local', password: 'admin123', role: 'superadmin', name: 'Administrador Sistema' },
+  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'médico', name: 'Dr. Roberto Gómez' },
+  { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: 'Ana Martínez' },
 ];
 
 const TEST_ACCOUNT_LABELS: Record<string, string> = {
@@ -30,6 +35,14 @@ const TEST_ACCOUNT_LABELS: Record<string, string> = {
   paciente: 'Paciente',
 };
 
+/**
+ * Vista de autenticación principal (Login).
+ * Maneja la captura de credenciales, validación frontal y comunicación con el endpoint de autenticación.
+ * Incluye un panel interactivo (colapsable) con cuentas de prueba para facilitar demos.
+ *
+ * @param {LoginViewProps} props - Propiedades de la vista.
+ * @returns {JSX.Element} Vista de inicio de sesión.
+ */
 export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

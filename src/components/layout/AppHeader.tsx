@@ -5,6 +5,19 @@ import { Bell, Menu, Plus } from 'lucide-react';
 import Button from '../ui/Button';
 import { ThemeToggle } from '../theme';
 
+/**
+ * Propiedades del componente AppHeader.
+ *
+ * @interface AppHeaderProps
+ * @property {string} [statusLabel='Servicio Activo'] - Etiqueta de estado del sistema a mostrar.
+ * @property {React.ReactNode} [actions] - Botones o acciones a mostrar en el lado derecho.
+ * @property {string} [profileInitials='CM'] - Iniciales del usuario logueado.
+ * @property {string} [profileName='Carlos M.'] - Nombre corto del usuario logueado.
+ * @property {number} [notificationCount=0] - Número de notificaciones no leídas.
+ * @property {React.ReactNode} [trailing] - Contenido personalizado para reemplazar la sección del perfil.
+ * @property {boolean} [showNotifications=true] - Controla la visibilidad del ícono de notificaciones.
+ * @property {() => void} [onMenuClick] - Callback para abrir el sidebar en dispositivos móviles.
+ */
 export interface AppHeaderProps {
   statusLabel?: string;
   actions?: React.ReactNode;
@@ -16,6 +29,14 @@ export interface AppHeaderProps {
   onMenuClick?: () => void;
 }
 
+/**
+ * Cabecera principal de la aplicación.
+ * Permite mostrar el estado, acciones rápidas, notificaciones y menú de perfil de usuario.
+ * Se mantiene fija (sticky) en la parte superior.
+ *
+ * @param {AppHeaderProps} props - Propiedades del encabezado.
+ * @returns {JSX.Element} Elemento cabecera.
+ */
 export default function AppHeader({
   statusLabel = 'Servicio Activo',
   actions,
@@ -75,6 +96,15 @@ export default function AppHeader({
   );
 }
 
+/**
+ * Componente auxiliar para renderizar una acción común en el AppHeader (ej. "Nuevo Paciente").
+ *
+ * @param {object} props - Propiedades de la acción.
+ * @param {React.ReactNode} props.children - Texto de la acción (el prefijo '+' se elimina si existe).
+ * @param {() => void} [props.onClick] - Callback ejecutado al hacer clic.
+ * @param {'outline' | 'admin'} [props.variant='outline'] - Variante visual del botón de acción.
+ * @returns {JSX.Element}
+ */
 export function AppHeaderAction({
   children,
   onClick,

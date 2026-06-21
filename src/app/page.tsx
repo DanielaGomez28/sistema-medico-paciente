@@ -28,6 +28,16 @@ import CmsView from '../components/CmsView';
 import DoctorsManagerView from '../components/DoctorsManagerView';
 import FinancialSettingsView from '../components/FinancialSettingsView';
 
+/**
+ * Componente principal (Home) que actúa como controlador y orquestador (Entry Point).
+ * Dependiendo del estado de autenticación (role: 'médico' | 'paciente' | 'admin'), 
+ * renderiza el portal (vista) correspondiente.
+ * 
+ * También maneja el estado global maestro para la aplicación administrativa (Orders, Products, Customers)
+ * y se encarga de hidratar la memoria local (localStorage) en el cliente para persistencia de datos simulada.
+ * 
+ * @returns {JSX.Element}
+ */
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currentUser, setCurrentUser] = useState<{ role: string; email: string } | null>(null);

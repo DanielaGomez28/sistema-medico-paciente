@@ -42,12 +42,23 @@ import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, Modal, ModalBody, ListCard } from './ui';
 
+/**
+ * Propiedades de la vista de portal del Médico.
+ * @interface DoctorViewProps
+ * @property {string} doctorName - Nombre del doctor autenticado.
+ * @property {string} doctorEmail - Correo del doctor.
+ * @property {() => void} onLogout - Acción para cerrar sesión.
+ */
 interface DoctorViewProps {
   doctorName: string;
   doctorEmail: string;
   onLogout: () => void;
 }
 
+/**
+ * Interfaz para representar un paciente vinculado al médico en el panel.
+ * @interface LinkedPatient
+ */
 interface LinkedPatient {
   cedula: string;
   name: string;
@@ -61,6 +72,10 @@ interface LinkedPatient {
   medications: string[];
 }
 
+/**
+ * Interfaz para representar un producto médico del catálogo o inventario de farmacia.
+ * @interface MedicalProduct
+ */
 interface MedicalProduct {
   id: string;
   name: string;
@@ -72,6 +87,10 @@ interface MedicalProduct {
   source: 'farmacia' | 'externo';
 }
 
+/**
+ * Interfaz para representar un medicamento agregado al carrito de prescripción médica (Récipe).
+ * @interface CartItem
+ */
 interface CartItem {
   product: MedicalProduct;
   posology: string;
@@ -192,6 +211,17 @@ const createEmptyPatient = (): LinkedPatient => ({
   medications: [],
 });
 
+/**
+ * Vista principal y portal exclusivo para Médicos.
+ * Integra múltiples submódulos usando pestañas (Panel, Pacientes, Prescripción, Comisiones, Perfil):
+ * - Agenda clínica y gestión de expedientes (CRUD de pacientes).
+ * - Generador de prescripciones médicas con asistente IA simulado.
+ * - Autenticación y vinculación por código QR dinámico.
+ * - Rastreo y cálculo de comisiones generadas por afiliación y ventas indirectas.
+ *
+ * @param {DoctorViewProps} props - Propiedades de la vista.
+ * @returns {JSX.Element}
+ */
 export default function DoctorView({ doctorName, doctorEmail, onLogout }: DoctorViewProps) {
   // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'
   const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'>('agenda');

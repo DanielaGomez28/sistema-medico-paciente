@@ -6,12 +6,27 @@ import { cn } from '../../lib/utils';
 import NavItem, { AccentVariant, NavItemConfig } from './NavItem';
 import { useShell } from './ShellContext';
 
+/**
+ * Configuración visual de la marca a mostrar en la parte superior del sidebar.
+ * @interface AppSidebarBrand
+ * @property {LucideIcon} icon - Ícono o logo de la marca.
+ * @property {string} title - Nombre principal de la aplicación o módulo.
+ * @property {string} [subtitle] - Subtítulo opcional (ej: rol o entorno).
+ */
 export interface AppSidebarBrand {
   icon: LucideIcon;
   title: string;
   subtitle?: string;
 }
 
+/**
+ * Información del perfil de usuario para mostrar en la parte inferior del sidebar.
+ * @interface AppSidebarProfile
+ * @property {string} initials - Iniciales para el avatar (ej: 'JD').
+ * @property {string} name - Nombre completo a mostrar.
+ * @property {string} [role] - Rol o posición del usuario.
+ * @property {string} [avatarClassName] - Estilos adicionales para el avatar.
+ */
 export interface AppSidebarProfile {
   initials: string;
   name: string;
@@ -19,6 +34,23 @@ export interface AppSidebarProfile {
   avatarClassName?: string;
 }
 
+/**
+ * Propiedades de configuración para la barra lateral de la aplicación.
+ * @interface AppSidebarProps
+ * @property {AppSidebarBrand} brand - Logo y título.
+ * @property {NavItemConfig[]} items - Elementos de navegación principales.
+ * @property {string} activeId - ID del elemento de navegación actualmente activo.
+ * @property {(id: string) => void} onNavigate - Callback ejecutado al seleccionar un ítem de menú.
+ * @property {AccentVariant} [accent='primary'] - Acento de color primario a usar en los íconos e ítems activos.
+ * @property {string} [sectionLabel] - Etiqueta opcional para agrupar visualmente los ítems de navegación.
+ * @property {React.ReactNode} [sidebarExtra] - Componente extra para renderizar debajo de la cabecera (ej: botón de acción).
+ * @property {React.ReactNode} [preProfile] - Contenido a mostrar justo arriba del perfil de usuario.
+ * @property {AppSidebarProfile} [profile] - Datos del perfil del usuario logueado.
+ * @property {() => void} [onLogout] - Acción ejecutada para cerrar sesión.
+ * @property {string} [logoutLabel='Cerrar Sesión'] - Texto a mostrar o anunciar para la acción de logout.
+ * @property {'icon' | 'full'} [logoutVariant='icon'] - Estilo de botón para el logout.
+ * @property {string} [className] - Clases adicionales.
+ */
 export interface AppSidebarProps {
   brand: AppSidebarBrand;
   items: NavItemConfig[];
@@ -40,6 +72,13 @@ const brandGradient: Record<AccentVariant, string> = {
   secondary: 'bg-surface-800 border border-surface-700',
 };
 
+/**
+ * Barra lateral (Sidebar) principal de navegación.
+ * Muestra la sección de branding, botones de navegación dinámicos, y el bloque inferior de perfil.
+ *
+ * @param {AppSidebarProps} props - Propiedades del sidebar.
+ * @returns {JSX.Element}
+ */
 export default function AppSidebar({
   brand,
   items,

@@ -1,11 +1,29 @@
 import React from 'react';
 import { cn } from '../../lib/utils';
 
+/**
+ * Campo de dato (par clave-valor) para mostrar dentro de una ListCard.
+ * @interface ListCardField
+ * @property {string} label - Título o etiqueta descriptiva del campo.
+ * @property {React.ReactNode} value - Valor principal a mostrar.
+ */
 export interface ListCardField {
   label: string;
   value: React.ReactNode;
 }
 
+/**
+ * Propiedades del componente ListCard.
+ *
+ * @interface ListCardProps
+ * @property {React.ReactNode} title - Título principal de la tarjeta.
+ * @property {React.ReactNode} [subtitle] - Subtítulo secundario (opcional).
+ * @property {React.ReactNode} [badge] - Elemento visual (ej. Badge) a mostrar en la esquina superior.
+ * @property {ListCardField[]} [fields] - Lista de campos de información adicionales.
+ * @property {React.ReactNode} [actions] - Botones o acciones para mostrar al pie de la tarjeta.
+ * @property {string} [className] - Clases CSS adicionales.
+ * @property {() => void} [onClick] - Función a ejecutar al hacer clic. Convierte la tarjeta en interactiva.
+ */
 export interface ListCardProps {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
@@ -16,6 +34,13 @@ export interface ListCardProps {
   onClick?: () => void;
 }
 
+/**
+ * Componente de tarjeta compacta para mostrar registros en formato lista o grid.
+ * Utilizado ampliamente para mostrar pedidos, clientes o entidades similares.
+ *
+ * @param {ListCardProps} props - Propiedades del componente.
+ * @returns {JSX.Element} Tarjeta renderizada.
+ */
 export default function ListCard({
   title,
   subtitle,
