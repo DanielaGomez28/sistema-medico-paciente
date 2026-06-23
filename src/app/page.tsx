@@ -40,7 +40,8 @@ import FinancialSettingsView from '../components/FinancialSettingsView';
  */
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [currentUser, setCurrentUser] = useState<{ role: string; email: string } | null>(null);
+  // Master state del usuario con el nombre dinámico incluido
+const [currentUser, setCurrentUser] = useState<{ role: string; email: string; name: string } | null>(null);
   
   // Master states
   const [orders, setOrders] = useState<Order[]>([]);
@@ -53,10 +54,16 @@ export default function Home() {
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
 
   // Load from local storage
+  // Load from local storage
   useEffect(() => {
     const localUser = localStorage.getItem('zenith_user');
     if (localUser) {
-      setCurrentUser(JSON.parse(localUser));
+      const parsed = JSON.parse(localUser);
+      setCurrentUser({
+        role: parsed.role || '',
+        email: parsed.email || '',
+        name: parsed.name || parsed.nombre || 'Usuario' // 🚀 Forzamos que lea 'name' o 'nombre'
+      });
     }
 
     const localOrders = localStorage.getItem('zenith_orders');
@@ -96,8 +103,8 @@ export default function Home() {
   }, []);
 
   // Sync helpers
-  const handleLoginSuccess = (role: string, email: string) => {
-    const user = { role, email };
+  const handleLoginSuccess = (role: string, email: string, name?: string) => {
+    const user = { role, email, name: name || 'Usuario' }; // 🚀 Guardamos el nombre dinámico
     setCurrentUser(user);
     localStorage.setItem('zenith_user', JSON.stringify(user));
   };
@@ -272,11 +279,15 @@ export default function Home() {
   const normalizedRole = currentUser.role.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   if (normalizedRole === 'medico') {
-    return <DoctorView doctorName="Dr. Alejandro Ríos" doctorEmail={currentUser.email} onLogout={handleLogout} />;
+    // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
+    const currentName = (currentUser as any).name || "Dr. Alejandro Ríos";
+    return <DoctorView doctorName={currentName} doctorEmail={currentUser.email} onLogout={handleLogout} />;
   }
 
   if (normalizedRole === 'paciente') {
-    return <PatientView patientName="Sofía Peralta" patientEmail={currentUser.email} onLogout={handleLogout} />;
+    // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
+    const currentName = (currentUser as any).name || "Sofía Peralta";
+    return <PatientView patientName={currentName} patientEmail={currentUser.email} onLogout={handleLogout} />;
   }
 
   return (
@@ -288,20 +299,37 @@ export default function Home() {
           setActiveTab={setActiveTab}
           pendingOrdersCount={pendingCount}
           onLogout={handleLogout}
+          adminName={currentUser?.name || "Administrador Sistema"}
         />
       }
-      header={({ onMenuClick }) => (
-        <AppHeader
-          onMenuClick={onMenuClick}
-          statusLabel=""
-          showNotifications={false}
-          actions={
-            <AppHeaderAction variant="admin" onClick={() => setIsNewOrderOpen(true)}>
-              Nuevo Pedido
-            </AppHeaderAction>
-          }
-        />
-      )}
+      // 📄 Dentro de tu src/app/page.tsx (Sección del Header del Administrador)
+      header={({ onMenuClick }) => {
+        // 🚀 1. Calculamos las iniciales en tiempo real basándonos en el backend
+        const getInitials = (nameString: string) => {
+          const parts = nameString.trim().split(/\s+/);
+          if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+          return parts[0] ? parts[0][0].toUpperCase() : 'AD';
+        };
+
+        const adminName = currentUser?.name || "Administrador Sistema";
+        const adminInitials = getInitials(adminName);
+
+        return (
+          <AppHeader
+            onMenuClick={onMenuClick}
+            statusLabel={adminName} // El label que ya tenías
+            showNotifications={false}
+            // 🚀 2. INYECTAMOS LAS PROPIEDADES DINÁMICAS AQUÍ:
+            profileName={adminName}
+            profileInitials={adminInitials}
+            actions={
+              <AppHeaderAction variant="admin" onClick={() => setIsNewOrderOpen(true)}>
+                Nuevo Pedido
+              </AppHeaderAction>
+            }
+          />
+        );
+      }}
     >
       {activeTab === 'dashboard' && (
         <DashboardView

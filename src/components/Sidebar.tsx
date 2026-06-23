@@ -15,31 +15,38 @@ import { AppSidebar } from './layout';
 /**
  * Propiedades del componente Sidebar de Administración.
  * @interface SidebarProps
- * @property {string} activeTab - ID de la pestaña o ruta actualmente activa en la vista.
- * @property {(tab: string) => void} setActiveTab - Función ejecutada para cambiar de vista.
- * @property {number} pendingOrdersCount - Cantidad de órdenes pendientes (usada para la insignia/badge).
- * @property {() => void} onLogout - Función que maneja el cierre de sesión del admin.
  */
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   pendingOrdersCount: number;
   onLogout: () => void;
+  adminName: string; // 🚀 Propiedad ya existente en tu interfaz
 }
 
 /**
  * Componente contenedor que implementa el `AppSidebar` genérico con la configuración
- * específica para el portal de Administrador. Define los ítems de navegación y el perfil.
- *
- * @param {SidebarProps} props - Propiedades y acciones de navegación.
- * @returns {JSX.Element} Sidebar configurado para admin.
+ * específica para el portal de Administrador.
  */
 export default function Sidebar({
   activeTab,
   setActiveTab,
   pendingOrdersCount,
   onLogout,
+  adminName, // 🚀 1. Extraemos 'adminName' para poder usarlo abajo
 }: SidebarProps) {
+  
+  // 🚀 2. Función helper para generar iniciales dinámicas (ej: "Administrador Sistema" -> "AS")
+  const getInitials = (nameString: string) => {
+    const parts = nameString.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return parts[0] ? parts[0][0].toUpperCase() : 'AD';
+  };
+
+  const dynamicInitials = getInitials(adminName || 'Administrador Sistema');
+
   return (
     <AppSidebar
       accent="primary"
@@ -64,8 +71,8 @@ export default function Sidebar({
       activeId={activeTab}
       onNavigate={setActiveTab}
       profile={{
-        initials: 'CM',
-        name: 'Carlos Mendoza',
+        initials: dynamicInitials, // 🚀 3. Iniciales dinámicas automáticas
+        name: adminName || 'Administrador Sistema', // 🚀 4. Nombre real traído desde el Backend
         avatarClassName: 'portal-profile-avatar',
       }}
       onLogout={onLogout}

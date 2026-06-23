@@ -20,7 +20,7 @@ import { cn } from '../lib/utils';
  * @property {(role: string, email: string) => void} onLoginSuccess - Callback invocado tras una autenticación exitosa.
  */
 interface LoginViewProps {
-  onLoginSuccess: (role: string, email: string) => void;
+  onLoginSuccess: (role: string, email: string, name?: string) => void;
 }
 
 const MOCK_USERS = [
@@ -31,7 +31,7 @@ const MOCK_USERS = [
 
 const TEST_ACCOUNT_LABELS: Record<string, string> = {
   superadmin: 'Admin',
-  médico: 'Médico',
+  medico: 'Médico',
   paciente: 'Paciente',
 };
 
@@ -89,29 +89,33 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     setSubmitting(true);
 
     try {
-      // 🚀 Llamada real al Backend que configuramos
+      // 🚀 Llamada real al Backend que configuramos en local
       const response = await fetch('http://localhost:4000/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }), // Enviamos los datos
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // 🚀 Ommran unifica roles (inglés/español) y correos de respaldo para el login exitoso
-        const userRole = data.role || data.rol || 'Paciente';
+        // Forzamos minúsculas para evitar problemas de "Médico" vs "medico"
+        const userRole = (data.role || data.rol || 'Paciente').toLowerCase();
         const userEmail = data.email || data.correo || email;
+        
+        // Buscamos en los MOCK locales comparando correos en minúscula
+        const fallbackUser = MOCK_USERS.find(u => u.email.toLowerCase() === userEmail.toLowerCase());
+        const userName = data.name || data.nombre || fallbackUser?.name || 'Administrador';
 
-        onLoginSuccess(userRole, userEmail);
+        onLoginSuccess(userRole, userEmail, userName);
       } else {
-        // Si tu middleware o el controlador del backend rechazan la petición, mostramos el error
+        // 🚀 Manejo de credenciales incorrectas devueltas por el servidor
         setGeneralError(data.error || 'Credenciales incorrectas.');
       }
     } catch (error) {
-      // Por si el servidor backend está apagado o no responde
+      // Por si el servidor backend local está apagado o no responde
       setGeneralError('No se pudo conectar con el servidor. Verifica que el Backend esté encendido.');
     }
 
