@@ -90,7 +90,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
     try {
       // 🚀 Llamada real al Backend que configuramos en local
-      const response = await fetch('http://localhost:4000/api/login', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+      const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -41,6 +41,7 @@ import {
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, Modal, ModalBody, ListCard } from './ui';
+import socket from '../lib/socket';
 
 /**
  * Propiedades de la vista de portal del Médico.
@@ -98,6 +99,10 @@ interface CartItem {
   aiOptimized: boolean;
 }
 
+/**
+ * Catálogo base simulado de productos médicos y medicinas.
+ * @constant {MedicalProduct[]}
+ */
 const FARMA_HUMANA_CATALOG: MedicalProduct[] = [
   { id: 'med-1', name: 'Ramipril 5mg', sku: 'RX-RAM-001', category: 'Cardiovascular', price: 12.50, stock: 120, description: 'Indicado para el tratamiento de la hipertensión arterial y reducción de morbilidad cardiovascular.', source: 'farmacia' },
   { id: 'med-2', name: 'Aspirina 100mg', sku: 'RX-ASP-002', category: 'Analgesia / Antiagregante', price: 6.00, stock: 450, description: 'Antiagregante plaquetario para la prevención cardiovascular.', source: 'farmacia' },
@@ -107,9 +112,16 @@ const FARMA_HUMANA_CATALOG: MedicalProduct[] = [
   { id: 'med-6', name: 'Ibuprofeno 600mg', sku: 'RX-IBU-006', category: 'Antiinflamatorio', price: 4.50, stock: 500, description: 'Alivio del dolor moderado y reducción de procesos febriles o inflamatorios.', source: 'farmacia' }
 ];
 
+/**
+ * Productos filtrados que pertenecen exclusivamente al inventario de farmacia.
+ * @constant {MedicalProduct[]}
+ */
 const PHARMACY_PRODUCTS = FARMA_HUMANA_CATALOG.filter((product) => product.source === 'farmacia');
 
-// Commission entry record
+/**
+ * Interfaz para representar el registro de una comisión médica.
+ * @interface CommissionEntry
+ */
 interface CommissionEntry {
   id: string;
   date: string;
@@ -121,7 +133,10 @@ interface CommissionEntry {
   status: 'Acreditado' | 'Pendiente';
 }
 
-// Signed recipe log entry
+/**
+ * Interfaz para representar un registro en la bitácora de récipes firmados.
+ * @interface RecipeLogEntry
+ */
 interface RecipeLogEntry {
   id: string;
   date: string;
@@ -132,6 +147,10 @@ interface RecipeLogEntry {
   status: 'Enviado' | 'Confirmado' | 'Retirado';
 }
 
+/**
+ * Datos simulados de comisiones generadas por el médico.
+ * @constant {CommissionEntry[]}
+ */
 const MOCK_COMMISSIONS: CommissionEntry[] = [
   { id: 'COM-2026-041', date: '08 Jun, 2026', patientName: 'Sofía Peralta', medication: 'Ramipril 5mg + Aspirina 100mg', saleAmount: 18.50, commissionRate: 8, commissionAmount: 1.48, status: 'Acreditado' },
   { id: 'COM-2026-038', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', medication: 'Metformina 850mg', saleAmount: 9.80, commissionRate: 8, commissionAmount: 0.78, status: 'Acreditado' },
@@ -140,6 +159,10 @@ const MOCK_COMMISSIONS: CommissionEntry[] = [
   { id: 'COM-2026-022', date: '20 May, 2026', patientName: 'Sofía Peralta', medication: 'Aspirina 100mg', saleAmount: 6.00, commissionRate: 8, commissionAmount: 0.48, status: 'Acreditado' },
 ];
 
+/**
+ * Historial simulado de récipes médicos emitidos y firmados digitalmente.
+ * @constant {RecipeLogEntry[]}
+ */
 const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
   { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientCedula: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmahumana Caracas', status: 'Confirmado' },
   { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientCedula: 'V-15234891', medications: ['Metformina 850mg'], branch: 'Clínica Humana Valencia', status: 'Retirado' },
@@ -147,6 +170,10 @@ const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
   { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientCedula: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Clínica Humana Caracas', status: 'Enviado' },
 ];
 
+/**
+ * Lista inicial simulada de pacientes vinculados al médico.
+ * @constant {LinkedPatient[]}
+ */
 const INITIAL_PATIENTS: LinkedPatient[] = [
   {
     cedula: 'V-28450123',
@@ -198,6 +225,10 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
   },
 ];
 
+/**
+ * Función auxiliar para generar la estructura de un paciente nuevo vacío.
+ * @returns {LinkedPatient} Objeto de paciente por defecto.
+ */
 const createEmptyPatient = (): LinkedPatient => ({
   cedula: '',
   name: '',
@@ -273,6 +304,65 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [isWaitingConsent, setIsWaitingConsent] = useState(false);
   const [pendingConsentPatient, setPendingConsentPatient] = useState<LinkedPatient | null>(null);
 
+  // WebSockets: Escuchar respuesta del paciente
+  useEffect(() => {
+    const identify = () => {
+      socket.emit('identifyUser', { userId: 'MD-992', role: 'doctor' });
+    };
+
+    if (socket.connected) identify();
+    socket.on('connect', identify);
+
+    const handleConsentResult = (data: any) => {
+      setIsWaitingConsent(false);
+      
+      if (data.success) {
+        // En el backend lo convertimos a entero para la BD, así que viene como número (ej: 28450123)
+        const cedulaNum = data.result?.vinculacion?.id_paciente?.toString();
+        
+        // Buscamos el paciente ignorando el prefijo "V-"
+        let targetPatient = patients.find(p => p.cedula.replace(/\D/g, '') === cedulaNum);
+        
+        if (!targetPatient) {
+          // Crear un paciente temporal basado en los datos devueltos por el paciente
+          targetPatient = {
+            cedula: `V-${cedulaNum}`,
+            name: data.patientName || 'Paciente Nuevo',
+            age: 0,
+            gender: 'No especificado',
+            bloodType: 'N/A',
+            phone: 'N/A',
+            condition: 'N/A',
+            allergies: 'Ninguna',
+            lastVisit: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+            medications: [],
+          } as LinkedPatient;
+          
+          setPatients(prev => [...prev, targetPatient as LinkedPatient]);
+        }
+        
+        setIsScannerModalOpen(false);
+        openPatientForm(targetPatient as LinkedPatient);
+      } else {
+        alert(data.message || 'El paciente denegó la solicitud de vinculación.');
+      }
+      setPendingConsentPatient(null);
+    };
+
+    const handleConsentRequestSent = ({ patientName }: { patientName: string }) => {
+      setPendingConsentPatient(prev => prev ? { ...prev, name: patientName } : null);
+    };
+
+    socket.on('consentResult', handleConsentResult);
+    socket.on('consentRequestSent', handleConsentRequestSent);
+
+    return () => {
+      socket.off('connect', identify);
+      socket.off('consentResult', handleConsentResult);
+      socket.off('consentRequestSent', handleConsentRequestSent);
+    };
+  }, [patients]);
+
   const filteredPatients = useMemo(() => {
     const query = patientListSearch.toLowerCase().trim();
     if (!query) return patients;
@@ -296,6 +386,10 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [aiLoadingId, setAiLoadingId] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
 
+  /**
+   * Abre el formulario de detalle de un paciente existente.
+   * @param {LinkedPatient} patient - El paciente a mostrar.
+   */
   const openPatientForm = (patient: LinkedPatient) => {
     setPatientForm({ ...patient, medications: [...patient.medications] });
     setMedicationsInput(patient.medications.join(', '));
@@ -305,6 +399,9 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setActiveTab('reception');
   };
 
+  /**
+   * Prepara el formulario para registrar un nuevo paciente.
+   */
   const handleNewPatient = () => {
     const empty = createEmptyPatient();
     setPatientForm(empty);
@@ -315,12 +412,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setActiveTab('reception');
   };
 
+  /**
+   * Regresa a la vista de lista de pacientes.
+   */
   const handleBackToPatientList = () => {
     setPatientViewMode('list');
     setIsNewPatient(false);
     setPatientSaveMsg('');
   };
 
+  /**
+   * Elimina el paciente actualmente seleccionado del estado local.
+   */
   const handleDeletePatient = () => {
     if (!patientForm.cedula || isNewPatient) return;
     if (!confirm(`¿Eliminar el expediente de ${patientForm.name}? Esta acción no se puede deshacer.`)) {
@@ -333,6 +436,10 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     handleBackToPatientList();
   };
 
+  /**
+   * Maneja el guardado o actualización de un paciente en el formulario.
+   * @param {React.FormEvent} e - Evento del formulario.
+   */
   const handleSavePatient = (e: React.FormEvent) => {
     e.preventDefault();
     if (!patientForm.name.trim() || !patientForm.phone.trim() || !patientForm.cedula.trim()) {
@@ -367,27 +474,57 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setTimeout(() => setPatientSaveMsg(''), 3000);
   };
 
+  /**
+   * Inicia el flujo de vinculación de un paciente buscando por su cédula e informando al backend.
+   * @param {string} cedulaQuery - La cédula a buscar o vincular.
+   */
   const linkPatientMock = (cedulaQuery: string) => {
-    const normalized = cedulaQuery.toLowerCase().replace(/\s/g, '');
+    const normalized = cedulaQuery.toLowerCase().replace(/[\s\.-]/g, '');
     const found = patients.find((p) =>
-      p.cedula.toLowerCase().replace(/\s/g, '').includes(normalized)
+      p.cedula.toLowerCase().replace(/[\s\.-]/g, '').includes(normalized)
     );
 
-    const targetPatient = found || patients[0];
+    const targetPatient = found || {
+      cedula: cedulaQuery.trim().toUpperCase(),
+      name: 'Paciente (Pendiente BD)',
+      age: 0,
+      gender: 'No especificado',
+      bloodType: 'N/A',
+      phone: 'N/A',
+      condition: 'N/A',
+      allergies: 'Ninguna',
+      lastVisit: 'N/A',
+      medications: [],
+    };
     
     setIsWaitingConsent(true);
     setPendingConsentPatient(targetPatient);
     
-    // Simulate wait time for the patient to approve on their end
-    setTimeout(() => {
-      setIsWaitingConsent(false);
-      setPendingConsentPatient(null);
-      setIsScannerModalOpen(false);
-      openPatientForm(targetPatient);
-    }, 3000);
+    // Emitir solicitud de vinculación al servidor WebSocket
+    socket.emit('requestConsent', {
+      doctorId: 'MD-992',
+      doctorName,
+      patientCedula: targetPatient.cedula
+    });
   };
 
-  // Simulate scanning camera
+  /**
+   * Cancela la solicitud de vinculación de un paciente en curso.
+   */
+  const cancelConsentRequest = () => {
+    if (pendingConsentPatient) {
+      socket.emit('cancelConsentRequest', { 
+        doctorId: 'MD-992', 
+        patientCedula: pendingConsentPatient.cedula 
+      });
+    }
+    setIsWaitingConsent(false);
+    setPendingConsentPatient(null);
+  };
+
+  /**
+   * Simula el inicio del escaneo mediante cámara.
+   */
   const triggerCameraScan = () => {
     setIsScanning(true);
     setScanProgress(0);
@@ -401,7 +538,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
         setScanProgress((prev) => {
           if (prev >= 100) {
             setIsScanning(false);
-            linkPatientMock('V-28450123'); // Auto link main patient Sofia
+            linkPatientMock('V-22341567'); // Auto link Ana Gómez Román
             return 0;
           }
           return prev + 25;
@@ -411,6 +548,10 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     return () => clearInterval(timer);
   }, [isScanning]);
 
+  /**
+   * Maneja el envío manual del formulario de vinculación de paciente.
+   * @param {React.FormEvent} e - Evento de formulario.
+   */
   const handleManualLinkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualCedulaInput) {
@@ -421,7 +562,10 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setManualCedulaInput('');
   };
 
-  // Cart operations
+  /**
+   * Añade un medicamento al carrito de prescripción médica.
+   * @param {MedicalProduct} product - El medicamento a añadir.
+   */
   const addToCart = (product: MedicalProduct) => {
     // Check if already in cart
     if (cart.some(item => item.product.id === product.id)) {
@@ -430,23 +574,41 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setCart([...cart, { product, posology: '', discount: 10, aiOptimized: false }]);
   };
 
+  /**
+   * Remueve un medicamento del carrito de prescripción médica.
+   * @param {string} productId - Identificador del producto a remover.
+   */
   const removeFromCart = (productId: string) => {
     setCart(cart.filter(item => item.product.id !== productId));
   };
 
+  /**
+   * Actualiza la posología de un medicamento específico en el carrito.
+   * @param {string} productId - Identificador del producto.
+   * @param {string} val - Nueva posología.
+   */
   const updateCartPosology = (productId: string, val: string) => {
     setCart(cart.map(item => 
       item.product.id === productId ? { ...item, posology: val, aiOptimized: false } : item
     ));
   };
 
+  /**
+   * Actualiza el descuento asociado a un medicamento en el carrito.
+   * @param {string} productId - Identificador del producto.
+   * @param {number} val - Nuevo porcentaje de descuento.
+   */
   const updateCartDiscount = (productId: string, val: number) => {
     setCart(cart.map(item => 
       item.product.id === productId ? { ...item, discount: val } : item
     ));
   };
 
-  // AI assistant suggestion simulation
+  /**
+   * Simula la sugerencia de posología asistida por IA para un medicamento.
+   * @param {string} productId - Identificador del producto.
+   * @param {string} name - Nombre comercial o genérico del medicamento.
+   */
   const handleAiPosologyAssist = (productId: string, name: string) => {
     setAiLoadingId(productId);
     
@@ -474,7 +636,10 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     }, 800);
   };
 
-  // Submit Prescription
+  /**
+   * Maneja el registro y envío de la prescripción médica.
+   * @param {React.FormEvent} e - Evento de formulario.
+   */
   const handleRegisterPrescription = (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0) {
@@ -1709,6 +1874,13 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                   El paciente {pendingConsentPatient?.name} debe aceptar la solicitud de vinculación en su dispositivo móvil.
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={cancelConsentRequest}
+                className="mt-6 px-4 py-2 border border-surface-700 hover:bg-surface-800 text-surface-300 rounded-lg text-xs font-bold transition-colors w-full max-w-[200px]"
+              >
+                Cancelar Solicitud
+              </button>
             </div>
           ) : (
             <>

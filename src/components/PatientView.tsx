@@ -42,7 +42,8 @@ import {
 } from './CredentialQr';
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
-import { Button, ListCard } from './ui';
+import { Button, ListCard, Modal, ModalBody } from './ui';
+import socket from '../lib/socket';
 
 /**
  * Propiedades de la vista de portal del Paciente.
@@ -282,8 +283,65 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
   // Profile Settings State (Pantalla P.5)
   const [profileName, setProfileName] = useState(patientName);
+  
+  const getCedulaFromName = (name: string) => {
+    const normalized = name.toLowerCase();
+    if (normalized.includes('ana')) return 'V-22.341.567';
+    if (normalized.includes('carlos')) return 'V-15.234.891';
+    if (normalized.includes('luis')) return 'V-18.765.432';
+    return 'V-28.450.123'; // Sofía Peralta (Default)
+  };
+  
+  const [profileDocumentId] = useState(getCedulaFromName(patientName));
+
+  // WebSockets: Consent Request State
+  const [incomingConsent, setIncomingConsent] = useState<{ doctorId: string; doctorName: string; patientCedula: string } | null>(null);
+
+  useEffect(() => {
+    // 1. Identificar al paciente en el servidor Socket.IO usando su Cédula real
+    const identify = () => {
+      // Normalizamos quitando espacios o puntos para evitar errores de red
+      const normalizedCedula = profileDocumentId.replace(/[\s\.-]/g, '');
+      socket.emit('identifyUser', { userId: normalizedCedula, role: 'patient', name: profileName });
+    };
+
+    if (socket.connected) identify();
+    socket.on('connect', identify);
+
+    // 2. Escuchar solicitudes de consentimiento entrantes
+    const handleIncomingRequest = (data: { doctorId: string; doctorName: string; patientCedula: string }) => {
+      console.log('Solicitud de vinculación recibida:', data);
+      setIncomingConsent(data);
+    };
+
+    // 3. Escuchar cancelación por parte del médico
+    const handleCancelRequest = (data: { doctorId: string }) => {
+      console.log('El médico canceló la solicitud:', data);
+      setIncomingConsent(null);
+    };
+
+    socket.on('incomingConsentRequest', handleIncomingRequest);
+    socket.on('consentRequestCancelled', handleCancelRequest);
+
+    return () => {
+      socket.off('connect', identify);
+      socket.off('incomingConsentRequest', handleIncomingRequest);
+      socket.off('consentRequestCancelled', handleCancelRequest);
+    };
+  }, []);
+
+  const handleConsentResponse = (accepted: boolean) => {
+    if (incomingConsent) {
+      socket.emit('consentResponse', {
+        doctorId: incomingConsent.doctorId,
+        patientCedula: incomingConsent.patientCedula,
+        patientName: profileName,
+        accepted,
+      });
+      setIncomingConsent(null);
+    }
+  };
   const [profilePhone, setProfilePhone] = useState('0412-6001234');
-  const [profileDocumentId] = useState('V-18.456.789');
   const [deliveryAddress, setDeliveryAddress] = useState('Av. Francisco de Miranda, Urb. Campo Alegre, Edif. Parque Cristal, Piso 4B');
   const [deliveryState, setDeliveryState] = useState('Distrito Capital');
   const [deliveryMunicipio, setDeliveryMunicipio] = useState('Chacao');
@@ -564,6 +622,41 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
         />
       )}
     >
+      {/* Consentimiento en Tiempo Real Modal */}
+      <Modal
+        open={incomingConsent !== null}
+        onClose={() => handleConsentResponse(false)}
+        title="Solicitud de Vinculación Clínica"
+        size="md"
+      >
+        <ModalBody className="space-y-6">
+          <div className="flex flex-col items-center justify-center space-y-4 py-4 text-center">
+            <div className="w-16 h-16 bg-secondary-500/10 text-secondary-500 rounded-full flex items-center justify-center">
+              <Stethoscope className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-white">El {incomingConsent?.doctorName} solicita acceso</h3>
+              <p className="text-sm text-surface-400 mt-2">
+                Para poder recetarle medicamentos, el médico necesita vincularse a su perfil clínico.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleConsentResponse(false)}
+              className="flex-1 px-4 py-3 border border-surface-700 hover:bg-surface-800 text-surface-300 rounded-xl font-bold transition-colors"
+            >
+              Denegar
+            </button>
+            <button
+              onClick={() => handleConsentResponse(true)}
+              className="flex-1 px-4 py-3 bg-secondary-600 hover:bg-secondary-500 text-white rounded-xl font-bold transition-colors"
+            >
+              Aceptar Vinculación
+            </button>
+          </div>
+        </ModalBody>
+      </Modal>
             {activeSubTab === 'recipes' && (
               <div className="space-y-6">
                 {/* Progress Stepper for last order */}
