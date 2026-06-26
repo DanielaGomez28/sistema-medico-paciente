@@ -43,7 +43,8 @@ import {
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, ListCard, Modal, ModalBody } from './ui';
-import socket from '../lib/socket';
+import apiClient from '../lib/api';
+import { socket } from '../lib/socket';
 
 /**
  * Propiedades de la vista de portal del Paciente.
@@ -240,6 +241,8 @@ const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout'
  * @param {PatientViewProps} props - Propiedades de la vista.
  * @returns {JSX.Element}
  */
+const PACIENTE_ID = "V-22.341.567";
+
 export default function PatientView({ patientName, patientEmail, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'
   const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('treatment');
@@ -253,10 +256,19 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   const [treatmentAlerts] = useState<TreatmentAlert[]>(MOCK_TREATMENT_ALERTS);
   const [doseSuccessMsg, setDoseSuccessMsg] = useState('');
   const [treatmentPanel, setTreatmentPanel] = useState<'today' | 'medications' | 'progress'>('today');
-  
+
+  // Estados para el QR y el Tiempo (Módulo 1 / Sprint #2)
+  const [qrImage, setQrImage] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutos en segundos
+  const [isTimerActive, setIsTimerActive] = useState<boolean>(false);
+
+  // Estados para el flujo de Consentimiento Ético
+  const [showConsentModal, setShowConsentModal] = useState<boolean>(false);
+  const [termsText, setTermsText] = useState<string>("");
+
   // Last Order State
   const [lastOrderStatus, setLastOrderStatus] = useState<'Pendiente por retirar' | 'Listo para retirar' | 'Retirado'>('Listo para retirar');
-  
+
   const {
     qrToken,
     qrSecondsLeft,
@@ -277,13 +289,13 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   // Payment States (Pantalla P.3)
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(900); // 15 minutes in seconds
   const [simulatedPaymentReference, setSimulatedPaymentReference] = useState('');
-  
+
   // Voucher info
   const [voucherId, setVoucherId] = useState('');
 
   // Profile Settings State (Pantalla P.5)
   const [profileName, setProfileName] = useState(patientName);
-  
+
   const getCedulaFromName = (name: string) => {
     const normalized = name.toLowerCase();
     if (normalized.includes('ana')) return 'V-22.341.567';
@@ -291,35 +303,63 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     if (normalized.includes('luis')) return 'V-18.765.432';
     return 'V-28.450.123'; // Sofía Peralta (Default)
   };
-  
+
   const [profileDocumentId] = useState(getCedulaFromName(patientName));
 
   // WebSockets: Consent Request State
   const [incomingConsent, setIncomingConsent] = useState<{ doctorId: string; doctorName: string; patientCedula: string } | null>(null);
 
+  // =========================================================
+  // 1. EFECTO: Sincronización WebSockets (Tiempo Real)
+  // =========================================================
   useEffect(() => {
-    // 1. Identificar al paciente en el servidor Socket.IO usando su Cédula real
+    // 1. Encendemos el socket global
+    socket.connect();
+
     const identify = () => {
-      // Normalizamos quitando espacios o puntos para evitar errores de red
-      const normalizedCedula = profileDocumentId.replace(/[\s\.-]/g, '');
-      socket.emit('identifyUser', { userId: normalizedCedula, role: 'patient', name: profileName });
+      // Mantenemos la cédula de pruebas o la del perfil
+      const targetCedula = profileDocumentId || 'V-22.341.567'; 
+      
+      console.log(`🤖 Registrando paciente en Socket local con Cédula: ${targetCedula}`);
+      
+      // Enviamos la petición unificada que tu server.js espera
+      socket.emit('identifyUser', { 
+        userId: targetCedula, 
+        role: 'patient', 
+        name: profileName || 'Ana Martínez'
+      });
     };
 
     if (socket.connected) identify();
     socket.on('connect', identify);
 
-    // 2. Escuchar solicitudes de consentimiento entrantes
-    const handleIncomingRequest = (data: { doctorId: string; doctorName: string; patientCedula: string }) => {
-      console.log('Solicitud de vinculación recibida:', data);
-      setIncomingConsent(data);
+    // 2. FUSIONAMOS LAS DOS LÓGICAS EN UNA SOLA FUNCIÓN RECEPTORA
+    const handleIncomingRequest = async (data: { doctorId: string; doctorName: string; patientCedula: string }) => {
+      console.log('🎯 ¡Solicitud de vinculación real recibida por el canal del Servidor!:', data);
+      
+      // Guardamos la información del médico entrante para el modal
+      setIncomingConsent(data); 
+
+      try {
+        // Consultamos dinámicamente los términos desde el backend
+        const response = await apiClient.get('/consentimiento/terminos');
+        setTermsText(response.data.texto);
+        setShowConsentModal(true); // 🔥 ¡Desplegamos el Modal de inmediato!
+      } catch (error) {
+        console.error("Error al traer los términos de privacidad:", error);
+        // Si falla el endpoint, abrimos el modal igual para no trabar la prueba local
+        setShowConsentModal(true);
+      }
     };
 
-    // 3. Escuchar cancelación por parte del médico
+    // Escuchar cancelación por parte del médico
     const handleCancelRequest = (data: { doctorId: string }) => {
       console.log('El médico canceló la solicitud:', data);
       setIncomingConsent(null);
+      setShowConsentModal(false); // Cerramos el modal si el médico se arrepiente
     };
 
+    // 3. CONECTAMOS LOS ESCUCHADORES EXCLUSIVOS DE TU SERVER.JS
     socket.on('incomingConsentRequest', handleIncomingRequest);
     socket.on('consentRequestCancelled', handleCancelRequest);
 
@@ -327,8 +367,47 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       socket.off('connect', identify);
       socket.off('incomingConsentRequest', handleIncomingRequest);
       socket.off('consentRequestCancelled', handleCancelRequest);
+      socket.disconnect();
     };
-  }, []);
+  }, [profileDocumentId, profileName]);
+
+  // =========================================================
+  // 2. EFECTO: Cuenta regresiva del QR efímero
+  // =========================================================
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isTimerActive && timeLeft > 0) {
+      interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    } else if (timeLeft === 0) {
+      setQrImage(null); // Borramos el QR expirado de la pantalla
+      setIsTimerActive(false);
+    }
+    return () => clearInterval(interval);
+  }, [isTimerActive, timeLeft]);
+
+  // =========================================================
+  // 3. FUNCIONES: Acciones de Negocio
+  // =========================================================
+  const handleGenerarQR = async () => {
+    try {
+      // Pedimos el token encriptado en AES-256 transformado a Base64
+      const response = await apiClient.get(`/qr/generate/${PACIENTE_ID}`);
+      setQrImage(response.data.qrImageBase64); // Suponiendo que el backend devuelve la propiedad así
+      setTimeLeft(300); // Reseteamos el reloj a 5 minutos
+      setIsTimerActive(true);
+    } catch (error) {
+      console.error("Error generando el código QR de seguridad:", error);
+    }
+  };
+
+  const handleResponderConsentimiento = (aceptado: boolean) => {
+    // Emitimos la respuesta directo por WebSocket para desbloquear la pantalla del médico
+    socket.emit('consentResponse', { 
+      idPaciente: PACIENTE_ID, 
+      status: aceptado ? 'ACCEPTED' : 'DECLINED' 
+    });
+    setShowConsentModal(false);
+  };
 
   const handleConsentResponse = (accepted: boolean) => {
     if (incomingConsent) {
@@ -901,6 +980,43 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* QR Digital Presencial (Módulo 1 / Sprint #2) */}
+                <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 sm:p-6 backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="space-y-2 text-left">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-primary-400" />
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                        QR Digital Presencial
+                      </h3>
+                    </div>
+                    <p className="text-xs text-surface-400 max-w-md">
+                      Genere un código QR de seguridad de un solo uso para autorizar accesos o validar su identidad en consultorios médicos.
+                    </p>
+                    <p className="text-xs text-surface-500">
+                      Cédula del paciente: <span className="font-mono text-surface-300 font-semibold">{PACIENTE_ID}</span>
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col items-center gap-3 shrink-0">
+                    <button
+                      onClick={handleGenerarQR}
+                      className="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg shadow-primary-950/20 active:scale-95 animate-pulse"
+                    >
+                      Generar QR Digital Presencial
+                    </button>
+
+                    {/* Renderizado de la imagen Base64 del Módulo 1 */}
+                    {qrImage && (
+                      <div className="mt-2 bg-white p-3.5 rounded-2xl border border-surface-200 flex flex-col items-center gap-2 animate-in zoom-in-95 duration-200">
+                        <img src={qrImage} alt="QR Efímero Paciente" className="w-[180px] h-[180px]" />
+                        <p className={`text-xs font-bold ${timeLeft < 60 ? 'text-[#e11d48]' : 'text-[#179150]'}`}>
+                          Expira en: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Navegación interna */}
@@ -1841,6 +1957,30 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
               </div>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* MODAL GLOBAL DE CONSENTIMIENTO ÉTICO (Tiempo Real) */}
+      {showConsentModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', 
+          backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '10px', maxWidth: '500px', textAlign: 'left', color: '#1e293b' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 10px 0' }}>⚠️ Autorización de Consulta Médica</h3>
+            <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #eee', padding: '10px', marginBottom: '15px', color: '#475569' }}>
+              {termsText}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <button onClick={() => handleResponderConsentimiento(true)} style={{ backgroundColor: 'green', color: '#fff', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                Autorizar Ingreso
+              </button>
+              <button onClick={() => handleResponderConsentimiento(false)} style={{ backgroundColor: 'red', color: '#fff', padding: '10px 20px', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
+                Rechazar
+              </button>
+            </div>
           </div>
         </div>
       )}

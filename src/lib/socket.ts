@@ -1,14 +1,13 @@
-import { io, Socket } from 'socket.io-client';
+import { io } from "socket.io-client";
 
-/**
- * Cliente Singleton de WebSockets (Socket.IO) para conexión bidireccional con el Backend.
- * @type {Socket}
- * @constant socket
- * @description Utiliza la variable de entorno NEXT_PUBLIC_SOCKET_URL definida en el entorno de Frontend.
- */
-const socket: Socket = io(process.env.NEXT_PUBLIC_SOCKET_URL, {
-  autoConnect: true,
-  reconnection: true,
+// Next.js usa 'process.env.NEXT_PUBLIC_...' o tu variable de entorno del .env
+// Ponemos un respaldo directo al puerto 4000 para asegurar el tiro en local
+const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || "http://localhost:4000";
+
+console.log("🔌 Intentando conectar el Socket a la URL:", SOCKET_URL);
+
+export const socket = io(SOCKET_URL, {
+  autoConnect: false,
+  withCredentials: true,
+  transports: ["polling", "websocket"] // Deja ambos para evitar bloqueos locales
 });
-
-export default socket;

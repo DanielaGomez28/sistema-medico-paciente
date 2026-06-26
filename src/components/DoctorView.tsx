@@ -41,7 +41,9 @@ import {
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, Modal, ModalBody, ListCard } from './ui';
-import socket from '../lib/socket';
+import apiClient from '../lib/api';
+import { socket } from '../lib/socket';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 
 /**
  * Propiedades de la vista de portal del Médico.
@@ -257,6 +259,15 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'
   const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'>('agenda');
 
+  // Estados para manejar el Escáner y el Bloqueo MCA (Módulo 1 / Sprint #2)
+  const [isScanning, setIsScanning] = useState<boolean>(false);
+  const [waitingConsent, setWaitingConsent] = useState<boolean>(false);
+  const [patientProfile, setPatientProfile] = useState<any>(null); // Aquí guardarás el JSON Sanitario
+
+  // Simulamos el ID del médico (para el Handshake)
+  const DOCTOR_ID = 'MD-99'; 
+  const DOCTOR_NAME = 'Dr. Alejandro Ríos';
+
   // M.4 Profile & Banking state
   const [bankHolder, setBankHolder] = useState('Dr. Alejandro Ríos García');
   const [bankHolderId, setBankHolderId] = useState('V-14.890.344');
@@ -363,6 +374,78 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     };
   }, [patients]);
 
+  // =========================================================
+  // LOGICA 1: WEBSOCKETS (Módulos 4 y 5)
+  // =========================================================
+  useEffect(() => {
+    // 1. Handshake inicial del Médico
+    socket.connect();
+    socket.emit('identifyUser', { userId: DOCTOR_ID, role: 'doctor', name: DOCTOR_NAME });
+
+    // 2. Escuchar la respuesta del paciente (Aceptó o Rechazó)
+    const handleConsentResponse = (data: { accepted: boolean; patientName: string; profileData?: any }) => {
+      setWaitingConsent(false); // Desbloqueamos la pantalla del médico
+
+      if (data.accepted) {
+        // Vinculación Exitosa (Módulo 2: Perfil filtrado)
+        alert(`¡Paciente ${data.patientName} vinculado exitosamente!`);
+        setPatientProfile(data.profileData); // Cargamos el expediente para la consulta
+      } else {
+        // Excepción MCA_LOCK: El paciente denegó el acceso
+        alert("Vinculación denegada: El paciente no aceptó los términos de privacidad.");
+      }
+    };
+
+    socket.on('consentResponse', handleConsentResponse);
+
+    return () => {
+      socket.off('consentResponse', handleConsentResponse);
+      socket.disconnect();
+    };
+  }, []);
+
+  // =========================================================
+  // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
+  // =========================================================
+  useEffect(() => {
+    if (isScanning) {
+      // Configuramos la cámara (Librería html5-qrcode)
+      const scanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
+      
+      scanner.render(async (decodedToken) => {
+        // ¡QR Detectado! Apagamos la cámara de inmediato
+        scanner.clear();
+        setIsScanning(false);
+
+        try {
+          // 1. Validamos la encriptación AES y la regla de 5 min en el backend
+          const response = await apiClient.post('/qr/validate', { token: decodedToken });
+          
+          if (response.data && response.data.patientId) {
+            // 2. Si el backend aprueba, bloqueamos la pantalla del médico (Esperando...)
+            setWaitingConsent(true);
+
+            // 3. Emitimos la alerta de WebSocket a la pantalla del paciente
+            socket.emit('requestConsent', {
+              doctorId: DOCTOR_ID,
+              doctorName: DOCTOR_NAME,
+              patientCedula: response.data.patientId // El backend desencriptó esto del QR
+            });
+          }
+        } catch (error: any) {
+          // Fallo por QR Caducado o Nonce duplicado
+          alert(error.response?.data?.message || "Error de seguridad: QR Caducado o Inválido.");
+        }
+      }, (err) => {
+        // Errores silenciosos mientras busca el QR frame por frame (se ignoran)
+      });
+
+      return () => {
+        scanner.clear().catch(e => console.error(e));
+      };
+    }
+  }, [isScanning]);
+
   const filteredPatients = useMemo(() => {
     const query = patientListSearch.toLowerCase().trim();
     if (!query) return patients;
@@ -375,7 +458,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
   // Reception / QR scan states (M.1)
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
   const [manualCedulaInput, setManualCedulaInput] = useState('');
   const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
@@ -867,6 +949,80 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
                         <CheckCircle2 className="h-5 w-5 shrink-0" />
                         <span>{patientSaveMsg}</span>
+                      </div>
+                    )}
+
+                    {/* BOTÓN PARA ABRIR LA CÁMARA */}
+                    <div className="p-6 bg-surface-900 rounded-2xl text-center">
+                      <h3 className="text-white font-bold mb-4">Ingreso de Nuevo Paciente</h3>
+                      
+                      {/* Estado 1: Botón de escaneo normal (visible si no está escaneando ni esperando) */}
+                      {!isScanning && !waitingConsent && (
+                        <button 
+                          onClick={() => setIsScanning(true)}
+                          className="px-6 py-3 bg-primary-600 text-white font-bold rounded-xl cursor-pointer hover:bg-primary-500 transition-colors animate-pulse"
+                        >
+                          Escanear QR de Vinculación
+                        </button>
+                      )}
+
+                      {/* Estado 2: Contenedor de la cámara activa */}
+                      {isScanning && (
+                        <div className="max-w-sm mx-auto mt-4 border-2 border-primary-500 rounded-xl overflow-hidden p-2 bg-white">
+                          <div id="qr-reader" className="w-full"></div>
+                          <button 
+                            onClick={() => setIsScanning(false)}
+                            className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg w-full cursor-pointer hover:bg-red-500 transition-colors"
+                          >
+                            Cancelar Escaneo
+                          </button>
+                        </div>
+                      )}
+
+                      {/* ==================================================================== */}
+                      {/* HERRAMIENTA DE DESARROLLO (Siempre visible para pruebas rápidas)      */}
+                      {/* ==================================================================== */}
+                      {!waitingConsent && (
+                        <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center max-w-sm mx-auto">
+                          <p className="text-[11px] text-amber-400 mb-2">🔧 Herramienta de Desarrollo (Sin Cámara)</p>
+                          <button 
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                // 1. Forzamos el estado de carga/bloqueo en el médico
+                                setWaitingConsent(true);
+                                
+                                // 2. Emitimos la solicitud directo al backend por WebSocket
+                                socket.emit('requestConsent', {
+                                  doctorId: 'MD-99',
+                                  doctorName: 'Dr. Alejandro Ríos',
+                                  patientCedula: 'V-22.341.567' // La cédula de tu captura
+                                });
+                                
+                                console.log("Solicitud de consentimiento enviada via WebSocket local.");
+                              } catch (error) {
+                                setWaitingConsent(false);
+                                alert("Error en la simulación local");
+                              }
+                            }}
+                            className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
+                          >
+                            Simular Lectura de QR (Ana Martínez)
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* MODAL DE BLOQUEO MCA (Esperando al paciente) */}
+                    {waitingConsent && (
+                      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+                        <div className="bg-surface-900 p-8 rounded-2xl text-center border border-surface-700 max-w-sm animate-in zoom-in-95 duration-200">
+                          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
+                          <h3 className="text-white font-bold text-lg">Validando Privacidad</h3>
+                          <p className="text-surface-400 mt-2 text-sm">
+                            Esperando autorización del paciente en su dispositivo móvil...
+                          </p>
+                        </div>
                       </div>
                     )}
 

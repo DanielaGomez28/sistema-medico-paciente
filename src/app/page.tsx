@@ -56,50 +56,62 @@ const [currentUser, setCurrentUser] = useState<{ role: string; email: string; na
   // Load from local storage
   // Load from local storage
   useEffect(() => {
-    const localUser = localStorage.getItem('zenith_user');
-    if (localUser) {
-      const parsed = JSON.parse(localUser);
-      setCurrentUser({
-        role: parsed.role || '',
-        email: parsed.email || '',
-        name: parsed.name || parsed.nombre || 'Usuario' // 🚀 Forzamos que lea 'name' o 'nombre'
-      });
-    }
-
-    const localOrders = localStorage.getItem('zenith_orders');
-    const localProducts = localStorage.getItem('zenith_products');
-    const localCustomers = localStorage.getItem('zenith_customers');
-
-    const storedProductsVersion = Number(localStorage.getItem('zenith_products_version') ?? '0') || null;
-    const productsData = loadProductsFromStorage(localProducts);
-    const refreshProducts = shouldRefreshProductsStorage(storedProductsVersion, productsData);
-
-    if (refreshProducts) {
-      setProducts(INITIAL_PRODUCTS);
-      setOrders(INITIAL_ORDERS);
-      localStorage.setItem('zenith_products', JSON.stringify(INITIAL_PRODUCTS));
-      localStorage.setItem('zenith_orders', JSON.stringify(INITIAL_ORDERS));
-      localStorage.setItem('zenith_products_version', String(PRODUCTS_DATA_VERSION));
-    } else {
-      setProducts(productsData);
-      if (localOrders) {
-        setOrders(JSON.parse(localOrders));
-      } else {
-        setOrders(INITIAL_ORDERS);
-        localStorage.setItem('zenith_orders', JSON.stringify(INITIAL_ORDERS));
+    try {
+      // 1. Intentamos cargar el usuario de forma segura
+      const localUser = localStorage.getItem('zenith_user');
+      if (localUser && localUser !== 'undefined' && localUser !== 'null') {
+        const parsed = JSON.parse(localUser);
+        setCurrentUser({
+          role: parsed.role || '',
+          email: parsed.email || '',
+          name: parsed.name || parsed.nombre || 'Usuario' // 🚀 Forzamos que lea 'name' o 'nombre'
+        });
       }
-      localStorage.setItem('zenith_products', JSON.stringify(productsData));
-    }
 
-    const storedCustomersVersion = Number(localStorage.getItem('zenith_customers_version') ?? '0') || null;
-    const customersData = loadCustomersFromStorage(localCustomers);
-    setCustomers(customersData);
-    localStorage.setItem('zenith_customers', JSON.stringify(customersData));
-    if (shouldRefreshCustomersStorage(storedCustomersVersion)) {
-      localStorage.setItem('zenith_customers_version', String(CUSTOMERS_DATA_VERSION));
+      // 2. Carga de órdenes, productos y clientes
+      const localOrders = localStorage.getItem('zenith_orders');
+      const localProducts = localStorage.getItem('zenith_products');
+      const localCustomers = localStorage.getItem('zenith_customers');
+
+      const storedProductsVersion = Number(localStorage.getItem('zenith_products_version') ?? '0') || null;
+      const productsData = loadProductsFromStorage(localProducts);
+      const refreshProducts = shouldRefreshProductsStorage(storedProductsVersion, productsData);
+
+      if (refreshProducts) {
+        setProducts(INITIAL_PRODUCTS);
+        setOrders(INITIAL_ORDERS);
+        localStorage.setItem('zenith_products', JSON.stringify(INITIAL_PRODUCTS));
+        localStorage.setItem('zenith_orders', JSON.stringify(INITIAL_ORDERS));
+        localStorage.setItem('zenith_products_version', String(PRODUCTS_DATA_VERSION));
+      } else {
+        setProducts(productsData);
+        if (localOrders && localOrders !== 'undefined' && localOrders !== 'null') {
+          setOrders(JSON.parse(localOrders));
+        } else {
+          setOrders(INITIAL_ORDERS);
+          localStorage.setItem('zenith_orders', JSON.stringify(INITIAL_ORDERS));
+        }
+        localStorage.setItem('zenith_products', JSON.stringify(productsData));
+      }
+
+      const storedCustomersVersion = Number(localStorage.getItem('zenith_customers_version') ?? '0') || null;
+      const customersData = loadCustomersFromStorage(localCustomers);
+      setCustomers(customersData);
+      localStorage.setItem('zenith_customers', JSON.stringify(customersData));
+      if (shouldRefreshCustomersStorage(storedCustomersVersion)) {
+        localStorage.setItem('zenith_customers_version', String(CUSTOMERS_DATA_VERSION));
+      }
+
+    } catch (error) {
+      // Si algo falla, lo registramos en consola pero NO congelamos la aplicación
+      console.error("⚠️ Error cargando datos de LocalStorage en desarrollo:", error);
+      
+      // Opcional: Si los datos locales causaron el colapso, los limpiamos para que empiece de cero
+      localStorage.removeItem('zenith_user');
+    } finally {
+      // 🔥 OBLIGATORIO: Pase lo que pase (éxito o error), apagamos la pantalla de carga
+      setIsLoaded(true);
     }
-    
-    setIsLoaded(true);
   }, []);
 
   // Sync helpers
