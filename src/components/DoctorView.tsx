@@ -270,6 +270,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [medicationsInput, setMedicationsInput] = useState('');
   const [isNewPatient, setIsNewPatient] = useState(false);
   const [patientSaveMsg, setPatientSaveMsg] = useState('');
+  const [isWaitingConsent, setIsWaitingConsent] = useState(false);
+  const [pendingConsentPatient, setPendingConsentPatient] = useState<LinkedPatient | null>(null);
 
   const filteredPatients = useMemo(() => {
     const query = patientListSearch.toLowerCase().trim();
@@ -371,13 +373,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
       p.cedula.toLowerCase().replace(/\s/g, '').includes(normalized)
     );
 
-    if (found) {
-      openPatientForm(found);
-    } else {
-      openPatientForm(patients[0]);
-    }
-
-    setIsScannerModalOpen(false);
+    const targetPatient = found || patients[0];
+    
+    setIsWaitingConsent(true);
+    setPendingConsentPatient(targetPatient);
+    
+    // Simulate wait time for the patient to approve on their end
+    setTimeout(() => {
+      setIsWaitingConsent(false);
+      setPendingConsentPatient(null);
+      setIsScannerModalOpen(false);
+      openPatientForm(targetPatient);
+    }, 3000);
   };
 
   // Simulate scanning camera
@@ -486,7 +493,9 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     
     setTimeout(() => {
       setSuccessMsg('');
-    }, 4500);
+      setLinkedPatient(null);
+      setActiveTab('agenda');
+    }, 3500);
   };
 
   // Filter pharmaceutical products from pharmacy inventory only
@@ -1687,69 +1696,87 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
         size="md"
       >
         <ModalBody className="space-y-5">
-          <p className="text-xs text-surface-400">
-            Active la cámara o ingrese manualmente la cédula del paciente para cargar su expediente y editar sus datos.
-          </p>
-
-          <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
-            {isScanning ? (
-              <>
-                <div className="absolute left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_8px_rgba(23,145,80,0.8)] laser-line" />
-                <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-secondary-500" />
-                <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-secondary-500" />
-                <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-secondary-500" />
-                <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-secondary-500" />
-                <div className="space-y-2 text-center z-10">
-                  <Camera className="h-10 w-10 text-secondary-500 animate-pulse mx-auto" />
-                  <p className="text-xs text-secondary-400 font-mono font-bold tracking-wider">
-                    BUSCANDO QR ({scanProgress}%)
-                  </p>
-                </div>
-              </>
-            ) : (
-              <div className="space-y-4 text-center z-10">
-                <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
-                <p className="text-sm text-surface-400 font-medium">Cámara de escáner inactiva</p>
-                <button
-                  type="button"
-                  onClick={triggerCameraScan}
-                  className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
-                >
-                  Activar escáner
-                </button>
+          {isWaitingConsent ? (
+            <div className="flex flex-col items-center justify-center py-10 space-y-4">
+              <div className="relative flex items-center justify-center">
+                <div className="absolute w-16 h-16 border-4 border-secondary-500/30 rounded-full"></div>
+                <div className="w-16 h-16 border-4 border-secondary-500 border-t-transparent rounded-full animate-spin"></div>
+                <Users className="absolute w-6 h-6 text-secondary-400" />
               </div>
-            )}
-          </div>
-
-          <div className="flex items-center gap-3 text-2xs font-bold text-surface-600 uppercase tracking-widest">
-            <span className="h-px bg-surface-800 flex-1" />
-            <span>o</span>
-            <span className="h-px bg-surface-800 flex-1" />
-          </div>
-
-          <form onSubmit={handleManualLinkSubmit} className="space-y-3">
-            <div className="space-y-1.5">
-              <label className="zenith-field-label">Cédula del paciente</label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="text"
-                  placeholder="Ej: V-28450123"
-                  value={manualCedulaInput}
-                  onChange={(e) => setManualCedulaInput(e.target.value)}
-                  className="flex-1 bg-surface-950 border border-surface-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-surface-750 focus:outline-none focus:border-secondary-500"
-                />
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer border border-surface-700 sm:shrink-0"
-                >
-                  Vincular
-                </button>
+              <div className="text-center space-y-2">
+                <h4 className="text-sm font-bold text-white">Esperando confirmación...</h4>
+                <p className="text-xs text-surface-400 max-w-[260px] mx-auto">
+                  El paciente {pendingConsentPatient?.name} debe aceptar la solicitud de vinculación en su dispositivo móvil.
+                </p>
               </div>
             </div>
-            <p className="text-[10px] text-surface-555 italic leading-snug">
-              Tip de prueba: digite <code className="text-secondary-400 font-mono">V-28450123</code> para vincular a Sofía Peralta.
-            </p>
-          </form>
+          ) : (
+            <>
+              <p className="text-xs text-surface-400">
+                Active la cámara o ingrese manualmente la cédula del paciente para cargar su expediente y editar sus datos.
+              </p>
+
+              <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
+                {isScanning ? (
+                  <>
+                    <div className="absolute left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_8px_rgba(23,145,80,0.8)] laser-line" />
+                    <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-secondary-500" />
+                    <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-secondary-500" />
+                    <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-secondary-500" />
+                    <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-secondary-500" />
+                    <div className="space-y-2 text-center z-10">
+                      <Camera className="h-10 w-10 text-secondary-500 animate-pulse mx-auto" />
+                      <p className="text-xs text-secondary-400 font-mono font-bold tracking-wider">
+                        BUSCANDO QR ({scanProgress}%)
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-4 text-center z-10">
+                    <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
+                    <p className="text-sm text-surface-400 font-medium">Cámara de escáner inactiva</p>
+                    <button
+                      type="button"
+                      onClick={triggerCameraScan}
+                      className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
+                    >
+                      Activar escáner
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3 text-2xs font-bold text-surface-600 uppercase tracking-widest">
+                <span className="h-px bg-surface-800 flex-1" />
+                <span>o</span>
+                <span className="h-px bg-surface-800 flex-1" />
+              </div>
+
+              <form onSubmit={handleManualLinkSubmit} className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="zenith-field-label">Cédula del paciente</label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ej: V-28450123"
+                      value={manualCedulaInput}
+                      onChange={(e) => setManualCedulaInput(e.target.value)}
+                      className="flex-1 bg-surface-950 border border-surface-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-surface-750 focus:outline-none focus:border-secondary-500"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer border border-surface-700 sm:shrink-0"
+                    >
+                      Vincular
+                    </button>
+                  </div>
+                </div>
+                <p className="text-[10px] text-surface-555 italic leading-snug">
+                  Tip de prueba: digite <code className="text-secondary-400 font-mono">V-28450123</code> para vincular a Sofía Peralta.
+                </p>
+              </form>
+            </>
+          )}
         </ModalBody>
       </Modal>
 
