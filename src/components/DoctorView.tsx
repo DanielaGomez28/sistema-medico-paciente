@@ -15,13 +15,11 @@ import {
   QrCode,
   Camera,
   CheckCircle2,
-  RefreshCw,
   UserPlus,
   AlertCircle,
   Activity,
   ShieldCheck,
   Search,
-  Sparkles,
   Percent,
   Send,
   Trash2,
@@ -98,7 +96,6 @@ interface CartItem {
   product: MedicalProduct;
   posology: string;
   discount: number;
-  aiOptimized: boolean;
 }
 
 /**
@@ -248,7 +245,7 @@ const createEmptyPatient = (): LinkedPatient => ({
  * Vista principal y portal exclusivo para Médicos.
  * Integra múltiples submódulos usando pestañas (Panel, Pacientes, Prescripción, Comisiones, Perfil):
  * - Agenda clínica y gestión de expedientes (CRUD de pacientes).
- * - Generador de prescripciones médicas con asistente IA simulado.
+ * - Generador de prescripciones médicas.
  * - Autenticación y vinculación por código QR dinámico.
  * - Rastreo y cálculo de comisiones generadas por afiliación y ventas indirectas.
  *
@@ -465,7 +462,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   // Prescription states (M.2)
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [aiLoadingId, setAiLoadingId] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
 
   /**
@@ -653,7 +649,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     if (cart.some(item => item.product.id === product.id)) {
       return;
     }
-    setCart([...cart, { product, posology: '', discount: 10, aiOptimized: false }]);
+    setCart([...cart, { product, posology: '', discount: 10 }]);
   };
 
   /**
@@ -671,7 +667,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
    */
   const updateCartPosology = (productId: string, val: string) => {
     setCart(cart.map(item => 
-      item.product.id === productId ? { ...item, posology: val, aiOptimized: false } : item
+      item.product.id === productId ? { ...item, posology: val } : item
     ));
   };
 
@@ -686,37 +682,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     ));
   };
 
-  /**
-   * Simula la sugerencia de posología asistida por IA para un medicamento.
-   * @param {string} productId - Identificador del producto.
-   * @param {string} name - Nombre comercial o genérico del medicamento.
-   */
-  const handleAiPosologyAssist = (productId: string, name: string) => {
-    setAiLoadingId(productId);
-    
-    // Simulate AI clinical reasoning
-    setTimeout(() => {
-      let suggestedPosology = '';
-      if (name.includes('Ramipril')) {
-        suggestedPosology = 'Tomar 1 comprimido al día por la mañana en ayunas. Controlar presión arterial semanalmente.';
-      } else if (name.includes('Aspirina')) {
-        suggestedPosology = 'Tomar 1 comprimido diario durante el almuerzo con un vaso de agua completo.';
-      } else if (name.includes('Amoxicilina')) {
-        suggestedPosology = 'Tomar 1 comprimido cada 12 horas con las comidas por 7 días. Completar el ciclo indicado.';
-      } else if (name.includes('Metformina')) {
-        suggestedPosology = 'Tomar 1 comprimido por la noche con la cena para reducir malestar gastrointestinal.';
-      } else if (name.includes('Atorvastatina')) {
-        suggestedPosology = 'Tomar 1 comprimido por la noche antes de acostarse. Evitar consumo de pomelo.';
-      } else {
-        suggestedPosology = 'Tomar 1 comprimido cada 8 horas en caso de dolor o inflamación aguda.';
-      }
-
-      setCart(prevCart => prevCart.map(item => 
-        item.product.id === productId ? { ...item, posology: suggestedPosology, aiOptimized: true } : item
-      ));
-      setAiLoadingId(null);
-    }, 800);
-  };
 
   /**
    * Maneja el registro y envío de la prescripción médica.
@@ -737,12 +702,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
     setSuccessMsg(`¡El récipe clínico con ${cart.length} medicamentos y propuestas comerciales se ha registrado y enviado correctamente al portal de ${linkedPatient?.name}!`);
     setCart([]);
-    
+    setLinkedPatient(null);
+    setActiveTab('agenda');
+
     setTimeout(() => {
       setSuccessMsg('');
-      setLinkedPatient(null);
-      setActiveTab('agenda');
-    }, 3500);
+    }, 2000);
   };
 
   // Filter pharmaceutical products from pharmacy inventory only
@@ -1341,10 +1306,19 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               </div>
             )}
 
-            {/* VIEW TAB 3: CLINICAL PRESCRIPTION & AI ASSISTANT (Pantalla M.2) */}
+            {/* VIEW TAB 3: CLINICAL PRESCRIPTION (Pantalla M.2) */}
             {activeTab === 'prescription' && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('agenda')}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Volver al panel
+                </button>
+
                 {/* Linked Patient Header Bar */}
                 <div className="bg-surface-900/65 border border-surface-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md">
                   <div className="flex items-center gap-3">
@@ -1499,43 +1473,17 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                                     </button>
                                   </div>
 
-                                  {/* Posology input with IA assistant */}
+                                  {/* Posology input */}
                                   <div className="space-y-1.5">
-                                    <div className="flex justify-between items-center">
-                                      <span className="zenith-field-label">Instrucciones de Posología</span>
-                                      
-                                      <button
-                                        type="button"
-                                        disabled={aiLoadingId === item.product.id}
-                                        onClick={() => handleAiPosologyAssist(item.product.id, item.product.name)}
-                                        className="text-[10px] font-extrabold bg-primary-500/10 hover:bg-primary-500 text-primary-400 hover:text-white border border-primary-550/20 px-2 py-0.5 rounded-lg flex items-center gap-1 transition-all cursor-pointer"
-                                      >
-                                        {aiLoadingId === item.product.id ? (
-                                          <RefreshCw className="h-3 w-3 animate-spin" />
-                                        ) : (
-                                          <Sparkles className="h-3 w-3" />
-                                        )}
-                                        <span>Asistente IA</span>
-                                      </button>
-                                    </div>
+                                    <span className="zenith-field-label">Instrucciones de Posología</span>
 
                                     <textarea
                                       rows={2}
                                       value={item.posology}
                                       onChange={(e) => updateCartPosology(item.product.id, e.target.value)}
                                       placeholder="Ej: Tomar 1 comprimido al día por la mañana en ayunas..."
-                                      className={`w-full bg-surface-950 border rounded-xl p-2.5 text-xs text-white placeholder-surface-750 focus:outline-none transition-all ${
-                                        item.aiOptimized 
-                                          ? 'border-primary-500/50 focus:border-primary-550 focus:ring-1 focus:ring-primary-500/20' 
-                                          : 'border-surface-800 focus:border-secondary-500'
-                                      }`}
+                                      className="w-full bg-surface-950 border border-surface-800 rounded-xl p-2.5 text-xs text-white placeholder-surface-750 focus:outline-none focus:border-secondary-500 transition-all"
                                     />
-                                    {item.aiOptimized && (
-                                      <p className="text-[9px] text-primary-400 font-semibold flex items-center gap-1">
-                                        <Sparkles className="h-3 w-3" />
-                                        <span>Posología estructurada y validada clínicamente por la IA de la clínica.</span>
-                                      </p>
-                                    )}
                                   </div>
 
                                   {/* Incentives / Discounts Selector */}
