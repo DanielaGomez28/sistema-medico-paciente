@@ -111,8 +111,11 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         const userName = data.name || data.nombre || fallbackUser?.name || 'Administrador';
 
         onLoginSuccess(userRole, userEmail, userName);
+      } else if (response.status === 401) {
+        // 🚀 Contraseña incorrecta (el correo sí está registrado)
+        setPasswordError(data.error || 'La contraseña es incorrecta.');
       } else {
-        // 🚀 Manejo de credenciales incorrectas devueltas por el servidor
+        // 🚀 Otros errores (usuario no encontrado, etc.)
         setGeneralError(data.error || 'Credenciales incorrectas.');
       }
     } catch (error) {
