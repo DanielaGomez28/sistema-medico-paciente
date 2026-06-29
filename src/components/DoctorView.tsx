@@ -31,11 +31,7 @@ import {
   BadgeCheck,
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
-import {
-  useCredentialQr,
-  SidebarCredentialButton,
-  CredentialQrModal,
-} from './CredentialQr';
+// QR credential removed for doctor portal
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, Modal, ModalBody, ListCard } from './ui';
@@ -228,18 +224,7 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
  * Función auxiliar para generar la estructura de un paciente nuevo vacío.
  * @returns {LinkedPatient} Objeto de paciente por defecto.
  */
-const createEmptyPatient = (): LinkedPatient => ({
-  cedula: '',
-  name: '',
-  age: 0,
-  gender: 'Masculino',
-  bloodType: 'O+',
-  phone: '',
-  condition: '',
-  allergies: 'Ninguna conocida',
-  lastVisit: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
-  medications: [],
-});
+// createEmptyPatient removed — new patient creation disabled in doctor portal
 
 /**
  * Vista principal y portal exclusivo para Médicos.
@@ -279,13 +264,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [consultorioMunicipio, setConsultorioMunicipio] = useState('Baruta');
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
 
-  const {
-    qrToken,
-    qrSecondsLeft,
-    isCredentialModalOpen,
-    setIsCredentialModalOpen,
-    handleRefreshQR,
-  } = useCredentialQr('MD-992', '28490');
+  // QR credential removed for doctor portal per requested change
 
   // Dynamic commission rate state
   const [commissionRate, setCommissionRate] = useState<number>(8);
@@ -305,9 +284,20 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [patients, setPatients] = useState<LinkedPatient[]>(INITIAL_PATIENTS);
   const [patientViewMode, setPatientViewMode] = useState<'list' | 'detail'>('list');
   const [patientListSearch, setPatientListSearch] = useState('');
-  const [patientForm, setPatientForm] = useState<LinkedPatient>(createEmptyPatient());
+  const [patientForm, setPatientForm] = useState<LinkedPatient>({
+    cedula: '',
+    name: '',
+    age: 0,
+    gender: 'Masculino',
+    bloodType: 'O+',
+    phone: '',
+    condition: '',
+    allergies: 'Ninguna conocida',
+    lastVisit: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+    medications: [],
+  });
   const [medicationsInput, setMedicationsInput] = useState('');
-  const [isNewPatient, setIsNewPatient] = useState(false);
+  // New-patient flow removed; editing existing patients remains
   const [patientSaveMsg, setPatientSaveMsg] = useState('');
   const [isWaitingConsent, setIsWaitingConsent] = useState(false);
   const [pendingConsentPatient, setPendingConsentPatient] = useState<LinkedPatient | null>(null);
@@ -472,30 +462,17 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     setPatientForm({ ...patient, medications: [...patient.medications] });
     setMedicationsInput(patient.medications.join(', '));
     setLinkedPatient(patient);
-    setIsNewPatient(false);
     setPatientViewMode('detail');
     setActiveTab('reception');
   };
 
-  /**
-   * Prepara el formulario para registrar un nuevo paciente.
-   */
-  const handleNewPatient = () => {
-    const empty = createEmptyPatient();
-    setPatientForm(empty);
-    setMedicationsInput('');
-    setLinkedPatient(null);
-    setIsNewPatient(true);
-    setPatientViewMode('detail');
-    setActiveTab('reception');
-  };
+  // New-patient creation removed from doctor portal
 
   /**
    * Regresa a la vista de lista de pacientes.
    */
   const handleBackToPatientList = () => {
     setPatientViewMode('list');
-    setIsNewPatient(false);
     setPatientSaveMsg('');
   };
 
@@ -503,7 +480,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
    * Elimina el paciente actualmente seleccionado del estado local.
    */
   const handleDeletePatient = () => {
-    if (!patientForm.cedula || isNewPatient) return;
+    if (!patientForm.cedula) return;
     if (!confirm(`¿Eliminar el expediente de ${patientForm.name}? Esta acción no se puede deshacer.`)) {
       return;
     }
@@ -530,23 +507,16 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
       .map((med) => med.trim())
       .filter(Boolean);
 
-    if (isNewPatient) {
-      const newPatient: LinkedPatient = {
-        ...patientForm,
-        cedula: patientForm.cedula.trim().toUpperCase(),
-        medications,
-        lastVisit: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
-      };
-      setPatients((prev) => [...prev, newPatient]);
-      setLinkedPatient(newPatient);
-      setPatientForm(newPatient);
-      setIsNewPatient(false);
-    } else {
-      const updatedPatient: LinkedPatient = { ...patientForm, medications };
-      setPatients((prev) => prev.map((p) => (p.cedula === updatedPatient.cedula ? updatedPatient : p)));
-      setLinkedPatient(updatedPatient);
-      setPatientForm(updatedPatient);
+    // Only support updating existing patients from the doctor portal
+    const updatedPatient: LinkedPatient = { ...patientForm, medications };
+    const exists = patients.some((p) => p.cedula === updatedPatient.cedula);
+    if (!exists) {
+      alert('No está permitido crear pacientes desde el portal del médico. Busque o vincule un paciente existente.');
+      return;
     }
+    setPatients((prev) => prev.map((p) => (p.cedula === updatedPatient.cedula ? updatedPatient : p)));
+    setLinkedPatient(updatedPatient);
+    setPatientForm(updatedPatient);
 
     setPatientSaveMsg('Datos del paciente guardados correctamente.');
     setTimeout(() => setPatientSaveMsg(''), 3000);
@@ -763,9 +733,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               name: doctorName,
               avatarClassName: 'portal-profile-avatar',
             }}
-            preProfile={
-              <SidebarCredentialButton onOpen={() => setIsCredentialModalOpen(true)} />
-            }
+            preProfile={null}
             onLogout={onLogout}
             logoutVariant="icon"
           />
@@ -791,10 +759,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
             {activeTab === 'agenda' && (
               <div className="space-y-6">
                 <div className="flex justify-end">
-                  <Button variant="doctor" onClick={handleNewPatient}>
-                    <UserPlus className="h-4 w-4" />
-                    Nuevo paciente
-                  </Button>
+                  {/* Nuevo paciente eliminado */}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -855,7 +820,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       onClick={() => setIsScannerModalOpen(true)}
                       className="w-full text-center text-xs text-secondary-400 font-semibold hover:text-secondary-300 transition-colors pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
                     >
-                      <span>Buscar paciente por credencial</span>
+                      <span>Escanear código qr</span>
                       <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -902,11 +867,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                     <div className="flex flex-wrap justify-end gap-2">
                       <Button variant="doctor" onClick={() => setIsScannerModalOpen(true)}>
                         <QrCode className="h-4 w-4" />
-                        Buscar por credencial
-                      </Button>
-                      <Button variant="doctor" onClick={handleNewPatient}>
-                        <UserPlus className="h-4 w-4" />
-                        Nuevo paciente
+                          Escanear código qr
                       </Button>
                     </div>
 
@@ -919,7 +880,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                     {/* BOTÓN PARA ABRIR LA CÁMARA */}
                     <div className="p-6 bg-surface-900 rounded-2xl text-center">
-                      <h3 className="text-white font-bold mb-4">Ingreso de Nuevo Paciente</h3>
+                      <h3 className="text-white font-bold mb-4">Vinculación por QR</h3>
                       
                       {/* Estado 1: Botón de escaneo normal (visible si no está escaneando ni esperando) */}
                       {!isScanning && !waitingConsent && (
@@ -1126,10 +1087,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                               : 'Modifique los términos de búsqueda.'}
                           </p>
                           {patients.length === 0 && (
-                            <Button variant="doctor" className="mt-4" onClick={handleNewPatient}>
-                              <UserPlus className="h-4 w-4" />
-                              Nuevo paciente
-                            </Button>
+                            <></>
                           )}
                         </div>
                       )}
@@ -1147,7 +1105,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       Volver al listado
                     </button>
 
-                    {!isNewPatient && patientForm.cedula ? (
+                    {patientForm.cedula ? (
                       <div className="flex justify-end">
                         <Button
                           variant="ghost"
@@ -1171,7 +1129,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       <form onSubmit={handleSavePatient} className="space-y-6">
                         <div>
                           <h3 className="zenith-section-title">
-                            {isNewPatient ? 'Datos del nuevo paciente' : 'Datos clínicos'}
+                            {'Datos clínicos'}
                           </h3>
                           <p className="text-xs text-surface-400">
                             Complete o actualice la información del expediente clínico.
@@ -1194,13 +1152,9 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                               type="text"
                               value={patientForm.cedula}
                               onChange={(e) => setPatientForm({ ...patientForm, cedula: e.target.value })}
-                              disabled={!isNewPatient}
-                              placeholder="Ej: V-28450123"
-                              className={`w-full border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-secondary-500 uppercase ${
-                                isNewPatient
-                                  ? 'bg-surface-950 text-white'
-                                  : 'bg-surface-950/40 text-surface-550 disabled:cursor-not-allowed'
-                              }`}
+                              disabled={true}
+                                placeholder="Ej: V-28450123"
+                                className={`w-full border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-secondary-500 uppercase bg-surface-950/40 text-surface-550 disabled:cursor-not-allowed`}
                             />
                           </div>
                           <div className="space-y-1.5">
@@ -1282,7 +1236,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                             Cancelar
                           </button>
                           <div className="flex flex-col sm:flex-row gap-3">
-                            {linkedPatient && !isNewPatient && (
+                            {linkedPatient && (
                               <button
                                 type="button"
                                 onClick={() => setActiveTab('prescription')}
@@ -1295,7 +1249,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                               type="submit"
                               className="px-6 py-2.5 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer"
                             >
-                              {isNewPatient ? 'Registrar paciente' : 'Guardar cambios'}
+                              {'Guardar cambios'}
                             </button>
                           </div>
                         </div>
@@ -1943,16 +1897,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
               </div>
             )}
 
-      <CredentialQrModal
-        open={isCredentialModalOpen}
-        onClose={() => setIsCredentialModalOpen(false)}
-        description="Presente este código en farmacia o recepción para validar su identidad profesional y autorizar dispensación."
-        displayName={doctorName}
-        credentialLine="MPPS 28.490 • CMDC-12.458"
-        qrToken={qrToken}
-        qrSecondsLeft={qrSecondsLeft}
-        onRefresh={handleRefreshQR}
-      />
+      {/* Credencial QR del médico eliminada */}
 
       <Modal
         open={isScannerModalOpen}
@@ -1961,7 +1906,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
           setIsScanning(false);
           setScanProgress(0);
         }}
-        title="Buscar paciente por credencial"
+        title="Escanear código qr"
         size="md"
       >
         <ModalBody className="space-y-5">

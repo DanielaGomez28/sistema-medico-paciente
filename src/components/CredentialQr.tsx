@@ -9,7 +9,7 @@ import { Button, Modal, ModalBody } from './ui';
  * Constante que define el tiempo de expiración (en segundos) de una credencial QR antes de rotar.
  * @constant
  */
-const QR_ROTATION_SECONDS = 30;
+const QR_ROTATION_SECONDS = 300; // 5 minutos
 
 /**
  * Genera un token pseudo-aleatorio con el prefijo dado.
@@ -140,6 +140,15 @@ export interface CredentialQrModalProps {
   qrToken: string;
   qrSecondsLeft: number;
   onRefresh: () => void;
+  /**
+   * Si se provee, se mostrará un botón "Regresar" que llamará esta función.
+   */
+  onReturn?: () => void;
+  /**
+   * Si se pasa `null`, se oculta la cabecera/título del modal.
+   * Si se omite, se usa el título por defecto.
+   */
+  modalTitle?: string | null;
 }
 
 /**
@@ -158,31 +167,54 @@ export function CredentialQrModal({
   qrToken,
   qrSecondsLeft,
   onRefresh,
+  onReturn,
+  modalTitle,
 }: CredentialQrModalProps) {
+  const modalTitleToUse = modalTitle === null ? undefined : modalTitle ?? 'Credencial QR Dinámica';
+
+  const formatExpiry = (secs: number) => {
+    if (secs >= 60) {
+      const mins = Math.ceil(secs / 60);
+      return `${mins} minutos`;
+    }
+    return `${secs}s`;
+  };
+
   return (
-    <Modal open={open} onClose={onClose} title="Credencial QR Dinámica" size="lg">
+    <Modal open={open} onClose={onClose} title={modalTitleToUse} size="lg">
       <ModalBody className="space-y-4">
-        <p className="text-xs text-surface-400 text-center">{description}</p>
+        {description ? (
+          <p className="text-xs text-surface-400 text-center">{description}</p>
+        ) : null}
         <div className="flex flex-col items-center bg-white text-[#0a1220] p-6 sm:p-8 rounded-xl shadow-inner border border-surface-700/10 mx-auto max-w-md w-full">
           <CredentialQrSvg />
           <div className="mt-3 text-center space-y-1">
-            <p className="text-sm font-bold text-[#0a1220]">{displayName}</p>
-            {credentialLine && (
+            {displayName ? <p className="text-sm font-bold text-[#0a1220]">{displayName}</p> : null}
+            {credentialLine ? (
               <p className="text-[10px] font-mono text-surface-600">{credentialLine}</p>
-            )}
-            <span className="text-xs font-mono font-bold text-[#0a1220] tracking-wider block">
-              TOKEN: {qrToken}
-            </span>
-            <p className="text-[10px] text-surface-600 font-medium">
-              Vence en <span className="text-secondary-600 font-bold">{qrSecondsLeft}s</span>
-            </p>
+            ) : null}
+            <span className="text-xs font-mono font-bold text-[#0a1220] tracking-wider block">TOKEN: {qrToken}</span>
+            <p className="text-[10px] text-surface-600 font-medium">Vence en <span className="text-secondary-600 font-bold">{formatExpiry(qrSecondsLeft)}</span></p>
           </div>
         </div>
         <div className="flex justify-center">
-          <Button variant="outline" size="sm" onClick={onRefresh}>
-            <RefreshCw className="h-3.5 w-3.5" />
-            Rotar credencial
-          </Button>
+          {onReturn ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onReturn();
+                onClose();
+              }}
+            >
+              Regresar
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onRefresh}>
+              <RefreshCw className="h-3.5 w-3.5" />
+              Rotar credencial
+            </Button>
+          )}
         </div>
       </ModalBody>
     </Modal>

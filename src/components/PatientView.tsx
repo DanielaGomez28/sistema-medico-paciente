@@ -1886,12 +1886,16 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       <CredentialQrModal
         open={isCredentialModalOpen}
         onClose={() => setIsCredentialModalOpen(false)}
-        description="Presente este código en el mostrador para validar su identidad y retirar medicamentos."
-        displayName={profileName}
-        credentialLine={profileDocumentId}
+        description=""
+        displayName=""
+        credentialLine={undefined}
+        modalTitle={null}
         qrToken={qrToken}
         qrSecondsLeft={qrSecondsLeft}
         onRefresh={handleRefreshQR}
+        onReturn={() => {
+          setActiveSubTab('treatment');
+        }}
       />
 
       {/* Mandatory Terms & Conditions Modal */}
