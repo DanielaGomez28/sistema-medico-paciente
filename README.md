@@ -12,18 +12,23 @@ Este frontend ahora está conectado y operando contra el backend desplegado en V
   - En móvil con cámara queda habilitado.
   - Sigue existiendo vinculación manual como fallback.
 
-## Variables de entorno
-Copiar `C:\Proyecto IDS Frontend\.env.example` a `.env` o `.env.local` y ajustarlo. 
+## Configuración: Local vs Nube (Vercel)
+El código ya está preparado para funcionar tanto en tu computadora como en la nube sin cambiar ni una sola línea de código, gracias a las **Variables de Entorno**.
 
-Para conectarse al backend en producción (Vercel):
-```env
-NEXT_PUBLIC_API_URL=https://proyecto-ids-backend.vercel.app/api
-```
-
-Para conectarse al backend local:
+### 1. Para correr en LOCAL (Tu PC)
+Crea un archivo llamado `.env.local` en la raíz de este proyecto (junto a `package.json`) y agrega:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
+NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
 ```
+*Next.js leerá este archivo automáticamente cuando uses `npm run dev` y se conectará a tu backend local.*
+
+### 2. Para correr en la NUBE (Vercel)
+Cuando importes el proyecto en Vercel, **no subas el archivo `.env.local`**. En su lugar, ve a la pestaña de **Environment Variables** en el panel de Vercel y agrega estas dos:
+- `NEXT_PUBLIC_API_URL` = `https://proyecto-ids-backend.vercel.app/api`
+- `NEXT_PUBLIC_SOCKET_URL` = `https://proyecto-ids-backend.vercel.app`
+
+*Así, la versión subida a la nube sabrá que debe conectarse al backend remoto, mientras que tu versión local seguirá usando tu backend de prueba.*
 
 ## Desarrollo local
 Para desarrollo normal en PC:
