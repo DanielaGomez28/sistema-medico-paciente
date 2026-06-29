@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import Turnstile from 'react-turnstile';
+
 import {
   AlertCircle,
   ChevronDown,
@@ -11,8 +11,8 @@ import {
   Lock,
   LogIn,
   Mail,
-  ShieldCheck,
-} from 'lucide-react';
+  LogIn,
+  Mail,
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
 
@@ -32,9 +32,7 @@ const TEST_ACCOUNT_LABELS: Record<string, string> = {
   paciente: 'Paciente',
 };
 
-const CAPTCHA_PROVIDER = process.env.NEXT_PUBLIC_CAPTCHA_PROVIDER ?? 'mock';
-const MOCK_CAPTCHA_TOKEN = process.env.NEXT_PUBLIC_MOCK_CAPTCHA_TOKEN ?? 'FARMAHUMANA_OK';
-const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+
 
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
@@ -46,11 +44,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [generalError, setGeneralError] = useState('');
-  const [captchaError, setCaptchaError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showTestAccounts, setShowTestAccounts] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState(CAPTCHA_PROVIDER === 'mock' ? MOCK_CAPTCHA_TOKEN : '');
-  const [mockCaptchaChecked, setMockCaptchaChecked] = useState(CAPTCHA_PROVIDER === 'mock');
 
   const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api', []);
 
@@ -69,7 +64,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     setEmailError('');
     setPasswordError('');
     setGeneralError('');
-    setCaptchaError('');
+
 
     const normalizedEmail = normalizeEmail(email);
     const normalizedPassword = password.trim();
@@ -95,15 +90,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       hasError = true;
     }
 
-    if (!captchaToken) {
-      setCaptchaError('Debes completar el captcha antes de iniciar sesion.');
-      hasError = true;
-    }
 
-    if (CAPTCHA_PROVIDER === 'mock' && !mockCaptchaChecked) {
-      setCaptchaError('Debes confirmar el captcha de prueba.');
-      hasError = true;
-    }
 
     if (hasError) return;
 
@@ -115,7 +102,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword, captchaToken }),
+        body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword }),
       });
 
       const data = await response.json();
@@ -130,8 +117,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         setPasswordError(data.error || 'La contrasena ingresada es incorrecta.');
       } else if (response.status === 404) {
         setEmailError(data.error || 'Usuario no registrado.');
-      } else if (response.status === 403 && String(data.error || '').toLowerCase().includes('captcha')) {
-        setCaptchaError(data.error || 'CAPTCHA invalido.');
+
       } else {
         setGeneralError(data.error || 'No fue posible iniciar sesion.');
       }
@@ -217,41 +203,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                 {passwordError && <p className="login-view__field-error">{passwordError}</p>}
               </div>
 
-              <div className="space-y-2 rounded-xl border border-surface-800/80 bg-surface-950/60 p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold text-surface-200">
-                  <ShieldCheck className="h-4 w-4 text-secondary-400" />
-                  Validacion CAPTCHA
-                </div>
 
-                {CAPTCHA_PROVIDER === 'turnstile' && TURNSTILE_SITE_KEY ? (
-                  <Turnstile
-                    sitekey={TURNSTILE_SITE_KEY}
-                    onVerify={(token) => {
-                      setCaptchaToken(token);
-                      setCaptchaError('');
-                    }}
-                    onExpire={() => setCaptchaToken('')}
-                    onError={() => setCaptchaError('No se pudo validar el captcha. Intenta nuevamente.')}
-                  />
-                ) : (
-                  <label className="flex items-start gap-3 text-xs text-surface-300">
-                    <input
-                      type="checkbox"
-                      checked={mockCaptchaChecked}
-                      onChange={(e) => {
-                        const checked = e.target.checked;
-                        setMockCaptchaChecked(checked);
-                        setCaptchaToken(checked ? MOCK_CAPTCHA_TOKEN : '');
-                        setCaptchaError('');
-                      }}
-                      className="mt-0.5"
-                    />
-                    <span>Captcha de prueba habilitado para entorno sin proveedor externo.</span>
-                  </label>
-                )}
-
-                {captchaError && <p className="login-view__field-error">{captchaError}</p>}
-              </div>
             </div>
 
             <button type="submit" disabled={submitting} className={cn('login-view__submit mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 transition-opacity', submitting && 'cursor-not-allowed opacity-70')}>
