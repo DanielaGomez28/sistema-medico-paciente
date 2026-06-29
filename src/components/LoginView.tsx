@@ -113,9 +113,12 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         onLoginSuccess(userRole, userEmail, userName);
       } else if (response.status === 401) {
         // 🚀 Contraseña incorrecta (el correo sí está registrado)
-        setPasswordError(data.error || 'La contraseña es incorrecta.');
+        setPasswordError(data.error || 'La contraseña ingresada es incorrecta, intente nuevamente.');
+      } else if (response.status === 404) {
+        // 🚀 Usuario no encontrado
+        setEmailError(data.error || 'Usuario no registrado.');
       } else {
-        // 🚀 Otros errores (usuario no encontrado, etc.)
+        // 🚀 Otros errores inesperados
         setGeneralError(data.error || 'Credenciales incorrectas.');
       }
     } catch (error) {
