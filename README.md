@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend SMP Farmahumana
 
-## Getting Started
+## Estado actual
+Este frontend funciona con mocks y flujos de prueba. La pantalla de login ahora exige CAPTCHA y el escaner en tiempo real queda restringido a movil.
 
-First, run the development server:
+## Cambios aplicados
+- Cliente API corregido para Next.js/Vercel con `NEXT_PUBLIC_API_URL`.
+- CAPTCHA en login:
+  - `mock` para demos/local.
+  - `turnstile` para produccion.
+- Sanitizacion basica de email, password y cedula antes de enviar.
+- Escaner en tiempo real:
+  - En PC queda bloqueado y se informa al usuario.
+  - En movil con camara queda habilitado.
+  - Sigue existiendo vinculación manual como fallback.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Variables de entorno
+Copiar `C:\Proyecto IDS Frontend\.env.example` a `.env.local`.
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+NEXT_PUBLIC_CAPTCHA_PROVIDER=mock
+NEXT_PUBLIC_MOCK_CAPTCHA_TOKEN=FARMAHUMANA_OK
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Desarrollo local
+```bash
+npm install
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Despliegue en Vercel
+Este frontend SI es compatible con Vercel.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Si el backend va en otro host
+Configura:
+```env
+NEXT_PUBLIC_API_URL=https://tu-backend/api
+NEXT_PUBLIC_CAPTCHA_PROVIDER=turnstile
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=tu_site_key
+```
 
-## Learn More
+## Flujo mock sin base de datos
+- El medico arma el recipe.
+- El frontend guarda la solicitud mock en `localStorage`.
+- El paciente detecta esa solicitud, la confirma y avanza al pago mock.
+- Como no hay OLTP real, la confirmacion visible depende del mock local, NO de una persistencia transaccional real.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Archivos clave
+- `C:\Proyecto IDS Frontend\src\components\LoginView.tsx`
+- `C:\Proyecto IDS Frontend\src\components\DoctorView.tsx`
+- `C:\Proyecto IDS Frontend\src\components\PatientView.tsx`
+- `C:\Proyecto IDS Frontend\src\lib\api.ts`

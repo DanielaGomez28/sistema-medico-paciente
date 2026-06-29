@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import Turnstile from 'react-turnstile';
 import {
   AlertCircle,
   ChevronDown,
@@ -10,39 +11,34 @@ import {
   Lock,
   LogIn,
   Mail,
+  ShieldCheck,
 } from 'lucide-react';
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
 
-/**
- * Propiedades de la vista de Login.
- * @interface LoginViewProps
- * @property {(role: string, email: string) => void} onLoginSuccess - Callback invocado tras una autenticación exitosa.
- */
 interface LoginViewProps {
   onLoginSuccess: (role: string, email: string, name?: string) => void;
 }
 
 const MOCK_USERS = [
   { email: 'admin@sistema.local', password: 'admin123', role: 'superadmin', name: 'Administrador Sistema' },
-  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'medico', name: 'Dr. Roberto Gómez' },
-  { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: 'Ana Martínez' },
+  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'medico', name: 'Dr. Roberto Gomez' },
+  { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: 'Ana Martinez' },
 ];
 
 const TEST_ACCOUNT_LABELS: Record<string, string> = {
   superadmin: 'Admin',
-  medico: 'Médico',
+  medico: 'Medico',
   paciente: 'Paciente',
 };
 
-/**
- * Vista de autenticación principal (Login).
- * Maneja la captura de credenciales, validación frontal y comunicación con el endpoint de autenticación.
- * Incluye un panel interactivo (colapsable) con cuentas de prueba para facilitar demos.
- *
- * @param {LoginViewProps} props - Propiedades de la vista.
- * @returns {JSX.Element} Vista de inicio de sesión.
- */
+const CAPTCHA_PROVIDER = process.env.NEXT_PUBLIC_CAPTCHA_PROVIDER ?? 'mock';
+const MOCK_CAPTCHA_TOKEN = process.env.NEXT_PUBLIC_MOCK_CAPTCHA_TOKEN ?? 'FARMAHUMANA_OK';
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? '';
+
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
+const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
+
 export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,8 +46,13 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [generalError, setGeneralError] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showTestAccounts, setShowTestAccounts] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState(CAPTCHA_PROVIDER === 'mock' ? MOCK_CAPTCHA_TOKEN : '');
+  const [mockCaptchaChecked, setMockCaptchaChecked] = useState(CAPTCHA_PROVIDER === 'mock');
+
+  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api', []);
 
   const handleQuickFill = (accEmail: string, accPass: string) => {
     setEmail(accEmail);
@@ -68,19 +69,39 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     setEmailError('');
     setPasswordError('');
     setGeneralError('');
+    setCaptchaError('');
+
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedPassword = password.trim();
 
     let hasError = false;
 
-    if (!email) {
-      setEmailError('El correo electrónico es obligatorio.');
+    if (!normalizedEmail) {
+      setEmailError('El correo electronico es obligatorio.');
       hasError = true;
-    } else if (!validateEmail(email)) {
-      setEmailError('Formato de correo electrónico no válido.');
+    } else if (!validateEmail(normalizedEmail)) {
+      setEmailError('Formato de correo electronico no valido.');
+      hasError = true;
+    } else if (containsSuspiciousPattern(normalizedEmail)) {
+      setEmailError('El correo contiene un patron invalido.');
       hasError = true;
     }
 
-    if (!password) {
-      setPasswordError('La contraseña es obligatoria.');
+    if (!normalizedPassword) {
+      setPasswordError('La contrasena es obligatoria.');
+      hasError = true;
+    } else if (containsSuspiciousPattern(normalizedPassword)) {
+      setPasswordError('La contrasena contiene un patron invalido.');
+      hasError = true;
+    }
+
+    if (!captchaToken) {
+      setCaptchaError('Debes completar el captcha antes de iniciar sesion.');
+      hasError = true;
+    }
+
+    if (CAPTCHA_PROVIDER === 'mock' && !mockCaptchaChecked) {
+      setCaptchaError('Debes confirmar el captcha de prueba.');
       hasError = true;
     }
 
@@ -89,44 +110,36 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     setSubmitting(true);
 
     try {
-      // 🚀 Llamada real al Backend que configuramos en local
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
       const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword, captchaToken }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        // Forzamos minúsculas para evitar problemas de "Médico" vs "medico"
-        const userRole = (data.role || data.rol || 'Paciente').toLowerCase();
-        const userEmail = data.email || data.correo || email;
-        
-        // Buscamos en los MOCK locales comparando correos en minúscula
-        const fallbackUser = MOCK_USERS.find(u => u.email.toLowerCase() === userEmail.toLowerCase());
-        const userName = data.name || data.nombre || fallbackUser?.name || 'Administrador';
-
+        const userRole = (data.role || data.rol || 'paciente').toLowerCase();
+        const userEmail = data.email || data.correo || normalizedEmail;
+        const fallbackUser = MOCK_USERS.find((u) => u.email.toLowerCase() === userEmail.toLowerCase());
+        const userName = data.name || data.nombre || fallbackUser?.name || 'Usuario';
         onLoginSuccess(userRole, userEmail, userName);
       } else if (response.status === 401) {
-        // 🚀 Contraseña incorrecta (el correo sí está registrado)
-        setPasswordError(data.error || 'La contraseña ingresada es incorrecta, intente nuevamente.');
+        setPasswordError(data.error || 'La contrasena ingresada es incorrecta.');
       } else if (response.status === 404) {
-        // 🚀 Usuario no encontrado
         setEmailError(data.error || 'Usuario no registrado.');
+      } else if (response.status === 403 && String(data.error || '').toLowerCase().includes('captcha')) {
+        setCaptchaError(data.error || 'CAPTCHA invalido.');
       } else {
-        // 🚀 Otros errores inesperados
-        setGeneralError(data.error || 'Credenciales incorrectas.');
+        setGeneralError(data.error || 'No fue posible iniciar sesion.');
       }
-    } catch (error) {
-      // Por si el servidor backend local está apagado o no responde
-      setGeneralError('No se pudo conectar con el servidor. Verifica que el Backend esté encendido.');
+    } catch {
+      setGeneralError('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
   };
 
   return (
@@ -147,17 +160,12 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             <LogIn className="h-5 w-5" />
           </div>
 
-          <h1 className="login-view__title">Iniciar sesión</h1>
-          <p className="login-view__subtitle">
-            Ingrese sus datos para acceder al sistema
-          </p>
+          <h1 className="login-view__title">Iniciar sesion</h1>
+          <p className="login-view__subtitle">Ingrese sus datos para acceder al sistema</p>
 
           <form onSubmit={handleSubmit} className="login-view__form">
             {generalError && (
-              <div
-                role="alert"
-                className="login-view__alert mb-4 flex items-start gap-3 rounded-xl border px-4 py-3"
-              >
+              <div role="alert" className="login-view__alert mb-4 flex items-start gap-3 rounded-xl border px-4 py-3">
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>{generalError}</span>
               </div>
@@ -173,18 +181,13 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                     name="email"
                     autoComplete="username"
                     placeholder="ejemplo@ejemplo.com"
-                    aria-label="Correo electrónico"
+                    aria-label="Correo electronico"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className={cn(
-                      'login-view__field w-full rounded-xl border-0 py-3.5 pl-11 pr-4 outline-none transition-shadow',
-                      emailError && 'login-view__field--error'
-                    )}
+                    className={cn('login-view__field w-full rounded-xl border-0 py-3.5 pl-11 pr-4 outline-none transition-shadow', emailError && 'login-view__field--error')}
                   />
                 </div>
-                {emailError && (
-                  <p className="login-view__field-error">{emailError}</p>
-                )}
+                {emailError && <p className="login-view__field-error">{emailError}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -195,81 +198,81 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                     type={showPassword ? 'text' : 'password'}
                     name="password"
                     autoComplete="current-password"
-                    placeholder="••••••••"
-                    aria-label="Contraseña"
+                    placeholder="********"
+                    aria-label="Contrasena"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className={cn(
-                      'login-view__field w-full rounded-xl border-0 py-3.5 pl-11 pr-11 outline-none transition-shadow',
-                      passwordError && 'login-view__field--error'
-                    )}
+                    className={cn('login-view__field w-full rounded-xl border-0 py-3.5 pl-11 pr-11 outline-none transition-shadow', passwordError && 'login-view__field--error')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="login-view__icon-btn absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 transition-colors"
-                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                    aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                     aria-pressed={showPassword}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                {passwordError && (
-                  <p className="login-view__field-error">{passwordError}</p>
+                {passwordError && <p className="login-view__field-error">{passwordError}</p>}
+              </div>
+
+              <div className="space-y-2 rounded-xl border border-surface-800/80 bg-surface-950/60 p-4">
+                <div className="flex items-center gap-2 text-xs font-semibold text-surface-200">
+                  <ShieldCheck className="h-4 w-4 text-secondary-400" />
+                  Validacion CAPTCHA
+                </div>
+
+                {CAPTCHA_PROVIDER === 'turnstile' && TURNSTILE_SITE_KEY ? (
+                  <Turnstile
+                    sitekey={TURNSTILE_SITE_KEY}
+                    onVerify={(token) => {
+                      setCaptchaToken(token);
+                      setCaptchaError('');
+                    }}
+                    onExpire={() => setCaptchaToken('')}
+                    onError={() => setCaptchaError('No se pudo validar el captcha. Intenta nuevamente.')}
+                  />
+                ) : (
+                  <label className="flex items-start gap-3 text-xs text-surface-300">
+                    <input
+                      type="checkbox"
+                      checked={mockCaptchaChecked}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setMockCaptchaChecked(checked);
+                        setCaptchaToken(checked ? MOCK_CAPTCHA_TOKEN : '');
+                        setCaptchaError('');
+                      }}
+                      className="mt-0.5"
+                    />
+                    <span>Captcha de prueba habilitado para entorno sin proveedor externo.</span>
+                  </label>
                 )}
+
+                {captchaError && <p className="login-view__field-error">{captchaError}</p>}
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={submitting}
-              className={cn(
-                'login-view__submit mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 transition-opacity',
-                submitting && 'cursor-not-allowed opacity-70'
-              )}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Entrando...
-                </>
-              ) : (
-                'Ingresar al sistema'
-              )}
+            <button type="submit" disabled={submitting} className={cn('login-view__submit mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 transition-opacity', submitting && 'cursor-not-allowed opacity-70')}>
+              {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" />Entrando...</>) : 'Ingresar al sistema'}
             </button>
           </form>
 
           <div className="login-view__divider mt-6 border-t pt-5">
-            <button
-              type="button"
-              onClick={() => setShowTestAccounts((open) => !open)}
-              aria-expanded={showTestAccounts}
-              aria-controls="login-test-accounts"
-              className="login-view__demo-toggle mx-auto flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors"
-            >
+            <button type="button" onClick={() => setShowTestAccounts((open) => !open)} aria-expanded={showTestAccounts} aria-controls="login-test-accounts" className="login-view__demo-toggle mx-auto flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors">
               Cuentas de prueba
-              <ChevronDown
-                className={cn('h-3.5 w-3.5 transition-transform duration-200', showTestAccounts && 'rotate-180')}
-                aria-hidden
-              />
+              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', showTestAccounts && 'rotate-180')} aria-hidden />
             </button>
 
             {showTestAccounts && (
               <div id="login-test-accounts" className="mt-3 grid grid-cols-1 gap-2">
                 {MOCK_USERS.map((account) => (
-                  <button
-                    key={account.email}
-                    type="button"
-                    onClick={() => handleQuickFill(account.email, account.password)}
-                    className="login-view__quick-fill flex flex-col gap-1 rounded-xl border px-3 py-2 text-left transition-all sm:flex-row sm:items-center sm:justify-between"
-                  >
+                  <button key={account.email} type="button" onClick={() => handleQuickFill(account.email, account.password)} className="login-view__quick-fill flex flex-col gap-1 rounded-xl border px-3 py-2 text-left transition-all sm:flex-row sm:items-center sm:justify-between">
                     <span className="min-w-0 break-all">
-                      {TEST_ACCOUNT_LABELS[account.role] ?? account.role}:{' '}
-                      <code className="login-view__link font-mono">{account.email}</code>
+                      {TEST_ACCOUNT_LABELS[account.role] ?? account.role}: <code className="login-view__link font-mono">{account.email}</code>
                     </span>
-                    <span className="login-view__mono shrink-0 font-mono text-2xs sm:text-right">
-                      Clave: {account.password}
-                    </span>
+                    <span className="login-view__mono shrink-0 font-mono text-2xs sm:text-right">Clave: {account.password}</span>
                   </button>
                 ))}
               </div>

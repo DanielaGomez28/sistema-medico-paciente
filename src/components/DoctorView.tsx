@@ -113,6 +113,10 @@ const FARMA_HUMANA_CATALOG: MedicalProduct[] = [
  */
 const PHARMACY_PRODUCTS = FARMA_HUMANA_CATALOG.filter((product) => product.source === 'farmacia');
 
+const MOBILE_SCANNER_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+const normalizeCedulaInput = (value: string) => value.toUpperCase().replace(/[^A-Z0-9-]/g, '').trim();
+const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
+
 /**
  * Interfaz para representar el registro de una comisión médica.
  * @interface CommissionEntry
@@ -395,7 +399,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
   // =========================================================
   useEffect(() => {
-    if (isScanning) {
+    if (isScanning && isMobileScannerCapable) {
       // Configuramos la cámara (Librería html5-qrcode)
       const scanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
       
@@ -410,6 +414,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
           
           if (response.data && response.data.patientId) {
             // 2. Si el backend aprueba, bloqueamos la pantalla del médico (Esperando...)
+            setScanProgress(100);
             setWaitingConsent(true);
 
             // 3. Emitimos la alerta de WebSocket a la pantalla del paciente
@@ -431,7 +436,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
         scanner.clear().catch(e => console.error(e));
       };
     }
-  }, [isScanning]);
+  }, [isScanning, isMobileScannerCapable]);
 
   const filteredPatients = useMemo(() => {
     const query = patientListSearch.toLowerCase().trim();
@@ -448,6 +453,17 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [scanProgress, setScanProgress] = useState(0);
   const [manualCedulaInput, setManualCedulaInput] = useState('');
   const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
+  const [isMobileScannerCapable, setIsMobileScannerCapable] = useState(false);
+  const [scannerErrorMsg, setScannerErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hasCameraApi = Boolean(navigator.mediaDevices?.getUserMedia);
+    const isMobileDevice = MOBILE_SCANNER_REGEX.test(window.navigator.userAgent || '');
+
+    setIsMobileScannerCapable(hasCameraApi && isMobileDevice);
+  }, []);
 
   // Prescription states (M.2)
   const [searchQuery, setSearchQuery] = useState('');
@@ -574,8 +590,15 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
    * Simula el inicio del escaneo mediante cámara.
    */
   const triggerCameraScan = () => {
+    if (!isMobileScannerCapable) {
+      setScannerErrorMsg('El escaner en tiempo real solo esta habilitado en dispositivos moviles con camara.');
+      setIsScanning(false);
+      return;
+    }
+
+    setScannerErrorMsg('');
     setIsScanning(true);
-    setScanProgress(0);
+    setScanProgress(15);
     setLinkedPatient(null);
   };
 
@@ -817,7 +840,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                     </div>
 
                     <button
-                      onClick={() => setIsScannerModalOpen(true)}
+                      onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}
                       className="w-full text-center text-xs text-secondary-400 font-semibold hover:text-secondary-300 transition-colors pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
                     >
                       <span>Escanear código qr</span>
@@ -865,7 +888,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                 {patientViewMode === 'list' ? (
                   <>
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Button variant="doctor" onClick={() => setIsScannerModalOpen(true)}>
+                      <Button variant="doctor" onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}>
                         <QrCode className="h-4 w-4" />
                           Escanear código qr
                       </Button>
@@ -885,7 +908,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       {/* Estado 1: Botón de escaneo normal (visible si no está escaneando ni esperando) */}
                       {!isScanning && !waitingConsent && (
                         <button 
-                          onClick={() => setIsScanning(true)}
+                          onClick={triggerCameraScan}
                           className="px-6 py-3 bg-primary-600 text-white font-bold rounded-xl cursor-pointer hover:bg-primary-500 transition-colors animate-pulse"
                         >
                           Escanear QR de Vinculación
@@ -916,7 +939,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                             onClick={async () => {
                               try {
                                 // 1. Forzamos el estado de carga/bloqueo en el médico
-                                setWaitingConsent(true);
+                                setScanProgress(100);
+            setWaitingConsent(true);
                                 
                                 // 2. Emitimos la solicitud directo al backend por WebSocket
                                 socket.emit('requestConsent', {
@@ -1939,6 +1963,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
               <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
                 {isScanning ? (
+                  <div id="qr-reader" className="absolute inset-0 z-0 overflow-hidden" />
                   <>
                     <div className="absolute left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_8px_rgba(23,145,80,0.8)] laser-line" />
                     <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-secondary-500" />
@@ -1966,6 +1991,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                   </div>
                 )}
               </div>
+
+              {scannerErrorMsg ? (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                  {scannerErrorMsg}
+                </div>
+              ) : null}
 
               <div className="flex items-center gap-3 text-2xs font-bold text-surface-600 uppercase tracking-widest">
                 <span className="h-px bg-surface-800 flex-1" />
