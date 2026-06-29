@@ -395,6 +395,23 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     };
   }, []);
 
+  // Reception / QR scan states (M.1)
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [manualCedulaInput, setManualCedulaInput] = useState('');
+  const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
+  const [isMobileScannerCapable, setIsMobileScannerCapable] = useState(false);
+  const [scannerErrorMsg, setScannerErrorMsg] = useState('');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const hasCameraApi = Boolean(navigator.mediaDevices?.getUserMedia);
+    const isMobileDevice = MOBILE_SCANNER_REGEX.test(window.navigator.userAgent || '');
+
+    setIsMobileScannerCapable(hasCameraApi && isMobileDevice);
+  }, []);
+
   // =========================================================
   // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
   // =========================================================
@@ -448,22 +465,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     );
   }, [patients, patientListSearch]);
 
-  // Reception / QR scan states (M.1)
-  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
-  const [manualCedulaInput, setManualCedulaInput] = useState('');
-  const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
-  const [isMobileScannerCapable, setIsMobileScannerCapable] = useState(false);
-  const [scannerErrorMsg, setScannerErrorMsg] = useState('');
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const hasCameraApi = Boolean(navigator.mediaDevices?.getUserMedia);
-    const isMobileDevice = MOBILE_SCANNER_REGEX.test(window.navigator.userAgent || '');
-
-    setIsMobileScannerCapable(hasCameraApi && isMobileDevice);
-  }, []);
 
   // Prescription states (M.2)
   const [searchQuery, setSearchQuery] = useState('');
@@ -901,67 +903,6 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       </div>
                     )}
 
-                    {/* BOTÓN PARA ABRIR LA CÁMARA */}
-                    <div className="p-6 bg-surface-900 rounded-2xl text-center">
-                      <h3 className="text-white font-bold mb-4">Vinculación por QR</h3>
-                      
-                      {/* Estado 1: Botón de escaneo normal (visible si no está escaneando ni esperando) */}
-                      {!isScanning && !waitingConsent && (
-                        <button 
-                          onClick={triggerCameraScan}
-                          className="px-6 py-3 bg-primary-600 text-white font-bold rounded-xl cursor-pointer hover:bg-primary-500 transition-colors animate-pulse"
-                        >
-                          Escanear QR de Vinculación
-                        </button>
-                      )}
-
-                      {/* Estado 2: Contenedor de la cámara activa */}
-                      {isScanning && (
-                        <div className="max-w-sm mx-auto mt-4 border-2 border-primary-500 rounded-xl overflow-hidden p-2 bg-white">
-                          <div id="qr-reader" className="w-full"></div>
-                          <button 
-                            onClick={() => setIsScanning(false)}
-                            className="mt-4 px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg w-full cursor-pointer hover:bg-red-500 transition-colors"
-                          >
-                            Cancelar Escaneo
-                          </button>
-                        </div>
-                      )}
-
-                      {/* ==================================================================== */}
-                      {/* HERRAMIENTA DE DESARROLLO (Siempre visible para pruebas rápidas)      */}
-                      {/* ==================================================================== */}
-                      {!waitingConsent && (
-                        <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-center max-w-sm mx-auto">
-                          <p className="text-[11px] text-amber-400 mb-2">🔧 Herramienta de Desarrollo (Sin Cámara)</p>
-                          <button 
-                            type="button"
-                            onClick={async () => {
-                              try {
-                                // 1. Forzamos el estado de carga/bloqueo en el médico
-                                setScanProgress(100);
-            setWaitingConsent(true);
-                                
-                                // 2. Emitimos la solicitud directo al backend por WebSocket
-                                socket.emit('requestConsent', {
-                                  doctorId: 'MD-99',
-                                  doctorName: 'Dr. Alejandro Ríos',
-                                  patientCedula: 'V-22.341.567' // La cédula de tu captura
-                                });
-                                
-                                console.log("Solicitud de consentimiento enviada via WebSocket local.");
-                              } catch (error) {
-                                setWaitingConsent(false);
-                                alert("Error en la simulación local");
-                              }
-                            }}
-                            className="w-full px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"
-                          >
-                            Simular Lectura de QR (Ana Martínez)
-                          </button>
-                        </div>
-                      )}
-                    </div>
 
                     {/* MODAL DE BLOQUEO MCA (Esperando al paciente) */}
                     {waitingConsent && (
@@ -1963,8 +1904,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
               <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
                 {isScanning ? (
-                  <div id="qr-reader" className="absolute inset-0 z-0 overflow-hidden" />
                   <>
+                    <div id="qr-reader" className="absolute inset-0 z-0 overflow-hidden" />
                     <div className="absolute left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_8px_rgba(23,145,80,0.8)] laser-line" />
                     <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-secondary-500" />
                     <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-secondary-500" />
