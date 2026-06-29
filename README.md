@@ -1,43 +1,78 @@
 # Frontend SMP Farmahumana
 
 ## Estado actual
-Este frontend funciona con mocks y flujos de prueba. El escaner en tiempo real queda restringido a movil.
+Este frontend ahora está conectado y operando contra el backend desplegado en Vercel. Ya no depende exclusivamente de mocks locales para las operaciones principales como el login o la gestión de usuarios, sino que se comunica con la API real. El escáner en tiempo real queda restringido a dispositivos móviles por cuestiones de hardware (cámara).
 
 ## Cambios aplicados
-- Cliente API corregido para Next.js/Vercel con `NEXT_PUBLIC_API_URL`.
-- Sanitizacion basica de email, password y cedula antes de enviar.
-- Escaner en tiempo real:
+- Conexión al backend en Vercel mediante la variable `NEXT_PUBLIC_API_URL`.
+- Eliminación del captcha en el inicio de sesión para agilizar el flujo y evitar dependencias externas problemáticas.
+- Sanitización básica de email, password y cédula antes de enviar al servidor.
+- Escáner en tiempo real:
   - En PC queda bloqueado y se informa al usuario.
-  - En movil con camara queda habilitado.
+  - En móvil con cámara queda habilitado.
   - Sigue existiendo vinculación manual como fallback.
 
 ## Variables de entorno
-Copiar `C:\Proyecto IDS Frontend\.env.example` a `.env.local`.
+Copiar `C:\Proyecto IDS Frontend\.env.example` a `.env` o `.env.local` y ajustarlo. 
 
+Para conectarse al backend en producción (Vercel):
+```env
+NEXT_PUBLIC_API_URL=https://proyecto-ids-backend.vercel.app/api
+```
+
+Para conectarse al backend local:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 ```
 
 ## Desarrollo local
+Para desarrollo normal en PC:
 ```bash
 npm install
 npm run dev
 ```
 
+### Corrida en Móvil (Acceso a la Cámara)
+Para que el escáner (la cámara) funcione en tu celular durante el desarrollo local, el navegador exige que la conexión sea segura (HTTPS). La forma más fácil y rápida de lograrlo en Windows es usando **Localtunnel**, sin necesidad de cuentas ni certificados complejos:
+
+**Paso 1: Levanta tu servidor normal**
+En tu terminal de siempre, inicia el proyecto:
+```bash
+npm run dev -- -H 0.0.0.0
+```
+
+**Paso 2: Crea el túnel HTTPS (Nueva terminal)**
+Abre una **segunda pestaña** en tu terminal (sin cerrar la anterior) y ejecuta:
+```bash
+npx localtunnel --port 3000
+```
+La consola te mostrará una URL similar a `https://algo-random.loca.lt`.
+
+**Paso 3: Entra desde tu celular**
+Abre esa URL desde el navegador de tu teléfono móvil.
+
+**Paso 4: Pantalla de Seguridad Anti-Phishing**
+La primera vez que entres, verás una pantalla blanca pidiéndote una "IP Address".
+- Fíjate en la IP que aparece en un cuadrito arriba en esa misma pantalla (ej. `45.186.x.x`).
+- Escribe esa IP exacta en la caja de texto.
+- Dale al botón azul **"Continue"**.
+
+¡Listo! Eso te redirigirá a la aplicación Frontend y podrás usar la cámara sin que el navegador la bloquee.
+
 ## Despliegue en Vercel
 Este frontend SI es compatible con Vercel.
 
 ### Si el backend va en otro host
-Configura:
+Configura en Vercel la variable de entorno:
 ```env
 NEXT_PUBLIC_API_URL=https://tu-backend/api
 ```
 
-## Flujo mock sin base de datos
-- El medico arma el recipe.
-- El frontend guarda la solicitud mock en `localStorage`.
-- El paciente detecta esa solicitud, la confirma y avanza al pago mock.
-- Como no hay OLTP real, la confirmacion visible depende del mock local, NO de una persistencia transaccional real.
+## Flujo de la Aplicación
+- El médico (u otro rol autorizado) se autentica contra el backend.
+- El médico arma el récipe y la solicitud se envía y persiste en la base de datos a través de la API.
+- El paciente detecta esa solicitud, la confirma y avanza al pago.
+- La confirmación ahora está respaldada por la persistencia transaccional real del backend.
 
 ## Archivos clave
 - `C:\Proyecto IDS Frontend\src\components\LoginView.tsx`
