@@ -11,8 +11,7 @@ import {
   Lock,
   LogIn,
   Mail,
-  LogIn,
-  Mail,
+} from 'lucide-react';
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
 
