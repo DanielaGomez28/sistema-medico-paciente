@@ -57,7 +57,8 @@ interface DoctorViewProps {
  * @interface LinkedPatient
  */
 interface LinkedPatient {
-  cedula: string;
+  systemId?: string;
+  patientId: string;
   name: string;
   age: number;
   gender: string;
@@ -114,7 +115,7 @@ const FARMA_HUMANA_CATALOG: MedicalProduct[] = [
 const PHARMACY_PRODUCTS = FARMA_HUMANA_CATALOG.filter((product) => product.source === 'farmacia');
 
 const MOBILE_SCANNER_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-const normalizeCedulaInput = (value: string) => value.toUpperCase().replace(/[^A-Z0-9-]/g, '').trim();
+const normalizePatientLookup = (value: string) => value.toUpperCase().replace(/[^A-Z0-9-]/g, '').trim();
 const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
 
 /**
@@ -140,7 +141,7 @@ interface RecipeLogEntry {
   id: string;
   date: string;
   patientName: string;
-  patientCedula: string;
+  patientId: string;
   medications: string[];
   branch: string;
   status: 'Enviado' | 'Confirmado' | 'Retirado';
@@ -163,10 +164,10 @@ const MOCK_COMMISSIONS: CommissionEntry[] = [
  * @constant {RecipeLogEntry[]}
  */
 const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
-  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientCedula: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmahumana Caracas', status: 'Confirmado' },
-  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientCedula: 'V-15234891', medications: ['Metformina 850mg'], branch: 'Clínica Humana Valencia', status: 'Retirado' },
-  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientCedula: 'V-22341567', medications: ['Atorvastatina 20mg'], branch: 'Farmahumana Maracaibo', status: 'Retirado' },
-  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientCedula: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Clínica Humana Caracas', status: 'Enviado' },
+  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientId: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmahumana Caracas', status: 'Confirmado' },
+  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'V-15234891', medications: ['Metformina 850mg'], branch: 'Clínica Humana Valencia', status: 'Retirado' },
+  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientId: 'V-22341567', medications: ['Atorvastatina 20mg'], branch: 'Farmahumana Maracaibo', status: 'Retirado' },
+  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientId: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Clínica Humana Caracas', status: 'Enviado' },
 ];
 
 /**
@@ -175,7 +176,8 @@ const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
  */
 const INITIAL_PATIENTS: LinkedPatient[] = [
   {
-    cedula: 'V-28450123',
+    systemId: 'patient_sofia_peralta',
+    patientId: 'V-28450123',
     name: 'Sofía Peralta',
     age: 28,
     gender: 'Femenino',
@@ -187,7 +189,8 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     medications: ['Ramipril 5mg', 'Aspirina 100mg'],
   },
   {
-    cedula: 'V-15234891',
+    systemId: 'patient_carlos_mendoza',
+    patientId: 'V-15234891',
     name: 'Carlos Mendoza',
     age: 45,
     gender: 'Masculino',
@@ -199,7 +202,8 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     medications: ['Metformina 850mg'],
   },
   {
-    cedula: 'V-22341567',
+    systemId: 'patient_ana_martinez',
+    patientId: 'V-22341567',
     name: 'Ana Gómez Román',
     age: 34,
     gender: 'Femenino',
@@ -211,7 +215,8 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
     medications: [],
   },
   {
-    cedula: 'V-18765432',
+    systemId: 'patient_luis_rodriguez',
+    patientId: 'V-18765432',
     name: 'Luis Rodríguez Silva',
     age: 52,
     gender: 'Masculino',
@@ -262,7 +267,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [bankAccountNumber, setBankAccountNumber] = useState('0134-0100-01-0101234567');
   const [bankMobilePhone, setBankMobilePhone] = useState('0414-1234567');
   const [profilePhone, setProfilePhone] = useState('0212-9103348');
-  const [profileDocumentId] = useState('V-14.890.344');
+  const [profileRegistryId] = useState('DR-14890344');
   const [consultorioAddress, setConsultorioAddress] = useState('Av. Las Delicias, Centro Médico Docente La Trinidad, Piso 3, Consultorio 12');
   const [consultorioState, setConsultorioState] = useState('Miranda');
   const [consultorioMunicipio, setConsultorioMunicipio] = useState('Baruta');
@@ -289,7 +294,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [patientViewMode, setPatientViewMode] = useState<'list' | 'detail'>('list');
   const [patientListSearch, setPatientListSearch] = useState('');
   const [patientForm, setPatientForm] = useState<LinkedPatient>({
-    cedula: '',
+    systemId: '',
+    patientId: '',
     name: '',
     age: 0,
     gender: 'Masculino',
@@ -306,29 +312,30 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [isWaitingConsent, setIsWaitingConsent] = useState(false);
   const [pendingConsentPatient, setPendingConsentPatient] = useState<LinkedPatient | null>(null);
 
-  // WebSockets: Escuchar respuesta del paciente
+  // WebSockets: Escuchar respuesta del paciente usando `patientId` interno
   useEffect(() => {
     const identify = () => {
-      socket.emit('identifyUser', { userId: 'MD-992', role: 'doctor' });
+      socket.emit('identifyUser', { userId: DOCTOR_ID, role: 'doctor', name: DOCTOR_NAME });
     };
+
+    socket.connect();
 
     if (socket.connected) identify();
     socket.on('connect', identify);
 
     const handleConsentResult = (data: any) => {
       setIsWaitingConsent(false);
-      
+      setWaitingConsent(false);
+
       if (data.success) {
-        // En el backend lo convertimos a entero para la BD, así que viene como número (ej: 28450123)
-        const cedulaNum = data.result?.vinculacion?.id_paciente?.toString();
-        
-        // Buscamos el paciente ignorando el prefijo "V-"
-        let targetPatient = patients.find(p => p.cedula.replace(/\D/g, '') === cedulaNum);
-        
+        const linkedPatientId = data.result?.vinculacion?.id_paciente?.toString()?.toLowerCase();
+
+        let targetPatient = patients.find((p) => p.systemId === linkedPatientId);
+
         if (!targetPatient) {
-          // Crear un paciente temporal basado en los datos devueltos por el paciente
           targetPatient = {
-            cedula: `V-${cedulaNum}`,
+            systemId: linkedPatientId || '',
+            patientId: 'N/A',
             name: data.patientName || 'Paciente Nuevo',
             age: 0,
             gender: 'No especificado',
@@ -339,20 +346,21 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
             lastVisit: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
             medications: [],
           } as LinkedPatient;
-          
-          setPatients(prev => [...prev, targetPatient as LinkedPatient]);
+
+          setPatients((prev) => [...prev, targetPatient as LinkedPatient]);
         }
-        
+
         setIsScannerModalOpen(false);
         openPatientForm(targetPatient as LinkedPatient);
       } else {
-        alert(data.message || 'El paciente denegó la solicitud de vinculación.');
+        alert(data.message || 'El paciente deneg? la solicitud de vinculaci?n.');
       }
+
       setPendingConsentPatient(null);
     };
 
     const handleConsentRequestSent = ({ patientName }: { patientName: string }) => {
-      setPendingConsentPatient(prev => prev ? { ...prev, name: patientName } : null);
+      setPendingConsentPatient((prev) => prev ? { ...prev, name: patientName } : null);
     };
 
     socket.on('consentResult', handleConsentResult);
@@ -362,43 +370,14 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
       socket.off('connect', identify);
       socket.off('consentResult', handleConsentResult);
       socket.off('consentRequestSent', handleConsentRequestSent);
-    };
-  }, [patients]);
-
-  // =========================================================
-  // LOGICA 1: WEBSOCKETS (Módulos 4 y 5)
-  // =========================================================
-  useEffect(() => {
-    // 1. Handshake inicial del Médico
-    socket.connect();
-    socket.emit('identifyUser', { userId: DOCTOR_ID, role: 'doctor', name: DOCTOR_NAME });
-
-    // 2. Escuchar la respuesta del paciente (Aceptó o Rechazó)
-    const handleConsentResponse = (data: { accepted: boolean; patientName: string; profileData?: any }) => {
-      setWaitingConsent(false); // Desbloqueamos la pantalla del médico
-
-      if (data.accepted) {
-        // Vinculación Exitosa (Módulo 2: Perfil filtrado)
-        alert(`¡Paciente ${data.patientName} vinculado exitosamente!`);
-        setPatientProfile(data.profileData); // Cargamos el expediente para la consulta
-      } else {
-        // Excepción MCA_LOCK: El paciente denegó el acceso
-        alert("Vinculación denegada: El paciente no aceptó los términos de privacidad.");
-      }
-    };
-
-    socket.on('consentResponse', handleConsentResponse);
-
-    return () => {
-      socket.off('consentResponse', handleConsentResponse);
       socket.disconnect();
     };
-  }, []);
+  }, [DOCTOR_ID, DOCTOR_NAME, patients]);
 
   // Reception / QR scan states (M.1)
   const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
   const [scanProgress, setScanProgress] = useState(0);
-  const [manualCedulaInput, setManualCedulaInput] = useState('');
+  const [manualPatientIdInput, setManualPatientIdInput] = useState('');
   const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
   const [isMobileScannerCapable, setIsMobileScannerCapable] = useState(false);
   const [scannerErrorMsg, setScannerErrorMsg] = useState('');
@@ -438,7 +417,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
             socket.emit('requestConsent', {
               doctorId: DOCTOR_ID,
               doctorName: DOCTOR_NAME,
-              patientCedula: response.data.patientId // El backend desencriptó esto del QR
+              patientId: response.data.patientId // El backend desencript? el patientId interno desde el QR
             });
           }
         } catch (error: any) {
@@ -461,7 +440,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     return patients.filter(
       (p) =>
         p.name.toLowerCase().includes(query) ||
-        p.cedula.toLowerCase().includes(query)
+        p.patientId.toLowerCase().includes(query)
     );
   }, [patients, patientListSearch]);
 
@@ -498,12 +477,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
    * Elimina el paciente actualmente seleccionado del estado local.
    */
   const handleDeletePatient = () => {
-    if (!patientForm.cedula) return;
+    if (!patientForm.patientId) return;
     if (!confirm(`¿Eliminar el expediente de ${patientForm.name}? Esta acción no se puede deshacer.`)) {
       return;
     }
-    setPatients((prev) => prev.filter((p) => p.cedula !== patientForm.cedula));
-    if (linkedPatient?.cedula === patientForm.cedula) {
+    setPatients((prev) => prev.filter((p) => p.patientId !== patientForm.patientId));
+    if (linkedPatient?.patientId === patientForm.patientId) {
       setLinkedPatient(null);
     }
     handleBackToPatientList();
@@ -515,8 +494,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
    */
   const handleSavePatient = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientForm.name.trim() || !patientForm.phone.trim() || !patientForm.cedula.trim()) {
-      alert('El nombre, la cédula y el teléfono del paciente son obligatorios.');
+    if (!patientForm.name.trim() || !patientForm.phone.trim() || !patientForm.patientId.trim()) {
+      alert('El nombre, el ID interno y el tel?fono del paciente son obligatorios.');
       return;
     }
 
@@ -527,12 +506,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
     // Only support updating existing patients from the doctor portal
     const updatedPatient: LinkedPatient = { ...patientForm, medications };
-    const exists = patients.some((p) => p.cedula === updatedPatient.cedula);
+    const exists = patients.some((p) => p.patientId === updatedPatient.patientId);
     if (!exists) {
       alert('No está permitido crear pacientes desde el portal del médico. Busque o vincule un paciente existente.');
       return;
     }
-    setPatients((prev) => prev.map((p) => (p.cedula === updatedPatient.cedula ? updatedPatient : p)));
+    setPatients((prev) => prev.map((p) => (p.patientId === updatedPatient.patientId ? updatedPatient : p)));
     setLinkedPatient(updatedPatient);
     setPatientForm(updatedPatient);
 
@@ -541,17 +520,18 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   };
 
   /**
-   * Inicia el flujo de vinculación de un paciente buscando por su cédula e informando al backend.
-   * @param {string} cedulaQuery - La cédula a buscar o vincular.
+   * Inicia el flujo de vinculaci?n de un paciente buscando por su ID interno e informando al backend.
+   * @param {string} patientQuery - El ID interno a buscar o vincular.
    */
-  const linkPatientMock = (cedulaQuery: string) => {
-    const normalized = cedulaQuery.toLowerCase().replace(/[\s\.-]/g, '');
+  const linkPatientMock = (patientQuery: string) => {
+    const normalized = patientQuery.toLowerCase().replace(/[\s\.-]/g, '');
     const found = patients.find((p) =>
-      p.cedula.toLowerCase().replace(/[\s\.-]/g, '').includes(normalized)
+      p.patientId.toLowerCase().replace(/[\s\.-]/g, '').includes(normalized)
     );
 
     const targetPatient = found || {
-      cedula: cedulaQuery.trim().toUpperCase(),
+      systemId: `patient_${normalized || 'pendiente_bd'}`.replace(/[^a-z0-9_]/g, ''),
+      patientId: patientQuery.trim().toUpperCase(),
       name: 'Paciente (Pendiente BD)',
       age: 0,
       gender: 'No especificado',
@@ -568,9 +548,9 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     
     // Emitir solicitud de vinculación al servidor WebSocket
     socket.emit('requestConsent', {
-      doctorId: 'MD-992',
-      doctorName,
-      patientCedula: targetPatient.cedula
+      doctorId: DOCTOR_ID,
+      doctorName: DOCTOR_NAME,
+      patientId: targetPatient.systemId || targetPatient.patientId
     });
   };
 
@@ -580,8 +560,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const cancelConsentRequest = () => {
     if (pendingConsentPatient) {
       socket.emit('cancelConsentRequest', { 
-        doctorId: 'MD-992', 
-        patientCedula: pendingConsentPatient.cedula 
+        doctorId: DOCTOR_ID, 
+        patientId: pendingConsentPatient.systemId || pendingConsentPatient.patientId 
       });
     }
     setIsWaitingConsent(false);
@@ -627,21 +607,21 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const handleManualLinkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const sanitizedCedula = normalizeCedulaInput(manualCedulaInput);
+    const sanitizedPatientId = normalizePatientLookup(manualPatientIdInput);
 
-    if (!sanitizedCedula) {
-      alert('Por favor ingrese la cedula del paciente.');
+    if (!sanitizedPatientId) {
+      alert('Por favor ingrese el ID interno del paciente.');
       return;
     }
 
-    if (containsSuspiciousPattern(sanitizedCedula)) {
-      alert('La cedula contiene un patron invalido.');
+    if (containsSuspiciousPattern(sanitizedPatientId)) {
+      alert('El ID interno contiene un patr?n inv?lido.');
       return;
     }
 
     setScannerErrorMsg('');
-    linkPatientMock(sanitizedCedula);
-    setManualCedulaInput('');
+    linkPatientMock(sanitizedPatientId);
+    setManualPatientIdInput('');
   };
 
   /**
@@ -805,12 +785,12 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                     <div className="divide-y divide-surface-850">
                       {patients.map((patient) => (
-                        <div key={patient.cedula} className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 first:pt-0 last:pb-0">
+                        <div key={patient.patientId} className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 first:pt-0 last:pb-0">
                           <div>
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-white">{patient.name}</p>
                               <span className="text-[9px] font-mono text-surface-500 bg-surface-950 px-1.5 py-0.5 rounded border border-surface-850">
-                                {patient.cedula}
+                                {patient.patientId}
                               </span>
                             </div>
                             <p className="text-xs text-surface-400 mt-1">
@@ -837,7 +817,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
                     <div className="space-y-3 flex-1 pt-2">
                       {patients.map((patient) => (
-                        <div key={patient.cedula} className="p-3 bg-surface-950/40 border border-surface-850 rounded-xl space-y-1">
+                        <div key={patient.patientId} className="p-3 bg-surface-950/40 border border-surface-850 rounded-xl space-y-1">
                           <div className="flex justify-between items-center text-xs">
                             <span className="font-semibold text-white">{patient.name}</span>
                             <span className="text-surface-555 text-[10px] font-medium">Edad: {patient.age} años</span>
@@ -954,7 +934,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
                         <input
                           type="text"
-                          placeholder="Buscar por nombre o cédula"
+                          placeholder="Buscar por nombre o ID interno"
                           value={patientListSearch}
                           onChange={(e) => setPatientListSearch(e.target.value)}
                           className="zenith-input pl-10 pr-4 py-2.5"
@@ -978,7 +958,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                               <tbody className="divide-y divide-surface-850">
                                 {filteredPatients.map((patient) => (
                                   <tr
-                                    key={patient.cedula}
+                                    key={patient.patientId}
                                     onClick={() => openPatientForm(patient)}
                                     className="hover:bg-surface-850/20 transition-colors cursor-pointer"
                                   >
@@ -989,7 +969,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                                         </div>
                                         <div>
                                           <p className="font-semibold text-surface-200 leading-none">{patient.name}</p>
-                                          <span className="text-[10px] text-surface-500 font-mono mt-1 block">{patient.cedula}</span>
+                                          <span className="text-[10px] text-surface-500 font-mono mt-1 block">{patient.patientId}</span>
                                         </div>
                                       </div>
                                     </td>
@@ -1025,9 +1005,9 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                           <div className="lg:hidden space-y-3 p-4">
                             {filteredPatients.map((patient) => (
                               <ListCard
-                                key={patient.cedula}
+                                key={patient.patientId}
                                 title={patient.name}
-                                subtitle={patient.cedula}
+                                subtitle={patient.patientId}
                                 onClick={() => openPatientForm(patient)}
                                 badge={
                                   patient.allergies && patient.allergies !== 'Ninguna conocida' ? (
@@ -1079,7 +1059,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       Volver al listado
                     </button>
 
-                    {patientForm.cedula ? (
+                    {patientForm.patientId ? (
                       <div className="flex justify-end">
                         <Button
                           variant="ghost"
@@ -1121,13 +1101,13 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <label className="zenith-field-label">Cédula</label>
+                            <label className="zenith-field-label">ID interno</label>
                             <input
                               type="text"
-                              value={patientForm.cedula}
-                              onChange={(e) => setPatientForm({ ...patientForm, cedula: e.target.value })}
+                              value={patientForm.patientId}
+                              onChange={(e) => setPatientForm({ ...patientForm, patientId: e.target.value })}
                               disabled={true}
-                                placeholder="Ej: V-28450123"
+                                placeholder="Ej: patient_sofia_peralta"
                                 className={`w-full border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-secondary-500 uppercase bg-surface-950/40 text-surface-550 disabled:cursor-not-allowed`}
                             />
                           </div>
@@ -1653,8 +1633,8 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       </div>
                       <div className="divide-y divide-surface-850 text-xs">
                         <div className="flex justify-between py-2">
-                          <span className="text-surface-500">Cédula de Identidad</span>
-                          <span className="text-surface-200 font-mono text-[10px]">{profileDocumentId}</span>
+                          <span className="text-surface-500">ID de registro</span>
+                          <span className="text-surface-200 font-mono text-[10px]">{profileRegistryId}</span>
                         </div>
                         <div className="flex justify-between py-2">
                           <span className="text-surface-500">Correo Institucional</span>
@@ -1778,7 +1758,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="zenith-field-label">Cédula del Titular</label>
+                      <label className="zenith-field-label">ID del titular</label>
                       <input
                         type="text"
                         value={bankHolderId}
@@ -1959,13 +1939,13 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
               <form onSubmit={handleManualLinkSubmit} className="space-y-3">
                 <div className="space-y-1.5">
-                  <label className="zenith-field-label">Cédula del paciente</label>
+                  <label className="zenith-field-label">ID interno del paciente</label>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       type="text"
-                      placeholder="Ej: V-28450123"
-                      value={manualCedulaInput}
-                      onChange={(e) => setManualCedulaInput(e.target.value)}
+                      placeholder="Ej: patient_sofia_peralta"
+                      value={manualPatientIdInput}
+                      onChange={(e) => setManualPatientIdInput(e.target.value)}
                       className="flex-1 bg-surface-950 border border-surface-800 rounded-xl px-3 py-2.5 text-xs text-white placeholder-surface-750 focus:outline-none focus:border-secondary-500"
                     />
                     <button

@@ -1,7 +1,7 @@
 # Frontend SMP Farmahumana
 
 ## Ejecucion local
-Este frontend vuelve a correr en local contra el backend Express/Socket.IO.
+Este frontend queda configurado para correr LOCAL contra el backend Express/Socket.IO.
 
 ### Variables
 Copiar `.env.example` a `.env.local`.
@@ -20,22 +20,17 @@ npm install
 npm run dev
 ```
 
+### Backend esperado
+El backend debe estar corriendo en:
+- `http://localhost:4000`
+
+El frontend queda en:
+- `http://localhost:3000`
+
 ## Escaner en tiempo real
 - En **PC** el escaner en tiempo real queda bloqueado a proposito.
 - En **movil** solo se habilita si el navegador expone acceso a camara.
 - Si no hay camara o el usuario esta en desktop, se usa la vinculacion manual.
-
-## Despliegue recomendado
-- Frontend: **Vercel**
-- Backend Express + Socket.IO: **Railway**
-
-### Si el backend cambia de host
-```env
-NEXT_PUBLIC_API_URL=https://tu-backend.railway.app/api
-NEXT_PUBLIC_SOCKET_URL=https://tu-backend.railway.app
-NEXT_PUBLIC_CAPTCHA_PROVIDER=turnstile
-NEXT_PUBLIC_TURNSTILE_SITE_KEY=tu_site_key
-```
 
 ## Flujo mock sin base de datos
 - El medico arma el recipe.

@@ -241,8 +241,6 @@ const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout'
  * @param {PatientViewProps} props - Propiedades de la vista.
  * @returns {JSX.Element}
  */
-const PACIENTE_ID = "V-22.341.567";
-
 export default function PatientView({ patientName, patientEmail, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'
   const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('treatment');
@@ -296,18 +294,19 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   // Profile Settings State (Pantalla P.5)
   const [profileName, setProfileName] = useState(patientName);
 
-  const getCedulaFromName = (name: string) => {
+  const getPatientProfileFromName = (name: string) => {
     const normalized = name.toLowerCase();
-    if (normalized.includes('ana')) return 'V-22.341.567';
-    if (normalized.includes('carlos')) return 'V-15.234.891';
-    if (normalized.includes('luis')) return 'V-18.765.432';
-    return 'V-28.450.123'; // Sofía Peralta (Default)
+    if (normalized.includes('ana')) return { systemId: 'patient_ana_martinez' };
+    if (normalized.includes('carlos')) return { systemId: 'patient_carlos_mendoza' };
+    if (normalized.includes('luis')) return { systemId: 'patient_luis_rodriguez' };
+    return { systemId: 'patient_sofia_peralta' };
   };
 
-  const [profileDocumentId] = useState(getCedulaFromName(patientName));
+  const resolvedPatientProfile = getPatientProfileFromName(patientName);
+  const [profileSystemId] = useState(resolvedPatientProfile.systemId);
 
-  // WebSockets: Consent Request State
-  const [incomingConsent, setIncomingConsent] = useState<{ doctorId: string; doctorName: string; patientCedula: string } | null>(null);
+  // WebSockets: estado de solicitud entrante usando `patientId` interno
+  const [incomingConsent, setIncomingConsent] = useState<{ doctorId: string; doctorName: string; patientId: string } | null>(null);
 
   // =========================================================
   // 1. EFECTO: Sincronización WebSockets (Tiempo Real)
@@ -317,14 +316,14 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     socket.connect();
 
     const identify = () => {
-      // Mantenemos la cédula de pruebas o la del perfil
-      const targetCedula = profileDocumentId || 'V-22.341.567'; 
+      // Registramos al paciente con su ID interno mock para el flujo WebSocket
+      const targetPatientId = profileSystemId || 'patient_ana_martinez'; 
       
-      console.log(`🤖 Registrando paciente en Socket local con Cédula: ${targetCedula}`);
+      console.log(`?? Registrando paciente en Socket local con ID interno: ${targetPatientId}`);
       
-      // Enviamos la petición unificada que tu server.js espera
+      // Enviamos la petici?n unificada que tu server.js espera
       socket.emit('identifyUser', { 
-        userId: targetCedula, 
+        userId: targetPatientId, 
         role: 'patient', 
         name: profileName || 'Ana Martínez'
       });
@@ -334,7 +333,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     socket.on('connect', identify);
 
     // 2. FUSIONAMOS LAS DOS LÓGICAS EN UNA SOLA FUNCIÓN RECEPTORA
-    const handleIncomingRequest = async (data: { doctorId: string; doctorName: string; patientCedula: string }) => {
+    const handleIncomingRequest = async (data: { doctorId: string; doctorName: string; patientId: string }) => {
       console.log('🎯 ¡Solicitud de vinculación real recibida por el canal del Servidor!:', data);
       
       // Guardamos la información del médico entrante para el modal
@@ -343,7 +342,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       try {
         // Consultamos dinámicamente los términos desde el backend
         const response = await apiClient.get('/consentimiento/terminos');
-        setTermsText(response.data.texto);
+        setTermsText(response.data?.texto || response.data?.data?.terminos || '');
         setShowConsentModal(true); // 🔥 ¡Desplegamos el Modal de inmediato!
       } catch (error) {
         console.error("Error al traer los términos de privacidad:", error);
@@ -369,7 +368,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       socket.off('consentRequestCancelled', handleCancelRequest);
       socket.disconnect();
     };
-  }, [profileDocumentId, profileName]);
+  }, [profileName, profileSystemId]);
 
   // =========================================================
   // 2. EFECTO: Cuenta regresiva del QR efímero
@@ -391,8 +390,8 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   const handleGenerarQR = async () => {
     try {
       // Pedimos el token encriptado en AES-256 transformado a Base64
-      const response = await apiClient.get(`/qr/generate/${PACIENTE_ID}`);
-      setQrImage(response.data.qrImageBase64); // Suponiendo que el backend devuelve la propiedad así
+      const response = await apiClient.get(`/qr/generate/${encodeURIComponent(profileSystemId)}`);
+      setQrImage(response.data?.qr_image || response.data?.qrImageBase64 || null);
       setTimeLeft(300); // Reseteamos el reloj a 5 minutos
       setIsTimerActive(true);
     } catch (error) {
@@ -401,24 +400,20 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   };
 
   const handleResponderConsentimiento = (aceptado: boolean) => {
-    // Emitimos la respuesta directo por WebSocket para desbloquear la pantalla del médico
-    socket.emit('consentResponse', { 
-      idPaciente: PACIENTE_ID, 
-      status: aceptado ? 'ACCEPTED' : 'DECLINED' 
-    });
-    setShowConsentModal(false);
+    handleConsentResponse(aceptado);
   };
 
   const handleConsentResponse = (accepted: boolean) => {
     if (incomingConsent) {
       socket.emit('consentResponse', {
         doctorId: incomingConsent.doctorId,
-        patientCedula: incomingConsent.patientCedula,
+        patientId: incomingConsent.patientId,
         patientName: profileName,
         accepted,
       });
       setIncomingConsent(null);
     }
+    setShowConsentModal(false);
   };
   const [profilePhone, setProfilePhone] = useState('0412-6001234');
   const [deliveryAddress, setDeliveryAddress] = useState('Av. Francisco de Miranda, Urb. Campo Alegre, Edif. Parque Cristal, Piso 4B');
@@ -703,7 +698,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     >
       {/* Consentimiento en Tiempo Real Modal */}
       <Modal
-        open={incomingConsent !== null}
+        open={incomingConsent !== null && !showConsentModal}
         onClose={() => handleConsentResponse(false)}
         title="Solicitud de Vinculación Clínica"
         size="md"
@@ -962,8 +957,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         <div className="min-w-0">
                           <p className="text-[10px] text-surface-500 truncate">Alertas</p>
                           <p className="text-sm font-semibold text-white tabular-nums">{treatmentAlerts.length}</p>
-                        </div>
-                      </div>
+                        </div>                      </div>
                     </div>
                   </div>
                   {todayTotalCount > 0 && (
@@ -995,7 +989,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       Genere un código QR de seguridad de un solo uso para autorizar accesos o validar su identidad en consultorios médicos.
                     </p>
                     <p className="text-xs text-surface-500">
-                      Cédula del paciente: <span className="font-mono text-surface-300 font-semibold">{PACIENTE_ID}</span>
+                      ID interno del paciente: <span className="font-mono text-surface-300 font-semibold">{profileSystemId}</span>
                     </p>
                   </div>
                   
@@ -1677,11 +1671,20 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Cédula de Identidad</label>
+                          <label className="zenith-field-label">ID Interno del Sistema</label>
                           <input
                             type="text"
                             disabled
-                            value={profileDocumentId}
+                            value={profileSystemId}
+                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 font-mono focus:outline-none cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="zenith-field-label">Referencia del Perfil</label>
+                          <input
+                            type="text"
+                            disabled
+                            value={profileSystemId}
                             className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 font-mono focus:outline-none cursor-not-allowed"
                           />
                         </div>
