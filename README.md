@@ -1,50 +1,51 @@
-# Sistema Médico-Paciente (SMP) - Farmahumana
+# Frontend SMP Farmahumana
 
-Plataforma transaccional para la gestión de vinculación médico-paciente en tiempo real mediante QR efímeros y WebSockets.
+## Ejecucion local
+Este frontend vuelve a correr en local contra el backend Express/Socket.IO.
 
-## 🚀 Guía de Inicio Rápido
+### Variables
+Copiar `.env.example` a `.env.local`.
 
-1. **Instalación:**
-   ```bash
-   npm install
-   ```
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
+NEXT_PUBLIC_CAPTCHA_PROVIDER=mock
+NEXT_PUBLIC_MOCK_CAPTCHA_TOKEN=FARMAHUMANA_OK
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=
+```
 
-2. **Configuración para Pruebas en Móvil:**
-   Crea un archivo `.env.local` en el frontend y un archivo `.env` en el backend usando los siguientes datos:
+### Desarrollo
+```bash
+npm install
+npm run dev
+```
 
-   - **Frontend** (`.env.local`):
-     ```env
-     NEXT_PUBLIC_API_URL=http://TU_IP:4000/api
-     NEXT_PUBLIC_SOCKET_URL=http://TU_IP:4000
-     ```
+## Escaner en tiempo real
+- En **PC** el escaner en tiempo real queda bloqueado a proposito.
+- En **movil** solo se habilita si el navegador expone acceso a camara.
+- Si no hay camara o el usuario esta en desktop, se usa la vinculacion manual.
 
-   - **Backend** (`.env`):
-     ```env
-     PORT=4000
-     FRONTEND_URL=http://TU_IP:3000
-     ```
+## Despliegue recomendado
+- Frontend: **Vercel**
+- Backend Express + Socket.IO: **Railway**
 
-   *Nota: Reemplaza "TU_IP" por tu Dirección IPv4 (obtenida con `ipconfig` en CMD).*
+### Si el backend cambia de host
+```env
+NEXT_PUBLIC_API_URL=https://tu-backend.railway.app/api
+NEXT_PUBLIC_SOCKET_URL=https://tu-backend.railway.app
+NEXT_PUBLIC_CAPTCHA_PROVIDER=turnstile
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=tu_site_key
+```
 
-3. **Ejecución:**
-   - **Backend:** `npm start`
-   - **Frontend:** `npm run dev -- -H TU_IP`
+## Flujo mock sin base de datos
+- El medico arma el recipe.
+- El frontend guarda la solicitud mock en `localStorage`.
+- El paciente detecta esa solicitud, la confirma y avanza al pago mock.
+- La confirmacion visible sigue dependiendo del mock local, no de una persistencia OLTP real.
 
-4. **Acceso:**
-   - Accede desde el navegador de tu móvil a: `http://TU_IP:3000`
-
----
-
-## 💡 Notas Importantes
-- **Red:** Asegúrate de que tanto el móvil como la PC estén en la misma red Wi-Fi.
-- **Cambios:** Siempre reinicia los servidores tras modificar cualquier archivo `.env` / `.env.local`.
-- **Seguridad:** Estos archivos son locales y no deben subirse al repositorio.
-
----
-
-> [!WARNING]
-> ### ⚠️ El Escáner QR NO funciona en `http://`
-> Si accedes a la aplicación móvil usando `http://TU_IP:3000`, **tu celular bloqueará la cámara por seguridad** (Chrome y Safari exigen HTTPS).
-> Para solucionar esto tienes dos opciones:
-> 1. **(Recomendado) Usar Localtunnel:** Ejecuta `npx localtunnel --port 3000` en tu PC y entra a la URL `.loca.lt` que te arroje desde tu celular. (Deberás configurar esa URL en el `FRONTEND_URL` del backend).
-> 2. **Truco en Android (Chrome):** En el Chrome de tu celular, ingresa a `chrome://flags/#unsafely-treat-insecure-origin-as-secure`, añade `http://TU_IP:3000`, activa la opción y reinicia Chrome.
+## Archivos clave
+- `C:\Proyecto IDS Frontend\src\components\LoginView.tsx`
+- `C:\Proyecto IDS Frontend\src\components\DoctorView.tsx`
+- `C:\Proyecto IDS Frontend\src\components\PatientView.tsx`
+- `C:\Proyecto IDS Frontend\src\lib\api.ts`
+- `C:\Proyecto IDS Frontend\src\lib\socket.ts`

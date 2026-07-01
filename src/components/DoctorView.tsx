@@ -443,7 +443,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
           }
         } catch (error: any) {
           // Fallo por QR Caducado o Nonce duplicado
-          alert(error.response?.data?.message || "Error de seguridad: QR Caducado o Inválido.");
+          setScannerErrorMsg(error.response?.data?.error || 'Error de seguridad: QR caducado o invalido.');
         }
       }, (err) => {
         // Errores silenciosos mientras busca el QR frame por frame (se ignoran)
@@ -605,20 +605,19 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   };
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: NodeJS.Timeout | undefined;
+
     if (isScanning) {
       timer = setInterval(() => {
-        setScanProgress((prev) => {
-          if (prev >= 100) {
-            setIsScanning(false);
-            linkPatientMock('V-22341567'); // Auto link Ana Gómez Román
-            return 0;
-          }
-          return prev + 25;
-        });
-      }, 350);
+        setScanProgress((prev) => (prev >= 90 ? 90 : prev + 10));
+      }, 400);
+    } else {
+      setScanProgress(0);
     }
-    return () => clearInterval(timer);
+
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [isScanning]);
 
   /**
@@ -627,11 +626,21 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
    */
   const handleManualLinkSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!manualCedulaInput) {
-      alert('Por favor ingrese la cédula del paciente.');
+
+    const sanitizedCedula = normalizeCedulaInput(manualCedulaInput);
+
+    if (!sanitizedCedula) {
+      alert('Por favor ingrese la cedula del paciente.');
       return;
     }
-    linkPatientMock(manualCedulaInput);
+
+    if (containsSuspiciousPattern(sanitizedCedula)) {
+      alert('La cedula contiene un patron invalido.');
+      return;
+    }
+
+    setScannerErrorMsg('');
+    linkPatientMock(sanitizedCedula);
     setManualCedulaInput('');
   };
 
@@ -1896,10 +1905,11 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                 Cancelar Solicitud
               </button>
             </div>
+          
           ) : (
             <>
               <p className="text-xs text-surface-400">
-                Active la cámara o ingrese manualmente la cédula del paciente para cargar su expediente y editar sus datos.
+                Active la camara desde un movil o use la vinculacion manual para cargar el expediente del paciente.
               </p>
 
               <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
@@ -1921,19 +1931,21 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                 ) : (
                   <div className="space-y-4 text-center z-10">
                     <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
-                    <p className="text-sm text-surface-400 font-medium">Cámara de escáner inactiva</p>
+                    <p className="text-sm text-surface-400 font-medium">{isMobileScannerCapable ? 'Camara de escaner inactiva' : 'Escaner no disponible en PC'}</p>
                     <button
                       type="button"
                       onClick={triggerCameraScan}
-                      className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
+                      disabled={!isMobileScannerCapable}
+                      className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Activar escáner
+                      {isMobileScannerCapable ? 'Activar escaner' : 'Solo disponible en movil'}
                     </button>
                   </div>
                 )}
               </div>
 
               {scannerErrorMsg ? (
+
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
                   {scannerErrorMsg}
                 </div>
