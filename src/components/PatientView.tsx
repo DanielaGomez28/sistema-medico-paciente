@@ -42,6 +42,7 @@ import apiClient from '../lib/api';
 import { socket } from '../lib/socket';
 import {
   PATIENT_DOSE_LOG_SEEDS,
+  PATIENT_PORTAL_COPY,
   PATIENT_PROFILE_DEFAULTS,
   PATIENT_TREATMENT_ALERT_SEEDS,
   PATIENT_TREATMENT_SEEDS,
@@ -80,7 +81,10 @@ interface BackendPrescriptionItem {
 interface BackendPrescription {
   recipeId: string;
   createdAt: string;
+  recipeExpiresAt?: string;
   doctorName?: string | null;
+  clinicalStatus?: string;
+  commercialStatus?: string;
   status?: string;
   totals?: {
     subtotal_base?: number;
@@ -169,13 +173,32 @@ const formatRecipeDate = (dateIso: string) =>
   new Date(dateIso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
 /**
+ * Construye la firma corta visible del médico emisor para el comprobante imprimible.
+ * @param {string} doctorName - Nombre visible del médico.
+ * @returns {string} Iniciales compactas del profesional.
+ */
+const buildDoctorSignatureLabel = (doctorName: string) => {
+  const source = (doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName).replace(/^Dr\.?\s+/i, '').trim();
+  const initials = source
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || '')
+    .join('.');
+
+  return initials ? `${initials}.` : 'MD';
+};
+
+/**
  * Convierte una receta backend en filas visuales para la tabla de recipes del paciente.
  * @param {BackendPrescription} prescription - Receta devuelta por el backend.
  * @returns {Recipe[]} Recipes adaptados al portal paciente.
  */
 const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Recipe[] => {
   const createdAt = prescription.createdAt || new Date().toISOString();
-  const expiryDate = addMonths(createdAt, 6).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+  const expirySource = prescription.recipeExpiresAt || addMonths(createdAt, 6).toISOString();
+  const expiryDate = formatRecipeDate(expirySource);
+  const status = prescription.clinicalStatus === 'expired' ? 'Expirado' : 'Activo';
 
   return (Array.isArray(prescription.items) ? prescription.items : []).map((item, index) => ({
     id: `${prescription.recipeId}${index > 0 ? `-${index + 1}` : ''}`,
@@ -183,11 +206,11 @@ const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Rec
     expiryDate,
     medication: item.nombre,
     dosage: `${item.cantidad} unidad(es)`,
-    instructions: item.dosis || 'Seguir indicaciones medicas.',
-    doctor: prescription.doctorName || 'Medico tratante',
-    specialty: 'Prescripcion clinica',
-    doctorLicense: 'Validacion digital Farmahumana',
-    status: 'Activo' as const,
+    instructions: item.dosis || 'Seguir indicaciones médicas.',
+    doctor: prescription.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName,
+    specialty: PATIENT_PORTAL_COPY.fallbackSpecialty,
+    doctorLicense: PATIENT_PORTAL_COPY.doctorLicenseLabel,
+    status,
   }));
 };
 
@@ -270,7 +293,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
   // Payment States (Pantalla P.3)
-  const [paymentTimeLeft, setPaymentTimeLeft] = useState(900); // 15 minutes in seconds
+  const [paymentTimeLeft, setPaymentTimeLeft] = useState(PATIENT_PORTAL_COPY.paymentHoldSeconds); // 15 minutes in seconds
   const [simulatedPaymentReference, setSimulatedPaymentReference] = useState('');
   const [checkoutSession, setCheckoutSession] = useState<CheckoutSessionState | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
@@ -355,7 +378,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       socket.emit('identifyUser', { 
         userId: targetPatientId, 
         role: 'patient', 
-        name: profileName || 'Ana Martínez'
+        name: profileName || PATIENT_PORTAL_COPY.fallbackPatientName
       });
     };
 
@@ -537,6 +560,14 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
   const getTreatmentProgress = (treatment: TreatmentMedication) =>
     Math.round((treatment.takenDoses / treatment.totalDoses) * 100);
+
+  const totalPlannedDoses = activeTreatments.reduce((sum, treatment) => sum + treatment.totalDoses, 0);
+  const totalTakenDoses = activeTreatments.reduce((sum, treatment) => sum + treatment.takenDoses, 0);
+  const globalAdherencePercent = totalPlannedDoses
+    ? Math.round((totalTakenDoses / totalPlannedDoses) * 100)
+    : 0;
+  const completedTreatments = treatments.filter((treatment) => treatment.status === 'Completado').length;
+  const treatmentsNearCompletion = activeTreatments.filter((treatment) => getTreatmentProgress(treatment) >= 80).length;
 
   const sortedTodayDoses = [...todayDoses].sort((a, b) =>
     a.scheduledTime.localeCompare(b.scheduledTime)
@@ -1387,11 +1418,30 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       </div>
                     )}
 
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="rounded-2xl border border-surface-800 bg-surface-900/60 p-4 backdrop-blur-md">
+                        <p className="text-[10px] uppercase tracking-wide text-surface-500">Adherencia global</p>
+                        <p className="mt-1 text-2xl font-bold text-white tabular-nums">{globalAdherencePercent}%</p>
+                        <p className="text-[11px] text-surface-500 mt-1">Basada en tratamientos activos</p>
+                      </div>
+                      <div className="rounded-2xl border border-surface-800 bg-surface-900/60 p-4 backdrop-blur-md">
+                        <p className="text-[10px] uppercase tracking-wide text-surface-500">Tomas registradas</p>
+                        <p className="mt-1 text-2xl font-bold text-white tabular-nums">{doseLogs.length}</p>
+                        <p className="text-[11px] text-surface-500 mt-1">Historial total disponible</p>
+                      </div>
+                      <div className="rounded-2xl border border-surface-800 bg-surface-900/60 p-4 backdrop-blur-md">
+                        <p className="text-[10px] uppercase tracking-wide text-surface-500">Tratamientos cerrados</p>
+                        <p className="mt-1 text-2xl font-bold text-white tabular-nums">{completedTreatments}</p>
+                        <p className="text-[11px] text-surface-500 mt-1">Ciclos ya completados</p>
+                      </div>
+                    </div>
+
                     <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
                       <div className="flex items-center gap-2">
                         <History className="h-4 w-4 text-surface-500" />
                         <div>
                           <h3 className="zenith-section-title">Historial de tomas</h3>
+                          <p className="text-xs text-surface-500 mt-1">Revis?? las confirmaciones m??s recientes y detect?? omisiones o patrones de consumo.</p>
                         </div>
                       </div>
 
@@ -1586,8 +1636,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           onChange={(e) => setSelectedBranch(e.target.value)}
                           className="w-full bg-surface-950/60 border border-surface-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-primary-500 cursor-pointer"
                         >
-                          <option value="Clínica Humana">Clínica Humana</option>
-                          <option value="Farmahumana">Farmahumana</option>
+                          {PATIENT_PORTAL_COPY.selectedBranchOptions.map((branch) => (
+                          <option key={branch} value={branch}>{branch}</option>
+                        ))}
                         </select>
                       </div>
                     </div>
@@ -1747,8 +1798,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     
                     <div className="flex justify-between items-start border-b border-surface-200 pb-4">
                       <div>
-                        <h4 className="text-sm font-bold text-surface-950">Farmahumana C.A.</h4>
-                        <p className="text-2xs text-surface-500">RIF: J-30123456-7 • Av. Francisco de Miranda, Caracas</p>
+                        <h4 className="text-sm font-bold text-surface-950">{PATIENT_PORTAL_COPY.pharmacyLegalName}</h4>
+                        <p className="text-2xs text-surface-500">{PATIENT_PORTAL_COPY.pharmacyLegalReference}</p>
                       </div>
                       <div className="text-right">
                         <p className="font-bold text-surface-850">CÓDIGO: {voucherId}</p>
@@ -1975,18 +2026,18 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-primary-900">
                     <Activity className="h-7 w-7 text-primary-700" />
-                    <h1 className="zenith-page-title uppercase">Clínica Zenith</h1>
+                    <h1 className="zenith-page-title uppercase">{PATIENT_PORTAL_COPY.printableFacilityName}</h1>
                   </div>
                   <p className="text-2xs text-surface-500 font-medium">
-                    Servicios de Cardiología y Diagnóstico Especializado<br />
-                    Av. Francisco de Miranda, Caracas • Tel: +58 212 345 6789
+                    {PATIENT_PORTAL_COPY.printableFacilitySubtitle}<br />
+                    {PATIENT_PORTAL_COPY.printableFacilityAddress}
                   </p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs font-bold bg-surface-100 border border-surface-300 px-3 py-1 rounded-full text-surface-700 font-mono">
                     {selectedRecipe.id}
                   </span>
-                  <p className="text-2xs text-surface-400 mt-2">Documento Digital Firmado</p>
+                  <p className="text-2xs text-surface-400 mt-2">{PATIENT_PORTAL_COPY.printableDocumentLabel}</p>
                 </div>
               </div>
 
@@ -1994,7 +2045,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 <div>
                   <p className="text-surface-500 font-bold uppercase text-[9px]">Paciente</p>
                   <p className="font-bold text-surface-850 text-sm mt-0.5">{profileName}</p>
-                  <p className="text-surface-500 mt-1">ID: #8849-SP • Correo: {patientEmail}</p>
+                  <p className="text-surface-500 mt-1">ID: {qrPatientIdentity} • Correo: {patientEmail}</p>
                 </div>
                 <div>
                   <p className="text-surface-500 font-bold uppercase text-[9px]">Fecha Prescripción</p>
@@ -2034,11 +2085,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 
                 <div className="flex flex-col items-center relative pr-4">
                   <div className="h-14 w-32 border-2 border-primary-700/60 rounded-lg flex flex-col items-center justify-center p-1 text-primary-750 rotate-3 font-serif select-none pointer-events-none bg-white/50 backdrop-blur-2xs">
-                    <span className="text-[7px] font-bold uppercase tracking-wider">Médico Autorizado</span>
-                    <span className="text-2xs font-extrabold uppercase my-0.5 tracking-tight font-sans">D.A. Ríos</span>
+                    <span className="text-[7px] font-bold uppercase tracking-wider">{PATIENT_PORTAL_COPY.printableSignatureLabel}</span>
+                    <span className="text-2xs font-extrabold uppercase my-0.5 tracking-tight font-sans">{buildDoctorSignatureLabel(selectedRecipe.doctor)}</span>
                     <span className="text-[7px] font-mono leading-none">REGISTRADO EN SISTEMA</span>
                   </div>
-                  <span className="text-[9px] text-surface-400 font-mono mt-1">Firma Digital Verificada</span>
+                  <span className="text-[9px] text-surface-400 font-mono mt-1">{PATIENT_PORTAL_COPY.printableSignatureFooter}</span>
                 </div>
               </div>
 
@@ -2046,7 +2097,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 <div className="flex flex-col gap-1 text-left">
                   <span className="text-[9px] font-bold uppercase text-surface-400">Código de Verificación Único</span>
                   <span className="text-2xs font-mono font-medium text-surface-600">
-                    SEC-TOKEN: {selectedRecipe.id}-A9812-7
+                    SEC-TOKEN: {selectedRecipe.id}-{qrSeedRight}
                   </span>
                 </div>
 
@@ -2079,7 +2130,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <rect x="96" y="0" width="1" height="20" fill="currentColor" />
                     <rect x="98" y="0" width="2" height="20" fill="currentColor" />
                   </svg>
-                  <span className="text-[7px] font-mono text-surface-400">Verificar autenticidad en portal.zenithclinica.com</span>
+                  <span className="text-[7px] font-mono text-surface-400">{PATIENT_PORTAL_COPY.verificationPortalLabel}</span>
                 </div>
               </div>
 
@@ -2131,7 +2182,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               
               <p className="font-bold text-white">2. Despacho y Recogida en Sucursales</p>
               <p>
-                Los medicamentos serán reservados en la sucursal seleccionada durante un plazo máximo de 7 días hábiles a partir de la confirmación digital. Transcurrido este periodo, la orden será automáticamente cancelada y los productos serán reincorporados al stock disponible.
+                {`Los medicamentos quedan reservados en la sucursal seleccionada durante un máximo de ${PATIENT_PORTAL_COPY.paymentHoldMinutes} minutos desde la emisión del recipe. Al vencer ese lapso, el sistema libera el stock y cualquier compra posterior vuelve a validar existencia real.`}
               </p>
 
               <p className="font-bold text-white">3. Validación Física de la Receta</p>

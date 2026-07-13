@@ -20,6 +20,7 @@ import {
 import { Order, Product } from '../types';
 import { formatCurrency } from '../lib/currency';
 import { downloadAuditReport } from '../lib/exportReport';
+import apiClient from '../lib/api';
 import { PageHeader, Button, Badge, StatCard, ListCard } from './ui';
 import {
   DASHBOARD_DOCTOR_RECORDS,
@@ -32,6 +33,21 @@ interface DashboardViewProps {
   products: Product[];
   onNavigate: (tab: string) => void;
   onSelectOrder: (order: Order) => void;
+}
+
+interface AdminRecipeRecord {
+  recipeId: string;
+  patientName?: string;
+  doctorName?: string;
+  clinicalStatus: string;
+  commercialStatus: string;
+  fulfillmentStatus: string;
+  recipeExpiresAt: string;
+  createdAt: string;
+  pharmacyDispatch?: {
+    branchName?: string;
+    dispatchStatus?: string;
+  } | null;
 }
 
 
@@ -60,6 +76,9 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
   const [exportProgress, setExportProgress] = useState(0);
   const [exportMsg, setExportMsg] = useState('');
   const [pendingExportType, setPendingExportType] = useState<'Excel' | 'CSV' | null>(null);
+  const [adminRecipes, setAdminRecipes] = useState<AdminRecipeRecord[]>([]);
+  const [recipesLoading, setRecipesLoading] = useState(false);
+  const [recipesError, setRecipesError] = useState('');
 
   // Calculations for static metrics
   const completedOrders = orders.filter(o => o.status === 'Entregado');
@@ -149,6 +168,40 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
 
     return () => clearTimeout(finishTimer);
   }, [isExporting, exportProgress, pendingExportType, orders, products]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAdminRecipes = async () => {
+      try {
+        setRecipesLoading(true);
+        setRecipesError('');
+        const response = await apiClient.get('/prescripciones');
+
+        if (!cancelled) {
+          setAdminRecipes(Array.isArray(response.data?.items) ? response.data.items : []);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setRecipesError(
+            error?.response?.data?.error ||
+            error?.response?.data?.details ||
+            'No se pudo cargar el monitor administrativo de recipes.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setRecipesLoading(false);
+        }
+      }
+    };
+
+    loadAdminRecipes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Database filtering
   const filteredDoctors = DASHBOARD_DOCTOR_RECORDS.filter(d => 
@@ -659,6 +712,53 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
 
         </div>
 
+      </div>
+
+      {/* Administrative recipe monitor */}
+      <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-4">
+        <div>
+          <h4 className="zenith-section-title">Monitor Administrativo de Recipes</h4>
+          <p className="text-xs text-surface-400">Estados clínicos, comerciales, caducidad y despacho automático a farmacia.</p>
+        </div>
+
+        {recipesError ? (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+            {recipesError}
+          </div>
+        ) : null}
+
+        {recipesLoading ? (
+          <div className="rounded-xl border border-surface-800 bg-surface-950/60 px-3 py-4 text-xs text-surface-400">
+            Consultando recipes emitidos...
+          </div>
+        ) : null}
+
+        <div className="divide-y divide-surface-850">
+          {!recipesLoading && adminRecipes.slice(0, 5).map((recipe) => (
+            <div key={recipe.recipeId} className="py-3 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div className="space-y-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-white">{recipe.patientName || 'Paciente'}</span>
+                  <span className="text-[10px] font-mono text-surface-500 bg-surface-950 border border-surface-850 px-1.5 py-0.2 rounded">{recipe.recipeId}</span>
+                </div>
+                <p className="text-[10px] text-surface-500 flex flex-wrap gap-2">
+                  <span>Médico: {recipe.doctorName || 'N/D'}</span>
+                  <span>•</span>
+                  <span>Caduca {new Date(recipe.recipeExpiresAt).toLocaleDateString('es-ES')}</span>
+                  <span>•</span>
+                  <span>{recipe.pharmacyDispatch?.branchName || 'Farmacia Central'}</span>
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-primary-500/10 text-primary-300 border border-primary-500/20">Clínico: {recipe.clinicalStatus}</span>
+                <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-secondary-500/10 text-secondary-300 border border-secondary-500/20">Comercial: {recipe.commercialStatus}</span>
+              </div>
+            </div>
+          ))}
+          {!recipesLoading && adminRecipes.length === 0 ? (
+            <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos en backend.</div>
+          ) : null}
+        </div>
       </div>
 
       {/* Recent Activity Table (2/3 width) & Stock Warning strip */}

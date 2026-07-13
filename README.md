@@ -1,4 +1,4 @@
-# Frontend SMP Farmahumana
+﻿# Frontend SMP Farmacia
 
 ## Ejecucion local
 Este frontend queda configurado para correr LOCAL contra el backend Express/Socket.IO.
@@ -10,7 +10,7 @@ Copiar `.env.example` a `.env.local`.
 NEXT_PUBLIC_API_URL=http://localhost:4000/api
 NEXT_PUBLIC_SOCKET_URL=http://localhost:4000
 NEXT_PUBLIC_CAPTCHA_PROVIDER=mock
-NEXT_PUBLIC_MOCK_CAPTCHA_TOKEN=FARMAHUMANA_OK
+NEXT_PUBLIC_MOCK_CAPTCHA_TOKEN=FARMACIA_OK
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 ```
 
@@ -44,3 +44,4 @@ El frontend queda en:
 - `C:\Proyecto IDS Frontend\src\components\PatientView.tsx`
 - `C:\Proyecto IDS Frontend\src\lib\api.ts`
 - `C:\Proyecto IDS Frontend\src\lib\socket.ts`
+

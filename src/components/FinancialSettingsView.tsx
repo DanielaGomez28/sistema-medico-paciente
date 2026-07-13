@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Percent, History, Save, ShieldAlert, CheckCircle, X } from 'lucide-react';
 import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
+import { APP_USER_DEFAULTS, FINANCIAL_AUDIT_LOG_SEEDS } from '../data/mockData';
 
 /**
  * Interfaz para representar un registro en el historial de auditoría financiera.
@@ -17,11 +18,6 @@ interface AuditLogEntry {
   newValue: string;
   status: 'Aplicado' | 'Revertido';
 }
-
-const DEFAULT_AUDIT_LOG: AuditLogEntry[] = [
-  { id: 'AUD-301', timestamp: '2026-05-15 09:30:12', adminName: 'Carlos Mendoza', action: 'Configuración Inicial de Tasa', previousValue: '0.0%', newValue: '8.0%', status: 'Aplicado' },
-  { id: 'AUD-302', timestamp: '2026-05-28 14:22:05', adminName: 'Carlos Mendoza', action: 'Actualización por Acuerdo Comercial', previousValue: '8.0%', newValue: '8.0%', status: 'Aplicado' },
-];
 
 /**
  * Vista de Configuración Financiera (Comisiones).
@@ -38,7 +34,7 @@ export default function FinancialSettingsView() {
   const [commissionValue, setCommissionValue] = useState<number>(8.0);
   const [minSaleThreshold, setMinSaleThreshold] = useState<number>(0.0);
 
-  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>(DEFAULT_AUDIT_LOG);
+  const [auditLog, setAuditLog] = useState<AuditLogEntry[]>(FINANCIAL_AUDIT_LOG_SEEDS);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
 
@@ -55,7 +51,7 @@ export default function FinancialSettingsView() {
     if (localLog) {
       setAuditLog(JSON.parse(localLog));
     } else {
-      localStorage.setItem('zenith_commission_audit_log', JSON.stringify(DEFAULT_AUDIT_LOG));
+      localStorage.setItem('zenith_commission_audit_log', JSON.stringify(FINANCIAL_AUDIT_LOG_SEEDS));
     }
   }, []);
 
@@ -74,7 +70,7 @@ export default function FinancialSettingsView() {
     const newEntry: AuditLogEntry = {
       id: nextAuditId,
       timestamp,
-      adminName: 'Carlos Mendoza',
+      adminName: APP_USER_DEFAULTS.adminName,
       action: 'Actualización Manual de Tasa de Comisión',
       previousValue: prevRateText,
       newValue: commissionType === 'percent' ? `${commissionValue.toFixed(1)}%` : `Bs. ${commissionValue.toFixed(2)}`,

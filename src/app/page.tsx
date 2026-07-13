@@ -19,7 +19,7 @@ import {
   loadProductsFromStorage,
   shouldRefreshProductsStorage,
 } from '../lib/productCatalog';
-import { INITIAL_ORDERS, INITIAL_PRODUCTS } from '../data/mockData';
+import { APP_USER_DEFAULTS, INITIAL_ORDERS, INITIAL_PRODUCTS } from '../data/mockData';
 import { Activity } from 'lucide-react';
 import LoginView from '../components/LoginView';
 import DoctorView from '../components/DoctorView';
@@ -305,7 +305,7 @@ export default function Home() {
 
   if (normalizedRole === 'medico') {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
-    const currentName = (currentUser as any).name || "Dr. Alejandro Ríos";
+    const currentName = (currentUser as any).name || APP_USER_DEFAULTS.doctorName;
     return (
       <DoctorView
         doctorName={currentName}
@@ -318,7 +318,7 @@ export default function Home() {
 
   if (normalizedRole === 'paciente') {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
-    const currentName = (currentUser as any).name || "Sofía Peralta";
+    const currentName = (currentUser as any).name || APP_USER_DEFAULTS.patientName;
     return (
       <PatientView
         patientName={currentName}
@@ -339,7 +339,7 @@ export default function Home() {
           setActiveTab={setActiveTab}
           pendingOrdersCount={pendingCount}
           onLogout={handleLogout}
-          adminName={currentUser?.name || "Administrador Sistema"}
+          adminName={currentUser?.name || APP_USER_DEFAULTS.adminName}
         />
       }
       // 📄 Dentro de tu src/app/page.tsx (Sección del Header del Administrador)
@@ -351,7 +351,7 @@ export default function Home() {
           return parts[0] ? parts[0][0].toUpperCase() : 'AD';
         };
 
-        const adminName = currentUser?.name || "Administrador Sistema";
+        const adminName = currentUser?.name || APP_USER_DEFAULTS.adminName;
         const adminInitials = getInitials(adminName);
 
         return (

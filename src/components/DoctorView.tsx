@@ -38,7 +38,6 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
   DOCTOR_LINKED_PATIENT_SEEDS,
   DOCTOR_PROFILE_DEFAULTS,
-  DOCTOR_RECIPE_LOG_SEEDS,
   type DoctorLinkedPatientSeed as LinkedPatient,
 } from '../data/mockData';
 
@@ -98,6 +97,30 @@ interface DoctorCommissionSummary {
   commissionRatePct: number;
   availableBalance: number;
   transactions: DoctorCommissionTransaction[];
+}
+
+interface DoctorRecipeLogItem {
+  id_producto: string;
+  nombre: string;
+  cantidad_prescrita?: number;
+  remaining_quantity?: number;
+}
+
+interface DoctorRecipeLogRecord {
+  recipeId: string;
+  patientId: string;
+  patientName?: string;
+  doctorName?: string;
+  clinicalStatus: string;
+  commercialStatus: string;
+  fulfillmentStatus: string;
+  recipeExpiresAt: string;
+  createdAt: string;
+  pharmacyDispatch?: {
+    branchName?: string;
+    dispatchStatus?: string;
+  } | null;
+  items: DoctorRecipeLogItem[];
 }
 
 /**
@@ -193,6 +216,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
   const [commissionSummary, setCommissionSummary] = useState<DoctorCommissionSummary | null>(null);
   const [commissionLoading, setCommissionLoading] = useState(false);
   const [commissionError, setCommissionError] = useState('');
+  const [doctorRecipeLog, setDoctorRecipeLog] = useState<DoctorRecipeLogRecord[]>([]);
+  const [recipeLogLoading, setRecipeLogLoading] = useState(false);
+  const [recipeLogError, setRecipeLogError] = useState('');
   
   useEffect(() => {
     const loadRate = () => {
@@ -482,6 +508,48 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
     };
   }, [DOCTOR_ID, activeTab]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    /**
+     * Carga desde backend la bitacora real de recipes emitidos por el medico.
+     * @returns {Promise<void>}
+     */
+    const loadDoctorRecipeLog = async () => {
+      if (activeTab !== 'commissions' || !DOCTOR_ID) {
+        return;
+      }
+
+      try {
+        setRecipeLogLoading(true);
+        setRecipeLogError('');
+        const response = await apiClient.get(`/prescripciones/medico/${encodeURIComponent(DOCTOR_ID)}`);
+
+        if (!cancelled) {
+          setDoctorRecipeLog(Array.isArray(response.data?.items) ? response.data.items : []);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setRecipeLogError(
+            error?.response?.data?.error ||
+            error?.response?.data?.details ||
+            'No se pudo cargar la bitácora real de recipes del backend.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setRecipeLogLoading(false);
+        }
+      }
+    };
+
+    loadDoctorRecipeLog();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [DOCTOR_ID, activeTab]);
+
   /**
    * Abre el formulario de detalle de un paciente existente.
    * @param {LinkedPatient} patient - El paciente a mostrar.
@@ -734,7 +802,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
       });
 
       const totalFinal = Number(response.data?.totals?.total_final || 0);
-      setSuccessMsg(`Receta ${response.data?.recipeId || ''} emitida correctamente para ${linkedPatient?.name}. Total estimado: ${formatCurrency(totalFinal)}.`);
+      setSuccessMsg(`Recipe ${response.data?.recipeId || ''} emitido para ${linkedPatient?.name}, despachado automáticamente a farmacia y vigente hasta ${new Date(response.data?.recipeExpiresAt || Date.now()).toLocaleDateString('es-ES')}. Total estimado: ${formatCurrency(totalFinal)}.`);
       setCart([]);
       setLinkedPatient(null);
       setActiveTab('agenda');
@@ -1602,35 +1670,48 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
                         <p className="text-xs text-surface-400">Historial de recetas digitales emitidas y firmadas electrónicamente.</p>
                       </div>
 
+                      {recipeLogError ? (
+                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                          {recipeLogError}
+                        </div>
+                      ) : null}
+
+                      {recipeLogLoading ? (
+                        <div className="rounded-xl border border-surface-800 bg-surface-950/60 px-3 py-4 text-xs text-surface-400">
+                          Consultando recipes emitidos y despachados a farmacia...
+                        </div>
+                      ) : null}
+
                       <div className="divide-y divide-surface-850">
-                        {DOCTOR_RECIPE_LOG_SEEDS.map((rec) => (
-                          <div key={rec.id} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
+                        {!recipeLogLoading && doctorRecipeLog.length === 0 ? (
+                          <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos por este médico.</div>
+                        ) : null}
+                        {doctorRecipeLog.map((rec) => (
+                          <div key={rec.recipeId} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
                             <div className="space-y-1 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-bold text-xs text-white">{rec.patientName}</span>
-                                <span className="text-[9px] font-mono text-surface-500 bg-surface-950 border border-surface-850 px-1.5 py-0.2 rounded">{rec.id}</span>
+                                <span className="font-bold text-xs text-white">{rec.patientName || rec.patientId}</span>
+                                <span className="text-[9px] font-mono text-surface-500 bg-surface-950 border border-surface-850 px-1.5 py-0.2 rounded">{rec.recipeId}</span>
                               </div>
                               <div className="flex flex-wrap gap-1 pt-0.5">
-                                {rec.medications.map((med, idx) => (
-                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{med}</span>
+                                {rec.items.map((item, idx) => (
+                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0})</span>
                                 ))}
                               </div>
-                              <p className="text-[10px] text-surface-500 flex items-center gap-1">
-                                <span>{rec.branch}</span>
+                              <p className="text-[10px] text-surface-500 flex items-center gap-1 flex-wrap">
+                                <span>{rec.pharmacyDispatch?.branchName || 'Farmacia Central'}</span>
                                 <span>•</span>
-                                <span>{rec.date}</span>
+                                <span>Emitido {new Date(rec.createdAt).toLocaleDateString('es-ES')}</span>
+                                <span>•</span>
+                                <span>Caduca {new Date(rec.recipeExpiresAt).toLocaleDateString('es-ES')}</span>
                               </p>
                             </div>
-                            <div className="shrink-0">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border ${
-                                rec.status === 'Retirado'
-                                  ? 'bg-secondary-500/10 text-secondary-400 border-secondary-500/20'
-                                  : rec.status === 'Confirmado'
-                                  ? 'bg-primary-500/10 text-primary-400 border-primary-500/20'
-                                  : 'bg-primary-500/10 text-primary-400 border-primary-500/20'
-                              }`}>
-                                {rec.status === 'Retirado' && <Check className="h-3 w-3" />}
-                                {rec.status}
+                            <div className="shrink-0 flex flex-col items-end gap-1">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border bg-primary-500/10 text-primary-300 border-primary-500/20">
+                                Clínico: {rec.clinicalStatus}
+                              </span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold border bg-secondary-500/10 text-secondary-300 border-secondary-500/20">
+                                Comercial: {rec.commercialStatus}
                               </span>
                             </div>
                           </div>

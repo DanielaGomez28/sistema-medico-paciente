@@ -205,7 +205,7 @@ export const INITIAL_ORDERS: Order[] = [
     history: [
       { status: 'Pendiente', timestamp: '2026-06-05T08:20:00Z', note: 'Esperando confirmación de transferencia bancaria.' },
       { status: 'En Preparación', timestamp: '2026-06-05T11:00:00Z', note: 'Transferencia verificada. Pedido en farmacia.' },
-      { status: 'Enviado', timestamp: '2026-06-06T15:30:00Z', note: 'Listo para retiro en sucursal Farmahumana.' }
+      { status: 'Enviado', timestamp: '2026-06-06T15:30:00Z', note: 'Listo para retiro en sucursal Farmacia.' }
     ]
   },
   {
@@ -375,9 +375,9 @@ export const DASHBOARD_PATIENT_RECORDS: DashboardPatientRecord[] = [
  * Coleccion de movimientos de inventario de prueba centralizada para el dashboard.
  */
 export const DASHBOARD_STOCK_MOVEMENTS: DashboardStockMovement[] = [
-  { id: 'MOV-104', medication: 'Ramipril 5mg', type: 'Salida', quantity: 30, date: '08 Jun, 2026', sourceDest: 'Farmahumana Caracas' },
-  { id: 'MOV-103', medication: 'Metformina 850mg', type: 'Salida', quantity: 60, date: '05 Jun, 2026', sourceDest: 'Cl?nica Humana Valencia' },
-  { id: 'MOV-102', medication: 'Atorvastatina 20mg', type: 'Salida', quantity: 30, date: '01 Jun, 2026', sourceDest: 'Farmahumana Maracaibo' },
+  { id: 'MOV-104', medication: 'Ramipril 5mg', type: 'Salida', quantity: 30, date: '08 Jun, 2026', sourceDest: 'Farmacia Caracas' },
+  { id: 'MOV-103', medication: 'Metformina 850mg', type: 'Salida', quantity: 60, date: '05 Jun, 2026', sourceDest: 'Farmacia Central Valencia' },
+  { id: 'MOV-102', medication: 'Atorvastatina 20mg', type: 'Salida', quantity: 30, date: '01 Jun, 2026', sourceDest: 'Farmacia Maracaibo' },
   { id: 'MOV-101', medication: 'Ibuprofeno 600mg', type: 'Entrada', quantity: 500, date: '29 May, 2026', sourceDest: 'Laboratorio Proveedor S.A.' },
   { id: 'MOV-100', medication: 'Amoxicilina 875mg', type: 'Entrada', quantity: 200, date: '25 May, 2026', sourceDest: 'Droguer?a M?dica S.A.' },
 ];
@@ -455,10 +455,10 @@ export const DOCTOR_COMMISSION_SEEDS: DoctorCommissionSeed[] = [
  * Bitacora de recipes de prueba centralizada para el portal medico.
  */
 export const DOCTOR_RECIPE_LOG_SEEDS: DoctorRecipeLogSeed[] = [
-  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sof?a Peralta', patientId: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmahumana Caracas', status: 'Confirmado' },
-  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'V-15234891', medications: ['Metformina 850mg'], branch: 'Cl?nica Humana Valencia', status: 'Retirado' },
-  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana G?mez Rom?n', patientId: 'V-22341567', medications: ['Atorvastatina 20mg'], branch: 'Farmahumana Maracaibo', status: 'Retirado' },
-  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodr?guez Silva', patientId: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Cl?nica Humana Caracas', status: 'Enviado' },
+  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sof?a Peralta', patientId: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmacia Caracas', status: 'Confirmado' },
+  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'V-15234891', medications: ['Metformina 850mg'], branch: 'Farmacia Central Valencia', status: 'Retirado' },
+  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana G?mez Rom?n', patientId: 'V-22341567', medications: ['Atorvastatina 20mg'], branch: 'Farmacia Maracaibo', status: 'Retirado' },
+  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodr?guez Silva', patientId: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Farmacia Central Caracas', status: 'Enviado' },
 ];
 
 
@@ -692,5 +692,155 @@ export const PATIENT_PROFILE_DEFAULTS: PatientProfileDefaultsSeed = {
  * Configuracion centralizada del flujo mock de pagos del portal paciente.
  */
 export const PATIENT_PAYMENT_SEED: PatientPaymentSeed = {
-  gatewayUrl: 'https://pagos.humana.example/checkout',
+  gatewayUrl: 'https://pagos.farmacia.local/checkout',
+};
+
+
+/**
+ * Valores por defecto del usuario autenticado cuando el backend no entrega un campo opcional.
+ */
+export interface AppUserDefaultsSeed {
+  adminName: string;
+  doctorName: string;
+  patientName: string;
+}
+
+/**
+ * Cuentas de prueba visibles en la pantalla de login.
+ */
+export interface LoginTestUserSeed {
+  email: string;
+  password: string;
+  role: 'superadmin' | 'medico' | 'paciente';
+  name: string;
+}
+
+/**
+ * Registro de auditoría financiera de prueba.
+ */
+export interface FinancialAuditLogSeed {
+  id: string;
+  timestamp: string;
+  adminName: string;
+  action: string;
+  previousValue: string;
+  newValue: string;
+  status: 'Aplicado' | 'Revertido';
+}
+
+/**
+ * Registro de médicos de prueba para el directorio administrativo.
+ */
+export interface DoctorsDirectorySeed {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  dni: string;
+  specialty: string;
+  licenseMpps: string;
+  colegioMedico: string;
+  status: 'Verificado' | 'Pendiente' | 'Inactivo';
+  registeredAt: string;
+}
+
+/**
+ * Textos y parámetros de presentación del portal paciente.
+ */
+export interface PatientPortalCopySeed {
+  fallbackDoctorName: string;
+  fallbackPatientName: string;
+  fallbackSpecialty: string;
+  doctorLicenseLabel: string;
+  printableFacilityName: string;
+  printableFacilitySubtitle: string;
+  printableFacilityAddress: string;
+  printableDocumentLabel: string;
+  printableSignatureLabel: string;
+  printableSignatureFooter: string;
+  verificationPortalLabel: string;
+  pharmacyBrandName: string;
+  pharmacyLegalName: string;
+  pharmacyLegalReference: string;
+  selectedBranchOptions: string[];
+  paymentHoldMinutes: number;
+  paymentHoldSeconds: number;
+}
+
+/**
+ * Valores por defecto del usuario autenticado.
+ */
+export const APP_USER_DEFAULTS: AppUserDefaultsSeed = {
+  adminName: 'Administrador Sistema',
+  doctorName: 'Dr. Roberto Gómez',
+  patientName: 'Ana Martínez',
+};
+
+/**
+ * Cuentas demo centralizadas del login.
+ */
+export const LOGIN_TEST_USERS: LoginTestUserSeed[] = [
+  { email: 'admin@sistema.local', password: 'admin123', role: 'superadmin', name: APP_USER_DEFAULTS.adminName },
+  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'medico', name: APP_USER_DEFAULTS.doctorName },
+  { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: APP_USER_DEFAULTS.patientName },
+];
+
+/**
+ * Etiquetas visibles para las cuentas demo del login.
+ */
+export const LOGIN_TEST_ACCOUNT_LABELS: Record<string, string> = {
+  superadmin: 'Admin',
+  medico: 'Médico',
+  paciente: 'Paciente',
+};
+
+/**
+ * Historial financiero inicial para el panel administrativo.
+ */
+export const FINANCIAL_AUDIT_LOG_SEEDS: FinancialAuditLogSeed[] = [
+  { id: 'AUD-301', timestamp: '2026-05-15 09:30:12', adminName: 'Carlos Mendoza', action: 'Configuración inicial de tasa', previousValue: '0.0%', newValue: '8.0%', status: 'Aplicado' },
+  { id: 'AUD-302', timestamp: '2026-05-28 14:22:05', adminName: 'Carlos Mendoza', action: 'Actualización por acuerdo comercial', previousValue: '8.0%', newValue: '8.0%', status: 'Aplicado' },
+];
+
+/**
+ * Directorio inicial de médicos para el panel administrativo.
+ */
+export const DOCTORS_DIRECTORY_SEEDS: DoctorsDirectorySeed[] = [
+  { id: 'MED-101', firstName: 'Alejandro', lastName: 'Ríos', email: 'ale.rios@zenith.com', dni: 'V-14.890.344', specialty: 'Cardiología', licenseMpps: 'MPPS 28.490', colegioMedico: 'CMDC-12.458', status: 'Verificado', registeredAt: '2026-05-10' },
+  { id: 'MED-102', firstName: 'Elena', lastName: 'Vargas', email: 'elena.vargas@zenith.com', dni: 'V-16.782.903', specialty: 'Medicina General', licenseMpps: 'MPPS 49.321', colegioMedico: 'CMV-08.912', status: 'Verificado', registeredAt: '2026-05-18' },
+  { id: 'MED-103', firstName: 'Juan', lastName: 'Pérez', email: 'juan.perez@zenith.com', dni: 'V-12.334.892', specialty: 'Pediatría', licenseMpps: 'MPPS 10.293', colegioMedico: 'CMC-05.441', status: 'Verificado', registeredAt: '2026-06-01' },
+];
+
+/**
+ * Especialidades disponibles en el formulario de alta de médicos.
+ */
+export const DOCTOR_SPECIALTY_OPTIONS: string[] = [
+  'Cardiología',
+  'Medicina General',
+  'Pediatría',
+  'Endocrinología',
+  'Dermatología',
+];
+
+/**
+ * Textos y ventanas temporales del portal paciente.
+ */
+export const PATIENT_PORTAL_COPY: PatientPortalCopySeed = {
+  fallbackDoctorName: APP_USER_DEFAULTS.doctorName,
+  fallbackPatientName: APP_USER_DEFAULTS.patientName,
+  fallbackSpecialty: 'Prescripción clínica',
+  doctorLicenseLabel: 'Validación digital de farmacia',
+  printableFacilityName: 'Clínica Zenith',
+  printableFacilitySubtitle: 'Servicios de Cardiología y Diagnóstico Especializado',
+  printableFacilityAddress: 'Av. Francisco de Miranda, Caracas • Tel: +58 212 345 6789',
+  printableDocumentLabel: 'Documento digital firmado',
+  printableSignatureLabel: 'Médico autorizado',
+  printableSignatureFooter: 'Firma digital verificada',
+  verificationPortalLabel: 'Verificar autenticidad en portal.zenithclinica.com',
+  pharmacyBrandName: 'Farmacia Central',
+  pharmacyLegalName: 'Farmacia Central C.A.',
+  pharmacyLegalReference: 'RIF: J-30123456-7 • Av. Francisco de Miranda, Caracas',
+  selectedBranchOptions: ['Farmacia Central', 'Farmacia Valencia'],
+  paymentHoldMinutes: 20,
+  paymentHoldSeconds: 20 * 60,
 };

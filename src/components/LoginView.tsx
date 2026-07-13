@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
+import { APP_USER_DEFAULTS, LOGIN_TEST_ACCOUNT_LABELS, LOGIN_TEST_USERS } from '../data/mockData';
 
 type LoginSuccessPayload = {
   role: string;
@@ -28,20 +29,6 @@ type LoginSuccessPayload = {
 interface LoginViewProps {
   onLoginSuccess: (user: LoginSuccessPayload) => void;
 }
-
-const MOCK_USERS = [
-  { email: 'admin@sistema.local', password: 'admin123', role: 'superadmin', name: 'Administrador Sistema' },
-  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'medico', name: 'Dr. Roberto Gomez' },
-  { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: 'Ana Martinez' },
-];
-
-const TEST_ACCOUNT_LABELS: Record<string, string> = {
-  superadmin: 'Admin',
-  medico: 'Medico',
-  paciente: 'Paciente',
-};
-
-
 
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
@@ -119,8 +106,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       if (response.ok) {
         const userRole = (data.role || data.rol || 'paciente').toLowerCase();
         const userEmail = data.email || data.correo || normalizedEmail;
-        const fallbackUser = MOCK_USERS.find((u) => u.email.toLowerCase() === userEmail.toLowerCase());
-        const userName = data.name || data.nombre || fallbackUser?.name || 'Usuario';
+        const fallbackUser = LOGIN_TEST_USERS.find((u) => u.email.toLowerCase() === userEmail.toLowerCase());
+        const userName = data.name || data.nombre || fallbackUser?.name || APP_USER_DEFAULTS.patientName;
         onLoginSuccess({
           role: userRole,
           email: userEmail,
@@ -236,10 +223,10 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
             {showTestAccounts && (
               <div id="login-test-accounts" className="mt-3 grid grid-cols-1 gap-2">
-                {MOCK_USERS.map((account) => (
+                {LOGIN_TEST_USERS.map((account) => (
                   <button key={account.email} type="button" onClick={() => handleQuickFill(account.email, account.password)} className="login-view__quick-fill flex flex-col gap-1 rounded-xl border px-3 py-2 text-left transition-all sm:flex-row sm:items-center sm:justify-between">
                     <span className="min-w-0 break-all">
-                      {TEST_ACCOUNT_LABELS[account.role] ?? account.role}: <code className="login-view__link font-mono">{account.email}</code>
+                      {LOGIN_TEST_ACCOUNT_LABELS[account.role] ?? account.role}: <code className="login-view__link font-mono">{account.email}</code>
                     </span>
                     <span className="login-view__mono shrink-0 font-mono text-2xs sm:text-right">Clave: {account.password}</span>
                   </button>

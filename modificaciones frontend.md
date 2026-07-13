@@ -390,3 +390,92 @@ La UI quedo alineada con el backend actual:
 - La proxima evolucion natural es reemplazar tambien bitacoras y modulos historicos por endpoints reales cuando existan en backend.
 - En pagos, el frontend ya no inventa una URL de pasarela: espera el dato real del backend para evitar un contrato mentiroso.
 - El portal medico ya refleja el ledger de comisiones liquidadas por el backend mock, no una simulacion local desacoplada.
+
+
+---
+
+## 5.9 Validacion documental cruzada con backend
+
+### Documentos base contrastados
+
+- `C:/Users/dvcab/Documents/Trabajos durante semestre/IDS/Esquema BDD IDS Tipos de datos.docx`
+- `C:/Users/dvcab/Documents/Trabajos durante semestre/IDS/IDS-Workshop #2.docx`
+
+### Que se hizo
+
+- Se dejo registrado en frontend el contraste funcional realizado entre el backend actual y los documentos academicos del proyecto.
+- Se verifico que las vistas intervenidas del frontend consuman un backend alineado con el flujo principal documentado:
+  - login por roles;
+  - vinculacion QR/consentimiento;
+  - recipes;
+  - reserva;
+  - pago;
+  - comisiones;
+  - seguimiento.
+- Se documento expresamente que la parte de IA del buscador fue descartada y que las decisiones tecnologicas originales del documento se toman hoy como referencia historica.
+
+### Logica aplicada
+
+El frontend no debia prometer capacidades que ya no forman parte del alcance real.
+
+Por eso queda consistente que:
+
+- el portal medico use un buscador conectado al backend actual sin venderlo como motor IA;
+- el portal paciente y medico se acoplen al contrato real del backend mock vigente;
+- la documentacion del frontend reconozca que el esquema BDD y el workshop sirven como marco funcional, no como fotografia final del codigo desplegado.
+
+### Resultado verificado
+
+#### Alineacion funcional visible
+
+- El frontend intervenido sigue representando correctamente el flujo base descrito en los documentos:
+  - acceso por rol;
+  - vinculacion medico-paciente;
+  - emision/consulta de recipes;
+  - preparacion comercial del checkout;
+  - seguimiento de estados y consumo.
+
+#### Ajustes de alcance asumidos
+
+- La asistencia IA del buscador ya no forma parte del contrato visible actual.
+- La decision documental de plataforma se conserva como antecedente, pero la integracion frontend-backend validada responde al estado real del proyecto actual.
+- El esquema BDD se asume referencial mientras no exista persistencia definitiva.
+
+### Resultado final
+
+Queda documentado que el frontend intervenido acompana correctamente al backend hoy validado contra los documentos base, sin sobreactuar capacidades descartadas y sin contradecir el alcance funcional vigente del proyecto.
+
+
+
+
+---
+
+## 5.10 Validacion final de frontend, limpieza y datos reales
+
+### Que se reviso
+
+- que las vistas medico/paciente rendericen datos provenientes de seeds centralizados o de la API mock disponible;
+- que no queden textos comerciales falsos incrustados en componentes clave;
+- que la vista de seguimiento del tratamiento use datos reales del tratamiento derivado del recipe comprado;
+- que las conexiones con reservas, checkout y comisiones sigan alineadas al backend.
+
+### Ajustes finales considerados validos
+
+- el frontend ya no inventa una URL de pasarela ni una orden paralela a la receta;
+- la identidad mostrada en checkout y comprobante se apoya en el mismo `recipeId` del backend;
+- la informacion de apoyo visual del portal paciente sale de `src/data/mockData.ts` o de respuestas API, no de hardcodes dispersos en el componente;
+- la vista de comisiones del medico consulta el ledger real del backend mock;
+- no se detectaron referencias visibles a la marca prohibida en el codigo fuente del frontend.
+
+### Dependencias
+
+Se reviso `package.json` del frontend contra sus imports actuales.
+
+Resultado:
+
+- **no se detectaron dependencias declaradas sin uso actual** dentro del alcance intervenido;
+- `axios`, `html5-qrcode`, `lucide-react` y `socket.io-client` siguen siendo dependencias activas.
+
+### Resultado verificado
+
+El frontend queda documentado y coherente con el backend mock actual, sin contratos visuales mentirosos en el flujo critico de receta, reserva, pago y seguimiento.

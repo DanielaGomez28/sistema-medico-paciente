@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react';
 import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
+import { DOCTORS_DIRECTORY_SEEDS, DOCTOR_SPECIALTY_OPTIONS } from '../data/mockData';
 
 /**
  * Interfaz de un perfil médico en el directorio y sistema de registro.
@@ -31,12 +32,6 @@ interface DoctorProfile {
   registeredAt: string;
 }
 
-const INITIAL_DOCTORS: DoctorProfile[] = [
-  { id: 'MED-101', firstName: 'Alejandro', lastName: 'Ríos', email: 'ale.rios@zenith.com', dni: 'V-14.890.344', specialty: 'Cardiología', licenseMpps: 'MPPS 28.490', colegioMedico: 'CMDC-12.458', status: 'Verificado', registeredAt: '2026-05-10' },
-  { id: 'MED-102', firstName: 'Elena', lastName: 'Vargas', email: 'elena.vargas@zenith.com', dni: 'V-16.782.903', specialty: 'Medicina General', licenseMpps: 'MPPS 49.321', colegioMedico: 'CMV-08.912', status: 'Verificado', registeredAt: '2026-05-18' },
-  { id: 'MED-103', firstName: 'Juan', lastName: 'Pérez', email: 'juan.perez@zenith.com', dni: 'V-12.334.892', specialty: 'Pediatría', licenseMpps: 'MPPS 10.293', colegioMedico: 'CMC-05.441', status: 'Verificado', registeredAt: '2026-06-01' },
-];
-
 /**
  * Vista de Gestión de Médicos (Panel Administrativo).
  * Permite dar de alta a nuevos profesionales de la salud afiliados al sistema.
@@ -46,7 +41,7 @@ const INITIAL_DOCTORS: DoctorProfile[] = [
  * @returns {JSX.Element}
  */
 export default function DoctorsManagerView() {
-  const [doctors, setDoctors] = useState<DoctorProfile[]>(INITIAL_DOCTORS);
+  const [doctors, setDoctors] = useState<DoctorProfile[]>(DOCTORS_DIRECTORY_SEEDS);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
 
@@ -70,7 +65,7 @@ export default function DoctorsManagerView() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setDoctors(JSON.parse(localDocs));
     } else {
-      localStorage.setItem('zenith_doctors_directory', JSON.stringify(INITIAL_DOCTORS));
+      localStorage.setItem('zenith_doctors_directory', JSON.stringify(DOCTORS_DIRECTORY_SEEDS));
     }
   }, []);
 
@@ -306,11 +301,9 @@ export default function DoctorsManagerView() {
               onChange={e => setSpecialty(e.target.value)}
               className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400"
             >
-              <option value="Cardiología">Cardiología</option>
-              <option value="Medicina General">Medicina General</option>
-              <option value="Pediatría">Pediatría</option>
-              <option value="Endocrinología">Endocrinología</option>
-              <option value="Dermatología">Dermatología</option>
+              {DOCTOR_SPECIALTY_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
             </select>
           </div>
         </div>
