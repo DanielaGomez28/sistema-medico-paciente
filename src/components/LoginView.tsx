@@ -15,8 +15,18 @@ import {
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
 
+type LoginSuccessPayload = {
+  role: string;
+  email: string;
+  name: string;
+  userId?: string | null;
+  doctorId?: string | null;
+  patientId?: string | null;
+  socketIdentity?: string | null;
+};
+
 interface LoginViewProps {
-  onLoginSuccess: (role: string, email: string, name?: string) => void;
+  onLoginSuccess: (user: LoginSuccessPayload) => void;
 }
 
 const MOCK_USERS = [
@@ -111,7 +121,15 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         const userEmail = data.email || data.correo || normalizedEmail;
         const fallbackUser = MOCK_USERS.find((u) => u.email.toLowerCase() === userEmail.toLowerCase());
         const userName = data.name || data.nombre || fallbackUser?.name || 'Usuario';
-        onLoginSuccess(userRole, userEmail, userName);
+        onLoginSuccess({
+          role: userRole,
+          email: userEmail,
+          name: userName,
+          userId: data.userId || null,
+          doctorId: data.doctorId || null,
+          patientId: data.patientId || null,
+          socketIdentity: data.socketIdentity || data.patientId || data.userId || userEmail,
+        });
       } else if (response.status === 401) {
         setPasswordError(data.error || 'La contrasena ingresada es incorrecta.');
       } else if (response.status === 404) {

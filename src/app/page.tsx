@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import { AppShell, AppHeader, AppHeaderAction } from '../components/layout';
 import DashboardView from '../components/DashboardView';
@@ -19,14 +19,24 @@ import {
   loadProductsFromStorage,
   shouldRefreshProductsStorage,
 } from '../lib/productCatalog';
-import { INITIAL_ORDERS, INITIAL_PRODUCTS, INITIAL_CUSTOMERS } from '../data/mockData';
-import { Bell, Activity } from 'lucide-react';
+import { INITIAL_ORDERS, INITIAL_PRODUCTS } from '../data/mockData';
+import { Activity } from 'lucide-react';
 import LoginView from '../components/LoginView';
 import DoctorView from '../components/DoctorView';
 import PatientView from '../components/PatientView';
 import CmsView from '../components/CmsView';
 import DoctorsManagerView from '../components/DoctorsManagerView';
 import FinancialSettingsView from '../components/FinancialSettingsView';
+
+type AuthenticatedUser = {
+  role: string;
+  email: string;
+  name: string;
+  userId?: string | null;
+  doctorId?: string | null;
+  patientId?: string | null;
+  socketIdentity?: string | null;
+};
 
 /**
  * Componente principal (Home) que actúa como controlador y orquestador (Entry Point).
@@ -41,7 +51,7 @@ import FinancialSettingsView from '../components/FinancialSettingsView';
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   // Master state del usuario con el nombre dinámico incluido
-const [currentUser, setCurrentUser] = useState<{ role: string; email: string; name: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
   
   // Master states
   const [orders, setOrders] = useState<Order[]>([]);
@@ -64,7 +74,11 @@ const [currentUser, setCurrentUser] = useState<{ role: string; email: string; na
         setCurrentUser({
           role: parsed.role || '',
           email: parsed.email || '',
-          name: parsed.name || parsed.nombre || 'Usuario' // 🚀 Forzamos que lea 'name' o 'nombre'
+          name: parsed.name || parsed.nombre || 'Usuario',
+          userId: parsed.userId || null,
+          doctorId: parsed.doctorId || null,
+          patientId: parsed.patientId || null,
+          socketIdentity: parsed.socketIdentity || null,
         });
       }
 
@@ -115,8 +129,7 @@ const [currentUser, setCurrentUser] = useState<{ role: string; email: string; na
   }, []);
 
   // Sync helpers
-  const handleLoginSuccess = (role: string, email: string, name?: string) => {
-    const user = { role, email, name: name || 'Usuario' }; // 🚀 Guardamos el nombre dinámico
+  const handleLoginSuccess = (user: AuthenticatedUser) => {
     setCurrentUser(user);
     localStorage.setItem('zenith_user', JSON.stringify(user));
   };
@@ -293,13 +306,28 @@ const [currentUser, setCurrentUser] = useState<{ role: string; email: string; na
   if (normalizedRole === 'medico') {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
     const currentName = (currentUser as any).name || "Dr. Alejandro Ríos";
-    return <DoctorView doctorName={currentName} doctorEmail={currentUser.email} onLogout={handleLogout} />;
+    return (
+      <DoctorView
+        doctorName={currentName}
+        doctorEmail={currentUser.email}
+        doctorId={currentUser.doctorId || currentUser.userId || currentUser.email}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   if (normalizedRole === 'paciente') {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
     const currentName = (currentUser as any).name || "Sofía Peralta";
-    return <PatientView patientName={currentName} patientEmail={currentUser.email} onLogout={handleLogout} />;
+    return (
+      <PatientView
+        patientName={currentName}
+        patientEmail={currentUser.email}
+        patientId={currentUser.patientId || null}
+        socketIdentity={currentUser.socketIdentity || currentUser.patientId || currentUser.email}
+        onLogout={handleLogout}
+      />
+    );
   }
 
   return (

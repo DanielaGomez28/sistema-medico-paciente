@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { Search, Filter, ArrowUpDown, Eye, Calendar, Plus } from 'lucide-react';
 import { Order } from '../types';
 import { formatCurrency } from '../lib/currency';

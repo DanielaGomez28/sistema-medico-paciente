@@ -8,14 +8,12 @@ import {
   PlusCircle, 
   LogOut, 
   ShieldAlert, 
-  Clock,
   Check,
   ChevronRight,
   ArrowLeft,
   QrCode,
   Camera,
   CheckCircle2,
-  UserPlus,
   AlertCircle,
   Activity,
   ShieldCheck,
@@ -27,7 +25,6 @@ import {
   TrendingUp,
   DollarSign,
   Award,
-  BarChart3,
   BadgeCheck,
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
@@ -38,42 +35,25 @@ import { Button, Modal, ModalBody, ListCard } from './ui';
 import apiClient from '../lib/api';
 import { socket } from '../lib/socket';
 import { Html5QrcodeScanner } from 'html5-qrcode';
+import {
+  DOCTOR_COMMISSION_SEEDS,
+  DOCTOR_LINKED_PATIENT_SEEDS,
+  DOCTOR_PROFILE_DEFAULTS,
+  DOCTOR_RECIPE_LOG_SEEDS,
+  type DoctorLinkedPatientSeed as LinkedPatient,
+} from '../data/mockData';
+
 
 /**
- * Propiedades de la vista de portal del Médico.
- * @interface DoctorViewProps
- * @property {string} doctorName - Nombre del doctor autenticado.
- * @property {string} doctorEmail - Correo del doctor.
- * @property {() => void} onLogout - Acción para cerrar sesión.
+ * Propiedades de la vista de portal del Medico.
  */
 interface DoctorViewProps {
   doctorName: string;
   doctorEmail: string;
+  doctorId: string;
   onLogout: () => void;
 }
 
-/**
- * Interfaz para representar un paciente vinculado al médico en el panel.
- * @interface LinkedPatient
- */
-interface LinkedPatient {
-  systemId?: string;
-  patientId: string;
-  name: string;
-  age: number;
-  gender: string;
-  bloodType: string;
-  phone: string;
-  condition: string;
-  allergies: string;
-  lastVisit: string;
-  medications: string[];
-}
-
-/**
- * Interfaz para representar un producto médico del catálogo o inventario de farmacia.
- * @interface MedicalProduct
- */
 interface MedicalProduct {
   id: string;
   name: string;
@@ -83,12 +63,22 @@ interface MedicalProduct {
   stock: number;
   description: string;
   source: 'farmacia' | 'externo';
+  benefitPct?: number;
 }
 
-/**
- * Interfaz para representar un medicamento agregado al carrito de prescripción médica (Récipe).
- * @interface CartItem
- */
+interface PrescriptionCatalogApiItem {
+  id_producto: string;
+  nombre: string;
+  principio_activo: string;
+  presentacion: string;
+  laboratorio: string;
+  sku: string;
+  stock: number;
+  precio_base: number;
+  beneficio_pct: number;
+  precio_con_beneficio: number;
+}
+
 interface CartItem {
   product: MedicalProduct;
   posology: string;
@@ -96,138 +86,47 @@ interface CartItem {
 }
 
 /**
- * Catálogo base simulado de productos médicos y medicinas.
- * @constant {MedicalProduct[]}
+ * Detecta si el navegador actual pertenece a un dispositivo movil apto para escaneo.
  */
-const FARMA_HUMANA_CATALOG: MedicalProduct[] = [
-  { id: 'med-1', name: 'Ramipril 5mg', sku: 'RX-RAM-001', category: 'Cardiovascular', price: 12.50, stock: 120, description: 'Indicado para el tratamiento de la hipertensión arterial y reducción de morbilidad cardiovascular.', source: 'farmacia' },
-  { id: 'med-2', name: 'Aspirina 100mg', sku: 'RX-ASP-002', category: 'Analgesia / Antiagregante', price: 6.00, stock: 450, description: 'Antiagregante plaquetario para la prevención cardiovascular.', source: 'farmacia' },
-  { id: 'med-3', name: 'Amoxicilina 875mg + Ácido Clavulánico 125mg', sku: 'RX-AMO-003', category: 'Antibiótico', price: 18.20, stock: 80, description: 'Tratamiento de infecciones bacterianas del tracto respiratorio u oído.', source: 'farmacia' },
-  { id: 'med-4', name: 'Metformina 850mg', sku: 'RX-MET-004', category: 'Antidiabético', price: 9.80, stock: 310, description: 'Tratamiento de la diabetes mellitus tipo 2 en adultos.', source: 'farmacia' },
-  { id: 'med-5', name: 'Atorvastatina 20mg', sku: 'RX-ATO-005', category: 'Hipolipemiante', price: 15.40, stock: 150, description: 'Tratamiento para la reducción del colesterol total y LDL elevado.', source: 'farmacia' },
-  { id: 'med-6', name: 'Ibuprofeno 600mg', sku: 'RX-IBU-006', category: 'Antiinflamatorio', price: 4.50, stock: 500, description: 'Alivio del dolor moderado y reducción de procesos febriles o inflamatorios.', source: 'farmacia' }
-];
+const MOBILE_SCANNER_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 
 /**
- * Productos filtrados que pertenecen exclusivamente al inventario de farmacia.
- * @constant {MedicalProduct[]}
+ * Normaliza un identificador de paciente para comparaciones seguras en UI.
+ * @param {string} value - Valor ingresado por el usuario.
+ * @returns {string} Identificador normalizado.
  */
-const PHARMACY_PRODUCTS = FARMA_HUMANA_CATALOG.filter((product) => product.source === 'farmacia');
-
-const MOBILE_SCANNER_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
 const normalizePatientLookup = (value: string) => value.toUpperCase().replace(/[^A-Z0-9-]/g, '').trim();
+
+/**
+ * Detecta patrones sospechosos en cadenas antes de enviarlas al backend.
+ * @param {string} value - Valor a inspeccionar.
+ * @returns {boolean} `true` si el valor parece malicioso.
+ */
 const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
 
 /**
- * Interfaz para representar el registro de una comisión médica.
- * @interface CommissionEntry
+ * Normaliza el texto de busqueda de medicamentos antes de consultar el catalogo.
+ * @param {string} value - Texto ingresado por el medico.
+ * @returns {string} Texto listo para consulta.
  */
-interface CommissionEntry {
-  id: string;
-  date: string;
-  patientName: string;
-  medication: string;
-  saleAmount: number;
-  commissionRate: number;
-  commissionAmount: number;
-  status: 'Acreditado' | 'Pendiente';
-}
+const normalizePrescriptionSearch = (value: string) => value.trim();
 
 /**
- * Interfaz para representar un registro en la bitácora de récipes firmados.
- * @interface RecipeLogEntry
+ * Adapta un item del catalogo backend al modelo visual del portal medico.
+ * @param {PrescriptionCatalogApiItem} item - Item devuelto por el backend.
+ * @returns {MedicalProduct} Producto adaptado para la UI.
  */
-interface RecipeLogEntry {
-  id: string;
-  date: string;
-  patientName: string;
-  patientId: string;
-  medications: string[];
-  branch: string;
-  status: 'Enviado' | 'Confirmado' | 'Retirado';
-}
-
-/**
- * Datos simulados de comisiones generadas por el médico.
- * @constant {CommissionEntry[]}
- */
-const MOCK_COMMISSIONS: CommissionEntry[] = [
-  { id: 'COM-2026-041', date: '08 Jun, 2026', patientName: 'Sofía Peralta', medication: 'Ramipril 5mg + Aspirina 100mg', saleAmount: 18.50, commissionRate: 8, commissionAmount: 1.48, status: 'Acreditado' },
-  { id: 'COM-2026-038', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', medication: 'Metformina 850mg', saleAmount: 9.80, commissionRate: 8, commissionAmount: 0.78, status: 'Acreditado' },
-  { id: 'COM-2026-031', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', medication: 'Atorvastatina 20mg', saleAmount: 15.40, commissionRate: 8, commissionAmount: 1.23, status: 'Acreditado' },
-  { id: 'COM-2026-029', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', medication: 'Ibuprofeno 600mg', saleAmount: 4.50, commissionRate: 8, commissionAmount: 0.36, status: 'Pendiente' },
-  { id: 'COM-2026-022', date: '20 May, 2026', patientName: 'Sofía Peralta', medication: 'Aspirina 100mg', saleAmount: 6.00, commissionRate: 8, commissionAmount: 0.48, status: 'Acreditado' },
-];
-
-/**
- * Historial simulado de récipes médicos emitidos y firmados digitalmente.
- * @constant {RecipeLogEntry[]}
- */
-const MOCK_RECIPE_LOG: RecipeLogEntry[] = [
-  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientId: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmahumana Caracas', status: 'Confirmado' },
-  { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'V-15234891', medications: ['Metformina 850mg'], branch: 'Clínica Humana Valencia', status: 'Retirado' },
-  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientId: 'V-22341567', medications: ['Atorvastatina 20mg'], branch: 'Farmahumana Maracaibo', status: 'Retirado' },
-  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientId: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Clínica Humana Caracas', status: 'Enviado' },
-];
-
-/**
- * Lista inicial simulada de pacientes vinculados al médico.
- * @constant {LinkedPatient[]}
- */
-const INITIAL_PATIENTS: LinkedPatient[] = [
-  {
-    systemId: 'patient_sofia_peralta',
-    patientId: 'V-28450123',
-    name: 'Sofía Peralta',
-    age: 28,
-    gender: 'Femenino',
-    bloodType: 'O+',
-    phone: '+58 412 600 1234',
-    condition: 'Hipertensión Arterial Leve',
-    allergies: 'Penicilina',
-    lastVisit: '08 Jun, 2026',
-    medications: ['Ramipril 5mg', 'Aspirina 100mg'],
-  },
-  {
-    systemId: 'patient_carlos_mendoza',
-    patientId: 'V-15234891',
-    name: 'Carlos Mendoza',
-    age: 45,
-    gender: 'Masculino',
-    bloodType: 'A-',
-    phone: '+58 424 699 9876',
-    condition: 'Diabetes Tipo 2 (Controlada)',
-    allergies: 'Ninguna conocida',
-    lastVisit: '01 Jun, 2026',
-    medications: ['Metformina 850mg'],
-  },
-  {
-    systemId: 'patient_ana_martinez',
-    patientId: 'V-22341567',
-    name: 'Ana Gómez Román',
-    age: 34,
-    gender: 'Femenino',
-    bloodType: 'B+',
-    phone: '+58 414 611 2233',
-    condition: 'Ninguna (Chequeo anual)',
-    allergies: 'Ninguna conocida',
-    lastVisit: '15 May, 2026',
-    medications: [],
-  },
-  {
-    systemId: 'patient_luis_rodriguez',
-    patientId: 'V-18765432',
-    name: 'Luis Rodríguez Silva',
-    age: 52,
-    gender: 'Masculino',
-    bloodType: 'O-',
-    phone: '+58 416 622 3344',
-    condition: 'Hipertensión controlada',
-    allergies: 'Sulfonamidas',
-    lastVisit: '28 May, 2026',
-    medications: ['Ibuprofeno 600mg'],
-  },
-];
+const mapCatalogItemToProduct = (item: PrescriptionCatalogApiItem): MedicalProduct => ({
+  id: item.id_producto,
+  name: item.nombre,
+  sku: item.sku,
+  category: item.principio_activo || item.laboratorio || 'Medicamento',
+  price: Number(item.precio_con_beneficio ?? item.precio_base ?? 0),
+  stock: Number(item.stock ?? 0),
+  description: [item.presentacion, item.laboratorio].filter(Boolean).join(' | '),
+  source: 'farmacia',
+  benefitPct: Number(item.beneficio_pct ?? 0),
+});
 
 /**
  * Función auxiliar para generar la estructura de un paciente nuevo vacío.
@@ -246,31 +145,30 @@ const INITIAL_PATIENTS: LinkedPatient[] = [
  * @param {DoctorViewProps} props - Propiedades de la vista.
  * @returns {JSX.Element}
  */
-export default function DoctorView({ doctorName, doctorEmail, onLogout }: DoctorViewProps) {
+export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout }: DoctorViewProps) {
   // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'
   const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'>('agenda');
 
   // Estados para manejar el Escáner y el Bloqueo MCA (Módulo 1 / Sprint #2)
   const [isScanning, setIsScanning] = useState<boolean>(false);
   const [waitingConsent, setWaitingConsent] = useState<boolean>(false);
-  const [patientProfile, setPatientProfile] = useState<any>(null); // Aquí guardarás el JSON Sanitario
 
   // Simulamos el ID del médico (para el Handshake)
-  const DOCTOR_ID = 'MD-99'; 
-  const DOCTOR_NAME = 'Dr. Alejandro Ríos';
+  const DOCTOR_ID = doctorId || doctorEmail;
+  const DOCTOR_NAME = doctorName || doctorEmail;
 
   // M.4 Profile & Banking state
-  const [bankHolder, setBankHolder] = useState('Dr. Alejandro Ríos García');
-  const [bankHolderId, setBankHolderId] = useState('V-14.890.344');
-  const [bankEntity, setBankEntity] = useState('Banesco Banco Universal');
-  const [bankAccountType, setBankAccountType] = useState<'Corriente' | 'Ahorro'>('Corriente');
-  const [bankAccountNumber, setBankAccountNumber] = useState('0134-0100-01-0101234567');
-  const [bankMobilePhone, setBankMobilePhone] = useState('0414-1234567');
-  const [profilePhone, setProfilePhone] = useState('0212-9103348');
-  const [profileRegistryId] = useState('DR-14890344');
-  const [consultorioAddress, setConsultorioAddress] = useState('Av. Las Delicias, Centro Médico Docente La Trinidad, Piso 3, Consultorio 12');
-  const [consultorioState, setConsultorioState] = useState('Miranda');
-  const [consultorioMunicipio, setConsultorioMunicipio] = useState('Baruta');
+  const [bankHolder, setBankHolder] = useState(doctorName || doctorEmail);
+  const [bankHolderId, setBankHolderId] = useState(DOCTOR_PROFILE_DEFAULTS.bankHolderId);
+  const [bankEntity, setBankEntity] = useState(DOCTOR_PROFILE_DEFAULTS.bankEntity);
+  const [bankAccountType, setBankAccountType] = useState<'Corriente' | 'Ahorro'>(DOCTOR_PROFILE_DEFAULTS.bankAccountType);
+  const [bankAccountNumber, setBankAccountNumber] = useState(DOCTOR_PROFILE_DEFAULTS.bankAccountNumber);
+  const [bankMobilePhone, setBankMobilePhone] = useState(DOCTOR_PROFILE_DEFAULTS.bankMobilePhone);
+  const [profilePhone, setProfilePhone] = useState(DOCTOR_PROFILE_DEFAULTS.profilePhone);
+  const [profileRegistryId] = useState(DOCTOR_PROFILE_DEFAULTS.profileRegistryId);
+  const [consultorioAddress, setConsultorioAddress] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioAddress);
+  const [consultorioState, setConsultorioState] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioState);
+  const [consultorioMunicipio, setConsultorioMunicipio] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioMunicipio);
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
 
   // QR credential removed for doctor portal per requested change
@@ -290,7 +188,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     return () => window.removeEventListener('zenith_commission_update', loadRate);
   }, []);
 
-  const [patients, setPatients] = useState<LinkedPatient[]>(INITIAL_PATIENTS);
+  const [patients, setPatients] = useState<LinkedPatient[]>(DOCTOR_LINKED_PATIENT_SEEDS);
   const [patientViewMode, setPatientViewMode] = useState<'list' | 'detail'>('list');
   const [patientListSearch, setPatientListSearch] = useState('');
   const [patientForm, setPatientForm] = useState<LinkedPatient>({
@@ -424,7 +322,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
           // Fallo por QR Caducado o Nonce duplicado
           setScannerErrorMsg(error.response?.data?.error || 'Error de seguridad: QR caducado o invalido.');
         }
-      }, (err) => {
+      }, () => {
         // Errores silenciosos mientras busca el QR frame por frame (se ignoran)
       });
 
@@ -450,6 +348,75 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
   const [successMsg, setSuccessMsg] = useState('');
+  const [inventoryPreview, setInventoryPreview] = useState<MedicalProduct[]>([]);
+  const [catalogResults, setCatalogResults] = useState<MedicalProduct[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCatalog = async () => {
+      try {
+        const response = await apiClient.get('/prescripciones/catalogo');
+        const items = Array.isArray(response.data?.items)
+          ? response.data.items.map(mapCatalogItemToProduct)
+          : [];
+
+        if (!cancelled) {
+          setInventoryPreview(items);
+          setCatalogResults(items);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setCatalogResults([]);
+        }
+      }
+    };
+
+    loadCatalog();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const runSearch = async () => {
+      const normalizedQuery = normalizePrescriptionSearch(searchQuery);
+
+      if (!normalizedQuery) {
+        setCatalogResults(inventoryPreview);
+        return;
+      }
+
+      try {
+        const response = await apiClient.post('/prescripciones/buscar', { searchTerm: normalizedQuery });
+        const items = Array.isArray(response.data?.items)
+          ? response.data.items.map(mapCatalogItemToProduct)
+          : [];
+
+        if (!cancelled) {
+          setCatalogResults(items);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setCatalogResults([]);
+        }
+      } finally {
+        if (!cancelled) {
+        }
+      }
+    };
+
+    if (activeTab === 'prescription') {
+      runSearch();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, inventoryPreview, searchQuery]);
 
   /**
    * Abre el formulario de detalle de un paciente existente.
@@ -633,7 +600,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
     if (cart.some(item => item.product.id === product.id)) {
       return;
     }
-    setCart([...cart, { product, posology: '', discount: 10 }]);
+    setCart([...cart, { product, posology: '', discount: product.benefitPct ?? 0 }]);
   };
 
   /**
@@ -671,35 +638,53 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
    * Maneja el registro y envío de la prescripción médica.
    * @param {React.FormEvent} e - Evento de formulario.
    */
-  const handleRegisterPrescription = (e: React.FormEvent) => {
+  const handleRegisterPrescription = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0) {
-      alert('Debe agregar al menos un medicamento a la prescripción.');
+      alert('Debe agregar al menos un medicamento a la prescripcion.');
       return;
     }
-    
-    const missingPosology = cart.some(item => !item.posology);
+
+    if (!linkedPatient?.systemId && !linkedPatient?.patientId) {
+      alert('Debe seleccionar primero un paciente vinculado.');
+      return;
+    }
+
+    const missingPosology = cart.some(item => !item.posology.trim());
     if (missingPosology) {
-      alert('Por favor configure las instrucciones de posología para todos los medicamentos.');
+      alert('Por favor configure las instrucciones de posologia para todos los medicamentos.');
       return;
     }
 
-    setSuccessMsg(`¡El récipe clínico con ${cart.length} medicamentos y propuestas comerciales se ha registrado y enviado correctamente al portal de ${linkedPatient?.name}!`);
-    setCart([]);
-    setLinkedPatient(null);
-    setActiveTab('agenda');
+    try {
+        const response = await apiClient.post('/prescripciones/emitir', {
+        doctorId: DOCTOR_ID,
+        patientId: linkedPatient.systemId || linkedPatient.patientId,
+        observaciones: `Receta emitida por ${DOCTOR_NAME}`,
+        items: cart.map((item) => ({
+          id_producto: item.product.id,
+          dosis: item.posology.trim(),
+          cantidad: 1,
+          aplicar_beneficio: Number(item.discount || 0) > 0,
+        })),
+      });
 
-    setTimeout(() => {
-      setSuccessMsg('');
-    }, 2000);
+      const totalFinal = Number(response.data?.totals?.total_final || 0);
+      setSuccessMsg(`Receta ${response.data?.recipeId || ''} emitida correctamente para ${linkedPatient?.name}. Total estimado: ${formatCurrency(totalFinal)}.`);
+      setCart([]);
+      setLinkedPatient(null);
+      setActiveTab('agenda');
+
+      setTimeout(() => {
+        setSuccessMsg('');
+      }, 3000);
+    } catch (error: any) {
+      alert(error?.response?.data?.error || error?.response?.data?.details || 'No se pudo emitir la receta.');
+    } finally {
+    }
   };
 
-  // Filter pharmaceutical products from pharmacy inventory only
-  const filteredCatalog = PHARMACY_PRODUCTS.filter(prod => 
-    prod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    prod.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    prod.sku.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredCatalog = catalogResults;
 
   return (
     <>
@@ -846,7 +831,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                     <p className="text-xs text-surface-400">Listado de productos internos de farmacia disponibles para la agenda clínica del día.</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {PHARMACY_PRODUCTS.slice(0, 4).map((prod) => (
+                    {inventoryPreview.slice(0, 4).map((prod) => (
                       <div key={prod.id} className="overflow-hidden bg-surface-950/50 border border-surface-850 rounded-2xl p-4 space-y-3">
                         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                           <div className="min-w-0 flex-1">
@@ -1362,7 +1347,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                         {cart.length > 0 ? (
                           <form onSubmit={handleRegisterPrescription} className="space-y-5">
                             <div className="space-y-4 divide-y divide-surface-850">
-                              {cart.map((item, index) => (
+                              {cart.map((item) => (
                                 <div key={item.product.id} className={`pt-4 first:pt-0 space-y-3`}>
                                   
                                   {/* Item Header */}
@@ -1475,7 +1460,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
 
             {/* VIEW TAB 4: COMMISSIONS & CLINICAL HISTORY (Pantalla M.3) */}
             {activeTab === 'commissions' && (() => {
-              const dynamicCommissions = MOCK_COMMISSIONS.map(c => {
+              const dynamicCommissions = DOCTOR_COMMISSION_SEEDS.map(c => {
                 const computedAmt = c.saleAmount * (commissionRate / 100);
                 return {
                   ...c,
@@ -1549,7 +1534,7 @@ export default function DoctorView({ doctorName, doctorEmail, onLogout }: Doctor
                       </div>
 
                       <div className="divide-y divide-surface-850">
-                        {MOCK_RECIPE_LOG.map((rec) => (
+                        {DOCTOR_RECIPE_LOG_SEEDS.map((rec) => (
                           <div key={rec.id} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
                             <div className="space-y-1 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { QrCode, RefreshCw } from 'lucide-react';
 import { useShell } from './layout';
 import { Button, Modal, ModalBody } from './ui';

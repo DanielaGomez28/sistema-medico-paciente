@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   DollarSign, 
   ShoppingBag, 
@@ -21,15 +21,12 @@ import { Order, Product } from '../types';
 import { formatCurrency } from '../lib/currency';
 import { downloadAuditReport } from '../lib/exportReport';
 import { PageHeader, Button, Badge, StatCard, ListCard } from './ui';
+import {
+  DASHBOARD_DOCTOR_RECORDS,
+  DASHBOARD_PATIENT_RECORDS,
+  DASHBOARD_STOCK_MOVEMENTS,
+} from '../data/mockData';
 
-/**
- * Propiedades de la vista del Dashboard (Panel de Control Principal).
- * @interface DashboardViewProps
- * @property {Order[]} orders - Lista global de órdenes/pedidos del sistema.
- * @property {Product[]} products - Lista global de productos/inventario.
- * @property {(tab: string) => void} onNavigate - Función para navegar hacia otras pestañas principales.
- * @property {(order: Order) => void} onSelectOrder - Acción para abrir el detalle de una orden desde "Últimos Pedidos".
- */
 interface DashboardViewProps {
   orders: Order[];
   products: Product[];
@@ -37,69 +34,6 @@ interface DashboardViewProps {
   onSelectOrder: (order: Order) => void;
 }
 
-/**
- * Modelo interno para representar registros médicos en la tabla mock.
- * @interface DoctorRecord
- */
-interface DoctorRecord {
-  id: string;
-  name: string;
-  specialty: string;
-  license: string;
-  recipesCount: number;
-  commissionsEarned: number;
-  status: 'Activo' | 'Inactivo';
-}
-
-/**
- * Modelo interno para representar pacientes en la tabla mock.
- * @interface PatientRecord
- */
-interface PatientRecord {
-  id: string;
-  name: string;
-  age: number;
-  condition: string;
-  lastRecipeDate: string;
-  withdrawalStatus: string;
-}
-
-/**
- * Modelo interno para representar movimientos de inventario en la tabla mock.
- * @interface StockMovement
- */
-interface StockMovement {
-  id: string;
-  medication: string;
-  type: 'Entrada' | 'Salida';
-  quantity: number;
-  date: string;
-  sourceDest: string;
-}
-
-const MOCK_DOCTORS: DoctorRecord[] = [
-  { id: 'MED-101', name: 'Dr. Alejandro Ríos', specialty: 'Cardiología', license: 'MPPS 28.490 • CMDC-12.458', recipesCount: 120, commissionsEarned: 1450.80, status: 'Activo' },
-  { id: 'MED-102', name: 'Dra. Elena Vargas', specialty: 'Medicina General', license: 'MPPS 49.321 • CMV-08.912', recipesCount: 85, commissionsEarned: 980.50, status: 'Activo' },
-  { id: 'MED-103', name: 'Dr. Juan Pérez', specialty: 'Pediatría', license: 'MPPS 10.293 • CMC-05.441', recipesCount: 42, commissionsEarned: 320.00, status: 'Activo' },
-  { id: 'MED-104', name: 'Dra. Patricia Gómez', specialty: 'Endocrinología', license: 'MPPS 22.810 • CMDC-09.104', recipesCount: 68, commissionsEarned: 740.20, status: 'Activo' },
-  { id: 'MED-105', name: 'Dr. Roberto Sánchez', specialty: 'Dermatología', license: 'MPPS 19.340 • CMM-03.287', recipesCount: 15, commissionsEarned: 110.00, status: 'Inactivo' }
-];
-
-const MOCK_PATIENTS: PatientRecord[] = [
-  { id: 'PX-992-8849', name: 'Sofía Peralta', age: 28, condition: 'Hipertensión Arterial Leve', lastRecipeDate: '08 Jun, 2026', withdrawalStatus: 'Listo para retirar' },
-  { id: 'PX-992-1029', name: 'Carlos Mendoza', age: 45, condition: 'Diabetes Tipo 2 (Controlada)', lastRecipeDate: '05 Jun, 2026', withdrawalStatus: 'Retirado' },
-  { id: 'PX-992-0344', name: 'Ana Gómez Román', age: 34, condition: 'Ninguna (Chequeo anual)', lastRecipeDate: '01 Jun, 2026', withdrawalStatus: 'Retirado' },
-  { id: 'PX-992-0811', name: 'Luis Rodríguez Silva', age: 52, condition: 'Chequeo de Presión Arterial', lastRecipeDate: '28 May, 2026', withdrawalStatus: 'Pendiente por retirar' },
-  { id: 'PX-992-4112', name: 'David Ortiz Alarcón', age: 39, condition: 'Hipotiroidismo Crónico', lastRecipeDate: '15 May, 2026', withdrawalStatus: 'Retirado' }
-];
-
-const MOCK_MOVEMENTS: StockMovement[] = [
-  { id: 'MOV-104', medication: 'Ramipril 5mg', type: 'Salida', quantity: 30, date: '08 Jun, 2026', sourceDest: 'Farmahumana Caracas' },
-  { id: 'MOV-103', medication: 'Metformina 850mg', type: 'Salida', quantity: 60, date: '05 Jun, 2026', sourceDest: 'Clínica Humana Valencia' },
-  { id: 'MOV-102', medication: 'Atorvastatina 20mg', type: 'Salida', quantity: 30, date: '01 Jun, 2026', sourceDest: 'Farmahumana Maracaibo' },
-  { id: 'MOV-101', medication: 'Ibuprofeno 600mg', type: 'Entrada', quantity: 500, date: '29 May, 2026', sourceDest: 'Laboratorio Proveedor S.A.' },
-  { id: 'MOV-100', medication: 'Amoxicilina 875mg', type: 'Entrada', quantity: 200, date: '25 May, 2026', sourceDest: 'Droguería Médica S.A.' }
-];
 
 /**
  * Vista de administración general ("Dashboard").
@@ -217,19 +151,19 @@ export default function DashboardView({ orders, products, onNavigate, onSelectOr
   }, [isExporting, exportProgress, pendingExportType, orders, products]);
 
   // Database filtering
-  const filteredDoctors = MOCK_DOCTORS.filter(d => 
+  const filteredDoctors = DASHBOARD_DOCTOR_RECORDS.filter(d => 
     d.name.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
     d.specialty.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
     d.license.toLowerCase().includes(dbSearchQuery.toLowerCase())
   );
 
-  const filteredPatients = MOCK_PATIENTS.filter(p => 
+  const filteredPatients = DASHBOARD_PATIENT_RECORDS.filter(p => 
     p.name.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
     p.condition.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
     p.withdrawalStatus.toLowerCase().includes(dbSearchQuery.toLowerCase())
   );
 
-  const filteredMovements = MOCK_MOVEMENTS.filter(m => 
+  const filteredMovements = DASHBOARD_STOCK_MOVEMENTS.filter(m => 
     m.medication.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
     m.sourceDest.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
     m.type.toLowerCase().includes(dbSearchQuery.toLowerCase())

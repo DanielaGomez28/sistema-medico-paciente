@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { X, Search, Plus, Minus, User, PlusCircle, CreditCard, MapPin, Trash2, ShoppingBag } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { X, Search, Plus, Minus, PlusCircle, CreditCard, MapPin, Trash2, ShoppingBag } from 'lucide-react';
 import { Product, Customer, Order, OrderItem } from '../types';
 import { formatCustomerAddress } from '../lib/customerLocation';
 import VenezuelanStateSelect from './VenezuelanStateSelect';

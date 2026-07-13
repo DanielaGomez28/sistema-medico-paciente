@@ -1,15 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   FileText, 
   Calendar, 
   Activity, 
-  Download, 
-  MapPin, 
-  Phone, 
   User,
-  Heart,
   Clock,
   CheckCircle2,
   PackageCheck,
@@ -23,7 +19,6 @@ import {
   ShieldCheck,
   Building,
   Info,
-  DollarSign,
   Pill,
   Bell,
   TrendingUp,
@@ -45,6 +40,16 @@ import { formatCurrency } from '../lib/currency';
 import { Button, ListCard, Modal, ModalBody } from './ui';
 import apiClient from '../lib/api';
 import { socket } from '../lib/socket';
+import {
+  PATIENT_DOSE_LOG_SEEDS,
+  PATIENT_PAYMENT_SEED,
+  PATIENT_PROFILE_DEFAULTS,
+  PATIENT_TREATMENT_ALERT_SEEDS,
+  PATIENT_TREATMENT_SEEDS,
+  type PatientDoseLogSeed as DoseLog,
+  type PatientTreatmentAlertSeed as TreatmentAlert,
+  type PatientTreatmentSeed as TreatmentMedication,
+} from '../data/mockData';
 
 /**
  * Propiedades de la vista de portal del Paciente.
@@ -56,7 +61,25 @@ import { socket } from '../lib/socket';
 interface PatientViewProps {
   patientName: string;
   patientEmail: string;
+  patientId?: string | null;
+  socketIdentity?: string | null;
   onLogout: () => void;
+}
+
+interface BackendPrescriptionItem {
+  id_producto: string;
+  nombre: string;
+  dosis: string;
+  cantidad: number;
+  precio_unitario_final: number;
+  beneficio_pct: number;
+}
+
+interface BackendPrescription {
+  recipeId: string;
+  createdAt: string;
+  doctorName?: string | null;
+  items: BackendPrescriptionItem[];
 }
 
 /**
@@ -76,44 +99,6 @@ interface Recipe {
   status: 'Activo' | 'Expirado';
 }
 
-const MOCK_RECIPES: Recipe[] = [
-  {
-    id: 'REC-2026-904',
-    date: '06 Jun, 2026',
-    expiryDate: '06 Dic, 2026',
-    medication: 'Ramipril 5mg',
-    dosage: '28 Comprimidos',
-    instructions: 'Tomar 1 comprimido al día por la mañana en ayunas.',
-    doctor: 'Dr. Alejandro Ríos',
-    specialty: 'Cardiología',
-    doctorLicense: 'MPPS 28.490 • CMDC-12.458',
-    status: 'Activo'
-  },
-  {
-    id: 'REC-2026-901',
-    date: '01 Jun, 2026',
-    expiryDate: '01 Dic, 2026',
-    medication: 'Aspirina 100mg',
-    dosage: '30 Comprimidos Gastrorresistentes',
-    instructions: 'Tomar 1 comprimido diario durante el almuerzo.',
-    doctor: 'Dr. Alejandro Ríos',
-    specialty: 'Cardiología',
-    doctorLicense: 'MPPS 28.490 • CMDC-12.458',
-    status: 'Activo'
-  },
-  {
-    id: 'REC-2026-712',
-    date: '15 Abr, 2026',
-    expiryDate: '15 May, 2026',
-    medication: 'Amoxicilina 875mg + Ácido Clavulánico 125mg',
-    dosage: '14 Comprimidos',
-    instructions: 'Tomar 1 comprimido cada 12 horas con las comidas por 7 días.',
-    doctor: 'Dr. Alejandro Ríos',
-    specialty: 'Medicina General',
-    doctorLicense: 'MPPS 28.490 • CMDC-12.458',
-    status: 'Expirado'
-  }
-];
 
 /**
  * Interfaz para representar un ítem de propuesta comercial dentro del módulo de checkout de farmacia.
@@ -127,108 +112,49 @@ interface ProposalItem {
   discountPercent: number;
 }
 
-/**
- * Interfaz para el seguimiento de adherencia y control de tratamiento médico del paciente.
- * @interface TreatmentMedication
- */
-interface TreatmentMedication {
-  id: string;
-  name: string;
-  dosage: string;
-  frequency: string;
-  scheduleTimes: string[];
-  startDate: string;
-  endDate: string;
-  doctor: string;
-  specialty: string;
-  recipeId: string;
-  totalDoses: number;
-  takenDoses: number;
-  status: 'En curso' | 'Completado' | 'Pausado';
-  instructions: string;
-}
 
 /**
- * Interfaz del registro de toma o log individual de dosis (Tracker).
- * @interface DoseLog
+ * Suma una cantidad de meses a una fecha ISO.
+ * @param {string} dateIso - Fecha base en formato ISO.
+ * @param {number} months - Cantidad de meses a sumar.
+ * @returns {Date} Fecha resultante.
  */
-interface DoseLog {
-  id: string;
-  medicationId: string;
-  medicationName: string;
-  scheduledTime: string;
-  takenAt?: string;
-  status: 'Tomada' | 'Omitida' | 'Pendiente';
-  date: string;
-}
+const addMonths = (dateIso: string, months: number) => {
+  const date = new Date(dateIso);
+  date.setMonth(date.getMonth() + months);
+  return date;
+};
 
 /**
- * Interfaz para las alertas proactivas automatizadas de la salud del paciente.
- * @interface TreatmentAlert
+ * Formatea una fecha ISO al formato de visualizacion del portal paciente.
+ * @param {string} dateIso - Fecha en formato ISO.
+ * @returns {string} Fecha formateada para la UI.
  */
-interface TreatmentAlert {
-  id: string;
-  type: 'recordatorio' | 'control' | 'renovacion';
-  title: string;
-  message: string;
-  date: string;
-}
+const formatRecipeDate = (dateIso: string) =>
+  new Date(dateIso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
-const MOCK_TREATMENTS: TreatmentMedication[] = [
-  {
-    id: 'trt-1',
-    name: 'Ramipril 5mg',
-    dosage: '1 comprimido',
-    frequency: '1 vez al día (mañana)',
-    scheduleTimes: ['08:00'],
-    startDate: '06 Jun, 2026',
-    endDate: '06 Dic, 2026',
-    doctor: 'Dr. Alejandro Ríos',
-    specialty: 'Cardiología',
-    recipeId: 'REC-2026-904',
-    totalDoses: 28,
-    takenDoses: 14,
-    status: 'En curso',
-    instructions: 'Tomar en ayunas con un vaso de agua. Controlar presión arterial semanalmente.',
-  },
-  {
-    id: 'trt-2',
-    name: 'Aspirina 100mg',
-    dosage: '1 comprimido gastrorresistente',
-    frequency: '1 vez al día (almuerzo)',
-    scheduleTimes: ['13:00'],
-    startDate: '01 Jun, 2026',
-    endDate: '01 Dic, 2026',
-    doctor: 'Dr. Alejandro Ríos',
-    specialty: 'Cardiología',
-    recipeId: 'REC-2026-901',
-    totalDoses: 30,
-    takenDoses: 20,
-    status: 'En curso',
-    instructions: 'Tomar durante el almuerzo. No masticar el comprimido.',
-  },
-];
+/**
+ * Convierte una receta backend en filas visuales para la tabla de recipes del paciente.
+ * @param {BackendPrescription} prescription - Receta devuelta por el backend.
+ * @returns {Recipe[]} Recipes adaptados al portal paciente.
+ */
+const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Recipe[] => {
+  const createdAt = prescription.createdAt || new Date().toISOString();
+  const expiryDate = addMonths(createdAt, 6).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
-const MOCK_DOSE_LOGS: DoseLog[] = [
-  { id: 'dose-1', medicationId: 'trt-1', medicationName: 'Ramipril 5mg', scheduledTime: '08:00', takenAt: '08:05', status: 'Tomada', date: '08 Jun, 2026' },
-  { id: 'dose-2', medicationId: 'trt-2', medicationName: 'Aspirina 100mg', scheduledTime: '13:00', status: 'Pendiente', date: '08 Jun, 2026' },
-  { id: 'dose-3', medicationId: 'trt-1', medicationName: 'Ramipril 5mg', scheduledTime: '08:00', takenAt: '08:10', status: 'Tomada', date: '07 Jun, 2026' },
-  { id: 'dose-4', medicationId: 'trt-2', medicationName: 'Aspirina 100mg', scheduledTime: '13:00', takenAt: '13:15', status: 'Tomada', date: '07 Jun, 2026' },
-  { id: 'dose-5', medicationId: 'trt-1', medicationName: 'Ramipril 5mg', scheduledTime: '08:00', status: 'Omitida', date: '06 Jun, 2026' },
-  { id: 'dose-6', medicationId: 'trt-2', medicationName: 'Aspirina 100mg', scheduledTime: '13:00', takenAt: '13:05', status: 'Tomada', date: '06 Jun, 2026' },
-];
-
-const MOCK_TREATMENT_ALERTS: TreatmentAlert[] = [
-  {
-    id: 'alert-3',
-    type: 'renovacion',
-    title: 'Renovación de receta Ramipril',
-    message: 'La receta REC-2026-904 vence el 06 Dic, 2026. Solicite renovación con 15 días de anticipación.',
-    date: '21 Nov, 2026',
-  },
-];
-
-const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout';
+  return (Array.isArray(prescription.items) ? prescription.items : []).map((item, index) => ({
+    id: `${prescription.recipeId}${index > 0 ? `-${index + 1}` : ''}`,
+    date: formatRecipeDate(createdAt),
+    expiryDate,
+    medication: item.nombre,
+    dosage: `${item.cantidad} unidad(es)`,
+    instructions: item.dosis || 'Seguir indicaciones medicas.',
+    doctor: prescription.doctorName || 'Medico tratante',
+    specialty: 'Prescripcion clinica',
+    doctorLicense: 'Validacion digital Farmahumana',
+    status: 'Activo' as const,
+  }));
+};
 
 /**
  * Vista principal y portal exclusivo para Pacientes (Portal B2C).
@@ -241,17 +167,19 @@ const EXAMPLE_EXTERNAL_PAYMENT_GATEWAY = 'https://pagos.humana.example/checkout'
  * @param {PatientViewProps} props - Propiedades de la vista.
  * @returns {JSX.Element}
  */
-export default function PatientView({ patientName, patientEmail, onLogout }: PatientViewProps) {
+export default function PatientView({ patientName, patientEmail, patientId, socketIdentity, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'
   const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('treatment');
 
-  const [recipes] = useState<Recipe[]>(MOCK_RECIPES);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [recipesLoading, setRecipesLoading] = useState(false);
+  const [recipesError, setRecipesError] = useState('');
 
   // Treatment tracking states
-  const [treatments, setTreatments] = useState<TreatmentMedication[]>(MOCK_TREATMENTS);
-  const [doseLogs, setDoseLogs] = useState<DoseLog[]>(MOCK_DOSE_LOGS);
-  const [treatmentAlerts] = useState<TreatmentAlert[]>(MOCK_TREATMENT_ALERTS);
+  const [treatments, setTreatments] = useState<TreatmentMedication[]>(PATIENT_TREATMENT_SEEDS);
+  const [doseLogs, setDoseLogs] = useState<DoseLog[]>(PATIENT_DOSE_LOG_SEEDS);
+  const [treatmentAlerts] = useState<TreatmentAlert[]>(PATIENT_TREATMENT_ALERT_SEEDS);
   const [doseSuccessMsg, setDoseSuccessMsg] = useState('');
   const [treatmentPanel, setTreatmentPanel] = useState<'today' | 'medications' | 'progress'>('today');
 
@@ -267,19 +195,26 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   // Last Order State
   const [lastOrderStatus, setLastOrderStatus] = useState<'Pendiente por retirar' | 'Listo para retirar' | 'Retirado'>('Listo para retirar');
 
+    const socketPatientIdentity = socketIdentity || patientId || patientEmail;
+  const qrIdentitySeed = String(socketPatientIdentity || patientEmail || 'PX-000');
+  const qrSeedLeft = qrIdentitySeed.slice(0, 6).toUpperCase();
+  const qrSeedRight = qrIdentitySeed.replace(/[^A-Za-z0-9]/g, '').slice(-4).toUpperCase() || '0000';
+
   const {
     qrToken,
     qrSecondsLeft,
     isCredentialModalOpen,
     setIsCredentialModalOpen,
     handleRefreshQR,
-  } = useCredentialQr('PX-992', '8812');
+  } = useCredentialQr(qrSeedLeft, qrSeedRight);
 
-  // Proposal states (Pantalla P.2)
-  const [proposalItems] = useState<ProposalItem[]>([
-    { id: 'prop-1', medication: 'Ramipril 5mg (28 Comprimidos)', quantity: 1, unitPrice: 12.50, discountPercent: 20 },
-    { id: 'prop-2', medication: 'Aspirina 100mg (30 Comprimidos)', quantity: 1, unitPrice: 6.00, discountPercent: 10 }
-  ]);
+  const proposalItems = useMemo<ProposalItem[]>(() => recipes.map((recipe, index) => ({
+    id: `prop-${index + 1}`,
+    medication: recipe.medication,
+    quantity: 1,
+    unitPrice: 0,
+    discountPercent: 0,
+  })), [recipes]);
   const [selectedBranch, setSelectedBranch] = useState('Clínica Humana');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
@@ -289,21 +224,48 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   const [simulatedPaymentReference, setSimulatedPaymentReference] = useState('');
 
   // Voucher info
-  const [voucherId, setVoucherId] = useState('');
+  const voucherId = simulatedPaymentReference || 'PENDIENTE';
 
   // Profile Settings State (Pantalla P.5)
   const [profileName, setProfileName] = useState(patientName);
 
-  const getPatientProfileFromName = (name: string) => {
-    const normalized = name.toLowerCase();
-    if (normalized.includes('ana')) return { systemId: 'patient_ana_martinez' };
-    if (normalized.includes('carlos')) return { systemId: 'patient_carlos_mendoza' };
-    if (normalized.includes('luis')) return { systemId: 'patient_luis_rodriguez' };
-    return { systemId: 'patient_sofia_peralta' };
-  };
+  const [profileSystemId] = useState(patientId || null);
+  const qrPatientIdentity = profileSystemId || socketPatientIdentity;
 
-  const resolvedPatientProfile = getPatientProfileFromName(patientName);
-  const [profileSystemId] = useState(resolvedPatientProfile.systemId);
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadRecipes = async () => {
+      try {
+        setRecipesLoading(true);
+        setRecipesError('');
+        const response = await apiClient.get(`/prescripciones/paciente/${encodeURIComponent(socketPatientIdentity)}`);
+        const backendItems = Array.isArray(response.data?.items) ? response.data.items : [];
+        const mappedRecipes = backendItems.flatMap(mapBackendPrescriptionToRecipes);
+
+        if (!cancelled) {
+          setRecipes(mappedRecipes);
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setRecipes([]);
+          setRecipesError(error?.response?.data?.error || 'No se pudieron cargar los recipes del paciente.');
+        }
+      } finally {
+        if (!cancelled) {
+          setRecipesLoading(false);
+        }
+      }
+    };
+
+    if (socketPatientIdentity) {
+      loadRecipes();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [socketPatientIdentity]);
 
   // WebSockets: estado de solicitud entrante usando `patientId` interno
   const [incomingConsent, setIncomingConsent] = useState<{ doctorId: string; doctorName: string; patientId: string } | null>(null);
@@ -317,7 +279,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
 
     const identify = () => {
       // Registramos al paciente con su ID interno mock para el flujo WebSocket
-      const targetPatientId = profileSystemId || 'patient_ana_martinez'; 
+      const targetPatientId = socketPatientIdentity; 
       
       console.log(`?? Registrando paciente en Socket local con ID interno: ${targetPatientId}`);
       
@@ -368,7 +330,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       socket.off('consentRequestCancelled', handleCancelRequest);
       socket.disconnect();
     };
-  }, [profileName, profileSystemId]);
+  }, [profileName, socketPatientIdentity]);
 
   // =========================================================
   // 2. EFECTO: Cuenta regresiva del QR efímero
@@ -390,7 +352,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
   const handleGenerarQR = async () => {
     try {
       // Pedimos el token encriptado en AES-256 transformado a Base64
-      const response = await apiClient.get(`/qr/generate/${encodeURIComponent(profileSystemId)}`);
+      const response = await apiClient.get(`/qr/generate/${encodeURIComponent(qrPatientIdentity)}`);
       setQrImage(response.data?.qr_image || response.data?.qrImageBase64 || null);
       setTimeLeft(300); // Reseteamos el reloj a 5 minutos
       setIsTimerActive(true);
@@ -415,10 +377,10 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
     }
     setShowConsentModal(false);
   };
-  const [profilePhone, setProfilePhone] = useState('0412-6001234');
-  const [deliveryAddress, setDeliveryAddress] = useState('Av. Francisco de Miranda, Urb. Campo Alegre, Edif. Parque Cristal, Piso 4B');
-  const [deliveryState, setDeliveryState] = useState('Distrito Capital');
-  const [deliveryMunicipio, setDeliveryMunicipio] = useState('Chacao');
+  const [profilePhone, setProfilePhone] = useState(PATIENT_PROFILE_DEFAULTS.profilePhone);
+  const [deliveryAddress, setDeliveryAddress] = useState(PATIENT_PROFILE_DEFAULTS.deliveryAddress);
+  const [deliveryState, setDeliveryState] = useState(PATIENT_PROFILE_DEFAULTS.deliveryState);
+  const [deliveryMunicipio, setDeliveryMunicipio] = useState(PATIENT_PROFILE_DEFAULTS.deliveryMunicipio);
 
   // Calculations for Proposal
   const calculateItemSubtotal = (item: ProposalItem) => {
@@ -458,7 +420,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
       metodos: 'pago-movil,transferencia',
       paciente: patientEmail,
     });
-    return `${EXAMPLE_EXTERNAL_PAYMENT_GATEWAY}?${params.toString()}`;
+    return `${PATIENT_PAYMENT_SEED.gatewayUrl}?${params.toString()}`;
   };
 
   const activeTreatments = treatments.filter((t) => t.status === 'En curso');
@@ -852,6 +814,13 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                         </tr>
                       </thead>
                       <tbody>
+                        {recipes.length === 0 && !recipesLoading && (
+                          <tr>
+                            <td colSpan={5} className="py-6 text-center text-xs text-surface-500">
+                              {recipesError || 'No hay recipes emitidos todavia para este paciente.'}
+                            </td>
+                          </tr>
+                        )}
                         {recipes.map((rec) => (
                           <tr key={rec.id} className="hover:bg-surface-850/25 transition-colors group">
                             <td className="py-4 font-mono font-bold text-xs text-white">{rec.id}</td>
@@ -885,6 +854,11 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     </table>
                   </div>
                   <div className="lg:hidden space-y-3">
+                    {recipes.length === 0 && !recipesLoading && (
+                      <div className="py-6 text-center text-xs text-surface-500">
+                        {recipesError || 'No hay recipes emitidos todavia para este paciente.'}
+                      </div>
+                    )}
                     {recipes.map((rec) => (
                       <ListCard
                         key={rec.id}
@@ -989,7 +963,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                       Genere un código QR de seguridad de un solo uso para autorizar accesos o validar su identidad en consultorios médicos.
                     </p>
                     <p className="text-xs text-surface-500">
-                      ID interno del paciente: <span className="font-mono text-surface-300 font-semibold">{profileSystemId}</span>
+                      ID interno del paciente: <span className="font-mono text-surface-300 font-semibold">{qrPatientIdentity}</span>
                     </p>
                   </div>
                   
@@ -1601,7 +1575,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                     <div className="border-t border-surface-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-surface-455 text-[10px]">
                       <div>
                         <p className="font-semibold text-surface-600">Pasarela externa del cliente:</p>
-                        <p className="font-mono text-surface-800 font-bold mt-0.5">{EXAMPLE_EXTERNAL_PAYMENT_GATEWAY}</p>
+                        <p className="font-mono text-surface-800 font-bold mt-0.5">{PATIENT_PAYMENT_SEED.gatewayUrl}</p>
                         <p className="font-semibold text-surface-600 mt-2">Referencia de pago (simulación):</p>
                         <p className="font-mono text-surface-800 font-bold mt-0.5">{simulatedPaymentReference}</p>
                       </div>
@@ -1675,7 +1649,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           <input
                             type="text"
                             disabled
-                            value={profileSystemId}
+                            value={qrPatientIdentity}
                             className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 font-mono focus:outline-none cursor-not-allowed"
                           />
                         </div>
@@ -1684,7 +1658,7 @@ export default function PatientView({ patientName, patientEmail, onLogout }: Pat
                           <input
                             type="text"
                             disabled
-                            value={profileSystemId}
+                            value={qrPatientIdentity}
                             className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 font-mono focus:outline-none cursor-not-allowed"
                           />
                         </div>

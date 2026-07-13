@@ -1,0 +1,305 @@
+﻿# Modificaciones realizadas
+
+## 1. Objetivo general
+
+Conectar el portal medico y el portal paciente del frontend real con el backend actual de prescripciones, eliminar mocks embebidos del flujo medico/paciente, centralizar los datos de prueba restantes en `src/data/mockData.ts` y validar que la implementacion quede consistente a nivel logico y tecnico.
+
+---
+
+## 2. Modulo de integracion frontend-backend para prescripciones
+
+### 2.1 Que se hizo
+
+- Se conecto el login para conservar identidades reales de sesion.
+- Se enlazo el portal medico con el backend de prescripciones para catalogo, busqueda y emision.
+- Se enlazo el portal paciente con el backend para consultar recetas emitidas por identidad real.
+- Se eliminaron dependencias de resolucion por nombre en el flujo paciente.
+
+### 2.2 Como se hizo a nivel logico
+
+#### 2.2.1 Identidad real de sesion
+
+El frontend antes ignoraba parte del contrato real de login. Ahora persiste y reutiliza:
+
+- `userId`
+- `doctorId`
+- `patientId`
+- `socketIdentity`
+
+Eso evita que el portal tenga que adivinar identidades por nombre o usar IDs hardcodeados.
+
+#### 2.2.2 Prescripcion medica real
+
+El portal medico ya no depende de un catalogo local embebido para buscar o emitir prescripciones. Ahora:
+
+1. consulta el catalogo real del backend;
+2. busca por texto con el endpoint de prescripciones;
+3. emite la receta real con el paciente vinculado;
+4. recibe `recipeId` y totales calculados por backend.
+
+#### 2.2.3 Lectura real del portal paciente
+
+El portal paciente ya no infiere su perfil desde el nombre. Ahora:
+
+1. toma la identidad real de sesion;
+2. la usa para sockets y QR;
+3. consulta sus recetas emitidas en backend;
+4. adapta la respuesta backend al formato visual del portal.
+
+---
+
+## 3. Centralizacion de datos de prueba en src/data/mockData.ts
+
+### 3.1 Que se hizo
+
+Se movieron los mocks embebidos del flujo medico/paciente hacia `src/data/mockData.ts`.
+
+### 3.2 Solucion hecha con codigo
+
+#### `C:/Proyecto IDS Frontend/src/data/mockData.ts`
+
+Se agregaron tipos y colecciones centralizadas para:
+
+- `DashboardDoctorRecord`
+- `DashboardPatientRecord`
+- `DashboardStockMovement`
+- `DoctorLinkedPatientSeed`
+- `DoctorCommissionSeed`
+- `DoctorRecipeLogSeed`
+- `PatientRecipeSeed`
+- `PatientTreatmentSeed`
+- `PatientDoseLogSeed`
+- `PatientTreatmentAlertSeed`
+- `DoctorProfileDefaultsSeed`
+- `PatientProfileDefaultsSeed`
+- `PatientPaymentSeed`
+
+Se exportaron estas colecciones y seeds:
+
+- `DASHBOARD_DOCTOR_RECORDS`
+- `DASHBOARD_PATIENT_RECORDS`
+- `DASHBOARD_STOCK_MOVEMENTS`
+- `DOCTOR_LINKED_PATIENT_SEEDS`
+- `DOCTOR_COMMISSION_SEEDS`
+- `DOCTOR_RECIPE_LOG_SEEDS`
+- `PATIENT_TREATMENT_SEEDS`
+- `PATIENT_DOSE_LOG_SEEDS`
+- `PATIENT_TREATMENT_ALERT_SEEDS`
+- `DOCTOR_PROFILE_DEFAULTS`
+- `PATIENT_PROFILE_DEFAULTS`
+- `PATIENT_PAYMENT_SEED`
+- `PATIENT_RECIPE_SEEDS`
+- `PATIENT_TREATMENT_SEEDS`
+- `PATIENT_DOSE_LOG_SEEDS`
+- `PATIENT_TREATMENT_ALERT_SEEDS`
+- `DOCTOR_PROFILE_DEFAULTS`
+- `PATIENT_PROFILE_DEFAULTS`
+- `PATIENT_PAYMENT_SEED`
+
+### 3.3 Logica aplicada
+
+La idea fue sacar datos de prueba del cuerpo de los componentes para que:
+
+- no queden hardcodes funcionales mezclados con la UI;
+- el mantenimiento de demos y semillas sea centralizado;
+- el componente consuma data de prueba conectada desde una unica fuente.
+
+---
+
+## 4. Ajustes aplicados por componente
+
+### 4.1 `C:/Proyecto IDS Frontend/src/app/page.tsx`
+
+#### Que se hizo
+
+- Se amplio el modelo de usuario autenticado.
+- Se propagan `doctorId`, `patientId` y `socketIdentity` al portal correcto.
+
+#### Logica aplicada
+
+La pagina principal ya no solo recuerda `role`, `email` y `name`. Ahora conserva tambien la identidad operativa necesaria para que medico y paciente hablen con backend y sockets sin atajos.
+
+### 4.2 `C:/Proyecto IDS Frontend/src/components/LoginView.tsx`
+
+#### Que se hizo
+
+- Se actualizo `onLoginSuccess` para devolver el payload completo de sesion.
+- Se consume el contrato real de login del backend.
+
+#### Logica aplicada
+
+En vez de fabricar identidad del lado cliente, el login ahora respeta lo que backend autentica y devuelve.
+
+### 4.3 `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx`
+
+#### Que se hizo
+
+- Se elimino el catalogo hardcodeado del flujo de prescripcion.
+- Se usa `doctorId` real de sesion.
+- Se reemplazo el nombre de medico hardcodeado por la identidad real de sesion.
+- Se centralizaron seeds de pacientes, comisiones, bitacora de recipes y defaults de perfil en `mockData.ts`.
+- Se agrego JSDoc a los helpers nuevos con parametros.
+
+#### Logica aplicada
+
+- el medico se identifica con su ID real de sesion;
+- el catalogo se consulta desde backend;
+- la busqueda se resuelve con backend;
+- la emision se registra realmente en backend;
+- la UI mantiene solo el render y la captura de datos.
+
+#### Solucion en codigo
+
+Consume:
+
+- `GET /api/prescripciones/catalogo`
+- `POST /api/prescripciones/buscar`
+- `POST /api/prescripciones/emitir`
+
+Y reutiliza:
+
+- `DOCTOR_LINKED_PATIENT_SEEDS`
+- `DOCTOR_COMMISSION_SEEDS`
+- `DOCTOR_RECIPE_LOG_SEEDS`
+- `DOCTOR_PROFILE_DEFAULTS`
+
+### 4.4 `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+
+#### Que se hizo
+
+- Se elimino la resolucion de paciente por nombre.
+- Se usa `patientId` / `socketIdentity` reales.
+- Se cargan recipes desde backend.
+- Se movieron a `mockData.ts` los mocks visibles restantes de tratamientos, logs, alertas, perfil y pasarela demo.
+- Se agrego JSDoc a los helpers nuevos con parametros.
+
+#### Logica aplicada
+
+El portal paciente usa la misma identidad que backend y sockets. Eso permite que QR, consentimiento y recetas dependan de una sola fuente de verdad incluso cuando algun submodulo todavia opera con seeds mock centralizados.
+
+#### Solucion en codigo
+
+Consume:
+
+- `GET /api/prescripciones/paciente/:patientId`
+
+Adapta la respuesta backend a la tabla y modal de recipes mediante helpers locales documentados y consume seeds centralizados para los modulos que todavia siguen en entorno mock.
+
+### 4.5 `C:/Proyecto IDS Frontend/src/components/DashboardView.tsx`
+
+#### Que se hizo
+
+- Se quitaron las tablas mock embebidas del archivo.
+- Se importan registros de medicos, pacientes y movimientos desde `src/data/mockData.ts`.
+
+#### Logica aplicada
+
+El dashboard sigue operando con data demo, pero ya no la define adentro del componente. Eso mejora consistencia y evita duplicacion.
+
+
+---
+
+## 4.6 Limpieza de codigo y organizacion de archivos
+
+### Que se hizo
+
+- Se eliminaron archivos no montados en la aplicacion actual.
+- Se limpiaron imports, tipos, estados y variables sin uso en componentes activos.
+- Se normalizaron valores por defecto para que sigan saliendo de seeds centralizados.
+
+### Solucion en codigo
+
+#### Archivos eliminados por no tener referencias reales
+
+- `C:/Proyecto IDS Frontend/src/components/ProductsView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/auth/LoginAnimatedBackdrop.tsx`
+
+#### Archivos ajustados por limpieza
+
+- `C:/Proyecto IDS Frontend/src/app/page.tsx`
+- `C:/Proyecto IDS Frontend/src/components/DashboardView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/NewOrderModal.tsx`
+- `C:/Proyecto IDS Frontend/src/components/OrderDetailModal.tsx`
+- `C:/Proyecto IDS Frontend/src/components/layout/NavItem.tsx`
+- `C:/Proyecto IDS Frontend/src/components/ui/EmptyState.tsx`
+
+### Logica aplicada
+
+La limpieza no se hizo por intuicion. Se hizo verificando:
+
+- que un archivo no tuviera referencias reales en `src/`;
+- que un import o estado no tuviera lecturas reales;
+- que el flujo siguiera tipando bien con chequeo estricto.
+
+---
+
+## 5. Validacion de cierre
+
+### 5.1 Validacion estructural
+
+Se verifico que el frontend real use imports centralizados para el flujo intervenido:
+
+- `DASHBOARD_DOCTOR_RECORDS`
+- `DASHBOARD_PATIENT_RECORDS`
+- `DASHBOARD_STOCK_MOVEMENTS`
+- `DOCTOR_LINKED_PATIENT_SEEDS`
+- `DOCTOR_COMMISSION_SEEDS`
+- `DOCTOR_RECIPE_LOG_SEEDS`
+- `PATIENT_TREATMENT_SEEDS`
+- `PATIENT_DOSE_LOG_SEEDS`
+- `PATIENT_TREATMENT_ALERT_SEEDS`
+- `DOCTOR_PROFILE_DEFAULTS`
+- `PATIENT_PROFILE_DEFAULTS`
+- `PATIENT_PAYMENT_SEED`
+
+### 5.2 Validacion funcional
+
+Se verifico el contrato real con backend:
+
+- portal medico consume catalogo real
+- portal medico busca medicamentos en backend
+- portal medico emite recetas reales
+- portal paciente consulta recetas reales por identidad de sesion
+- medico y paciente reutilizan identidades compatibles con sockets y QR
+
+### 5.3 Validacion tecnica
+
+Se ejecuto en `C:/Proyecto IDS Frontend`:
+
+- `npx tsc --noEmit --incremental false` -> OK
+- `npx tsc --noEmit --incremental false --noUnusedLocals --noUnusedParameters` -> OK
+
+### 5.4 Verificacion adicional sin build
+
+Se verifico especificamente que:
+
+- `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx` ya no depende de `DOCTOR_NAME` hardcodeado para operar.
+- `C:/Proyecto IDS Frontend/src/components/PatientView.tsx` ya no contiene `MOCK_TREATMENTS`, `MOCK_DOSE_LOGS`, `MOCK_TREATMENT_ALERTS` ni `EXAMPLE_EXTERNAL_PAYMENT_GATEWAY` embebidos.
+- los datos demo visibles restantes salen de `C:/Proyecto IDS Frontend/src/data/mockData.ts`.
+
+### 5.5 Cierre del contrato frontend-backend
+
+En frontend, `contrato` significa el shape exacto que espera cada vista al leer o enviar datos.
+
+Se verifico que:
+
+- login preserva identidad operativa real;
+- medico envia IDs y payloads compatibles con backend;
+- paciente consulta recetas con la misma identidad usada en sockets y QR;
+- los datos demo restantes ya salen de una unica fuente centralizada.
+
+### 5.6 Estado final
+
+El flujo medico/paciente intervenido quedo cerrado correctamente para el entorno mock actual con integracion real al backend de prescripciones.
+
+---
+
+## 6. Observaciones finales
+
+- Todavia existen otros mocks en zonas administrativas que no forman parte del flujo medico/paciente intervenido.
+- El objetivo de este cambio no fue eliminar toda la data demo del frontend, sino quitar la que estaba incrustada en los componentes clave del flujo medico/paciente y conectarlos a la API real disponible.
+- La proxima evolucion natural es reemplazar tambien bitacoras y modulos historicos por endpoints reales cuando existan en backend.
+
+
