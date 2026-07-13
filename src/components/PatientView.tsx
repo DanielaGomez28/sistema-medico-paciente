@@ -42,7 +42,6 @@ import apiClient from '../lib/api';
 import { socket } from '../lib/socket';
 import {
   PATIENT_DOSE_LOG_SEEDS,
-  PATIENT_PAYMENT_SEED,
   PATIENT_PROFILE_DEFAULTS,
   PATIENT_TREATMENT_ALERT_SEEDS,
   PATIENT_TREATMENT_SEEDS,
@@ -71,7 +70,10 @@ interface BackendPrescriptionItem {
   nombre: string;
   dosis: string;
   cantidad: number;
+  precio_unitario_base: number;
   precio_unitario_final: number;
+  subtotal_base?: number;
+  subtotal_final?: number;
   beneficio_pct: number;
 }
 
@@ -79,7 +81,40 @@ interface BackendPrescription {
   recipeId: string;
   createdAt: string;
   doctorName?: string | null;
+  status?: string;
+  totals?: {
+    subtotal_base?: number;
+    subtotal_descuento?: number;
+    total_final?: number;
+  };
   items: BackendPrescriptionItem[];
+}
+
+interface PaymentOrderState {
+  orderId: string;
+  recipeId: string;
+  status: string;
+  amount: number;
+  currency?: string;
+  redirectReady?: boolean;
+  redirectUrl?: string | null;
+  nextAction?: string | null;
+  holdExpiresAt?: string | null;
+  paymentReference?: string | null;
+  gatewayTransactionId?: string | null;
+  paidAt?: string | null;
+}
+
+interface InventoryHoldState {
+  recipeId: string;
+  status: string;
+  expiresAt?: string | null;
+  releaseReason?: string | null;
+}
+
+interface CheckoutSessionState {
+  order: PaymentOrderState;
+  hold: InventoryHoldState | null;
 }
 
 /**
@@ -172,6 +207,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('treatment');
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [backendPrescriptions, setBackendPrescriptions] = useState<BackendPrescription[]>([]);
+  const [activeCheckoutRecipeId, setActiveCheckoutRecipeId] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
@@ -208,13 +245,26 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     handleRefreshQR,
   } = useCredentialQr(qrSeedLeft, qrSeedRight);
 
-  const proposalItems = useMemo<ProposalItem[]>(() => recipes.map((recipe, index) => ({
-    id: `prop-${index + 1}`,
-    medication: recipe.medication,
-    quantity: 1,
-    unitPrice: 0,
-    discountPercent: 0,
-  })), [recipes]);
+  const activeCheckoutPrescription = useMemo(() => {
+    if (!backendPrescriptions.length) return null;
+    return (
+      backendPrescriptions.find((prescription) => prescription.recipeId === activeCheckoutRecipeId) ||
+      backendPrescriptions[backendPrescriptions.length - 1] ||
+      null
+    );
+  }, [activeCheckoutRecipeId, backendPrescriptions]);
+
+  const proposalItems = useMemo<ProposalItem[]>(() => {
+    if (!activeCheckoutPrescription) return [];
+
+    return (Array.isArray(activeCheckoutPrescription.items) ? activeCheckoutPrescription.items : []).map((item, index) => ({
+      id: `${activeCheckoutPrescription.recipeId}-${index + 1}`,
+      medication: item.nombre,
+      quantity: Number(item.cantidad || 0),
+      unitPrice: Number(item.precio_unitario_base || item.precio_unitario_final || 0),
+      discountPercent: Number(item.beneficio_pct || 0),
+    }));
+  }, [activeCheckoutPrescription]);
   const [selectedBranch, setSelectedBranch] = useState('Clínica Humana');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
@@ -222,9 +272,18 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   // Payment States (Pantalla P.3)
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(900); // 15 minutes in seconds
   const [simulatedPaymentReference, setSimulatedPaymentReference] = useState('');
+  const [checkoutSession, setCheckoutSession] = useState<CheckoutSessionState | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+  const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
 
   // Voucher info
-  const voucherId = simulatedPaymentReference || 'PENDIENTE';
+  const voucherId =
+    simulatedPaymentReference ||
+    checkoutSession?.order?.paymentReference ||
+    checkoutSession?.order?.gatewayTransactionId ||
+    checkoutSession?.order?.recipeId ||
+    'PENDIENTE';
 
   // Profile Settings State (Pantalla P.5)
   const [profileName, setProfileName] = useState(patientName);
@@ -242,13 +301,22 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         const response = await apiClient.get(`/prescripciones/paciente/${encodeURIComponent(socketPatientIdentity)}`);
         const backendItems = Array.isArray(response.data?.items) ? response.data.items : [];
         const mappedRecipes = backendItems.flatMap(mapBackendPrescriptionToRecipes);
+        const latestRecipeId = backendItems.length ? backendItems[backendItems.length - 1]?.recipeId || '' : '';
 
         if (!cancelled) {
+          setBackendPrescriptions(backendItems);
           setRecipes(mappedRecipes);
+          setActiveCheckoutRecipeId((current) =>
+            current && backendItems.some((prescription: BackendPrescription) => prescription.recipeId === current)
+              ? current
+              : latestRecipeId
+          );
         }
       } catch (error: any) {
         if (!cancelled) {
+          setBackendPrescriptions([]);
           setRecipes([]);
+          setActiveCheckoutRecipeId('');
           setRecipesError(error?.response?.data?.error || 'No se pudieron cargar los recipes del paciente.');
         }
       } finally {
@@ -412,15 +480,53 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
   const totals = getProposalTotals();
 
-  const getExamplePaymentRedirectUrl = () => {
-    const params = new URLSearchParams({
-      pedido: 'PR-2026',
-      total: totals.netTotal.toFixed(2),
-      sucursal: selectedBranch,
-      metodos: 'pago-movil,transferencia',
-      paciente: patientEmail,
-    });
-    return `${PATIENT_PAYMENT_SEED.gatewayUrl}?${params.toString()}`;
+  /**
+   * Sincroniza el estado del checkout recibido desde backend con la UI local.
+   * @param {CheckoutSessionState | null} nextSession - Sesion de checkout consolidada.
+   * @param {boolean} [moveToVoucher=false] - Indica si debe navegar automaticamente al comprobante.
+   */
+  const applyCheckoutSession = (nextSession: CheckoutSessionState | null, moveToVoucher = false) => {
+    setCheckoutSession(nextSession);
+
+    const expirationCandidate = nextSession?.hold?.expiresAt || nextSession?.order?.holdExpiresAt || null;
+    if (expirationCandidate) {
+      const secondsLeft = Math.max(0, Math.floor((new Date(expirationCandidate).getTime() - Date.now()) / 1000));
+      setPaymentTimeLeft(secondsLeft);
+    }
+
+    if (nextSession?.order?.paymentReference || nextSession?.order?.gatewayTransactionId) {
+      setSimulatedPaymentReference(
+        nextSession.order.paymentReference || nextSession.order.gatewayTransactionId || ''
+      );
+    }
+
+    if (nextSession?.order?.status === 'payment_confirmed') {
+      setLastOrderStatus('Pendiente por retirar');
+      if (moveToVoucher) {
+        setActiveSubTab('voucher');
+      }
+    }
+  };
+
+  /**
+   * Consulta en backend la orden y la reserva asociadas a una receta.
+   * @param {string} recipeId - Identificador canonico de la receta/orden.
+   * @returns {Promise<CheckoutSessionState>} Estado consolidado del checkout.
+   */
+  const fetchCheckoutSession = async (recipeId: string): Promise<CheckoutSessionState> => {
+    const [orderResult, holdResult] = await Promise.allSettled([
+      apiClient.get(`/pagos/recetas/${encodeURIComponent(recipeId)}`),
+      apiClient.get(`/pagos/reservas/${encodeURIComponent(recipeId)}`),
+    ]);
+
+    if (orderResult.status !== 'fulfilled') {
+      throw orderResult.reason;
+    }
+
+    return {
+      order: orderResult.value.data as PaymentOrderState,
+      hold: holdResult.status === 'fulfilled' ? (holdResult.value.data as InventoryHoldState) : null,
+    };
   };
 
   const activeTreatments = treatments.filter((t) => t.status === 'En curso');
@@ -525,13 +631,53 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       timer = setInterval(() => {
         setPaymentTimeLeft((prev) => prev - 1);
       }, 1000);
-    } else if (activeSubTab === 'payment' && paymentTimeLeft === 0) {
-      alert('El tiempo límite de 15 minutos para confirmar el pago ha expirado. El inventario apartado ha sido liberado.');
+    } else if (
+      activeSubTab === 'payment' &&
+      paymentTimeLeft === 0 &&
+      checkoutSession?.order?.status !== 'payment_confirmed'
+    ) {
+      setCheckoutError('La reserva de inventario expiró. Debe recrear el checkout desde la propuesta.');
+      setPaymentStatusMessage('La reserva venció antes de recibir confirmación de pago.');
       setActiveSubTab('proposals');
-      setPaymentTimeLeft(900);
+      setCheckoutSession((current) =>
+        current
+          ? {
+              ...current,
+              order: {
+                ...current.order,
+                status: 'expired',
+                nextAction: 'recreate_checkout',
+              },
+            }
+          : current
+      );
     }
     return () => clearInterval(timer);
-  }, [activeSubTab, paymentTimeLeft]);
+  }, [activeSubTab, checkoutSession?.order?.status, paymentTimeLeft]);
+
+  useEffect(() => {
+    if (activeSubTab !== 'payment' || !checkoutSession?.order?.recipeId) {
+      return;
+    }
+
+    if (['payment_confirmed', 'expired'].includes(checkoutSession.order.status)) {
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const session = await fetchCheckoutSession(checkoutSession.order.recipeId);
+        applyCheckoutSession(session, session.order.status === 'payment_confirmed');
+        if (session.order.status === 'payment_confirmed') {
+          setPaymentStatusMessage('Pago confirmado por la pasarela. Ya puede retirar el pedido.');
+        }
+      } catch (error) {
+        // Polling silencioso para no bloquear la UI del paciente.
+      }
+    }, 12000);
+
+    return () => clearInterval(interval);
+  }, [activeSubTab, checkoutSession?.order?.recipeId, checkoutSession?.order?.status]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -578,14 +724,74 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
   const activeOrderStepIndex = orderDeliverySteps.findIndex((step) => step.id === lastOrderStatus);
 
-  const handleConfirmOrder = () => {
+  /**
+   * Crea el checkout real en backend para la receta actualmente seleccionada.
+   * @returns {Promise<void>}
+   */
+  const handleConfirmOrder = async () => {
     if (!termsAccepted) {
       alert('Debe aceptar los Términos y Condiciones del servicio.');
       return;
     }
-    setPaymentTimeLeft(900);
-    setSimulatedPaymentReference('');
-    setActiveSubTab('payment');
+
+    if (!activeCheckoutPrescription?.recipeId) {
+      setCheckoutError('No hay una receta disponible para iniciar el checkout.');
+      return;
+    }
+
+    try {
+      setCheckoutLoading(true);
+      setCheckoutError('');
+      setPaymentStatusMessage('');
+      setSimulatedPaymentReference('');
+
+      const response = await apiClient.post('/pagos/redireccion', {
+        recipeId: activeCheckoutPrescription.recipeId,
+      });
+
+      const session: CheckoutSessionState = {
+        order: response.data?.order as PaymentOrderState,
+        hold: (response.data?.hold || null) as InventoryHoldState | null,
+      };
+
+      applyCheckoutSession(session);
+      setPaymentStatusMessage(response.data?.message || 'Checkout creado correctamente.');
+      setActiveSubTab('payment');
+    } catch (error: any) {
+      setCheckoutError(
+        error?.response?.data?.error ||
+        error?.response?.data?.details ||
+        'No se pudo iniciar la reserva de inventario para la receta seleccionada.'
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  /**
+   * Refresca manualmente el estado del checkout consultando al backend.
+   * @returns {Promise<void>}
+   */
+  const handleRefreshPaymentStatus = async () => {
+    if (!checkoutSession?.order?.recipeId) {
+      return;
+    }
+
+    try {
+      setCheckoutLoading(true);
+      setCheckoutError('');
+      const session = await fetchCheckoutSession(checkoutSession.order.recipeId);
+      applyCheckoutSession(session, session.order.status === 'payment_confirmed');
+      setPaymentStatusMessage('Estado del checkout actualizado desde el backend.');
+    } catch (error: any) {
+      setCheckoutError(
+        error?.response?.data?.error ||
+        error?.response?.data?.details ||
+        'No se pudo consultar el estado del checkout.'
+      );
+    } finally {
+      setCheckoutLoading(false);
+    }
   };
 
   const activeNavId =
@@ -1258,9 +1464,18 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   
                   {/* Proposal Breakdown Table */}
                   <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
-                    <div>
-                      <h3 className="zenith-section-title">Medicamentos recetados</h3>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <h3 className="zenith-section-title">Medicamentos recetados</h3>
+                        <p className="text-xs text-surface-500 mt-1">Checkout asociado a la receta: <span className="font-mono text-primary-300">{activeCheckoutPrescription?.recipeId || 'SIN_RÉCIPE'}</span></p>
+                      </div>
                     </div>
+
+                    {checkoutError ? (
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                        {checkoutError}
+                      </div>
+                    ) : null}
 
                     <div className="divide-y divide-surface-850">
                       {proposalItems.map((item) => {
@@ -1380,11 +1595,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <Button
                       variant="patient"
                       onClick={handleConfirmOrder}
-                      disabled={!termsAccepted}
+                      disabled={!termsAccepted || !proposalItems.length || checkoutLoading}
                       className="w-full"
                       size="lg"
                     >
-                      <span>Confirmar y Enviar Carrito</span>
+                      <span>{checkoutLoading ? 'Preparando checkout...' : 'Confirmar y Enviar Carrito'}</span>
                       <ArrowRight className="h-4.5 w-4.5" />
                     </Button>
 
@@ -1410,44 +1625,58 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   
-                  {/* Documentación de redirección a pasarela externa */}
+                  {/* Estado del checkout y futura redirección */}
                   <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-5">
                     <div className="p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl flex items-start gap-3 text-xs text-surface-300">
                       <Info className="h-5 w-5 text-primary-400 shrink-0 mt-0.5" />
                       <p className="leading-relaxed">
-                        El procesamiento de pagos (Pago Móvil y Transferencia) se realiza en la pasarela externa del cliente.
-                        Esta aplicación no implementa la pasarela: solo documenta y simula el flujo de redirección de integración.
+                        La receta <span className="font-mono text-primary-300">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'SIN_RÉCIPE'}</span> ya quedó conectada al checkout del backend.
+                        La redirección automática se activará cuando la pasarela entregue una URL real. Mientras tanto, esta pantalla consulta el estado de la reserva y espera el callback legítimo del backend.
                       </p>
                     </div>
 
-                    <div className="space-y-3">
-                      <h3 className="zenith-section-title">Ejemplo de redirección</h3>
-                      <div className="p-3 bg-surface-950/60 border border-surface-850 rounded-xl">
-                        <p className="text-[10px] font-bold text-surface-500 uppercase mb-1.5">URL de ejemplo</p>
-                        <p className="text-[11px] font-mono text-primary-300 break-all leading-relaxed">
-                          {getExamplePaymentRedirectUrl()}
-                        </p>
+                    {paymentStatusMessage ? (
+                      <div className="rounded-xl border border-secondary-500/30 bg-secondary-500/10 px-3 py-2 text-xs text-secondary-300">
+                        {paymentStatusMessage}
                       </div>
-                    </div>
+                    ) : null}
+
+                    {checkoutError ? (
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                        {checkoutError}
+                      </div>
+                    ) : null}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="p-3 bg-surface-950/50 border border-surface-850 rounded-xl space-y-1">
-                        <p className="font-semibold text-surface-500">Métodos en pasarela del cliente</p>
-                        <p className="text-surface-300">Pago Móvil, Transferencia</p>
+                        <p className="font-semibold text-surface-500">Estado backend</p>
+                        <p className="text-surface-200 font-bold uppercase">{checkoutSession?.order?.status || 'checkout_pending'}</p>
                       </div>
                       <div className="p-3 bg-surface-950/50 border border-surface-850 rounded-xl space-y-1">
-                        <p className="font-semibold text-surface-500">Retorno esperado</p>
-                        <p className="text-surface-300">Callback con referencia de pago confirmada</p>
+                        <p className="font-semibold text-surface-500">Siguiente acción</p>
+                        <p className="text-surface-300 font-mono">{checkoutSession?.order?.nextAction || 'await_gateway_url'}</p>
+                      </div>
+                      <div className="p-3 bg-surface-950/50 border border-surface-850 rounded-xl space-y-1 sm:col-span-2">
+                        <p className="font-semibold text-surface-500">URL de redirección</p>
+                        <p className="text-surface-300 font-mono break-all">{checkoutSession?.order?.redirectUrl || 'Pendiente de configuración por la pasarela del cliente.'}</p>
                       </div>
                     </div>
 
-                    <div className="flex justify-end pt-2">
+                    <div className="flex justify-end gap-3 pt-2">
                       <button
                         type="button"
                         onClick={() => setActiveSubTab('proposals')}
                         className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
                       >
                         Volver a Propuesta
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRefreshPaymentStatus}
+                        disabled={checkoutLoading || !checkoutSession?.order?.recipeId}
+                        className="px-4 py-2.5 bg-primary-500/15 border border-primary-500/30 rounded-xl text-primary-300 hover:text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {checkoutLoading ? 'Consultando...' : 'Actualizar estado'}
                       </button>
                     </div>
                   </div>
@@ -1574,15 +1803,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
                     <div className="border-t border-surface-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-surface-455 text-[10px]">
                       <div>
-                        <p className="font-semibold text-surface-600">Pasarela externa del cliente:</p>
-                        <p className="font-mono text-surface-800 font-bold mt-0.5">{PATIENT_PAYMENT_SEED.gatewayUrl}</p>
-                        <p className="font-semibold text-surface-600 mt-2">Referencia de pago (simulación):</p>
-                        <p className="font-mono text-surface-800 font-bold mt-0.5">{simulatedPaymentReference}</p>
+                        <p className="font-semibold text-surface-600">Recipe / Order ID:</p>
+                        <p className="font-mono text-surface-800 font-bold mt-0.5">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'PENDIENTE'}</p>
+                        <p className="font-semibold text-surface-600 mt-2">Referencia de pago confirmada:</p>
+                        <p className="font-mono text-surface-800 font-bold mt-0.5">{simulatedPaymentReference || 'PENDIENTE DE CALLBACK'}</p>
                       </div>
                       
                       <div className="flex items-center gap-1.5 text-secondary-605 font-bold">
                         <ShieldCheck className="h-4.5 w-4.5" />
-                        <span>Reserva Confirmada en Almacén</span>
+                        <span>{checkoutSession?.order?.status === 'payment_confirmed' ? 'Reserva Confirmada en Almacén' : 'Esperando confirmación del backend'}</span>
                       </div>
                     </div>
 

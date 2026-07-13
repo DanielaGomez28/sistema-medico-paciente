@@ -36,7 +36,6 @@ import apiClient from '../lib/api';
 import { socket } from '../lib/socket';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
-  DOCTOR_COMMISSION_SEEDS,
   DOCTOR_LINKED_PATIENT_SEEDS,
   DOCTOR_PROFILE_DEFAULTS,
   DOCTOR_RECIPE_LOG_SEEDS,
@@ -83,6 +82,22 @@ interface CartItem {
   product: MedicalProduct;
   posology: string;
   discount: number;
+}
+
+interface DoctorCommissionTransaction {
+  orderId: string;
+  recipeId: string;
+  amount: number;
+  commissionAmount: number;
+  settledAt: string;
+}
+
+interface DoctorCommissionSummary {
+  doctorId: string;
+  currency: string;
+  commissionRatePct: number;
+  availableBalance: number;
+  transactions: DoctorCommissionTransaction[];
 }
 
 /**
@@ -175,6 +190,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
 
   // Dynamic commission rate state
   const [commissionRate, setCommissionRate] = useState<number>(8);
+  const [commissionSummary, setCommissionSummary] = useState<DoctorCommissionSummary | null>(null);
+  const [commissionLoading, setCommissionLoading] = useState(false);
+  const [commissionError, setCommissionError] = useState('');
   
   useEffect(() => {
     const loadRate = () => {
@@ -417,6 +435,52 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
       cancelled = true;
     };
   }, [activeTab, inventoryPreview, searchQuery]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    /**
+     * Carga desde backend el resumen real de comisiones del medico autenticado.
+     * @returns {Promise<void>}
+     */
+    const loadCommissionSummary = async () => {
+      if (activeTab !== 'commissions' || !DOCTOR_ID) {
+        return;
+      }
+
+      try {
+        setCommissionLoading(true);
+        setCommissionError('');
+        const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
+
+        if (!cancelled) {
+          const summary = response.data as DoctorCommissionSummary;
+          setCommissionSummary(summary);
+          if (Number.isFinite(summary?.commissionRatePct)) {
+            setCommissionRate(Number(summary.commissionRatePct));
+          }
+        }
+      } catch (error: any) {
+        if (!cancelled) {
+          setCommissionError(
+            error?.response?.data?.error ||
+            error?.response?.data?.details ||
+            'No se pudo cargar el libro de comisiones del backend.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setCommissionLoading(false);
+        }
+      }
+    };
+
+    loadCommissionSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [DOCTOR_ID, activeTab]);
 
   /**
    * Abre el formulario de detalle de un paciente existente.
@@ -1460,21 +1524,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
 
             {/* VIEW TAB 4: COMMISSIONS & CLINICAL HISTORY (Pantalla M.3) */}
             {activeTab === 'commissions' && (() => {
-              const dynamicCommissions = DOCTOR_COMMISSION_SEEDS.map(c => {
-                const computedAmt = c.saleAmount * (commissionRate / 100);
-                return {
-                  ...c,
-                  commissionRate,
-                  commissionAmount: computedAmt
-                };
-              });
-
-              const totalAccredited = dynamicCommissions
-                .filter((c) => c.status === 'Acreditado')
-                .reduce((sum, c) => sum + c.commissionAmount, 0);
-              const totalPending = dynamicCommissions
-                .filter((c) => c.status === 'Pendiente')
-                .reduce((sum, c) => sum + c.commissionAmount, 0);
+              const ledgerEntries = commissionSummary?.transactions || [];
+              const totalAccredited = Number(commissionSummary?.availableBalance || 0);
+              const totalPending = 0;
 
               return (
                 <div className="space-y-6 animate-in fade-in duration-300">
@@ -1485,26 +1537,43 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
                       <div className="flex justify-between items-center">
                         <div>
                           <h3 className="zenith-section-title">Libro de Comisiones</h3>
-                          <p className="text-xs text-surface-400">Incentivos asignados por venta efectiva en la red de farmacias.</p>
+                          <p className="text-xs text-surface-400">Comisiones liquidadas automáticamente por pagos confirmados.</p>
                         </div>
-                        <span className="text-[10px] bg-secondary-500/20 text-white border border-secondary-400/40 px-2 py-0.5 rounded font-bold shadow-sm">Tasa: {commissionRate}%</span>
+                        <span className="text-[10px] bg-secondary-500/20 text-white border border-secondary-400/40 px-2 py-0.5 rounded font-bold shadow-sm">Tasa backend: {commissionSummary?.commissionRatePct ?? commissionRate}%</span>
                       </div>
+
+                      {commissionError ? (
+                        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                          {commissionError}
+                        </div>
+                      ) : null}
+
+                      {commissionLoading ? (
+                        <div className="rounded-xl border border-surface-800 bg-surface-950/60 px-3 py-4 text-xs text-surface-400">
+                          Consultando comisiones liquidadas...
+                        </div>
+                      ) : null}
 
                       {/* Bar-chart style visualisation per entry */}
                       <div className="space-y-3">
-                        {dynamicCommissions.map((entry) => (
-                          <div key={entry.id} className="space-y-1.5">
+                        {!commissionLoading && ledgerEntries.length === 0 ? (
+                          <div className="rounded-xl border border-surface-800 bg-surface-950/60 px-3 py-4 text-xs text-surface-400">
+                            Todavía no hay pagos confirmados que hayan generado comisión para este médico.
+                          </div>
+                        ) : null}
+                        {ledgerEntries.map((entry, index) => (
+                          <div key={`${entry.recipeId}-${index}`} className="space-y-1.5">
                             <div className="flex justify-between items-start text-xs">
                               <div className="min-w-0">
-                                <span className="font-semibold text-surface-200 block truncate">{entry.patientName}</span>
-                                <span className="text-[10px] text-surface-500 truncate block">{entry.medication} • {entry.date}</span>
+                                <span className="font-semibold text-surface-200 block truncate">Recipe {entry.recipeId}</span>
+                                <span className="text-[10px] text-surface-500 truncate block">Orden {entry.orderId} • Liquidada {new Date(entry.settledAt).toLocaleDateString('es-ES')}</span>
                               </div>
                               <div className="text-right shrink-0 pl-3">
                                 <span className="font-bold text-sm text-black">
                                   +{formatCurrency(entry.commissionAmount)}
                                 </span>
-                                <span className={`text-[9px] font-bold block ${ entry.status === 'Acreditado' ? 'text-secondary-500/70' : 'text-primary-500/70' }`}>
-                                  {entry.status}
+                                <span className="text-[9px] font-bold block text-secondary-500/70">
+                                  Acreditado
                                 </span>
                               </div>
                             </div>
@@ -1512,7 +1581,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
                             <div className="h-1 w-full bg-surface-850 rounded-full overflow-hidden">
                               <div
                                 className="h-full rounded-full bg-[#179150]"
-                                style={{ width: `${Math.min((entry.saleAmount / 25) * 100, 100)}%` }}
+                                style={{ width: `${Math.min((entry.amount / 25) * 100, 100)}%` }}
                               ></div>
                             </div>
                           </div>

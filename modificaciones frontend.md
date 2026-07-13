@@ -303,3 +303,90 @@ El flujo medico/paciente intervenido quedo cerrado correctamente para el entorno
 - La proxima evolucion natural es reemplazar tambien bitacoras y modulos historicos por endpoints reales cuando existan en backend.
 
 
+
+
+---
+
+## 4.7 Objetivo 2: Integracion frontend con reservas, checkout y comisiones
+
+### Que se hizo
+
+- Se conecto el portal paciente al backend real de reservas y checkout.
+- Se elimino la pasarela simulada incrustada como URL ficticia dentro del componente.
+- Se conecto el portal medico al ledger real de comisiones liquidadas por pagos confirmados.
+- Se documentaron con JSDoc los helpers nuevos del flujo de checkout y consulta de comisiones.
+
+### Logica aplicada
+
+#### Portal paciente
+
+- La propuesta comercial ya no inventa una orden aparte: usa la misma identidad canonica de la receta.
+- Al confirmar, el frontend solicita `POST /api/pagos/redireccion` con `recipeId`.
+- La UI conserva el checkout recibido y consulta periodicamente:
+  - `GET /api/pagos/recetas/:recipeId`
+  - `GET /api/pagos/reservas/:recipeId`
+- Como la URL real de la pasarela todavia no existe, el frontend respeta el contrato transitorio:
+  - `redirectReady: false`
+  - `redirectUrl: null`
+  - `nextAction: await_gateway_url`
+
+#### Portal medico
+
+- La vista de comisiones ya no depende de seeds locales para mostrar liquidaciones.
+- Cuando la pestaña de comisiones se activa, consulta:
+  - `GET /api/pagos/comisiones/medico/:doctorId`
+- El resumen de saldo, tasa y movimientos se renderiza desde el backend real del entorno mock.
+
+### Solucion en codigo
+
+#### `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+
+- agrega estados de `checkoutSession`, `checkoutLoading`, `checkoutError` y `paymentStatusMessage`
+- conecta `handleConfirmOrder()` con `POST /api/pagos/redireccion`
+- agrega `fetchCheckoutSession()` y polling de estado
+- adapta voucher y pantalla de pago al contrato real del backend
+
+#### `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx`
+
+- reemplaza las comisiones sembradas localmente por el resumen real del backend
+- agrega carga diferida de `commissionSummary`
+- renderiza ledger y saldo disponible desde la API
+
+---
+
+## 5.7 Validacion adicional del objetivo 2
+
+### Frontend
+
+Se verifico nuevamente sin build:
+
+- chequeo sintactico y de tipos de:
+  - `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+  - `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx`
+- validacion del contrato visual del checkout:
+  - receta activa visible
+  - reserva consultable
+  - URL de redireccion en espera
+  - refresco manual de estado
+- validacion del contrato visual de comisiones:
+  - saldo disponible
+  - tasa backend
+  - movimientos liquidados
+
+### Resultado verificado
+
+La UI quedo alineada con el backend actual:
+
+- paciente y backend comparten el mismo `recipeId` como identidad de checkout;
+- el frontend no promete una redireccion falsa mientras la pasarela no entregue una URL real;
+- el medico ve solo comisiones realmente liquidadas por el backend mock.
+
+---
+
+## 6. Observaciones finales
+
+- Todavia existen otros mocks en zonas administrativas que no forman parte del flujo medico/paciente intervenido.
+- El objetivo de este cambio no fue eliminar toda la data demo del frontend, sino quitar la que estaba incrustada en los componentes clave del flujo medico/paciente y conectarlos a la API real disponible.
+- La proxima evolucion natural es reemplazar tambien bitacoras y modulos historicos por endpoints reales cuando existan en backend.
+- En pagos, el frontend ya no inventa una URL de pasarela: espera el dato real del backend para evitar un contrato mentiroso.
+- El portal medico ya refleja el ledger de comisiones liquidadas por el backend mock, no una simulacion local desacoplada.
