@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente new order modal.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
 import { useState, useMemo } from 'react';
 import { X, Search, Plus, Minus, PlusCircle, CreditCard, MapPin, Trash2, ShoppingBag } from 'lucide-react';
 import { Product, Customer, Order, OrderItem } from '../types';

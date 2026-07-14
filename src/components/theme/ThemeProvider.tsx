@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente de tema theme provider.
+ * @description Gestiona apariencia, persistencia y sincronizaci?n del tema visual del frontend.
+ */
+
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import {
   applyTheme,

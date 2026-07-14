@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente de tema theme toggle.
+ * @description Gestiona apariencia, persistencia y sincronizaci?n del tema visual del frontend.
+ */
+
 import React from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { cn } from '../../lib/utils';

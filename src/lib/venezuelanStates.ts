@@ -1,4 +1,8 @@
 /**
+ * @fileoverview Utilidad de frontend venezuelan states.
+ * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
+ */
+/**
  * Lista oficial inmutable de los 23 estados de Venezuela más
  * las Dependencias Federales y el Distrito Capital.
  * @constant {readonly string[]}

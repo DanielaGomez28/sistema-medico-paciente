@@ -1,4 +1,8 @@
 /**
+ * @fileoverview Utilidad de frontend theme.
+ * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
+ */
+/**
  * Modos de tema de color soportados por la aplicación.
  * @type {ThemeMode}
  */

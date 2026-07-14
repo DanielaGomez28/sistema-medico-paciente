@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente venezuelan state select.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
 import { cn } from '../lib/utils';
 import { VENEZUELAN_STATES, isVenezuelanState } from '../lib/venezuelanStates';
 

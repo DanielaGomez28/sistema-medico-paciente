@@ -1,10 +1,14 @@
-'use client';
+﻿'use client';
+
+/**
+ * @fileoverview Componente login view.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
 
 import React, { useMemo, useState } from 'react';
 
 import {
   AlertCircle,
-  ChevronDown,
   Eye,
   EyeOff,
   Loader2,
@@ -14,16 +18,26 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
-import { APP_USER_DEFAULTS, LOGIN_TEST_ACCOUNT_LABELS, LOGIN_TEST_USERS } from '../data/mockData';
+import { APP_USER_DEFAULTS } from '../data/mockData';
 
 type LoginSuccessPayload = {
   role: string;
   email: string;
   name: string;
+  token?: string | null;
   userId?: string | null;
   doctorId?: string | null;
   patientId?: string | null;
   socketIdentity?: string | null;
+  doctorProfile?: {
+    mpps?: string | null;
+    specialty?: string | null;
+    medicalCollege?: string | null;
+    specialSanitaryRegistration?: string | null;
+    digitalSignatureHash?: string | null;
+    officeLocation?: string | null;
+    status?: string | null;
+  } | null;
 };
 
 interface LoginViewProps {
@@ -41,17 +55,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [passwordError, setPasswordError] = useState('');
   const [generalError, setGeneralError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [showTestAccounts, setShowTestAccounts] = useState(false);
-
   const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api', []);
-
-  const handleQuickFill = (accEmail: string, accPass: string) => {
-    setEmail(accEmail);
-    setPassword(accPass);
-    setEmailError('');
-    setPasswordError('');
-    setGeneralError('');
-  };
 
   const validateEmail = (input: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
 
@@ -106,22 +110,25 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       if (response.ok) {
         const userRole = (data.role || data.rol || 'paciente').toLowerCase();
         const userEmail = data.email || data.correo || normalizedEmail;
-        const fallbackUser = LOGIN_TEST_USERS.find((u) => u.email.toLowerCase() === userEmail.toLowerCase());
-        const userName = data.name || data.nombre || fallbackUser?.name || APP_USER_DEFAULTS.patientName;
+        const userName = data.name || data.nombre || APP_USER_DEFAULTS.patientName;
         onLoginSuccess({
           role: userRole,
           email: userEmail,
           name: userName,
+          token: data.token || null,
           userId: data.userId || null,
           doctorId: data.doctorId || null,
           patientId: data.patientId || null,
           socketIdentity: data.socketIdentity || data.patientId || data.userId || userEmail,
+          doctorProfile: data.doctorProfile || null,
         });
       } else if (response.status === 401) {
         setPasswordError(data.error || 'La contrasena ingresada es incorrecta.');
       } else if (response.status === 404) {
         setEmailError(data.error || 'Usuario no registrado.');
 
+      } else if (response.status === 403) {
+        setGeneralError(data.error || 'La cuenta no tiene permisos o se encuentra suspendida.');
       } else {
         setGeneralError(data.error || 'No fue posible iniciar sesion.');
       }
@@ -214,28 +221,9 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
               {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" />Entrando...</>) : 'Ingresar al sistema'}
             </button>
           </form>
-
-          <div className="login-view__divider mt-6 border-t pt-5">
-            <button type="button" onClick={() => setShowTestAccounts((open) => !open)} aria-expanded={showTestAccounts} aria-controls="login-test-accounts" className="login-view__demo-toggle mx-auto flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors">
-              Cuentas de prueba
-              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform duration-200', showTestAccounts && 'rotate-180')} aria-hidden />
-            </button>
-
-            {showTestAccounts && (
-              <div id="login-test-accounts" className="mt-3 grid grid-cols-1 gap-2">
-                {LOGIN_TEST_USERS.map((account) => (
-                  <button key={account.email} type="button" onClick={() => handleQuickFill(account.email, account.password)} className="login-view__quick-fill flex flex-col gap-1 rounded-xl border px-3 py-2 text-left transition-all sm:flex-row sm:items-center sm:justify-between">
-                    <span className="min-w-0 break-all">
-                      {LOGIN_TEST_ACCOUNT_LABELS[account.role] ?? account.role}: <code className="login-view__link font-mono">{account.email}</code>
-                    </span>
-                    <span className="login-view__mono shrink-0 font-mono text-2xs sm:text-right">Clave: {account.password}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </div>
   );
 }
+

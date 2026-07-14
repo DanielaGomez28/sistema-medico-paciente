@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente credential qr.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { QrCode, RefreshCw } from 'lucide-react';
 import { useShell } from './layout';

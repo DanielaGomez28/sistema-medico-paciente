@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Utilidad de frontend product catalog.
+ * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
+ */
 import { Product } from '../types';
 import { INITIAL_PRODUCTS } from '../data/mockData';
 

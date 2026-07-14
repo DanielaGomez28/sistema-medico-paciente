@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Utilidad de frontend products.
+ * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
+ */
 import { Product } from '../types';
 
 /**

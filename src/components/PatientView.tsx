@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * @fileoverview Componente patient view.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
+import Image from 'next/image';
 import { useState, useEffect, useMemo } from 'react';
 import { 
   FileText, 
@@ -41,14 +47,8 @@ import { Button, ListCard, Modal, ModalBody } from './ui';
 import apiClient from '../lib/api';
 import { socket } from '../lib/socket';
 import {
-  PATIENT_DOSE_LOG_SEEDS,
   PATIENT_PORTAL_COPY,
   PATIENT_PROFILE_DEFAULTS,
-  PATIENT_TREATMENT_ALERT_SEEDS,
-  PATIENT_TREATMENT_SEEDS,
-  type PatientDoseLogSeed as DoseLog,
-  type PatientTreatmentAlertSeed as TreatmentAlert,
-  type PatientTreatmentSeed as TreatmentMedication,
 } from '../data/mockData';
 
 /**
@@ -66,11 +66,126 @@ interface PatientViewProps {
   onLogout: () => void;
 }
 
+
+interface BackendPatientProfile {
+  systemId: string;
+  patientId: string;
+  name: string;
+  age: number;
+  gender: string;
+  bloodType: string;
+  phone: string;
+  condition: string;
+  allergies: string;
+  lastVisit: string;
+  deliveryAddress: string;
+  deliveryState: string;
+  deliveryMunicipio: string;
+  medications: string[];
+}
+
+interface PatientProfileDraft {
+  name: string;
+  phone: string;
+  deliveryAddress: string;
+  deliveryState: string;
+  deliveryMunicipio: string;
+}
+
+/**
+ * Detecta patrones sospechosos en texto libre antes de enviarlo al backend.
+ * @param {string} value - Valor a inspeccionar.
+ * @returns {boolean} `true` si el valor parece malicioso.
+ */
+const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|union|select|insert|delete|drop|update|<script)/i.test(value);
+
+/**
+ * Crea un borrador vacio del perfil editable del paciente.
+ * @returns {PatientProfileDraft} Borrador inicial seguro.
+ */
+function createEmptyPatientProfileDraft(): PatientProfileDraft {
+  return {
+    name: '',
+    phone: PATIENT_PROFILE_DEFAULTS.profilePhone,
+    deliveryAddress: PATIENT_PROFILE_DEFAULTS.deliveryAddress,
+    deliveryState: PATIENT_PROFILE_DEFAULTS.deliveryState,
+    deliveryMunicipio: PATIENT_PROFILE_DEFAULTS.deliveryMunicipio,
+  };
+}
+
+/**
+ * Extrae el subconjunto editable del perfil real del paciente.
+ * @param {BackendPatientProfile | null} profile - Perfil backend consolidado.
+ * @param {string} fallbackName - Nombre de respaldo de la sesion.
+ * @returns {PatientProfileDraft} Datos listos para el formulario.
+ */
+function buildPatientProfileDraft(profile: BackendPatientProfile | null, fallbackName: string): PatientProfileDraft {
+  return {
+    name: profile?.name || fallbackName || '',
+    phone: profile?.phone || PATIENT_PROFILE_DEFAULTS.profilePhone,
+    deliveryAddress: profile?.deliveryAddress || PATIENT_PROFILE_DEFAULTS.deliveryAddress,
+    deliveryState: profile?.deliveryState || PATIENT_PROFILE_DEFAULTS.deliveryState,
+    deliveryMunicipio: profile?.deliveryMunicipio || PATIENT_PROFILE_DEFAULTS.deliveryMunicipio,
+  };
+}
+
+/**
+ * Valida el borrador editable del perfil antes de persistirlo.
+ * @param {PatientProfileDraft} draft - Datos capturados en UI.
+ * @returns {string | null} Mensaje de error o `null` si es valido.
+ */
+function validatePatientProfileDraft(draft: PatientProfileDraft): string | null {
+  const normalized = {
+    name: draft.name.trim(),
+    phone: draft.phone.trim(),
+    deliveryAddress: draft.deliveryAddress.trim(),
+    deliveryState: draft.deliveryState.trim(),
+    deliveryMunicipio: draft.deliveryMunicipio.trim(),
+  };
+
+  if (Object.values(normalized).some(containsSuspiciousPattern)) {
+    return 'Se detectaron caracteres inseguros en el formulario.';
+  }
+
+  if (!/^[\p{L}\p{N}\s.'-]{3,120}$/u.test(normalized.name)) {
+    return 'El nombre debe tener entre 3 y 120 caracteres validos.';
+  }
+
+  if (!/^[+\d\s()-]{7,20}$/.test(normalized.phone)) {
+    return 'El telefono debe tener un formato visible y valido.';
+  }
+
+  if (!/^[\p{L}\p{N}\s.,#()"'-]{5,200}$/u.test(normalized.deliveryAddress)) {
+    return 'La direccion debe tener entre 5 y 200 caracteres validos.';
+  }
+
+  if (!/^[\p{L}\s.'-]{2,80}$/u.test(normalized.deliveryState)) {
+    return 'El estado seleccionado no es valido.';
+  }
+
+  if (!/^[\p{L}\p{N}\s.'-]{2,120}$/u.test(normalized.deliveryMunicipio)) {
+    return 'El municipio debe tener entre 2 y 120 caracteres validos.';
+  }
+
+  return null;
+}
+
+interface ApiErrorPayload {
+  response?: {
+    data?: {
+      error?: string;
+      details?: string;
+    };
+  };
+}
+
 interface BackendPrescriptionItem {
   id_producto: string;
   nombre: string;
   dosis: string;
   cantidad: number;
+  daily_doses?: number;
+  treatment_days?: number;
   precio_unitario_base: number;
   precio_unitario_final: number;
   subtotal_base?: number;
@@ -83,8 +198,11 @@ interface BackendPrescription {
   createdAt: string;
   recipeExpiresAt?: string;
   doctorName?: string | null;
+  doctorSpecialty?: string | null;
+  doctorLicense?: string | null;
   clinicalStatus?: string;
   commercialStatus?: string;
+  fulfillmentStatus?: string;
   status?: string;
   totals?: {
     subtotal_base?: number;
@@ -119,6 +237,66 @@ interface InventoryHoldState {
 interface CheckoutSessionState {
   order: PaymentOrderState;
   hold: InventoryHoldState | null;
+}
+
+interface BackendTrackingItem {
+  id_producto: string;
+  nombre: string;
+  totalPrescribedDoses: number;
+  totalDispensedDoses: number;
+  availableDoses: number;
+  consumedDoses: number;
+  averageDailyConsumption: number;
+  estimatedDaysRemaining: number | null;
+  refillAlertActive: boolean;
+  lastAlertAt: string | null;
+  intakeLogs: Array<{ logId: string; dosesTaken: number; takenAt: string }>;
+}
+
+interface BackendTrackingProfile {
+  recipeId: string;
+  patientId: string;
+  status: string;
+  updatedAt: string;
+  items: BackendTrackingItem[];
+}
+
+interface TreatmentMedication {
+  id: string;
+  productId: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  scheduleTimes: string[];
+  startDate: string;
+  endDate: string;
+  doctor: string;
+  specialty: string;
+  recipeId: string;
+  totalDoses: number;
+  takenDoses: number;
+  status: 'En curso' | 'Completado' | 'Pausado';
+  instructions: string;
+}
+
+interface DoseLog {
+  id: string;
+  recipeId: string;
+  productId: string;
+  medicationId: string;
+  medicationName: string;
+  scheduledTime: string;
+  takenAt?: string;
+  status: 'Tomada' | 'Omitida' | 'Pendiente';
+  date: string;
+}
+
+interface TreatmentAlert {
+  id: string;
+  type: 'recordatorio' | 'control' | 'renovacion';
+  title: string;
+  message: string;
+  date: string;
 }
 
 /**
@@ -208,10 +386,118 @@ const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Rec
     dosage: `${item.cantidad} unidad(es)`,
     instructions: item.dosis || 'Seguir indicaciones médicas.',
     doctor: prescription.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName,
-    specialty: PATIENT_PORTAL_COPY.fallbackSpecialty,
-    doctorLicense: PATIENT_PORTAL_COPY.doctorLicenseLabel,
+    specialty: prescription.doctorSpecialty || PATIENT_PORTAL_COPY.fallbackSpecialty,
+    doctorLicense: prescription.doctorLicense || PATIENT_PORTAL_COPY.doctorLicenseLabel,
     status,
   }));
+};
+
+const buildTreatmentId = (recipeId: string, productId: string) => `${recipeId}::${productId}`;
+
+const formatDoseDateLabel = (dateIso: string) =>
+  new Date(dateIso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+
+const buildScheduleTimes = (dailyDoses: number) => {
+  const normalized = Math.max(1, Math.min(4, Number(dailyDoses || 1)));
+  if (normalized === 1) return ['08:00'];
+  if (normalized === 2) return ['08:00', '20:00'];
+  if (normalized === 3) return ['08:00', '14:00', '20:00'];
+  return ['06:00', '12:00', '18:00', '22:00'];
+};
+
+const buildTreatmentsFromTracking = (
+  profiles: BackendTrackingProfile[],
+  prescriptions: BackendPrescription[]
+): TreatmentMedication[] =>
+  profiles.flatMap((profile) => {
+    const recipe = prescriptions.find((entry) => entry.recipeId === profile.recipeId);
+    return (profile.items || []).map((item) => {
+      const prescriptionItem = recipe?.items?.find((candidate) => candidate.id_producto === item.id_producto);
+      const totalDoses = Number(item.totalDispensedDoses || item.totalPrescribedDoses || 0);
+      const takenDoses = Number(item.consumedDoses || 0);
+      return {
+        id: buildTreatmentId(profile.recipeId, item.id_producto),
+        productId: item.id_producto,
+        name: item.nombre,
+        dosage: prescriptionItem?.dosis || 'Seguir indicaciones m?dicas',
+        frequency: item.averageDailyConsumption > 0 ? `${item.averageDailyConsumption.toFixed(2)} dosis/d?a` : 'Seguimiento activo',
+        scheduleTimes: buildScheduleTimes(Number(prescriptionItem?.daily_doses || 1)),
+        startDate: formatRecipeDate(recipe?.createdAt || new Date().toISOString()),
+        endDate: formatRecipeDate(recipe?.recipeExpiresAt || new Date().toISOString()),
+        doctor: recipe?.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName,
+        specialty: recipe?.doctorSpecialty || PATIENT_PORTAL_COPY.fallbackSpecialty,
+        recipeId: profile.recipeId,
+        totalDoses,
+        takenDoses,
+        status: item.availableDoses <= 0 ? 'Completado' : 'En curso',
+        instructions: prescriptionItem?.dosis || 'Seguir indicaciones m?dicas.',
+      };
+    });
+  });
+
+const buildDoseLogsFromTracking = (profiles: BackendTrackingProfile[]): DoseLog[] =>
+  profiles.flatMap((profile) =>
+    (profile.items || []).flatMap((item) =>
+      (item.intakeLogs || []).map((log) => ({
+        id: log.logId,
+        recipeId: profile.recipeId,
+        productId: item.id_producto,
+        medicationId: buildTreatmentId(profile.recipeId, item.id_producto),
+        medicationName: item.nombre,
+        scheduledTime: new Date(log.takenAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        takenAt: new Date(log.takenAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        status: 'Tomada' as const,
+        date: formatDoseDateLabel(log.takenAt),
+      }))
+    )
+  ).sort((left, right) => new Date(`${left.date} ${left.scheduledTime}`).getTime() - new Date(`${right.date} ${right.scheduledTime}`).getTime());
+
+const buildTreatmentAlertsFromTracking = (profiles: BackendTrackingProfile[], prescriptions: BackendPrescription[]): TreatmentAlert[] => {
+  const refillAlerts = profiles.flatMap((profile) =>
+    (profile.items || [])
+      .filter((item) => item.refillAlertActive)
+      .map((item) => ({
+        id: `refill-${profile.recipeId}-${item.id_producto}`,
+        type: 'recordatorio' as const,
+        title: `Reposici?n sugerida para ${item.nombre}`,
+        message: item.estimatedDaysRemaining !== null
+          ? `Quedan aproximadamente ${item.estimatedDaysRemaining} d?as de tratamiento disponibles.`
+          : 'El tratamiento est? activo y requiere seguimiento de reposici?n.',
+        date: formatDoseDateLabel(item.lastAlertAt || new Date().toISOString()),
+      }))
+  );
+
+  const renewalAlerts = prescriptions
+    .filter((prescription) => Boolean(prescription.recipeExpiresAt))
+    .filter((prescription) => {
+      const expiry = new Date(prescription.recipeExpiresAt || '').getTime();
+      const diffDays = Math.ceil((expiry - Date.now()) / 86400000);
+      return Number.isFinite(diffDays) && diffDays >= 0 && diffDays <= 15;
+    })
+    .map((prescription) => ({
+      id: `renewal-${prescription.recipeId}`,
+      type: 'renovacion' as const,
+      title: `Renovaci?n de receta ${prescription.recipeId}`,
+      message: `La receta vence el ${formatRecipeDate(prescription.recipeExpiresAt || new Date().toISOString())}. Solicite renovaci?n con anticipaci?n.`,
+      date: formatRecipeDate(prescription.recipeExpiresAt || new Date().toISOString()),
+    }));
+
+  return [...refillAlerts, ...renewalAlerts].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
+};
+
+const deriveOrderDeliveryStatus = (
+  checkoutSession: CheckoutSessionState | null,
+  activePrescription: BackendPrescription | null
+): 'Pendiente por retirar' | 'Listo para retirar' | 'Retirado' => {
+  if (activePrescription?.fulfillmentStatus === 'fully_fulfilled') {
+    return 'Retirado';
+  }
+
+  if (checkoutSession?.order?.status === 'payment_confirmed' || activePrescription?.commercialStatus === 'paid') {
+    return 'Listo para retirar';
+  }
+
+  return 'Pendiente por retirar';
 };
 
 /**
@@ -237,9 +523,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [recipesError, setRecipesError] = useState('');
 
   // Treatment tracking states
-  const [treatments, setTreatments] = useState<TreatmentMedication[]>(PATIENT_TREATMENT_SEEDS);
-  const [doseLogs, setDoseLogs] = useState<DoseLog[]>(PATIENT_DOSE_LOG_SEEDS);
-  const [treatmentAlerts] = useState<TreatmentAlert[]>(PATIENT_TREATMENT_ALERT_SEEDS);
+  const [trackingProfiles, setTrackingProfiles] = useState<BackendTrackingProfile[]>([]);
   const [doseSuccessMsg, setDoseSuccessMsg] = useState('');
   const [treatmentPanel, setTreatmentPanel] = useState<'today' | 'medications' | 'progress'>('today');
 
@@ -252,8 +536,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [showConsentModal, setShowConsentModal] = useState<boolean>(false);
   const [termsText, setTermsText] = useState<string>("");
 
-  // Last Order State
-  const [lastOrderStatus, setLastOrderStatus] = useState<'Pendiente por retirar' | 'Listo para retirar' | 'Retirado'>('Listo para retirar');
 
     const socketPatientIdentity = socketIdentity || patientId || patientEmail;
   const qrIdentitySeed = String(socketPatientIdentity || patientEmail || 'PX-000');
@@ -300,6 +582,47 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [checkoutError, setCheckoutError] = useState('');
   const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
 
+  const treatments = useMemo(() => buildTreatmentsFromTracking(trackingProfiles, backendPrescriptions), [trackingProfiles, backendPrescriptions]);
+  const trackedDoseLogs = useMemo(() => buildDoseLogsFromTracking(trackingProfiles), [trackingProfiles]);
+  const doseLogs = useMemo<DoseLog[]>(() => {
+    const todayLabel = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    const pendingLogs = treatments.flatMap((treatment) =>
+      treatment.status !== 'En curso'
+        ? []
+        : treatment.scheduleTimes
+            .filter((time) =>
+              !trackedDoseLogs.some((log) =>
+                log.recipeId === treatment.recipeId &&
+                log.productId === treatment.productId &&
+                log.date === todayLabel &&
+                log.scheduledTime === time
+              )
+            )
+            .map((time, index) => ({
+              id: `pending-${treatment.id}-${time}-${index + 1}`,
+              recipeId: treatment.recipeId,
+              productId: treatment.productId,
+              medicationId: treatment.id,
+              medicationName: treatment.name,
+              scheduledTime: time,
+              takenAt: undefined,
+              status: 'Pendiente' as const,
+              date: todayLabel,
+            }))
+    );
+
+    return [...trackedDoseLogs, ...pendingLogs].sort((left, right) => {
+      const leftKey = `${left.date}-${left.scheduledTime}`;
+      const rightKey = `${right.date}-${right.scheduledTime}`;
+      return leftKey.localeCompare(rightKey);
+    });
+  }, [trackedDoseLogs, treatments]);
+  const treatmentAlerts = useMemo(() => buildTreatmentAlertsFromTracking(trackingProfiles, backendPrescriptions), [trackingProfiles, backendPrescriptions]);
+  const lastOrderStatus = useMemo(
+    () => deriveOrderDeliveryStatus(checkoutSession, activeCheckoutPrescription),
+    [activeCheckoutPrescription, checkoutSession]
+  );
+
   // Voucher info
   const voucherId =
     simulatedPaymentReference ||
@@ -309,9 +632,18 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     'PENDIENTE';
 
   // Profile Settings State (Pantalla P.5)
-  const [profileName, setProfileName] = useState(patientName);
-
-  const [profileSystemId] = useState(patientId || null);
+  const [patientProfile, setPatientProfile] = useState<BackendPatientProfile | null>(null);
+  const [profileDraft, setProfileDraft] = useState<PatientProfileDraft>(() => createEmptyPatientProfileDraft());
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [profileSaveMsg, setProfileSaveMsg] = useState('');
+  const profileName = patientProfile?.name || patientName;
+  const profilePhone = patientProfile?.phone || PATIENT_PROFILE_DEFAULTS.profilePhone;
+  const deliveryAddress = patientProfile?.deliveryAddress || PATIENT_PROFILE_DEFAULTS.deliveryAddress;
+  const deliveryState = patientProfile?.deliveryState || PATIENT_PROFILE_DEFAULTS.deliveryState;
+  const deliveryMunicipio = patientProfile?.deliveryMunicipio || PATIENT_PROFILE_DEFAULTS.deliveryMunicipio;
+  const profileSystemId = patientProfile?.systemId || patientId || null;
   const qrPatientIdentity = profileSystemId || socketPatientIdentity;
 
   useEffect(() => {
@@ -335,12 +667,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               : latestRecipeId
           );
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!cancelled) {
+          const apiError = error as ApiErrorPayload;
           setBackendPrescriptions([]);
           setRecipes([]);
           setActiveCheckoutRecipeId('');
-          setRecipesError(error?.response?.data?.error || 'No se pudieron cargar los recipes del paciente.');
+          setRecipesError(apiError.response?.data?.error || 'No se pudieron cargar los recipes del paciente.');
         }
       } finally {
         if (!cancelled) {
@@ -357,6 +690,78 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       cancelled = true;
     };
   }, [socketPatientIdentity]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPatientProfile = async () => {
+      try {
+        setProfileLoading(true);
+        setProfileError('');
+        const response = await apiClient.get('/pacientes/perfil/actual');
+        const nextProfile = response.data as BackendPatientProfile;
+
+        if (!cancelled) {
+          setPatientProfile(nextProfile);
+          setProfileDraft(buildPatientProfileDraft(nextProfile, patientName));
+        }
+      } catch (error: unknown) {
+        if (!cancelled) {
+          const apiError = error as ApiErrorPayload;
+          setProfileError(
+            apiError.response?.data?.error ||
+            apiError.response?.data?.details ||
+            'No se pudo cargar el perfil real del paciente.'
+          );
+          setPatientProfile(null);
+          setProfileDraft(buildPatientProfileDraft(null, patientName));
+        }
+      } finally {
+        if (!cancelled) {
+          setProfileLoading(false);
+        }
+      }
+    };
+
+    void loadPatientProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [patientName]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTrackingProfiles = async () => {
+      if (!backendPrescriptions.length) {
+        if (!cancelled) {
+          setTrackingProfiles([]);
+        }
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        backendPrescriptions.map((prescription) =>
+          apiClient.get(`/seguimiento/recetas/${encodeURIComponent(prescription.recipeId)}`)
+        )
+      );
+
+      if (!cancelled) {
+        setTrackingProfiles(
+          results.flatMap((result) =>
+            result.status === 'fulfilled' ? [result.value.data as BackendTrackingProfile] : []
+          )
+        );
+      }
+    };
+
+    void loadTrackingProfiles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendPrescriptions]);
 
   // WebSockets: estado de solicitud entrante usando `patientId` interno
   const [incomingConsent, setIncomingConsent] = useState<{ doctorId: string; doctorName: string; patientId: string } | null>(null);
@@ -427,14 +832,25 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   // 2. EFECTO: Cuenta regresiva del QR efímero
   // =========================================================
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isTimerActive && timeLeft > 0) {
-      interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
-    } else if (timeLeft === 0) {
-      setQrImage(null); // Borramos el QR expirado de la pantalla
-      setIsTimerActive(false);
+    if (!isTimerActive || timeLeft <= 0) {
+      return undefined;
     }
+
+    const interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearInterval(interval);
+  }, [isTimerActive, timeLeft]);
+
+  useEffect(() => {
+    if (!isTimerActive || timeLeft !== 0) {
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => {
+      setQrImage(null);
+      setIsTimerActive(false);
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, [isTimerActive, timeLeft]);
 
   // =========================================================
@@ -468,10 +884,68 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     }
     setShowConsentModal(false);
   };
-  const [profilePhone, setProfilePhone] = useState(PATIENT_PROFILE_DEFAULTS.profilePhone);
-  const [deliveryAddress, setDeliveryAddress] = useState(PATIENT_PROFILE_DEFAULTS.deliveryAddress);
-  const [deliveryState, setDeliveryState] = useState(PATIENT_PROFILE_DEFAULTS.deliveryState);
-  const [deliveryMunicipio, setDeliveryMunicipio] = useState(PATIENT_PROFILE_DEFAULTS.deliveryMunicipio);
+
+  /**
+   * Habilita la edicion explicita del perfil del paciente.
+   * @returns {void}
+   */
+  const handleStartProfileEdit = () => {
+    setProfileDraft(buildPatientProfileDraft(patientProfile, patientName));
+    setProfileError('');
+    setProfileSaveMsg('');
+    setIsEditingProfile(true);
+  };
+
+  /**
+   * Cancela la edicion y restaura la vista segura de solo lectura.
+   * @returns {void}
+   */
+  const handleCancelProfileEdit = () => {
+    setProfileDraft(buildPatientProfileDraft(patientProfile, patientName));
+    setProfileError('');
+    setIsEditingProfile(false);
+  };
+
+  /**
+   * Persiste el perfil del paciente autenticado usando el endpoint real.
+   * @returns {Promise<void>}
+   */
+  const handleConfirmProfileEdit = async () => {
+    const validationError = validatePatientProfileDraft(profileDraft);
+    if (validationError) {
+      setProfileError(validationError);
+      setProfileSaveMsg('');
+      return;
+    }
+
+    try {
+      setProfileLoading(true);
+      setProfileError('');
+      const payload = {
+        name: profileDraft.name.trim(),
+        phone: profileDraft.phone.trim(),
+        deliveryAddress: profileDraft.deliveryAddress.trim(),
+        deliveryState: profileDraft.deliveryState.trim(),
+        deliveryMunicipio: profileDraft.deliveryMunicipio.trim(),
+      };
+      const response = await apiClient.put('/pacientes/perfil/actual', payload);
+      const nextProfile = response.data?.patient as BackendPatientProfile;
+      setPatientProfile(nextProfile);
+      setProfileDraft(buildPatientProfileDraft(nextProfile, patientName));
+      setIsEditingProfile(false);
+      setProfileSaveMsg('Perfil actualizado correctamente.');
+      setTimeout(() => setProfileSaveMsg(''), 3000);
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      setProfileError(
+        apiError.response?.data?.error ||
+        apiError.response?.data?.details ||
+        'No se pudo actualizar el perfil del paciente.'
+      );
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
   // Calculations for Proposal
   const calculateItemSubtotal = (item: ProposalItem) => {
@@ -524,7 +998,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     }
 
     if (nextSession?.order?.status === 'payment_confirmed') {
-      setLastOrderStatus('Pendiente por retirar');
       if (moveToVoucher) {
         setActiveSubTab('voucher');
       }
@@ -553,7 +1026,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   };
 
   const activeTreatments = treatments.filter((t) => t.status === 'En curso');
-  const todayLabel = '08 Jun, 2026';
+  const todayLabel = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   const todayDoses = doseLogs.filter((d) => d.date === todayLabel);
   const pendingTodayDoses = todayDoses.filter((d) => d.status === 'Pendiente');
   const nextPendingDose = pendingTodayDoses[0];
@@ -567,7 +1040,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     ? Math.round((totalTakenDoses / totalPlannedDoses) * 100)
     : 0;
   const completedTreatments = treatments.filter((treatment) => treatment.status === 'Completado').length;
-  const treatmentsNearCompletion = activeTreatments.filter((treatment) => getTreatmentProgress(treatment) >= 80).length;
 
   const sortedTodayDoses = [...todayDoses].sort((a, b) =>
     a.scheduledTime.localeCompare(b.scheduledTime)
@@ -591,25 +1063,33 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     return treatment.instructions;
   };
 
-  const handleMarkDoseTaken = (doseId: string) => {
-    const dose = doseLogs.find((d) => d.id === doseId);
+  const handleMarkDoseTaken = async (doseId: string) => {
+    const dose = doseLogs.find((entry) => entry.id === doseId);
     if (!dose || dose.status !== 'Pendiente') return;
 
-    const now = new Date();
-    const takenAt = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    try {
+      await apiClient.post('/seguimiento/ingestas', {
+        recipeId: dose.recipeId,
+        productId: dose.productId,
+        dosesTaken: 1,
+        takenAt: new Date().toISOString(),
+      });
 
-    setDoseLogs((prev) =>
-      prev.map((d) =>
-        d.id === doseId ? { ...d, status: 'Tomada' as const, takenAt } : d
-      )
-    );
-    setTreatments((prev) =>
-      prev.map((t) =>
-        t.id === dose.medicationId ? { ...t, takenDoses: t.takenDoses + 1 } : t
-      )
-    );
-    setDoseSuccessMsg(`Toma de ${dose.medicationName} registrada correctamente.`);
-    setTimeout(() => setDoseSuccessMsg(''), 3000);
+      const refreshedProfile = await apiClient.get(`/seguimiento/recetas/${encodeURIComponent(dose.recipeId)}`);
+      setTrackingProfiles((prev) => {
+        const next = prev.filter((profile) => profile.recipeId !== dose.recipeId);
+        return [...next, refreshedProfile.data as BackendTrackingProfile];
+      });
+      setDoseSuccessMsg(`Toma de ${dose.medicationName} registrada correctamente.`);
+      setTimeout(() => setDoseSuccessMsg(''), 3000);
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      setRecipesError(
+        apiError.response?.data?.error ||
+          apiError.response?.data?.details ||
+          'No se pudo registrar la toma del medicamento.'
+      );
+    }
   };
 
   const getAlertMeta = (type: TreatmentAlert['type']) => {
@@ -640,35 +1120,32 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     };
   };
 
-  // Load profile settings from localStorage if available
-  useEffect(() => {
-    const savedName = localStorage.getItem('zenith_patient_name');
-    const savedPhone = localStorage.getItem('zenith_patient_phone');
-    const savedAddr = localStorage.getItem('zenith_patient_address');
-    const savedState = localStorage.getItem('zenith_patient_state') ?? localStorage.getItem('zenith_patient_pc');
-    const savedMunicipio = localStorage.getItem('zenith_patient_municipio') ?? localStorage.getItem('zenith_patient_city');
-
-    if (savedName) setProfileName(savedName);
-    if (savedPhone) setProfilePhone(savedPhone);
-    if (savedAddr) setDeliveryAddress(savedAddr);
-    if (savedState) setDeliveryState(savedState);
-    if (savedMunicipio) setDeliveryMunicipio(savedMunicipio);
-  }, []);
 
   // Countdown Timer for Payment Gateway (P.3)
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (activeSubTab === 'payment' && paymentTimeLeft > 0) {
-      timer = setInterval(() => {
-        setPaymentTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (
-      activeSubTab === 'payment' &&
-      paymentTimeLeft === 0 &&
-      checkoutSession?.order?.status !== 'payment_confirmed'
+    if (activeSubTab !== 'payment' || paymentTimeLeft <= 0) {
+      return undefined;
+    }
+
+    const timer = setInterval(() => {
+      setPaymentTimeLeft((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [activeSubTab, paymentTimeLeft]);
+
+  useEffect(() => {
+    if (
+      activeSubTab !== 'payment' ||
+      paymentTimeLeft !== 0 ||
+      checkoutSession?.order?.status === 'payment_confirmed'
     ) {
-      setCheckoutError('La reserva de inventario expiró. Debe recrear el checkout desde la propuesta.');
-      setPaymentStatusMessage('La reserva venció antes de recibir confirmación de pago.');
+      return undefined;
+    }
+
+    const timeout = setTimeout(() => {
+      setCheckoutError('La reserva de inventario expir?. Debe recrear el checkout desde la propuesta.');
+      setPaymentStatusMessage('La reserva venci? antes de recibir confirmaci?n de pago.');
       setActiveSubTab('proposals');
       setCheckoutSession((current) =>
         current
@@ -682,8 +1159,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             }
           : current
       );
-    }
-    return () => clearInterval(timer);
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, [activeSubTab, checkoutSession?.order?.status, paymentTimeLeft]);
 
   useEffect(() => {
@@ -702,7 +1180,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         if (session.order.status === 'payment_confirmed') {
           setPaymentStatusMessage('Pago confirmado por la pasarela. Ya puede retirar el pedido.');
         }
-      } catch (error) {
+      } catch {
         // Polling silencioso para no bloquear la UI del paciente.
       }
     }, 12000);
@@ -726,11 +1204,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     return 'bg-amber-500/20 text-amber-600 border-amber-500/35';
   };
 
-  const cycleOrderStatus = () => {
-    if (lastOrderStatus === 'Pendiente por retirar') setLastOrderStatus('Listo para retirar');
-    else if (lastOrderStatus === 'Listo para retirar') setLastOrderStatus('Retirado');
-    else setLastOrderStatus('Pendiente por retirar');
-  };
 
   const orderDeliverySteps = [
     {
@@ -788,10 +1261,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       applyCheckoutSession(session);
       setPaymentStatusMessage(response.data?.message || 'Checkout creado correctamente.');
       setActiveSubTab('payment');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
       setCheckoutError(
-        error?.response?.data?.error ||
-        error?.response?.data?.details ||
+        apiError.response?.data?.error ||
+        apiError.response?.data?.details ||
         'No se pudo iniciar la reserva de inventario para la receta seleccionada.'
       );
     } finally {
@@ -814,10 +1288,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       const session = await fetchCheckoutSession(checkoutSession.order.recipeId);
       applyCheckoutSession(session, session.order.status === 'payment_confirmed');
       setPaymentStatusMessage('Estado del checkout actualizado desde el backend.');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
       setCheckoutError(
-        error?.response?.data?.error ||
-        error?.response?.data?.details ||
+        apiError.response?.data?.error ||
+        apiError.response?.data?.details ||
         'No se pudo consultar el estado del checkout.'
       );
     } finally {
@@ -941,7 +1416,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           <span className="text-[10px] bg-surface-800 text-surface-300 border border-surface-700 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">
                             Última Orden de Farmacia
                           </span>
-                          <span className="text-xs font-mono font-semibold text-surface-500">ID: #ORD-9923</span>
+                          <span className="text-xs font-mono font-semibold text-surface-500">ID: {checkoutSession?.order?.orderId || activeCheckoutPrescription?.recipeId || 'SIN-ORDEN'}</span>
                         </div>
                         <h3 className="text-sm !font-bold text-foreground">Retiro de medicamentos en farmacia</h3>
                       </div>
@@ -966,7 +1441,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         </span>
                         <button
                           type="button"
-                          onClick={cycleOrderStatus}
+                          onClick={() => { void handleRefreshPaymentStatus(); }}
                           className="p-2 bg-surface-800 hover:bg-surface-700 text-surface-400 hover:text-white rounded-lg border border-surface-700 transition-colors cursor-pointer shrink-0"
                           title="Simular actualización del estado de entrega"
                         >
@@ -1215,7 +1690,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     {/* Renderizado de la imagen Base64 del Módulo 1 */}
                     {qrImage && (
                       <div className="mt-2 bg-white p-3.5 rounded-2xl border border-surface-200 flex flex-col items-center gap-2 animate-in zoom-in-95 duration-200">
-                        <img src={qrImage} alt="QR Efímero Paciente" className="w-[180px] h-[180px]" />
+                        <Image src={qrImage} alt="QR Ef??mero Paciente" width={180} height={180} unoptimized className="h-[180px] w-[180px]" />
                         <p className={`text-xs font-bold ${timeLeft < 60 ? 'text-[#e11d48]' : 'text-[#179150]'}`}>
                           Expira en: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                         </p>
@@ -1885,107 +2360,162 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             {/* P.5: PROFILE CONFIGURATION VIEW */}
             {activeSubTab === 'profile' && (
               <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
+                {profileSaveMsg && (
+                  <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-400 text-xs">
+                    <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
+                    <span>{profileSaveMsg}</span>
+                  </div>
+                )}
+                {profileError && (
+                  <div className="p-4 bg-danger-500/10 border border-danger-500/25 rounded-2xl flex items-center gap-2.5 text-danger-300 text-xs">
+                    <Info className="h-4.5 w-4.5 shrink-0" />
+                    <span>{profileError}</span>
+                  </div>
+                )}
                 <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-8 backdrop-blur-md space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4">
+                    <div>
+                      <h3 className="zenith-section-title text-xs">Perfil del paciente</h3>
+                      <p className="text-xs text-surface-400">
+                        Los datos quedan en modo lectura hasta que pulses editar.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {isEditingProfile ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleCancelProfileEdit}
+                            className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all"
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void handleConfirmProfileEdit()}
+                            disabled={profileLoading}
+                            className="px-4 py-2.5 bg-secondary hover:bg-secondary-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
+                          >
+                            {profileLoading ? 'Guardando...' : 'Confirmar cambios'}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleStartProfileEdit}
+                          disabled={profileLoading}
+                          className="px-4 py-2.5 bg-secondary hover:bg-secondary-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
+                        >
+                          {profileLoading ? 'Cargando...' : 'Editar perfil'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="space-y-6">
-                    
-                    {/* Sección 1: Datos Personales */}
                     <div className="space-y-4">
                       <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                        Información Personal
+                        Informaci??n Personal
                       </h3>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1.5">
                           <label className="zenith-field-label">Nombre Completo</label>
                           <input
                             type="text"
-                            value={profileName}
-                            readOnly
-                            disabled
-                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none cursor-not-allowed"
+                            value={isEditingProfile ? profileDraft.name : profileName}
+                            onChange={(e) => setProfileDraft((prev) => ({ ...prev, name: e.target.value }))}
+                            readOnly={!isEditingProfile}
+                            className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Correo Electrónico</label>
+                          <label className="zenith-field-label">Correo Electr??nico</label>
                           <input
                             type="email"
                             value={patientEmail}
-                            disabled
-                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none cursor-not-allowed"
+                            readOnly
+                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Teléfono Móvil</label>
+                          <label className="zenith-field-label">Tel??fono M??vil</label>
                           <input
-                            type="text"
-                            value={profilePhone}
-                            readOnly
-                            disabled
-                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 font-mono focus:outline-none cursor-not-allowed"
+                            type="tel"
+                            value={isEditingProfile ? profileDraft.phone : profilePhone}
+                            onChange={(e) => setProfileDraft((prev) => ({ ...prev, phone: e.target.value }))}
+                            readOnly={!isEditingProfile}
+                            className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
                           />
                         </div>
                         <div className="space-y-1.5">
                           <label className="zenith-field-label">ID Interno del Sistema</label>
                           <input
                             type="text"
-                            disabled
                             value={qrPatientIdentity}
-                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 font-mono focus:outline-none cursor-not-allowed"
+                            readOnly
+                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 font-mono focus:outline-none"
                           />
                         </div>
                         <div className="space-y-1.5">
                           <label className="zenith-field-label">Referencia del Perfil</label>
                           <input
                             type="text"
-                            disabled
-                            value={qrPatientIdentity}
-                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 font-mono focus:outline-none cursor-not-allowed"
+                            value={patientProfile?.patientId || qrPatientIdentity}
+                            readOnly
+                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 font-mono focus:outline-none"
                           />
                         </div>
                       </div>
                     </div>
 
-                    {/* Sección 2: Dirección de Delivery */}
                     <div className="space-y-4">
                       <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                        Dirección Predeterminada de Delivery
+                        Direcci??n Predeterminada de Delivery
                       </h3>
-                      
+
                       <div className="space-y-4">
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Dirección (Av., Urb., Edif., Piso)</label>
+                          <label className="zenith-field-label">Direcci??n (Av., Urb., Edif., Piso)</label>
                           <input
                             type="text"
-                            value={deliveryAddress}
-                            readOnly
-                            disabled
-                            className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none cursor-not-allowed"
+                            value={isEditingProfile ? profileDraft.deliveryAddress : deliveryAddress}
+                            onChange={(e) => setProfileDraft((prev) => ({ ...prev, deliveryAddress: e.target.value }))}
+                            readOnly={!isEditingProfile}
+                            className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
                           />
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-1.5">
                             <label className="zenith-field-label">Estado</label>
-                            <VenezuelanStateSelect
-                              value={deliveryState}
-                              onChange={setDeliveryState}
-                              disabled
-                            />
+                            {isEditingProfile ? (
+                              <VenezuelanStateSelect
+                                value={profileDraft.deliveryState}
+                                onChange={(value) => setProfileDraft((prev) => ({ ...prev, deliveryState: value }))}
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={deliveryState}
+                                readOnly
+                                className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                              />
+                            )}
                           </div>
                           <div className="space-y-1.5">
                             <label className="zenith-field-label">Municipio</label>
                             <input
                               type="text"
-                              value={deliveryMunicipio}
-                              readOnly
-                              disabled
-                              className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-550 focus:outline-none cursor-not-allowed"
+                              value={isEditingProfile ? profileDraft.deliveryMunicipio : deliveryMunicipio}
+                              onChange={(e) => setProfileDraft((prev) => ({ ...prev, deliveryMunicipio: e.target.value }))}
+                              readOnly={!isEditingProfile}
+                              className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
                             />
                           </div>
                         </div>
                       </div>
                     </div>
-
                   </div>
                 </div>
               </div>

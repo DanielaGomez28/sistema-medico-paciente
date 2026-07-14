@@ -1,4 +1,8 @@
 /**
+ * @fileoverview Tipos compartidos de index.
+ * @description Expone contratos de tipado reutilizados en los distintos m?dulos del frontend.
+ */
+/**
  * Representa un producto o medicamento dentro del catálogo del sistema.
  * @interface Product
  * @property {string} id - Identificador único del producto.

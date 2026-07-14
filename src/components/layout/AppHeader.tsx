@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente de layout app header.
+ * @description Resuelve la estructura visual reutilizable del portal y su navegaci?n principal.
+ */
+
 import React from 'react';
 import { Bell, Menu, Plus } from 'lucide-react';
 import Button from '../ui/Button';

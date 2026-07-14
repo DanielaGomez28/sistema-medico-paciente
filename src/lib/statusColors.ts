@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Utilidad de frontend status colors.
+ * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
+ */
 import { OrderStatus } from '../types';
 
 /**

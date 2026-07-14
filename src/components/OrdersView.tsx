@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente orders view.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
 import { useState, useMemo } from 'react';
 import { Search, Filter, ArrowUpDown, Eye, Calendar, Plus } from 'lucide-react';
 import { Order } from '../types';

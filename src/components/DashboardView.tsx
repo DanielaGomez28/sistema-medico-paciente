@@ -1,38 +1,53 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  DollarSign, 
-  ShoppingBag, 
-  TrendingUp, 
-  ChevronRight,
-  Search,
-  FileSpreadsheet,
-  Download,
-  Activity,
-  Database,
-  CheckCircle,
-  RefreshCw,
-  Award,
-  Stethoscope,
-  Heart
-} from 'lucide-react';
-import { Order, Product } from '../types';
+/**
+ * @fileoverview Componente dashboard view.
+ * @description Implementa una vista administrativa conectada al backend real del panel.
+ */
+
+import { useEffect, useMemo, useState } from 'react';
+import { Activity, ChevronRight, DollarSign, Heart, RefreshCw, Stethoscope, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '../lib/currency';
-import { downloadAuditReport } from '../lib/exportReport';
 import apiClient from '../lib/api';
-import { PageHeader, Button, Badge, StatCard, ListCard } from './ui';
-import {
-  DASHBOARD_DOCTOR_RECORDS,
-  DASHBOARD_PATIENT_RECORDS,
-  DASHBOARD_STOCK_MOVEMENTS,
-} from '../data/mockData';
+import { Button, PageHeader, StatCard } from './ui';
+
+interface ApiErrorPayload {
+  response?: {
+    data?: {
+      error?: string;
+      details?: string;
+    };
+  };
+}
 
 interface DashboardViewProps {
-  orders: Order[];
-  products: Product[];
   onNavigate: (tab: string) => void;
-  onSelectOrder: (order: Order) => void;
+}
+
+interface AdminDashboardStats {
+  generatedAt: string;
+  summary: {
+    activeDoctors: number;
+    activePatients: number;
+    prescriptionsIssued: number;
+    paidTreatments: number;
+    financialVolume: number;
+    totalCommissions: number;
+    averageTicket: number;
+  };
+  charts: {
+    prescriptionsByPeriod: Array<{ period: string; value: number }>;
+    revenueByPeriod: Array<{ period: string; value: number }>;
+  };
+}
+
+interface AdminDoctorProfile {
+  id_usuario: number;
+  nombre: string;
+  correo: string;
+  status: 'activo' | 'suspendido';
+  especialidad?: string | null;
+  mpps?: string | null;
 }
 
 interface AdminRecipeRecord {
@@ -41,853 +56,237 @@ interface AdminRecipeRecord {
   doctorName?: string;
   clinicalStatus: string;
   commercialStatus: string;
-  fulfillmentStatus: string;
-  recipeExpiresAt: string;
   createdAt: string;
-  pharmacyDispatch?: {
-    branchName?: string;
-    dispatchStatus?: string;
-  } | null;
+  recipeExpiresAt: string;
+  items?: Array<{ id_producto: string; nombre: string; cantidad?: number }>;
 }
 
+interface CatalogRecord {
+  id_producto: string;
+  nombre: string;
+  stock: number;
+  principio_activo?: string;
+}
 
-/**
- * Vista de administración general ("Dashboard").
- * Contiene:
- * - KPIs financieros y operativos.
- * - Gráficos interactivos de tendencias (Ventas y Récipes).
- * - Distribución de ventas por categorías.
- * - Buscador avanzado interconectado con tablas simuladas de base de datos (Médicos, Pacientes, Movimientos).
- * - Monitoreo de pedidos recientes y alertas de stock bajo.
- *
- * @param {DashboardViewProps} props - Propiedades de la vista.
- * @returns {JSX.Element}
- */
-export default function DashboardView({ orders, products, onNavigate, onSelectOrder }: DashboardViewProps) {
-  // Navigation active metric tab for sales line chart
-  const [activeMetricTab, setActiveMetricTab] = useState<'sales' | 'recipes'>('sales');
-
-  // Database search state
-  const [dbSearchTab, setDbSearchTab] = useState<'medicos' | 'pacientes' | 'movimientos'>('medicos');
-  const [dbSearchQuery, setDbSearchQuery] = useState('');
-
-  // Export progress simulation state
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState(0);
-  const [exportMsg, setExportMsg] = useState('');
-  const [pendingExportType, setPendingExportType] = useState<'Excel' | 'CSV' | null>(null);
-  const [adminRecipes, setAdminRecipes] = useState<AdminRecipeRecord[]>([]);
-  const [recipesLoading, setRecipesLoading] = useState(false);
-  const [recipesError, setRecipesError] = useState('');
-
-  // Calculations for static metrics
-  const completedOrders = orders.filter(o => o.status === 'Entregado');
-  
-  const revenueOrders = orders.filter(o => o.status !== 'Cancelado');
-  const totalRevenue = revenueOrders.reduce((sum, o) => sum + o.total, 0);
-  
-  const pendingOrdersCount = orders.filter(o => o.status === 'Pendiente').length;
-  
-  const lowStockProducts = products.filter(p => p.stock <= p.minStock);
-
-  // Dynamic Chart Data mapping based on active tab
-  const getSalesChartData = () => [
-    { label: 'Lun', value: 240 },
-    { label: 'Mar', value: 380 },
-    { label: 'Mié', value: 180 },
-    { label: 'Jue', value: 510 },
-    { label: 'Vie', value: 420 },
-    { label: 'Sáb', value: 680 },
-    { label: 'Dom', value: 850 },
-  ];
-
-  const getRecipesChartData = () => [
-    { label: 'Lun', value: 12 },
-    { label: 'Mar', value: 18 },
-    { label: 'Mié', value: 9 },
-    { label: 'Jue', value: 24 },
-    { label: 'Vie', value: 21 },
-    { label: 'Sáb', value: 35 },
-    { label: 'Dom', value: 40 },
-  ];
-
-  const chartData = activeMetricTab === 'sales' ? getSalesChartData() : getRecipesChartData();
-  const maxVal = Math.max(...chartData.map(d => d.value), 100);
-  const chartHeight = 160;
-  const chartWidth = 500;
-  
-  const points = chartData.map((d, i) => {
-    const x = (i / (chartData.length - 1)) * chartWidth;
-    const y = chartHeight - (d.value / maxVal) * (chartHeight - 20);
-    return { x, y };
+const buildPolyline = (values: Array<{ label: string; value: number }>) => {
+  const width = 320;
+  const height = 140;
+  const max = Math.max(...values.map((item) => item.value), 1);
+  const points = values.map((item, index) => {
+    const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
+    const y = height - (item.value / max) * (height - 20);
+    return `${x},${y}`;
   });
 
-  const linePath = points.reduce((path, p, i) => {
-    return i === 0 ? `M ${p.x} ${p.y}` : `${path} L ${p.x} ${p.y}`;
-  }, '');
+  return { width, height, points: points.join(' ') };
+};
 
-  const areaPath = points.length > 0 
-    ? `${linePath} L ${points[points.length - 1].x} ${chartHeight} L ${points[0].x} ${chartHeight} Z`
-    : '';
-
-  const handleExport = (type: 'Excel' | 'CSV') => {
-    setPendingExportType(type);
-    setIsExporting(true);
-    setExportProgress(0);
-    setExportMsg(`Generando archivo de auditoría contable (.${type === 'Excel' ? 'xls' : 'csv'})...`);
-  };
-
-  useEffect(() => {
-    if (!isExporting || exportProgress >= 100 || !pendingExportType) {
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setExportProgress((prev) => Math.min(prev + 20, 100));
-    }, 200);
-
-    return () => clearInterval(timer);
-  }, [isExporting, exportProgress, pendingExportType]);
-
-  useEffect(() => {
-    if (!isExporting || exportProgress < 100 || !pendingExportType) {
-      return;
-    }
-
-    const finishTimer = setTimeout(() => {
-      downloadAuditReport(
-        pendingExportType === 'Excel' ? 'excel' : 'csv',
-        orders,
-        products
-      );
-      setIsExporting(false);
-      setExportProgress(0);
-      setExportMsg('');
-      setPendingExportType(null);
-    }, 400);
-
-    return () => clearTimeout(finishTimer);
-  }, [isExporting, exportProgress, pendingExportType, orders, products]);
+export default function DashboardView({ onNavigate }: DashboardViewProps) {
+  const [stats, setStats] = useState<AdminDashboardStats | null>(null);
+  const [doctors, setDoctors] = useState<AdminDoctorProfile[]>([]);
+  const [recipes, setRecipes] = useState<AdminRecipeRecord[]>([]);
+  const [catalog, setCatalog] = useState<CatalogRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [activeMetricTab, setActiveMetricTab] = useState<'sales' | 'recipes'>('sales');
 
   useEffect(() => {
     let cancelled = false;
 
-    const loadAdminRecipes = async () => {
+    const loadAdminData = async () => {
       try {
-        setRecipesLoading(true);
-        setRecipesError('');
-        const response = await apiClient.get('/prescripciones');
+        setLoading(true);
+        setError('');
+        const [statsResponse, doctorsResponse, recipesResponse, catalogResponse] = await Promise.all([
+          apiClient.get('/admin/dashboard/stats'),
+          apiClient.get('/admin/doctors'),
+          apiClient.get('/prescripciones'),
+          apiClient.get('/prescripciones/catalogo'),
+        ]);
 
         if (!cancelled) {
-          setAdminRecipes(Array.isArray(response.data?.items) ? response.data.items : []);
+          setStats(statsResponse.data || null);
+          setDoctors(Array.isArray(doctorsResponse.data?.items) ? doctorsResponse.data.items : []);
+          setRecipes(Array.isArray(recipesResponse.data?.items) ? recipesResponse.data.items : []);
+          setCatalog(Array.isArray(catalogResponse.data?.items) ? catalogResponse.data.items : []);
         }
-      } catch (error: any) {
+      } catch (requestError: unknown) {
         if (!cancelled) {
-          setRecipesError(
-            error?.response?.data?.error ||
-            error?.response?.data?.details ||
-            'No se pudo cargar el monitor administrativo de recipes.'
+          const apiError = requestError as ApiErrorPayload;
+          setError(
+            apiError.response?.data?.error ||
+              apiError.response?.data?.details ||
+              'No se pudo cargar el dashboard administrativo real.'
           );
         }
       } finally {
         if (!cancelled) {
-          setRecipesLoading(false);
+          setLoading(false);
         }
       }
     };
 
-    loadAdminRecipes();
+    void loadAdminData();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Database filtering
-  const filteredDoctors = DASHBOARD_DOCTOR_RECORDS.filter(d => 
-    d.name.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
-    d.specialty.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
-    d.license.toLowerCase().includes(dbSearchQuery.toLowerCase())
+  const lowStockProducts = useMemo(
+    () => catalog.filter((product) => Number(product.stock || 0) <= 20).slice(0, 4),
+    [catalog]
   );
 
-  const filteredPatients = DASHBOARD_PATIENT_RECORDS.filter(p => 
-    p.name.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
-    p.condition.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
-    p.withdrawalStatus.toLowerCase().includes(dbSearchQuery.toLowerCase())
+  const recentRecipes = useMemo(
+    () => [...recipes].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()).slice(0, 4),
+    [recipes]
   );
 
-  const filteredMovements = DASHBOARD_STOCK_MOVEMENTS.filter(m => 
-    m.medication.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
-    m.sourceDest.toLowerCase().includes(dbSearchQuery.toLowerCase()) ||
-    m.type.toLowerCase().includes(dbSearchQuery.toLowerCase())
-  );
+  const chartSource = useMemo(() => {
+    if (activeMetricTab === 'sales') {
+      return stats?.charts?.revenueByPeriod?.map((item) => ({
+        label: item.period.slice(5),
+        value: Number(item.value || 0),
+      })) || [];
+    }
 
-  const productCategoryById = new Map(products.map((product) => [product.id, product.category]));
+    return stats?.charts?.prescriptionsByPeriod?.map((item) => ({
+      label: item.period.slice(5),
+      value: Number(item.value || 0),
+    })) || [];
+  }, [activeMetricTab, stats]);
 
-  const categorySales = orders
-    .filter((order) => order.status !== 'Cancelado')
-    .flatMap((order) => order.items)
-    .reduce((acc, item) => {
-      const category = productCategoryById.get(item.productId) ?? 'Sin categoría';
-      const lineTotal = item.price * item.quantity;
-      acc[category] = (acc[category] || 0) + lineTotal;
-      return acc;
-    }, {} as Record<string, number>);
-
-  const categoryTotals = Object.entries(categorySales)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value);
-
-  const totalCatVal = categoryTotals.reduce((sum, category) => sum + category.value, 0);
-  const categoryBarColors = [
-    'bg-primary-500',
-    'bg-secondary-500',
-    'bg-primary-400',
-    'bg-secondary-400',
-    'bg-primary-600',
-    'bg-secondary-600',
-  ];
-
-  const recentOrders = [...orders]
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, 4);
+  const chartValues = chartSource.length ? chartSource : [{ label: 'Sin datos', value: 0 }];
+  const chart = buildPolyline(chartValues);
 
   return (
     <div className="space-y-6">
-      
       <PageHeader
         actions={
-          <>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => handleExport('Excel')}
-              disabled={isExporting}
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              Exportar Excel
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleExport('CSV')}
-              disabled={isExporting}
-            >
-              <Download className="h-4 w-4" />
-              Exportar CSV
-            </Button>
-          </>
+          <Button variant="outline" size="sm" onClick={() => window.location.reload()} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Recargar panel
+          </Button>
         }
       />
 
-      {/* Export progress banner */}
-      {isExporting && (
-        <div className="p-4 bg-surface-900 border border-surface-800 rounded-2xl space-y-2 animate-in fade-in duration-200">
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-surface-300 font-semibold flex items-center gap-2">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-              <span>{exportMsg}</span>
-            </span>
-            <span className="font-mono text-surface-400">{exportProgress}%</span>
-          </div>
-          <div className="h-1.5 w-full bg-surface-950 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary-500 transition-all duration-300"
-              style={{ width: `${exportProgress}%` }}
-            />
-          </div>
+      {error ? (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
+          {error}
         </div>
-      )}
+      ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <StatCard
-          icon={DollarSign}
-          label="Ventas Totales"
-          value={formatCurrency(totalRevenue)}
-          hint={
-            <>
-              <TrendingUp className="h-3 w-3" />
-              <span>+12.4% vs. mes anterior</span>
-            </>
-          }
-        />
-        <StatCard
-          icon={Heart}
-          label="Récipes Emitidos"
-          value="338"
-          accent="primary"
-          hint={
-            <>
-              <Activity className="h-3 w-3" />
-              <span>98% firmados electrónicamente</span>
-            </>
-          }
-        />
-        <StatCard
-          icon={ShoppingBag}
-          label="Transacciones de Venta"
-          value={orders.length}
-          hint={
-            <>
-              <span>{completedOrders.length} retirados</span>
-              <span>•</span>
-              <span className="text-primary-450">{pendingOrdersCount} en espera</span>
-            </>
-          }
-        />
-        <StatCard
-          icon={Award}
-          label="Efectividad de Tratamientos"
-          value="94.6%"
-          accent="primary"
-          hint={
-            <>
-              <CheckCircle className="h-3 w-3" />
-              <span>Control exitoso de pacientes activos</span>
-            </>
-          }
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <StatCard icon={DollarSign} label="Volumen financiero" value={formatCurrency(stats?.summary.financialVolume || 0)} hint={<><TrendingUp className="h-3 w-3" /><span>{stats?.summary.paidTreatments || 0} tratamientos pagados</span></>} />
+        <StatCard icon={Heart} label="Recipes emitidos" value={stats?.summary.prescriptionsIssued || 0} accent="primary" hint={<><Activity className="h-3 w-3" /><span>{stats?.summary.activePatients || 0} pacientes activos</span></>} />
+        <StatCard icon={Stethoscope} label="M?dicos activos" value={stats?.summary.activeDoctors || 0} hint={<><span>{doctors.filter((doctor) => doctor.status === 'activo').length} habilitados</span></>} />
+        <StatCard icon={TrendingUp} label="Comisiones liquidadas" value={formatCurrency(stats?.summary.totalCommissions || 0)} accent="primary" hint={<><span>Ticket promedio {formatCurrency(stats?.summary.averageTicket || 0)}</span></>} />
       </div>
 
-      {/* Interactive Charts Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Main Line Chart (2/3 width) */}
-        <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md flex flex-col justify-between">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+        <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+          <div className="flex items-center justify-between gap-3">
             <div>
-              <h4 className="zenith-section-title">Tendencia Operativa Semanal</h4>
-              <p className="text-xs text-surface-400">Filtre y visualice las estadísticas clave de rendimiento.</p>
+              <h4 className="zenith-section-title">Tendencia administrativa real</h4>
+              <p className="text-xs text-surface-400">Datos agregados desde el backend del dashboard administrativo.</p>
             </div>
-            
-            {/* Interactive metric selectors */}
-            <div className="flex items-center gap-1 text-2xs font-bold bg-surface-950 border border-surface-850 rounded-xl p-1 self-start sm:self-center">
-              <button
-                onClick={() => setActiveMetricTab('sales')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'sales' ? 'bg-white text-surface-950' : 'text-surface-500 hover:text-foreground'}`}
-              >
-                Ventas
-              </button>
-              <button
-                onClick={() => setActiveMetricTab('recipes')}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${activeMetricTab === 'recipes' ? 'bg-white text-surface-950' : 'text-surface-500 hover:text-foreground'}`}
-              >
-                Récipes Emitidos
-              </button>
+            <div className="flex items-center gap-1 text-2xs font-bold bg-surface-950 border border-surface-850 rounded-xl p-1">
+              <button type="button" onClick={() => setActiveMetricTab('sales')} className={`px-3 py-1.5 rounded-lg ${activeMetricTab === 'sales' ? 'bg-white text-surface-950' : 'text-surface-500 hover:text-foreground'}`}>Ventas</button>
+              <button type="button" onClick={() => setActiveMetricTab('recipes')} className={`px-3 py-1.5 rounded-lg ${activeMetricTab === 'recipes' ? 'bg-white text-surface-950' : 'text-surface-500 hover:text-foreground'}`}>Recipes</button>
             </div>
           </div>
 
-          {/* SVG line graph */}
-          <div className="flex-1 w-full flex items-end relative min-h-[160px] pt-4">
-            <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} className="w-full h-full overflow-visible">
-              <defs>
-                <linearGradient id="main-gradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.0" />
-                </linearGradient>
-                <linearGradient id="glow-line" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="var(--color-primary)" />
-                  <stop offset="50%" stopColor="var(--color-primary)" stopOpacity="0.85" />
-                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.65" />
-                </linearGradient>
-              </defs>
-              
-              <line x1="0" y1="20" x2={chartWidth} y2="20" stroke="var(--color-surface-800)" strokeDasharray="3" />
-              <line x1="0" y1="70" x2={chartWidth} y2="70" stroke="var(--color-surface-800)" strokeDasharray="3" />
-              <line x1="0" y1="120" x2={chartWidth} y2="120" stroke="var(--color-surface-800)" strokeDasharray="3" />
-              <line x1="0" y1={chartHeight} x2={chartWidth} y2={chartHeight} stroke="var(--color-surface-700)" />
+          <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-44 overflow-visible">
+            <polyline fill="none" stroke="var(--color-primary)" strokeWidth="3" points={chart.points} />
+          </svg>
 
-              {areaPath && (
-                <path d={areaPath} fill="url(#main-gradient)" className="transition-all duration-300" />
-              )}
-              {linePath && (
-                <path d={linePath} fill="none" stroke="url(#glow-line)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="transition-all duration-300" />
-              )}
-
-              {points.map((p, idx) => (
-                <g key={idx} className="group/dot cursor-pointer">
-                  <circle cx={p.x} cy={p.y} r="5.5" fill="var(--color-surface-900)" stroke="var(--color-primary)" strokeWidth="2.5" className="transition-all duration-150 hover:r-7" />
-                  <text x={p.x} y={p.y - 12} textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="bold" className="opacity-0 group-hover/dot:opacity-100 transition-opacity bg-surface-950 font-mono">
-                    {activeMetricTab === 'sales' ? formatCurrency(chartData[idx].value) : `${chartData[idx].value} r.`}
-                  </text>
-                </g>
-              ))}
-            </svg>
-          </div>
-
-          <div className="flex justify-between mt-3 px-1 text-2xs font-bold text-surface-500">
-            {chartData.map((d, idx) => (
-              <span key={idx} className="w-10 text-center">{d.label}</span>
+          <div className="flex justify-between gap-2 text-[10px] text-surface-500 font-mono">
+            {chartValues.map((item) => (
+              <span key={`${activeMetricTab}-${item.label}`}>{item.label}</span>
             ))}
           </div>
         </div>
 
-        {/* Category breakdown (1/3 width) */}
-        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 sm:p-6 backdrop-blur-md flex flex-col">
-          <div className="mb-4">
-            <h4 className="zenith-section-title">Distribución por Categorías</h4>
-            <p className="text-xs text-surface-400">Ventas por línea terapéutica en pedidos activos.</p>
+        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+          <div>
+            <h4 className="zenith-section-title">Directorio m?dico real</h4>
+            <p className="text-xs text-surface-400">Perfiles cargados desde /api/admin/doctors.</p>
           </div>
-
-          <div className="flex-1 space-y-3.5">
-            {categoryTotals.length > 0 ? (
-              categoryTotals.map((cat, idx) => {
-                const percentage = totalCatVal > 0 ? (cat.value / totalCatVal) * 100 : 0;
-                const barColor = categoryBarColors[idx % categoryBarColors.length];
-
-                return (
-                  <div key={cat.name} className="space-y-1.5">
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-0.5">
-                      <span
-                        className="text-xs font-semibold leading-snug text-surface-200 break-words"
-                        title={cat.name}
-                      >
-                        {cat.name}
-                      </span>
-                      <span className="text-xs font-semibold text-surface-100 tabular-nums whitespace-nowrap">
-                        {formatCurrency(cat.value)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-2 min-w-0 flex-1 rounded-full bg-surface-850/80 overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${barColor}`}
-                          style={{ width: `${Math.max(percentage, percentage > 0 ? 4 : 0)}%` }}
-                        />
-                      </div>
-                      <span className="w-9 shrink-0 text-right text-[10px] font-semibold text-surface-500 tabular-nums">
-                        {Math.round(percentage)}%
-                      </span>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="py-10 text-center text-xs font-medium text-surface-500">
-                Sin movimientos financieros para clasificar.
+          <div className="space-y-3">
+            {doctors.slice(0, 4).map((doctor) => (
+              <div key={doctor.id_usuario} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3">
+                <p className="text-xs font-semibold text-white">{doctor.nombre}</p>
+                <p className="text-[10px] text-surface-500">{doctor.especialidad || 'Sin especialidad'} ? {doctor.mpps || 'Sin MPPS'}</p>
+                <span className={`mt-2 inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>
+                  {doctor.status}
+                </span>
               </div>
-            )}
-          </div>
-
-          <div className="mt-5 border-t border-surface-850 pt-3.5 flex items-center justify-between gap-3 text-xs">
-            <span className="font-medium text-surface-500">Total categorizado</span>
-            <span className="font-semibold text-white tabular-nums">
-              {formatCurrency(totalCatVal)}
-            </span>
-          </div>
-        </div>
-
-      </div>
-
-      {/* Advanced Database Search Engine (Buscador Avanzado) */}
-      <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
-        
-        {/* Database header with input */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-surface-850 pb-4">
-          <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-surface-400" />
-            <div>
-              <h4 className="zenith-section-title">Buscador y Consultas de Base de Datos</h4>
-              <p className="text-xs text-surface-400">Consulte tablas relacionales sincronizadas con las sucursales de la red.</p>
-            </div>
-          </div>
-          
-          <div className="relative max-w-sm w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
-            <input
-              type="text"
-              placeholder="Filtro rápido de búsqueda..."
-              value={dbSearchQuery}
-              onChange={(e) => setDbSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-surface-950 border border-surface-800 rounded-xl text-xs text-white placeholder-surface-700 focus:outline-none focus:border-secondary-500"
-            />
-          </div>
-        </div>
-
-        {/* Database Search Tabs */}
-        <div className="flex items-center gap-1.5 text-2xs font-bold border-b border-surface-850 pb-1 overflow-x-auto flex-nowrap">
-          <button
-            onClick={() => { setDbSearchTab('medicos'); setDbSearchQuery(''); }}
-            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'medicos' ? 'text-white border-b-2 border-primary-550' : 'text-surface-500 hover:text-surface-350'}`}
-          >
-            Médicos Colegiados ({filteredDoctors.length})
-          </button>
-          <button
-            onClick={() => { setDbSearchTab('pacientes'); setDbSearchQuery(''); }}
-            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'pacientes' ? 'text-white border-b-2 border-primary-550' : 'text-surface-500 hover:text-surface-350'}`}
-          >
-            Pacientes Afiliados ({filteredPatients.length})
-          </button>
-          <button
-            onClick={() => { setDbSearchTab('movimientos'); setDbSearchQuery(''); }}
-            className={`pb-2.5 px-4 relative transition-colors cursor-pointer ${dbSearchTab === 'movimientos' ? 'text-white border-b-2 border-primary-550' : 'text-surface-500 hover:text-surface-350'}`}
-          >
-            Movimientos de Stock ({filteredMovements.length})
-          </button>
-        </div>
-
-        {/* Tab content viewer */}
-        <div className="min-h-[180px]">
-          
-          {/* Doctors Table */}
-          {dbSearchTab === 'medicos' && (
-            <>
-            <div className="zenith-table-wrap hidden lg:block">
-            <table className="zenith-table text-xs">
-              <thead>
-                <tr className="border-b border-surface-850 text-surface-500 uppercase font-bold tracking-wider">
-                  <th className="py-2.5">ID</th>
-                  <th>Médico</th>
-                  <th>Especialidad</th>
-                  <th>Registro Médico</th>
-                  <th>Récipes Emitidos</th>
-                  <th>Comisiones</th>
-                  <th className="text-right">Estado</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-850/60 text-surface-300">
-                {filteredDoctors.map(doc => (
-                  <tr key={doc.id} className="hover:bg-surface-950/20">
-                    <td className="py-3 font-mono font-bold text-surface-500">{doc.id}</td>
-                    <td className="font-semibold text-white flex items-center gap-1.5 py-3">
-                      <Stethoscope className="h-3.5 w-3.5 text-surface-500" />
-                      <span>{doc.name}</span>
-                    </td>
-                    <td>{doc.specialty}</td>
-                    <td className="font-mono text-surface-450">{doc.license}</td>
-                    <td className="font-semibold">{doc.recipesCount} r.</td>
-                    <td className="font-mono font-bold text-secondary-400">{formatCurrency(doc.commissionsEarned)}</td>
-                    <td className="text-right whitespace-nowrap">
-                      <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-surface-800 text-surface-500'}`}>
-                        {doc.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-            <div className="lg:hidden space-y-3">
-              {filteredDoctors.map((doc) => (
-                <ListCard
-                  key={doc.id}
-                  title={doc.name}
-                  subtitle={doc.specialty}
-                  badge={
-                    <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${doc.status === 'Activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-surface-800 text-surface-500'}`}>
-                      {doc.status}
-                    </span>
-                  }
-                  fields={[
-                    { label: 'ID', value: doc.id },
-                    { label: 'Registro', value: doc.license },
-                    { label: 'Récipes', value: `${doc.recipesCount} r.` },
-                    { label: 'Comisiones', value: formatCurrency(doc.commissionsEarned) },
-                  ]}
-                />
-              ))}
-            </div>
-            </>
-          )}
-
-          {/* Patients Table */}
-          {dbSearchTab === 'pacientes' && (
-            <>
-            <div className="zenith-table-wrap hidden lg:block">
-            <table className="zenith-table text-xs">
-              <thead>
-                <tr className="border-b border-surface-855 text-surface-500 uppercase font-bold tracking-wider">
-                  <th className="py-2.5">Cédula</th>
-                  <th>Nombre Paciente</th>
-                  <th>Edad</th>
-                  <th>Diagnóstico Activo</th>
-                  <th>Último Récipe</th>
-                  <th className="text-right">Estado Entrega</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-850/60 text-surface-300">
-                {filteredPatients.map(pat => (
-                  <tr key={pat.id} className="hover:bg-surface-950/20">
-                    <td className="py-3 font-mono font-bold text-surface-500">{pat.id}</td>
-                    <td className="font-semibold text-white py-3">{pat.name}</td>
-                    <td className="font-mono">{pat.age} años</td>
-                    <td className="italic text-surface-400">{pat.condition}</td>
-                    <td>{pat.lastRecipeDate}</td>
-                    <td className="text-right whitespace-nowrap">
-                      <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${
-                        pat.withdrawalStatus === 'Retirado' 
-                          ? 'bg-secondary-500/10 text-secondary-400' 
-                          : pat.withdrawalStatus === 'Listo para retirar' 
-                          ? 'bg-primary-500/10 text-primary-400' 
-                          : 'bg-primary-500/10 text-primary-400'
-                      }`}>
-                        {pat.withdrawalStatus}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-            <div className="lg:hidden space-y-3">
-              {filteredPatients.map((pat) => (
-                <ListCard
-                  key={pat.id}
-                  title={pat.name}
-                  subtitle={pat.id}
-                  badge={
-                    <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-bold ${
-                      pat.withdrawalStatus === 'Retirado'
-                        ? 'bg-secondary-500/10 text-secondary-400'
-                        : 'bg-primary-500/10 text-primary-400'
-                    }`}>
-                      {pat.withdrawalStatus}
-                    </span>
-                  }
-                  fields={[
-                    { label: 'Edad', value: `${pat.age} años` },
-                    { label: 'Diagnóstico', value: pat.condition },
-                    { label: 'Último récipe', value: pat.lastRecipeDate },
-                  ]}
-                />
-              ))}
-            </div>
-            </>
-          )}
-
-          {/* Stock Movements Table */}
-          {dbSearchTab === 'movimientos' && (
-            <>
-            <div className="zenith-table-wrap hidden lg:block">
-            <table className="zenith-table text-xs">
-              <thead>
-                <tr className="border-b border-surface-855 text-surface-500 uppercase font-bold tracking-wider">
-                  <th className="py-2.5">Movimiento</th>
-                  <th>Medicamento / Producto</th>
-                  <th>Tipo</th>
-                  <th>Cantidad</th>
-                  <th>Fecha</th>
-                  <th className="text-right">Origen / Destino</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-850/60 text-surface-300">
-                {filteredMovements.map(mov => (
-                  <tr key={mov.id} className="hover:bg-surface-950/20">
-                    <td className="py-3 font-mono font-bold text-surface-550">{mov.id}</td>
-                    <td className="font-semibold text-white py-3">{mov.medication}</td>
-                    <td>
-                      <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${mov.type === 'Entrada' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-secondary-500/10 text-secondary-400'}`}>
-                        {mov.type}
-                      </span>
-                    </td>
-                    <td className="font-mono font-bold">{mov.quantity} u.</td>
-                    <td>{mov.date}</td>
-                    <td className="text-right text-surface-400">{mov.sourceDest}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            </div>
-            <div className="lg:hidden space-y-3">
-              {filteredMovements.map((mov) => (
-                <ListCard
-                  key={mov.id}
-                  title={mov.medication}
-                  subtitle={mov.id}
-                  badge={
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${mov.type === 'Entrada' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-secondary-500/10 text-secondary-400'}`}>
-                      {mov.type}
-                    </span>
-                  }
-                  fields={[
-                    { label: 'Cantidad', value: `${mov.quantity} u.` },
-                    { label: 'Fecha', value: mov.date },
-                    { label: 'Origen/Destino', value: mov.sourceDest },
-                  ]}
-                />
-              ))}
-            </div>
-            </>
-          )}
-
-        </div>
-
-      </div>
-
-      {/* Administrative recipe monitor */}
-      <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-4">
-        <div>
-          <h4 className="zenith-section-title">Monitor Administrativo de Recipes</h4>
-          <p className="text-xs text-surface-400">Estados clínicos, comerciales, caducidad y despacho automático a farmacia.</p>
-        </div>
-
-        {recipesError ? (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-            {recipesError}
-          </div>
-        ) : null}
-
-        {recipesLoading ? (
-          <div className="rounded-xl border border-surface-800 bg-surface-950/60 px-3 py-4 text-xs text-surface-400">
-            Consultando recipes emitidos...
-          </div>
-        ) : null}
-
-        <div className="divide-y divide-surface-850">
-          {!recipesLoading && adminRecipes.slice(0, 5).map((recipe) => (
-            <div key={recipe.recipeId} className="py-3 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-              <div className="space-y-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-white">{recipe.patientName || 'Paciente'}</span>
-                  <span className="text-[10px] font-mono text-surface-500 bg-surface-950 border border-surface-850 px-1.5 py-0.2 rounded">{recipe.recipeId}</span>
-                </div>
-                <p className="text-[10px] text-surface-500 flex flex-wrap gap-2">
-                  <span>Médico: {recipe.doctorName || 'N/D'}</span>
-                  <span>•</span>
-                  <span>Caduca {new Date(recipe.recipeExpiresAt).toLocaleDateString('es-ES')}</span>
-                  <span>•</span>
-                  <span>{recipe.pharmacyDispatch?.branchName || 'Farmacia Central'}</span>
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-primary-500/10 text-primary-300 border border-primary-500/20">Clínico: {recipe.clinicalStatus}</span>
-                <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-secondary-500/10 text-secondary-300 border border-secondary-500/20">Comercial: {recipe.commercialStatus}</span>
-              </div>
-            </div>
-          ))}
-          {!recipesLoading && adminRecipes.length === 0 ? (
-            <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos en backend.</div>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Recent Activity Table (2/3 width) & Stock Warning strip */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Recent Orders Table */}
-        <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md">
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h4 className="zenith-section-title">Últimos Pedidos</h4>
-              <p className="text-xs text-surface-400">Monitoreo en tiempo real de transacciones.</p>
-            </div>
-            <button 
-              onClick={() => onNavigate('orders')} 
-              className="text-xs font-semibold text-primary-400 hover:text-primary-300 transition-colors flex items-center gap-0.5 group cursor-pointer"
-            >
-              Ver todos los pedidos <ChevronRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
-          
-          <div className="zenith-table-wrap hidden lg:block">
-            <table className="zenith-table text-sm">
-              <thead>
-                <tr className="border-b border-surface-805 text-xs font-bold text-surface-450 uppercase tracking-wider">
-                  <th className="pb-3">ID</th>
-                  <th>Cliente</th>
-                  <th>Total</th>
-                  <th>Estado</th>
-                  <th className="text-right">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-850/60">
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-surface-850/20 transition-colors duration-150">
-                    <td className="py-3 font-mono font-bold text-surface-350">{order.id}</td>
-                    <td className="py-3 text-white font-medium">{order.customerName}</td>
-                    <td className="py-3 font-mono font-bold text-surface-300">
-                      {formatCurrency(order.total)}
-                    </td>
-                    <td className="py-3 whitespace-nowrap">
-                      <Badge status={order.status}>{order.status}</Badge>
-                    </td>
-                    <td className="py-3 text-right">
-                      <button
-                        onClick={() => onSelectOrder(order)}
-                        className="px-2.5 py-1 text-xs font-semibold text-surface-400 hover:text-white bg-surface-800 hover:bg-surface-700 rounded-md border border-surface-700 transition-colors cursor-pointer"
-                      >
-                        Detalles
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="lg:hidden space-y-3">
-            {recentOrders.map((order) => (
-              <ListCard
-                key={order.id}
-                title={order.id}
-                subtitle={order.customerName}
-                badge={<Badge status={order.status}>{order.status}</Badge>}
-                fields={[
-                  {
-                    label: 'Total',
-                    value: formatCurrency(order.total),
-                  },
-                ]}
-                actions={
-                  <button
-                    onClick={() => onSelectOrder(order)}
-                    className="px-2.5 py-1 text-xs font-semibold text-surface-400 hover:text-white bg-surface-800 hover:bg-surface-700 rounded-md border border-surface-700 transition-colors cursor-pointer"
-                  >
-                    Detalles
-                  </button>
-                }
-              />
             ))}
+            {doctors.length === 0 ? <div className="text-xs text-surface-500">Todav?a no hay m?dicos disponibles.</div> : null}
           </div>
         </div>
-
-        {/* Inventory alerts */}
-        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md flex flex-col">
-          <div className="mb-4">
-            <h4 className="zenith-section-title">Alertas de Inventario</h4>
-            <p className="text-xs text-surface-400">Productos cercanos o bajo stock mínimo.</p>
-          </div>
-          
-          <div className="flex-1 space-y-3">
-            {lowStockProducts.length > 0 ? (
-              lowStockProducts.slice(0, 3).map((prod) => (
-                <div 
-                  key={prod.id} 
-                  className="flex items-center gap-3 p-3 rounded-xl bg-surface-950/40 border border-secondary-500/10"
-                >
-                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-secondary/20 to-secondary/20 text-secondary-450 flex items-center justify-center font-bold text-xs">
-                    {prod.stock}
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-xs font-semibold text-white truncate">{prod.name}</p>
-                    <p className="text-[10px] text-surface-500 font-mono truncate">SKU: {prod.sku} • Min: {prod.minStock}</p>
-                  </div>
-                  <span className="px-2 py-1 text-[10px] font-bold text-secondary-400 bg-secondary-500/15 border border-secondary-500/20 rounded-md whitespace-nowrap">
-                    Bajo stock
-                  </span>
-                </div>
-              ))
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-surface-950/20 border border-dashed border-surface-800 rounded-xl">
-                <div className="h-10 w-10 rounded-full bg-secondary-500/10 text-secondary-450 flex items-center justify-center mb-2">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <p className="text-xs font-semibold text-surface-350">Todo en orden</p>
-                <p className="text-[10px] text-surface-500 mt-1">No hay alertas de inventario en este momento.</p>
-              </div>
-            )}
-            
-            {lowStockProducts.length > 3 && (
-              <p className="w-full text-center text-xs text-secondary-400 font-semibold pt-2">
-                Y {lowStockProducts.length - 3} alertas más de inventario
-              </p>
-            )}
-          </div>
-        </div>
-
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h4 className="zenith-section-title">Monitor administrativo de recipes</h4>
+              <p className="text-xs text-surface-400">Estados cl?nicos y comerciales sincronizados con backend.</p>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => onNavigate('doctors')}>
+              Gesti?n m?dica
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {recipes.slice(0, 5).map((recipe) => (
+              <div key={recipe.recipeId} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3 space-y-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-white">{recipe.patientName || 'Paciente'}</p>
+                    <p className="text-[10px] text-surface-500 font-mono">{recipe.recipeId} ? {recipe.doctorName || 'Sin m?dico visible'}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-primary-500/10 text-primary-300">{recipe.clinicalStatus}</span>
+                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-secondary-500/10 text-secondary-300">{recipe.commercialStatus}</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-surface-500">Emitido {new Date(recipe.createdAt).toLocaleDateString('es-ES')} ? Caduca {new Date(recipe.recipeExpiresAt).toLocaleDateString('es-ES')}</p>
+              </div>
+            ))}
+            {!recipes.length ? <div className="text-xs text-surface-500">No hay recipes emitidos todav?a.</div> : null}
+          </div>
+        </div>
+
+        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+          <div>
+            <h4 className="zenith-section-title">Actividad operativa real</h4>
+            <p className="text-xs text-surface-400">Sincronizada con recipes emitidos y cat?logo activo del backend.</p>
+          </div>
+          <div className="space-y-3">
+            {recentRecipes.map((recipe) => (
+              <div key={`recent-${recipe.recipeId}`} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3 space-y-1">
+                <p className="text-xs font-semibold text-white">{recipe.recipeId}</p>
+                <p className="text-[10px] text-surface-500">Paciente: {recipe.patientName || 'Paciente'} ? M?dico: {recipe.doctorName || 'Sin m?dico visible'}</p>
+                <p className="text-[10px] text-surface-400">{Array.isArray(recipe.items) ? recipe.items.map((item) => item.nombre).slice(0, 2).join(', ') : 'Sin items visibles'}</p>
+              </div>
+            ))}
+            {!recentRecipes.length ? <div className="text-xs text-surface-500">Sin actividad reciente.</div> : null}
+          </div>
+          <div className="border-t border-surface-850 pt-3 space-y-2">
+            <p className="text-xs font-semibold text-white">Alertas de stock bajo</p>
+            {lowStockProducts.map((product) => (
+              <div key={product.id_producto} className="flex items-center justify-between gap-3 rounded-lg border border-surface-800 bg-surface-950/40 px-3 py-2 text-xs">
+                <span className="text-surface-200">{product.nombre}</span>
+                <span className="font-mono text-amber-300">{product.stock} u.</span>
+              </div>
+            ))}
+            {!lowStockProducts.length ? <div className="text-xs text-surface-500">Sin alertas de stock bajo.</div> : null}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

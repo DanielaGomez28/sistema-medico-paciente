@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Componente UI empty state.
+ * @description Aporta una pieza visual reutilizable del sistema de interfaz del frontend.
+ */
 import { cn } from '../../lib/utils';
 import { LucideIcon } from 'lucide-react';
 

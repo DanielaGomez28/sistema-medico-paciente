@@ -1,3 +1,7 @@
+/*
+ * @fileoverview Estilos globales del frontend SMP Farmahumana.
+ * @description Declara tokens, utilidades visuales y reglas base compartidas por toda la aplicaci?n.
+ */
 @import "tailwindcss";
 
 @font-face {

@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente de layout app sidebar.
+ * @description Resuelve la estructura visual reutilizable del portal y su navegaci?n principal.
+ */
+
 import React from 'react';
 import { LucideIcon, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';

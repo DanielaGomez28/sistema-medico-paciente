@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Componente de tema theme script.
+ * @description Gestiona apariencia, persistencia y sincronizaci?n del tema visual del frontend.
+ */
 import { THEME_STORAGE_KEY } from '../../lib/theme';
 
 /**

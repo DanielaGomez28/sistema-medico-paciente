@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Utilidad de frontend customer location.
+ * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
+ */
 import { Customer } from '../types';
 import { INITIAL_CUSTOMERS } from '../data/mockData';
 

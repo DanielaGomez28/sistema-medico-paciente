@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente customers view.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
 import React, { useState, useMemo } from 'react';
 import { Search, Plus, Users, Mail, Phone, MapPin, DollarSign, ShoppingBag, X } from 'lucide-react';
 import { Customer } from '../types';

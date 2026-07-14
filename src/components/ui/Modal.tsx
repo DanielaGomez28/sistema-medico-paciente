@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente UI modal.
+ * @description Aporta una pieza visual reutilizable del sistema de interfaz del frontend.
+ */
+
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';

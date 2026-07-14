@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Utilidad de frontend export report.
+ * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
+ */
 import { Order, Product } from '../types';
 
 type ExportFormat = 'csv' | 'excel';

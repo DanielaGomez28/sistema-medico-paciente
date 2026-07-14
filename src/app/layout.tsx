@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Layout ra?z del frontend SMP Farmahumana.
+ * @description Define la estructura compartida, providers globales y metadatos base de la aplicaci?n.
+ */
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Inter } from "next/font/google";
 import { ThemeProvider, ThemeScript } from "../components/theme";

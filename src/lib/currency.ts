@@ -1,4 +1,8 @@
 /**
+ * @fileoverview Utilidad de frontend currency.
+ * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
+ */
+/**
  * Formatea un número como moneda en Bolívares (VES).
  *
  * @param {number} value - El valor numérico a formatear.

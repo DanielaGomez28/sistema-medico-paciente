@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Componente UI select.
+ * @description Aporta una pieza visual reutilizable del sistema de interfaz del frontend.
+ */
 import React from 'react';
 import { cn } from '../../lib/utils';
 

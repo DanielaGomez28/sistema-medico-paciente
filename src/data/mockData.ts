@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Datos de soporte mock data.
+ * @description Centraliza semillas, cat?logos o estructuras temporales consumidas por la interfaz.
+ */
 import { Product, Customer, Order } from '../types';
 
 /**

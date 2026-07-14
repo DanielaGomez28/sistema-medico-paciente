@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente de layout app shell.
+ * @description Resuelve la estructura visual reutilizable del portal y su navegaci?n principal.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { ShellProvider } from './ShellContext';

@@ -1,126 +1,167 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import {
-  Upload,
-  CheckCircle,
-  Palette,
-  Info,
-  ImageIcon,
-  FileText,
-  Save,
-} from 'lucide-react';
+/**
+ * @fileoverview Componente cms view.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
+import React, { useEffect, useState } from 'react';
+import { CheckCircle, FileText, ImageIcon, Info, Palette, Save, Upload } from 'lucide-react';
 import { PageHeader, Button } from './ui';
 import { cn } from '../lib/utils';
+import apiClient from '../lib/api';
 
-/**
- * Estructura de configuración global del CMS (Content Management System).
- * @interface CmsSettings
- * @property {string} logoUrl - URL o ruta del logotipo del portal de pacientes.
- * @property {string} bannerUrl - URL o ruta del banner principal.
- * @property {string} termsAndConditions - Contenido en texto de términos de servicio.
- * @property {string} privacyPolicy - Contenido de políticas de privacidad.
- * @property {string} deliveryPolicy - Contenido de políticas de entrega.
- */
+interface ApiErrorPayload {
+  response?: {
+    data?: {
+      error?: string;
+      details?: string;
+    };
+  };
+}
+
 interface CmsSettings {
   logoUrl: string;
   bannerUrl: string;
+  consentTerms: string;
   termsAndConditions: string;
-  privacyPolicy: string;
-  deliveryPolicy: string;
+  usagePolicy: string;
 }
 
 type CmsSection = 'appearance' | 'legal';
-
-const DEFAULT_TERMS = `Términos y Condiciones del Servicio:
-1. Aceptación de los Términos: Al acceder y utilizar este portal de salud digital, el usuario acepta de manera explícita los términos de servicio expuestos en el presente acuerdo.
-2. Prescripción Médica: La compra de medicamentos controlados requerirá de la validación física u homologación digital del récipe emitido por un médico colegiado verificado en Médico-Paciente.
-3. Descuentos y Promociones: Los descuentos otorgados son exclusivos del programa de incentivos del médico tratante y no son transferibles.`;
-
-const DEFAULT_PRIVACY = `Políticas de Privacidad y Consentimiento de Datos:
-De conformidad con las leyes de protección de datos de salud y regulaciones de secreto médico, toda la información de diagnóstico y recetas emitidas se almacena de forma encriptada de punto a punto y no es compartida con entidades de mercadotecnia de terceros.`;
 
 const sectionTabs: { id: CmsSection; label: string; icon: React.ElementType }[] = [
   { id: 'appearance', label: 'Apariencia', icon: Palette },
   { id: 'legal', label: 'Textos legales', icon: FileText },
 ];
 
-/**
- * Vista de Configuración Global (CMS) para el panel de Administración.
- * Proporciona un gestor de contenidos para cambiar dinámicamente recursos visuales
- * (logotipos, banners) y actualizar textos legales mostrados en toda la plataforma.
- * 
- * @returns {JSX.Element}
- */
-export default function CmsView() {
-  const [settings, setSettings] = useState<CmsSettings>({
-    logoUrl: '/images/default-logo.png',
-    bannerUrl: '/images/default-banner.jpg',
-    termsAndConditions: DEFAULT_TERMS,
-    privacyPolicy: DEFAULT_PRIVACY,
-    deliveryPolicy:
-      'Las entregas a domicilio estándar se procesan en un lapso de 24 horas hábiles a partir de la confirmación del pago en la plataforma.',
-  });
+const DEFAULT_SETTINGS: CmsSettings = {
+  logoUrl: '/images/default-logo.png',
+  bannerUrl: '/images/default-banner.jpg',
+  consentTerms: 'T?rminos cl?nicos no cargados.',
+  termsAndConditions: 'T?rminos generales no cargados.',
+  usagePolicy: 'Pol?tica de uso no cargada.',
+};
 
+export default function CmsView() {
+  const [settings, setSettings] = useState<CmsSettings>(DEFAULT_SETTINGS);
   const [activeSection, setActiveSection] = useState<CmsSection>('appearance');
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [backendError, setBackendError] = useState('');
+  const [loadingConfig, setLoadingConfig] = useState(false);
   const [logoFileName, setLogoFileName] = useState('logo_zenith_vector.png');
   const [bannerFileName, setBannerFileName] = useState('banner_promocional.jpg');
 
   useEffect(() => {
-    const localCms = localStorage.getItem('zenith_cms_settings');
-    if (localCms) {
-      const parsed = JSON.parse(localCms) as Partial<CmsSettings> & { themeColor?: string };
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSettings((prev) => ({
-        ...prev,
-        logoUrl: parsed.logoUrl ?? prev.logoUrl,
-        bannerUrl: parsed.bannerUrl ?? prev.bannerUrl,
-        termsAndConditions: parsed.termsAndConditions ?? prev.termsAndConditions,
-        privacyPolicy: parsed.privacyPolicy ?? prev.privacyPolicy,
-        deliveryPolicy: parsed.deliveryPolicy ?? prev.deliveryPolicy,
-      }));
-    }
+    let cancelled = false;
+
+    const loadCms = async () => {
+      const localCms = localStorage.getItem('zenith_cms_settings');
+      if (localCms) {
+        const parsed = JSON.parse(localCms) as Partial<CmsSettings>;
+        setSettings((prev) => ({
+          ...prev,
+          logoUrl: parsed.logoUrl ?? prev.logoUrl,
+          bannerUrl: parsed.bannerUrl ?? prev.bannerUrl,
+        }));
+      }
+
+      try {
+        setLoadingConfig(true);
+        setBackendError('');
+        const response = await apiClient.get('/admin/cms/config');
+        const config = response.data?.config || {};
+
+        if (!cancelled) {
+          setSettings((prev) => ({
+            ...prev,
+            consentTerms: config.consentTermsText ?? prev.consentTerms,
+            termsAndConditions: config.termsAndConditionsText ?? prev.termsAndConditions,
+            usagePolicy: config.usagePolicyText ?? prev.usagePolicy,
+          }));
+        }
+      } catch (error: unknown) {
+        if (!cancelled) {
+          setBackendError(
+            (error as ApiErrorPayload).response?.data?.error ||
+              (error as ApiErrorPayload).response?.data?.details ||
+              'No se pudo cargar el CMS real del backend.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingConfig(false);
+        }
+      }
+    };
+
+    loadCms();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const handleImageUpload = (
-    file: File,
-    field: 'logoUrl' | 'bannerUrl',
-    setFileName: (name: string) => void
-  ) => {
+  const handleImageUpload = (file: File, field: 'logoUrl' | 'bannerUrl', setFileName: (name: string) => void) => {
     const objectUrl = URL.createObjectURL(file);
     setSettings((prev) => ({ ...prev, [field]: objectUrl }));
     setFileName(file.name);
   };
 
-  const handlePublish = () => {
-    localStorage.setItem('zenith_cms_settings', JSON.stringify(settings));
-    localStorage.setItem('zenith_terms_conditions', settings.termsAndConditions);
-    window.dispatchEvent(new Event('zenith_cms_update'));
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+  const handlePublish = async () => {
+    try {
+      setLoadingConfig(true);
+      setBackendError('');
+      await apiClient.put('/admin/cms/config', {
+        config: {
+          consentTermsText: settings.consentTerms,
+          termsAndConditionsText: settings.termsAndConditions,
+          usagePolicyText: settings.usagePolicy,
+        },
+      });
+
+      localStorage.setItem(
+        'zenith_cms_settings',
+        JSON.stringify({ logoUrl: settings.logoUrl, bannerUrl: settings.bannerUrl })
+      );
+      window.dispatchEvent(new Event('zenith_cms_update'));
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error: unknown) {
+      setBackendError(
+        (error as ApiErrorPayload).response?.data?.error ||
+          (error as ApiErrorPayload).response?.data?.details ||
+          'No se pudo guardar la configuraci?n global.'
+      );
+    } finally {
+      setLoadingConfig(false);
+    }
   };
 
   return (
     <div className="space-y-6">
       <PageHeader
         actions={
-          <Button size="sm" variant="patient" onClick={handlePublish}>
+          <Button size="sm" variant="patient" onClick={handlePublish} disabled={loadingConfig}>
             <Save className="h-4 w-4" />
             Guardar cambios
           </Button>
         }
       />
 
-      {saveSuccess && (
+      {backendError ? (
+        <div className="p-3.5 bg-amber-500/10 border border-amber-500/25 rounded-xl flex items-center gap-2 text-amber-300 text-xs">
+          <Info className="h-4 w-4 shrink-0" />
+          <span>{backendError}</span>
+        </div>
+      ) : null}
+
+      {saveSuccess ? (
         <div className="p-3.5 bg-secondary-500/10 border border-secondary-500/25 rounded-xl flex items-center gap-2 text-secondary-450 text-xs">
           <CheckCircle className="h-4 w-4 shrink-0" />
-          <span>
-            <strong className="font-bold">Cambios guardados.</strong> Se aplicarán en la configuración
-            global del sistema.
-          </span>
+          <span><strong className="font-bold">Cambios guardados.</strong> El CMS ya est? sincronizado con el backend.</span>
         </div>
-      )}
+      ) : null}
 
       <div className="flex flex-wrap gap-2 border-b border-surface-800 pb-1">
         {sectionTabs.map(({ id, label, icon: Icon }) => (
@@ -144,151 +185,68 @@ export default function CmsView() {
       {activeSection === 'appearance' ? (
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
           <div className="xl:col-span-3 space-y-5">
-            <section className="zenith-panel space-y-4">
-              <div>
-                <h3 className="zenith-section-title">Logotipo</h3>
-                <p className="text-xs text-surface-500 mt-0.5">
-                  Imagen que aparece en el encabezado del portal.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                <div className="h-16 w-16 rounded-xl bg-surface-950 border border-surface-800 flex items-center justify-center shrink-0 overflow-hidden">
-                  <ImageIcon className="h-7 w-7 text-surface-500" />
+            {([
+              { key: 'logoUrl', label: 'Logotipo', fileName: logoFileName, setter: setLogoFileName },
+              { key: 'bannerUrl', label: 'Banner principal', fileName: bannerFileName, setter: setBannerFileName },
+            ] as const).map((item) => (
+              <section key={item.key} className="zenith-panel space-y-4">
+                <div>
+                  <h3 className="zenith-section-title">{item.label}</h3>
+                  <p className="text-xs text-surface-500 mt-0.5">Estos recursos siguen siendo locales del frontend.</p>
                 </div>
-                <div className="flex-1 space-y-2 min-w-0">
-                  <p className="text-xs text-surface-400 truncate">{logoFileName}</p>
-                  <label className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface-950 border border-surface-800 rounded-xl text-xs font-semibold text-foreground hover:bg-surface-850 transition-colors cursor-pointer">
-                    <Upload className="h-4 w-4" />
-                    Subir logotipo
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/svg+xml"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) handleImageUpload(file, 'logoUrl', setLogoFileName);
-                      }}
-                    />
-                  </label>
-                  <p className="text-[10px] text-surface-500">PNG, JPG o SVG. Máximo 5 MB.</p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="h-16 w-16 rounded-xl bg-surface-950 border border-surface-800 flex items-center justify-center shrink-0 overflow-hidden">
+                    <ImageIcon className="h-7 w-7 text-surface-500" />
+                  </div>
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <p className="text-xs text-surface-400 truncate">{item.fileName}</p>
+                    <label className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface-950 border border-surface-800 rounded-xl text-xs font-semibold text-foreground hover:bg-surface-850 transition-colors cursor-pointer">
+                      <Upload className="h-4 w-4" />
+                      Subir recurso
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleImageUpload(file, item.key, item.setter);
+                        }}
+                      />
+                    </label>
+                  </div>
                 </div>
-              </div>
-            </section>
-
-            <section className="zenith-panel space-y-4">
-              <div>
-                <h3 className="zenith-section-title">Banner principal</h3>
-                <p className="text-xs text-surface-500 mt-0.5">
-                  Imagen promocional en la pantalla de inicio del paciente.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <p className="text-xs text-surface-400 truncate">{bannerFileName}</p>
-                <label className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface-950 border border-surface-800 rounded-xl text-xs font-semibold text-foreground hover:bg-surface-850 transition-colors cursor-pointer">
-                  <Upload className="h-4 w-4" />
-                  Subir banner
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file, 'bannerUrl', setBannerFileName);
-                    }}
-                  />
-                </label>
-                <p className="text-[10px] text-surface-500">PNG o JPG. Máximo 5 MB.</p>
-              </div>
-            </section>
+              </section>
+            ))}
           </div>
 
           <aside className="xl:col-span-2">
             <div className="zenith-panel space-y-4 sticky top-6">
-              <div>
-                <h3 className="zenith-section-title">Vista previa</h3>
-                <p className="text-xs text-surface-500 mt-0.5">Así se verá el banner del paciente.</p>
-              </div>
-              <div className="cms-patient-banner-preview">
-                <div className="space-y-2 relative z-10">
-                  <span className="cms-patient-banner-preview__badge">
-                    Beneficio activo
-                  </span>
-                  <p className="cms-patient-banner-preview__title">
-                    Su médico le ha otorgado descuentos exclusivos
-                  </p>
-                  <p className="cms-patient-banner-preview__subtitle">
-                    Canjee su receta en cualquier sucursal de la red.
-                  </p>
-                </div>
-                <div className="cms-patient-banner-preview__icon">
-                  <Palette className="h-7 w-7" />
-                </div>
-                <div className="cms-patient-banner-preview__glow" />
-              </div>
+              <h3 className="zenith-section-title">Vista previa</h3>
+              <p className="text-xs text-surface-500">Los textos legales s? est?n conectados al backend; las im?genes se conservan locales en esta versi?n.</p>
             </div>
           </aside>
         </div>
       ) : (
-        <div className="max-w-3xl space-y-5">
+        <div className="max-w-4xl space-y-5">
           <section className="zenith-panel space-y-5">
             <div>
-              <h3 className="zenith-section-title">Textos legales</h3>
-              <p className="text-xs text-surface-500 mt-0.5">
-                El paciente debe aceptarlos antes de confirmar un pedido.
-              </p>
+              <h3 className="zenith-section-title">Textos legales reales</h3>
+              <p className="text-xs text-surface-500 mt-0.5">Sincronizados con <code>/api/admin/cms/config</code>.</p>
             </div>
 
             <div className="space-y-1.5">
-              <label className="zenith-field-label" htmlFor="cms-terms">
-                Términos y condiciones
-              </label>
-              <textarea
-                id="cms-terms"
-                rows={5}
-                value={settings.termsAndConditions}
-                onChange={(e) =>
-                  setSettings((prev) => ({ ...prev, termsAndConditions: e.target.value }))
-                }
-                className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[120px]"
-              />
+              <label className="zenith-field-label" htmlFor="cms-consent">T?rminos de consentimiento cl?nico</label>
+              <textarea id="cms-consent" rows={5} value={settings.consentTerms} onChange={(e) => setSettings((prev) => ({ ...prev, consentTerms: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[120px]" />
             </div>
 
             <div className="space-y-1.5">
-              <label className="zenith-field-label" htmlFor="cms-privacy">
-                Política de privacidad
-              </label>
-              <textarea
-                id="cms-privacy"
-                rows={4}
-                value={settings.privacyPolicy}
-                onChange={(e) =>
-                  setSettings((prev) => ({ ...prev, privacyPolicy: e.target.value }))
-                }
-                className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[100px]"
-              />
+              <label className="zenith-field-label" htmlFor="cms-terms">T?rminos y condiciones de la plataforma</label>
+              <textarea id="cms-terms" rows={5} value={settings.termsAndConditions} onChange={(e) => setSettings((prev) => ({ ...prev, termsAndConditions: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[120px]" />
             </div>
 
             <div className="space-y-1.5">
-              <label className="zenith-field-label" htmlFor="cms-delivery">
-                Política de entregas
-              </label>
-              <textarea
-                id="cms-delivery"
-                rows={3}
-                value={settings.deliveryPolicy}
-                onChange={(e) =>
-                  setSettings((prev) => ({ ...prev, deliveryPolicy: e.target.value }))
-                }
-                className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[80px]"
-              />
-            </div>
-
-            <div className="p-3 bg-surface-950 border border-surface-800 rounded-xl flex items-start gap-2 text-[11px] text-surface-500">
-              <Info className="h-4 w-4 shrink-0 mt-0.5 text-surface-400" />
-              <span>
-                Si modificas estos textos, el paciente tendrá que volver a aceptar los términos en su
-                próximo pedido.
-              </span>
+              <label className="zenith-field-label" htmlFor="cms-policy">Pol?tica de uso</label>
+              <textarea id="cms-policy" rows={4} value={settings.usagePolicy} onChange={(e) => setSettings((prev) => ({ ...prev, usagePolicy: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[100px]" />
             </div>
           </section>
         </div>

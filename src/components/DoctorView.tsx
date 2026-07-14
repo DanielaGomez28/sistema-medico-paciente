@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente doctor view.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Users, 
@@ -7,8 +12,7 @@ import {
   FileText, 
   PlusCircle, 
   LogOut, 
-  ShieldAlert, 
-  Check,
+  ShieldAlert,
   ChevronRight,
   ArrowLeft,
   QrCode,
@@ -36,7 +40,6 @@ import apiClient from '../lib/api';
 import { socket } from '../lib/socket';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
-  DOCTOR_LINKED_PATIENT_SEEDS,
   DOCTOR_PROFILE_DEFAULTS,
   type DoctorLinkedPatientSeed as LinkedPatient,
 } from '../data/mockData';
@@ -49,6 +52,15 @@ interface DoctorViewProps {
   doctorName: string;
   doctorEmail: string;
   doctorId: string;
+  doctorProfile?: {
+    mpps?: string | null;
+    specialty?: string | null;
+    medicalCollege?: string | null;
+    specialSanitaryRegistration?: string | null;
+    digitalSignatureHash?: string | null;
+    officeLocation?: string | null;
+    status?: string | null;
+  } | null;
   onLogout: () => void;
 }
 
@@ -62,6 +74,9 @@ interface MedicalProduct {
   description: string;
   source: 'farmacia' | 'externo';
   benefitPct?: number;
+  sanitaryCategory?: string;
+  isControlled?: boolean;
+  controlledSubstanceType?: string | null;
 }
 
 interface PrescriptionCatalogApiItem {
@@ -75,12 +90,17 @@ interface PrescriptionCatalogApiItem {
   precio_base: number;
   beneficio_pct: number;
   precio_con_beneficio: number;
+  sanitary_category?: string;
+  is_controlled?: boolean;
+  controlled_substance_type?: string | null;
 }
 
 interface CartItem {
   product: MedicalProduct;
   posology: string;
   discount: number;
+  treatmentDays: number;
+  dailyDoses: number;
 }
 
 interface DoctorCommissionTransaction {
@@ -123,6 +143,26 @@ interface DoctorRecipeLogRecord {
   items: DoctorRecipeLogItem[];
 }
 
+interface ConsentResultPayload {
+  success: boolean;
+  message?: string;
+  patientName?: string;
+  result?: {
+    vinculacion?: {
+      id_paciente?: string | number | null;
+    } | null;
+  } | null;
+}
+
+interface ApiErrorPayload {
+  response?: {
+    data?: {
+      error?: string;
+      details?: string;
+    };
+  };
+}
+
 /**
  * Detecta si el navegador actual pertenece a un dispositivo movil apto para escaneo.
  */
@@ -141,6 +181,14 @@ const normalizePatientLookup = (value: string) => value.toUpperCase().replace(/[
  * @returns {boolean} `true` si el valor parece malicioso.
  */
 const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
+
+/**
+ * Valida texto libre seguro para entradas operativas del frontend.
+ * @param {string} value - Valor a validar.
+ * @param {RegExp} pattern - Patron permitido.
+ * @returns {boolean} `true` si cumple el formato esperado.
+ */
+const matchesSafePattern = (value: string, pattern: RegExp) => Boolean(value.trim()) && !containsSuspiciousPattern(value) && pattern.test(value.trim());
 
 /**
  * Normaliza el texto de busqueda de medicamentos antes de consultar el catalogo.
@@ -164,6 +212,9 @@ const mapCatalogItemToProduct = (item: PrescriptionCatalogApiItem): MedicalProdu
   description: [item.presentacion, item.laboratorio].filter(Boolean).join(' | '),
   source: 'farmacia',
   benefitPct: Number(item.beneficio_pct ?? 0),
+  sanitaryCategory: item.sanitary_category || 'regular',
+  isControlled: Boolean(item.is_controlled),
+  controlledSubstanceType: item.controlled_substance_type || null,
 });
 
 /**
@@ -183,7 +234,7 @@ const mapCatalogItemToProduct = (item: PrescriptionCatalogApiItem): MedicalProdu
  * @param {DoctorViewProps} props - Propiedades de la vista.
  * @returns {JSX.Element}
  */
-export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout }: DoctorViewProps) {
+export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorProfile, onLogout }: DoctorViewProps) {
   // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'
   const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'>('agenda');
 
@@ -204,15 +255,20 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
   const [bankMobilePhone, setBankMobilePhone] = useState(DOCTOR_PROFILE_DEFAULTS.bankMobilePhone);
   const [profilePhone, setProfilePhone] = useState(DOCTOR_PROFILE_DEFAULTS.profilePhone);
   const [profileRegistryId] = useState(DOCTOR_PROFILE_DEFAULTS.profileRegistryId);
-  const [consultorioAddress, setConsultorioAddress] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioAddress);
+  const [consultorioAddress, setConsultorioAddress] = useState(doctorProfile?.officeLocation || DOCTOR_PROFILE_DEFAULTS.consultorioAddress);
   const [consultorioState, setConsultorioState] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioState);
   const [consultorioMunicipio, setConsultorioMunicipio] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioMunicipio);
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
+  const doctorMpps = doctorProfile?.mpps || 'MPPS no disponible';
+  const doctorSpecialty = doctorProfile?.specialty || 'Especialidad no disponible';
+  const doctorMedicalCollege = doctorProfile?.medicalCollege || 'Colegio no disponible';
+  const doctorSpecialSanitaryRegistration = doctorProfile?.specialSanitaryRegistration || null;
+  const doctorDigitalSignatureHash = doctorProfile?.digitalSignatureHash || null;
 
   // QR credential removed for doctor portal per requested change
 
   // Dynamic commission rate state
-  const [commissionRate, setCommissionRate] = useState<number>(8);
+  const [commissionRate, setCommissionRate] = useState<number>(0);
   const [commissionSummary, setCommissionSummary] = useState<DoctorCommissionSummary | null>(null);
   const [commissionLoading, setCommissionLoading] = useState(false);
   const [commissionError, setCommissionError] = useState('');
@@ -220,19 +276,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
   const [recipeLogLoading, setRecipeLogLoading] = useState(false);
   const [recipeLogError, setRecipeLogError] = useState('');
   
-  useEffect(() => {
-    const loadRate = () => {
-      const savedRate = localStorage.getItem('zenith_commission_rate');
-      if (savedRate) {
-        setCommissionRate(parseFloat(savedRate));
-      }
-    };
-    loadRate();
-    window.addEventListener('zenith_commission_update', loadRate);
-    return () => window.removeEventListener('zenith_commission_update', loadRate);
-  }, []);
-
-  const [patients, setPatients] = useState<LinkedPatient[]>(DOCTOR_LINKED_PATIENT_SEEDS);
+  const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [patientViewMode, setPatientViewMode] = useState<'list' | 'detail'>('list');
   const [patientListSearch, setPatientListSearch] = useState('');
   const [patientForm, setPatientForm] = useState<LinkedPatient>({
@@ -251,8 +295,77 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
   const [medicationsInput, setMedicationsInput] = useState('');
   // New-patient flow removed; editing existing patients remains
   const [patientSaveMsg, setPatientSaveMsg] = useState('');
+  const [profileErrorMsg, setProfileErrorMsg] = useState('');
+  const [isEditingDoctorProfile, setIsEditingDoctorProfile] = useState(false);
+  const [isEditingPatientRecord, setIsEditingPatientRecord] = useState(false);
+  const [patientFormSnapshot, setPatientFormSnapshot] = useState<LinkedPatient | null>(null);
+  const [doctorProfileSnapshot, setDoctorProfileSnapshot] = useState<null | {
+    bankHolder: string;
+    bankHolderId: string;
+    bankEntity: string;
+    bankAccountType: 'Corriente' | 'Ahorro';
+    bankAccountNumber: string;
+    bankMobilePhone: string;
+    profilePhone: string;
+    consultorioAddress: string;
+    consultorioState: string;
+    consultorioMunicipio: string;
+  }>(null);
   const [isWaitingConsent, setIsWaitingConsent] = useState(false);
   const [pendingConsentPatient, setPendingConsentPatient] = useState<LinkedPatient | null>(null);
+
+  // Reception / QR scan states (M.1)
+  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [manualPatientIdInput, setManualPatientIdInput] = useState('');
+  const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
+  const [, setPatientsLoading] = useState(false);
+  const [, setPatientsError] = useState('');
+
+  const [scannerErrorMsg, setScannerErrorMsg] = useState('');
+  const [isMobileScannerCapable] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const hasCameraApi = Boolean(window.navigator.mediaDevices?.getUserMedia);
+    const isMobileDevice = MOBILE_SCANNER_REGEX.test(window.navigator.userAgent || '');
+    return hasCameraApi && isMobileDevice;
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadPatients = async () => {
+      if (!DOCTOR_ID) return;
+
+      try {
+        setPatientsLoading(true);
+        setPatientsError('');
+        const response = await apiClient.get(`/pacientes/medico/${encodeURIComponent(DOCTOR_ID)}`);
+
+        if (!cancelled) {
+          setPatients(Array.isArray(response.data?.items) ? response.data.items : []);
+        }
+      } catch (error: unknown) {
+        if (!cancelled) {
+          const apiError = error as ApiErrorPayload;
+          setPatientsError(
+            apiError.response?.data?.error ||
+            apiError.response?.data?.details ||
+            'No se pudo cargar la agenda cl?nica real del m?dico.'
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setPatientsLoading(false);
+        }
+      }
+    };
+
+    void loadPatients();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [DOCTOR_ID]);
 
   // WebSockets: Escuchar respuesta del paciente usando `patientId` interno
   useEffect(() => {
@@ -265,14 +378,27 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
     if (socket.connected) identify();
     socket.on('connect', identify);
 
-    const handleConsentResult = (data: any) => {
+    const handleConsentResult = async (data: ConsentResultPayload) => {
       setIsWaitingConsent(false);
       setWaitingConsent(false);
 
       if (data.success) {
         const linkedPatientId = data.result?.vinculacion?.id_paciente?.toString()?.toLowerCase();
 
-        let targetPatient = patients.find((p) => p.systemId === linkedPatientId);
+        let targetPatient: LinkedPatient | undefined | null = patients.find((p) => p.systemId === linkedPatientId);
+
+        if (!targetPatient && linkedPatientId) {
+          try {
+            const response = await apiClient.get(`/pacientes/${encodeURIComponent(linkedPatientId)}`);
+            targetPatient = response.data as LinkedPatient;
+            setPatients((prev) => {
+              const exists = prev.some((patient) => patient.systemId === targetPatient?.systemId);
+              return exists || !targetPatient ? prev : [...prev, targetPatient];
+            });
+          } catch {
+            targetPatient = null;
+          }
+        }
 
         if (!targetPatient) {
           targetPatient = {
@@ -288,8 +414,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
             lastVisit: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
             medications: [],
           } as LinkedPatient;
-
-          setPatients((prev) => [...prev, targetPatient as LinkedPatient]);
         }
 
         setIsScannerModalOpen(false);
@@ -305,33 +429,44 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
       setPendingConsentPatient((prev) => prev ? { ...prev, name: patientName } : null);
     };
 
+    const handlePatientProfileUpdated = ({ patient }: { patient?: LinkedPatient }) => {
+      if (!patient?.systemId && !patient?.patientId) {
+        return;
+      }
+
+      setPatients((prev) => prev.map((current) => (
+        current.systemId === patient.systemId || current.patientId === patient.patientId
+          ? { ...current, ...patient }
+          : current
+      )));
+
+      setLinkedPatient((current) => {
+        if (!current) return current;
+        return current.systemId === patient.systemId || current.patientId === patient.patientId
+          ? { ...current, ...patient }
+          : current;
+      });
+
+      setPatientForm((current) => (
+        current.systemId === patient.systemId || current.patientId === patient.patientId
+          ? { ...current, ...patient }
+          : current
+      ));
+    };
+
     socket.on('consentResult', handleConsentResult);
     socket.on('consentRequestSent', handleConsentRequestSent);
+    socket.on('patientProfileUpdated', handlePatientProfileUpdated);
 
     return () => {
       socket.off('connect', identify);
       socket.off('consentResult', handleConsentResult);
       socket.off('consentRequestSent', handleConsentRequestSent);
+      socket.off('patientProfileUpdated', handlePatientProfileUpdated);
       socket.disconnect();
     };
   }, [DOCTOR_ID, DOCTOR_NAME, patients]);
 
-  // Reception / QR scan states (M.1)
-  const [isScannerModalOpen, setIsScannerModalOpen] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
-  const [manualPatientIdInput, setManualPatientIdInput] = useState('');
-  const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
-  const [isMobileScannerCapable, setIsMobileScannerCapable] = useState(false);
-  const [scannerErrorMsg, setScannerErrorMsg] = useState('');
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const hasCameraApi = Boolean(navigator.mediaDevices?.getUserMedia);
-    const isMobileDevice = MOBILE_SCANNER_REGEX.test(window.navigator.userAgent || '');
-
-    setIsMobileScannerCapable(hasCameraApi && isMobileDevice);
-  }, []);
 
   // =========================================================
   // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
@@ -362,9 +497,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
               patientId: response.data.patientId // El backend desencript? el patientId interno desde el QR
             });
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           // Fallo por QR Caducado o Nonce duplicado
-          setScannerErrorMsg(error.response?.data?.error || 'Error de seguridad: QR caducado o invalido.');
+          const apiError = error as ApiErrorPayload;
+          setScannerErrorMsg(apiError.response?.data?.error || 'Error de seguridad: QR caducado o invalido.');
         }
       }, () => {
         // Errores silenciosos mientras busca el QR frame por frame (se ignoran)
@@ -374,7 +510,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
         scanner.clear().catch(e => console.error(e));
       };
     }
-  }, [isScanning, isMobileScannerCapable]);
+  }, [DOCTOR_ID, DOCTOR_NAME, isScanning, isMobileScannerCapable]);
 
   const filteredPatients = useMemo(() => {
     const query = patientListSearch.toLowerCase().trim();
@@ -409,7 +545,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
           setInventoryPreview(items);
           setCatalogResults(items);
         }
-      } catch (error: any) {
+      } catch {
         if (!cancelled) {
           setCatalogResults([]);
         }
@@ -443,7 +579,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
         if (!cancelled) {
           setCatalogResults(items);
         }
-      } catch (error: any) {
+      } catch {
         if (!cancelled) {
           setCatalogResults([]);
         }
@@ -486,11 +622,12 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
             setCommissionRate(Number(summary.commissionRatePct));
           }
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         if (!cancelled) {
+          const apiError = error as ApiErrorPayload;
           setCommissionError(
-            error?.response?.data?.error ||
-            error?.response?.data?.details ||
+            apiError.response?.data?.error ||
+            apiError.response?.data?.details ||
             'No se pudo cargar el libro de comisiones del backend.'
           );
         }
@@ -527,13 +664,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
 
         if (!cancelled) {
           setDoctorRecipeLog(Array.isArray(response.data?.items) ? response.data.items : []);
-        }
-      } catch (error: any) {
+        }      } catch (error: unknown) {
         if (!cancelled) {
+          const apiError = error as ApiErrorPayload;
           setRecipeLogError(
-            error?.response?.data?.error ||
-            error?.response?.data?.details ||
-            'No se pudo cargar la bitácora real de recipes del backend.'
+            apiError.response?.data?.error ||
+            apiError.response?.data?.details ||
+            'No se pudo cargar la bit?cora real de recipes del backend.'
           );
         }
       } finally {
@@ -554,13 +691,16 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
    * Abre el formulario de detalle de un paciente existente.
    * @param {LinkedPatient} patient - El paciente a mostrar.
    */
-  const openPatientForm = (patient: LinkedPatient) => {
-    setPatientForm({ ...patient, medications: [...patient.medications] });
+  function openPatientForm(patient: LinkedPatient) {
+    const hydratedPatient = { ...patient, medications: [...patient.medications] };
+    setPatientForm(hydratedPatient);
+    setPatientFormSnapshot(hydratedPatient);
     setMedicationsInput(patient.medications.join(', '));
     setLinkedPatient(patient);
+    setIsEditingPatientRecord(false);
     setPatientViewMode('detail');
     setActiveTab('reception');
-  };
+  }
 
   // New-patient creation removed from doctor portal
 
@@ -570,31 +710,41 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
   const handleBackToPatientList = () => {
     setPatientViewMode('list');
     setPatientSaveMsg('');
+    setProfileErrorMsg('');
+    setIsEditingPatientRecord(false);
   };
-
-  /**
-   * Elimina el paciente actualmente seleccionado del estado local.
-   */
-  const handleDeletePatient = () => {
-    if (!patientForm.patientId) return;
-    if (!confirm(`¿Eliminar el expediente de ${patientForm.name}? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-    setPatients((prev) => prev.filter((p) => p.patientId !== patientForm.patientId));
-    if (linkedPatient?.patientId === patientForm.patientId) {
-      setLinkedPatient(null);
-    }
-    handleBackToPatientList();
-  };
-
   /**
    * Maneja el guardado o actualización de un paciente en el formulario.
    * @param {React.FormEvent} e - Evento del formulario.
    */
-  const handleSavePatient = (e: React.FormEvent) => {
+  const handleSavePatient = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!patientForm.name.trim() || !patientForm.phone.trim() || !patientForm.patientId.trim()) {
-      alert('El nombre, el ID interno y el tel?fono del paciente son obligatorios.');
+    if (!isEditingPatientRecord) {
+      return;
+    }
+
+    if (!matchesSafePattern(patientForm.name, /^[\p{L}\p{N}\s.'-]{3,120}$/u)) {
+      alert('El nombre del paciente contiene un formato inválido.');
+      return;
+    }
+
+    if (!matchesSafePattern(patientForm.phone, /^[+\d\s()-]{7,20}$/)) {
+      alert('El teléfono del paciente no cumple el formato esperado.');
+      return;
+    }
+
+    if (!patientForm.patientId.trim()) {
+      alert('El ID interno del paciente es obligatorio.');
+      return;
+    }
+
+    if (patientForm.condition && !matchesSafePattern(patientForm.condition, /^[\p{L}\p{N}\s.,()'-]{2,160}$/u)) {
+      alert('La condición del paciente contiene caracteres inválidos.');
+      return;
+    }
+
+    if (patientForm.allergies && !matchesSafePattern(patientForm.allergies, /^[\p{L}\p{N}\s.,()'-]{2,160}$/u)) {
+      alert('Las alergias del paciente contienen caracteres inválidos.');
       return;
     }
 
@@ -603,64 +753,185 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
       .map((med) => med.trim())
       .filter(Boolean);
 
-    // Only support updating existing patients from the doctor portal
-    const updatedPatient: LinkedPatient = { ...patientForm, medications };
-    const exists = patients.some((p) => p.patientId === updatedPatient.patientId);
-    if (!exists) {
-      alert('No está permitido crear pacientes desde el portal del médico. Busque o vincule un paciente existente.');
-      return;
-    }
-    setPatients((prev) => prev.map((p) => (p.patientId === updatedPatient.patientId ? updatedPatient : p)));
-    setLinkedPatient(updatedPatient);
-    setPatientForm(updatedPatient);
+    try {
+      const response = await apiClient.put(`/pacientes/${encodeURIComponent(patientForm.systemId || patientForm.patientId)}`, {
+        ...patientForm,
+        medications,
+      });
+      const updatedPatient = response.data?.patient as LinkedPatient;
 
-    setPatientSaveMsg('Datos del paciente guardados correctamente.');
-    setTimeout(() => setPatientSaveMsg(''), 3000);
+      setPatients((prev) =>
+        prev.map((patient) =>
+          patient.systemId === updatedPatient.systemId || patient.patientId === updatedPatient.patientId
+            ? updatedPatient
+            : patient
+        )
+      );
+      setLinkedPatient(updatedPatient);
+      setPatientForm(updatedPatient);
+      setPatientFormSnapshot(updatedPatient);
+      setIsEditingPatientRecord(false);
+      setMedicationsInput(updatedPatient.medications.join(', '));
+      setPatientSaveMsg('Datos del paciente guardados correctamente.');
+      setTimeout(() => setPatientSaveMsg(''), 3000);
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      alert(
+        apiError.response?.data?.error ||
+        apiError.response?.data?.details ||
+        'No se pudo actualizar el expediente cl?nico del paciente.'
+      );
+    }
+  };
+
+
+  /**
+   * Habilita la edicion explicita del expediente del paciente.
+   * @returns {void}
+   */
+  const handleStartPatientEdit = () => {
+    setPatientFormSnapshot({ ...patientForm, medications: [...patientForm.medications] });
+    setPatientSaveMsg('');
+    setProfileErrorMsg('');
+    setIsEditingPatientRecord(true);
   };
 
   /**
-   * Inicia el flujo de vinculaci?n de un paciente buscando por su ID interno e informando al backend.
-   * @param {string} patientQuery - El ID interno a buscar o vincular.
+   * Cancela la edicion del expediente y restaura el ultimo snapshot valido.
+   * @returns {void}
    */
-  const linkPatientMock = (patientQuery: string) => {
+  const handleCancelPatientEdit = () => {
+    if (patientFormSnapshot) {
+      setPatientForm({ ...patientFormSnapshot, medications: [...patientFormSnapshot.medications] });
+      setMedicationsInput(patientFormSnapshot.medications.join(', '));
+    }
+    setIsEditingPatientRecord(false);
+    setPatientSaveMsg('');
+  };
+
+  /**
+   * Habilita la edicion controlada del perfil profesional visible en UI.
+   * @returns {void}
+   */
+  const handleStartDoctorProfileEdit = () => {
+    setDoctorProfileSnapshot({
+      bankHolder,
+      bankHolderId,
+      bankEntity,
+      bankAccountType,
+      bankAccountNumber,
+      bankMobilePhone,
+      profilePhone,
+      consultorioAddress,
+      consultorioState,
+      consultorioMunicipio,
+    });
+    setProfileErrorMsg('');
+    setProfileSaveMsg('');
+    setIsEditingDoctorProfile(true);
+  };
+
+  /**
+   * Revierte la edicion local del perfil del medico.
+   * @returns {void}
+   */
+  const handleCancelDoctorProfileEdit = () => {
+    if (doctorProfileSnapshot) {
+      setBankHolder(doctorProfileSnapshot.bankHolder);
+      setBankHolderId(doctorProfileSnapshot.bankHolderId);
+      setBankEntity(doctorProfileSnapshot.bankEntity);
+      setBankAccountType(doctorProfileSnapshot.bankAccountType);
+      setBankAccountNumber(doctorProfileSnapshot.bankAccountNumber);
+      setBankMobilePhone(doctorProfileSnapshot.bankMobilePhone);
+      setProfilePhone(doctorProfileSnapshot.profilePhone);
+      setConsultorioAddress(doctorProfileSnapshot.consultorioAddress);
+      setConsultorioState(doctorProfileSnapshot.consultorioState);
+      setConsultorioMunicipio(doctorProfileSnapshot.consultorioMunicipio);
+    }
+    setIsEditingDoctorProfile(false);
+    setProfileErrorMsg('');
+  };
+
+  /**
+   * Confirma la edicion local del perfil profesional tras validar entradas.
+   * @returns {void}
+   */
+  const handleConfirmDoctorProfileEdit = () => {
+    const doctorPhoneIsValid = matchesSafePattern(profilePhone, /^[+\d\s()-]{7,20}$/);
+    const bankHolderIsValid = matchesSafePattern(bankHolder, /^[\p{L}\p{N}\s.'-]{3,120}$/u);
+    const bankHolderIdIsValid = matchesSafePattern(bankHolderId, /^[VEJGP-\d\s.]{5,20}$/i);
+    const bankEntityIsValid = matchesSafePattern(bankEntity, /^[\p{L}\p{N}\s.'-]{3,120}$/u);
+    const accountNumberIsValid = matchesSafePattern(bankAccountNumber, /^[\d-]{10,30}$/);
+    const bankMobileIsValid = matchesSafePattern(bankMobilePhone, /^[+\d\s()-]{7,20}$/);
+    const officeAddressIsValid = matchesSafePattern(consultorioAddress, /^[\p{L}\p{N}\s.,#()"'-]{5,200}$/u);
+    const officeMunicipioIsValid = matchesSafePattern(consultorioMunicipio, /^[\p{L}\p{N}\s.'-]{2,120}$/u);
+
+    if (!doctorPhoneIsValid || !bankHolderIsValid || !bankHolderIdIsValid || !bankEntityIsValid || !accountNumberIsValid || !bankMobileIsValid || !officeAddressIsValid || !officeMunicipioIsValid) {
+      setProfileErrorMsg('Revisá los datos del perfil profesional. Hay campos vacíos, inseguros o con formato inválido.');
+      return;
+    }
+
+    setProfileErrorMsg('');
+    setIsEditingDoctorProfile(false);
+    setProfileSaveMsg('Perfil, consultorio y datos bancarios listos y confirmados para la sesión actual.');
+    setTimeout(() => setProfileSaveMsg(''), 4000);
+  };
+
+  /**
+   * Inicia el flujo de vinculacion manual de un paciente por identificador.
+   * @param {string} patientQuery - Identificador ingresado desde la UI.
+   * @returns {Promise<void>}
+   */
+  const linkPatientMock = async (patientQuery: string) => {
     const normalized = patientQuery.toLowerCase().replace(/[\s\.-]/g, '');
-    const found = patients.find((p) =>
-      p.patientId.toLowerCase().replace(/[\s\.-]/g, '').includes(normalized)
+    let targetPatient = patients.find((patient) =>
+      patient.patientId.toLowerCase().replace(/[\s\.-]/g, '').includes(normalized)
     );
 
-    const targetPatient = found || {
-      systemId: `patient_${normalized || 'pendiente_bd'}`.replace(/[^a-z0-9_]/g, ''),
-      patientId: patientQuery.trim().toUpperCase(),
-      name: 'Paciente (Pendiente BD)',
-      age: 0,
-      gender: 'No especificado',
-      bloodType: 'N/A',
-      phone: 'N/A',
-      condition: 'N/A',
-      allergies: 'Ninguna',
-      lastVisit: 'N/A',
-      medications: [],
-    };
-    
+    if (!targetPatient) {
+      try {
+        const response = await apiClient.get(`/pacientes/${encodeURIComponent(patientQuery)}`);
+        targetPatient = response.data as LinkedPatient;
+        setPatients((prev) => {
+          const exists = prev.some((patient) => patient.systemId === targetPatient?.systemId);
+          return exists || !targetPatient ? prev : [...prev, targetPatient];
+        });
+      } catch {
+        targetPatient = {
+          systemId: `patient_${normalized || 'pendiente'}`.replace(/[^a-z0-9_]/g, ''),
+          patientId: patientQuery.trim().toUpperCase(),
+          name: 'Paciente pendiente de vinculaci?n',
+          age: 0,
+          gender: 'No especificado',
+          bloodType: 'N/A',
+          phone: 'N/A',
+          condition: 'N/A',
+          allergies: 'Ninguna',
+          lastVisit: 'N/A',
+          medications: [],
+        } as LinkedPatient;
+      }
+    }
+
     setIsWaitingConsent(true);
-    setPendingConsentPatient(targetPatient);
-    
-    // Emitir solicitud de vinculación al servidor WebSocket
+    setPendingConsentPatient(targetPatient || null);
+
     socket.emit('requestConsent', {
       doctorId: DOCTOR_ID,
       doctorName: DOCTOR_NAME,
-      patientId: targetPatient.systemId || targetPatient.patientId
+      patientId: targetPatient?.systemId || targetPatient?.patientId || patientQuery,
     });
   };
 
   /**
-   * Cancela la solicitud de vinculación de un paciente en curso.
+   * Cancela la solicitud de consentimiento pendiente.
+   * @returns {void}
    */
   const cancelConsentRequest = () => {
     if (pendingConsentPatient) {
-      socket.emit('cancelConsentRequest', { 
-        doctorId: DOCTOR_ID, 
-        patientId: pendingConsentPatient.systemId || pendingConsentPatient.patientId 
+      socket.emit('cancelConsentRequest', {
+        doctorId: DOCTOR_ID,
+        patientId: pendingConsentPatient.systemId || pendingConsentPatient.patientId,
       });
     }
     setIsWaitingConsent(false);
@@ -685,17 +956,19 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
 
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
+    let resetTimer: NodeJS.Timeout | undefined;
 
     if (isScanning) {
       timer = setInterval(() => {
         setScanProgress((prev) => (prev >= 90 ? 90 : prev + 10));
       }, 400);
     } else {
-      setScanProgress(0);
+      resetTimer = setTimeout(() => setScanProgress(0), 0);
     }
 
     return () => {
       if (timer) clearInterval(timer);
+      if (resetTimer) clearTimeout(resetTimer);
     };
   }, [isScanning]);
 
@@ -719,7 +992,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
     }
 
     setScannerErrorMsg('');
-    linkPatientMock(sanitizedPatientId);
+    void linkPatientMock(sanitizedPatientId);
     setManualPatientIdInput('');
   };
 
@@ -732,7 +1005,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
     if (cart.some(item => item.product.id === product.id)) {
       return;
     }
-    setCart([...cart, { product, posology: '', discount: product.benefitPct ?? 0 }]);
+    setCart([...cart, { product, posology: '', discount: product.benefitPct ?? 0, treatmentDays: 1, dailyDoses: 1 }]);
   };
 
   /**
@@ -810,9 +1083,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
       setTimeout(() => {
         setSuccessMsg('');
       }, 3000);
-    } catch (error: any) {
-      alert(error?.response?.data?.error || error?.response?.data?.details || 'No se pudo emitir la receta.');
-    } finally {
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      alert(apiError.response?.data?.error || apiError.response?.data?.details || 'No se pudo emitir la receta.');
     }
   };
 
@@ -1176,19 +1449,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
                       Volver al listado
                     </button>
 
-                    {patientForm.patientId ? (
-                      <div className="flex justify-end">
-                        <Button
-                          variant="ghost"
-                          onClick={handleDeletePatient}
-                          className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Eliminar
-                        </Button>
-                      </div>
-                    ) : null}
-
                     {patientSaveMsg && (
                       <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
                         <CheckCircle2 className="h-5 w-5 shrink-0" />
@@ -1198,130 +1458,38 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
 
                     <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md">
                       <form onSubmit={handleSavePatient} className="space-y-6">
-                        <div>
-                          <h3 className="zenith-section-title">
-                            {'Datos clínicos'}
-                          </h3>
-                          <p className="text-xs text-surface-400">
-                            Complete o actualice la información del expediente clínico.
-                          </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="zenith-field-label">Nombre completo</label>
-                            <input
-                              type="text"
-                              value={patientForm.name}
-                              onChange={(e) => setPatientForm({ ...patientForm, name: e.target.value })}
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                            />
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <h3 className="zenith-section-title">{'Datos cl?nicos'}</h3>
+                            <p className="text-xs text-surface-400">El expediente permanece en solo lectura hasta que confirmes la edici?n.</p>
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="zenith-field-label">ID interno</label>
-                            <input
-                              type="text"
-                              value={patientForm.patientId}
-                              onChange={(e) => setPatientForm({ ...patientForm, patientId: e.target.value })}
-                              disabled={true}
-                                placeholder="Ej: patient_sofia_peralta"
-                                className={`w-full border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:border-secondary-500 uppercase bg-surface-950/40 text-surface-550 disabled:cursor-not-allowed`}
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="zenith-field-label">Edad</label>
-                            <input
-                              type="number"
-                              min={0}
-                              value={patientForm.age || ''}
-                              onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })}
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="zenith-field-label">Género</label>
-                            <select
-                              value={patientForm.gender}
-                              onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })}
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"
-                            >
-                              <option value="Masculino">Masculino</option>
-                              <option value="Femenino">Femenino</option>
-                              <option value="Otro">Otro</option>
-                            </select>
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="zenith-field-label">Grupo sanguíneo</label>
-                            <input
-                              type="text"
-                              value={patientForm.bloodType}
-                              onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })}
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                            />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="zenith-field-label">Teléfono móvil</label>
-                            <input
-                              type="tel"
-                              value={patientForm.phone}
-                              onChange={(e) => setPatientForm({ ...patientForm, phone: e.target.value })}
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                            />
-                          </div>
-                          <div className="space-y-1.5 md:col-span-2">
-                            <label className="zenith-field-label">Condición / diagnóstico de control</label>
-                            <input
-                              type="text"
-                              value={patientForm.condition}
-                              onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })}
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                            />
-                          </div>
-                          <div className="space-y-1.5 md:col-span-2">
-                            <label className="zenith-field-label">Alergias</label>
-                            <input
-                              type="text"
-                              value={patientForm.allergies}
-                              onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })}
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                            />
-                          </div>
-                          <div className="space-y-1.5 md:col-span-2">
-                            <label className="zenith-field-label">Tratamientos activos (separados por coma)</label>
-                            <input
-                              type="text"
-                              value={medicationsInput}
-                              onChange={(e) => setMedicationsInput(e.target.value)}
-                              placeholder="Ej: Ramipril 5mg, Aspirina 100mg"
-                              className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4 border-t border-surface-850">
-                          <button
-                            type="button"
-                            onClick={handleBackToPatientList}
-                            className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
-                          >
-                            Cancelar
-                          </button>
-                          <div className="flex flex-col sm:flex-row gap-3">
-                            {linkedPatient && (
-                              <button
-                                type="button"
-                                onClick={() => setActiveTab('prescription')}
-                                className="px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-surface-700"
-                              >
-                                Generar Récipe
-                              </button>
+                          <div className="flex flex-wrap gap-2">
+                            {isEditingPatientRecord ? (
+                              <>
+                                <button type="button" onClick={handleCancelPatientEdit} className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all cursor-pointer">Cancelar edici?n</button>
+                                <button type="submit" className="px-4 py-2.5 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer">Confirmar cambios</button>
+                              </>
+                            ) : (
+                              <button type="button" onClick={handleStartPatientEdit} className="px-4 py-2.5 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer">Editar expediente</button>
                             )}
-                            <button
-                              type="submit"
-                              className="px-6 py-2.5 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer"
-                            >
-                              {'Guardar cambios'}
-                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-1.5"><label className="zenith-field-label">Nombre completo</label><input type="text" value={patientForm.name} onChange={(e) => setPatientForm({ ...patientForm, name: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">ID interno</label><input type="text" value={patientForm.patientId} readOnly placeholder="Ej: patient_sofia_peralta" className="w-full border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none uppercase bg-surface-950/40 text-surface-250" /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">G?nero</label>{isEditingPatientRecord ? (<select value={patientForm.gender} onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></select>) : (<input type="text" value={patientForm.gender} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Grupo sangu?neo</label><input type="text" value={patientForm.bloodType} onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Tel?fono m?vil</label><input type="tel" value={patientForm.phone} onChange={(e) => setPatientForm({ ...patientForm, phone: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Condici?n / diagn?stico de control</label><input type="text" value={patientForm.condition} onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Alergias</label><input type="text" value={patientForm.allergies} onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Tratamientos activos (separados por coma)</label><input type="text" value={medicationsInput} onChange={(e) => setMedicationsInput(e.target.value)} readOnly={!isEditingPatientRecord} placeholder="Ej: Ramipril 5mg, Aspirina 100mg" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4 border-t border-surface-850">
+                          <button type="button" onClick={handleBackToPatientList} className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer">Volver</button>
+                          <div className="flex flex-col sm:flex-row gap-3">
+                            {linkedPatient && (<button type="button" onClick={() => setActiveTab('prescription')} className="px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-surface-700">Generar R?cipe</button>)}
+                            {!isEditingPatientRecord && (<button type="button" onClick={handleStartPatientEdit} className="px-6 py-2.5 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer">Editar expediente</button>)}
                           </div>
                         </div>
                       </form>
@@ -1722,7 +1890,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
                       <div className="border-t border-surface-850 pt-4 flex items-center justify-between">
                         <div className="text-xs space-y-0.5">
                           <p className="font-bold text-white">{doctorName}</p>
-                          <p className="text-[10px] text-surface-500">MPPS 28.490 • CMDC-12.458 • Cardiología</p>
+                          <p className="text-[10px] text-surface-500">{doctorMpps} ? {doctorMedicalCollege} ? {doctorSpecialty}</p>
                         </div>
                         <div className="flex items-center gap-1 text-[10px] text-secondary-450 font-bold">
                           <ShieldCheck className="h-4 w-4" />
@@ -1740,249 +1908,14 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, onLogout
             {/* VIEW TAB 5: PROFILE CONFIGURATION (Pantalla M.4) */}
             {activeTab === 'profile' && (
               <div className="space-y-6 animate-in fade-in duration-300 max-w-2xl mx-auto">
-                {profileSaveMsg && (
-                  <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-400 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
-                    <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
-                    <span>{profileSaveMsg}</span>
-                  </div>
-                )}
-
-                {/* Validated Credentials Card */}
+                {profileSaveMsg && (<div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-400 text-xs animate-in fade-in slide-in-from-top-2 duration-300"><CheckCircle2 className="h-4.5 w-4.5 shrink-0" /><span>{profileSaveMsg}</span></div>)}
+                {profileErrorMsg && (<div className="p-4 bg-danger-500/10 border border-danger-500/25 rounded-2xl flex items-center gap-2.5 text-danger-300 text-xs animate-in fade-in slide-in-from-top-2 duration-300"><AlertCircle className="h-4.5 w-4.5 shrink-0" /><span>{profileErrorMsg}</span></div>)}
                 <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
-                  <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                    Credenciales Médicas Validadas
-                  </h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                    {/* Identity */}
-                    <div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-10 w-10 rounded-xl bg-secondary-500/10 flex items-center justify-center shrink-0">
-                          <BadgeCheck className="h-5 w-5 text-secondary-400" />
-                        </div>
-                        <div>
-                          <p className="zenith-field-label">Nombre Legal</p>
-                          <p className="text-sm font-semibold text-white">{doctorName}</p>
-                        </div>
-                      </div>
-                      <div className="divide-y divide-surface-850 text-xs">
-                        <div className="flex justify-between py-2">
-                          <span className="text-surface-500">ID de registro</span>
-                          <span className="text-surface-200 font-mono text-[10px]">{profileRegistryId}</span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="text-surface-500">Correo Institucional</span>
-                          <span className="text-surface-200 font-mono text-[10px]">{doctorEmail}</span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="text-surface-500">Teléfono Profesional</span>
-                          <input
-                            type="text"
-                            value={profilePhone}
-                            onChange={e => setProfilePhone(e.target.value)}
-                            placeholder="0212-9103348"
-                            className="bg-transparent text-surface-200 text-[10px] font-mono text-right w-36 focus:outline-none focus:text-white"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Medical Registry */}
-                    <div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="h-10 w-10 rounded-xl bg-primary-500/10 flex items-center justify-center shrink-0">
-                          <Award className="h-5 w-5 text-primary-400" />
-                        </div>
-                        <div>
-                          <p className="zenith-field-label">Registro Profesional</p>
-                          <p className="text-sm font-semibold text-white">MPPS 28.490</p>
-                        </div>
-                      </div>
-                      <div className="divide-y divide-surface-850 text-xs">
-                        <div className="flex justify-between py-2">
-                          <span className="text-surface-500">Especialidad Primaria</span>
-                          <span className="text-surface-200 font-semibold">Cardiología</span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="text-surface-500">Colegio de Médicos</span>
-                          <span className="text-surface-200 font-semibold">CMDC-12.458</span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="text-surface-500">Institución Certificadora</span>
-                          <span className="text-surface-200 font-semibold">MPPS Venezuela</span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="text-surface-500">Estado de Colegiatura</span>
-                          <span className="inline-flex items-center gap-1 text-secondary-400 font-bold text-[10px]">
-                            <ShieldCheck className="h-3 w-3" /> Activo / Vigente
-                          </span>
-                        </div>
-                        <div className="flex justify-between py-2">
-                          <span className="text-surface-500">Renovación</span>
-                          <span className="text-surface-200 font-mono text-[10px]">31 Dic, 2027</span>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-
-                  {/* Credential validity stamp */}
-                  <div className="flex items-center gap-3 p-3 bg-secondary-500/5 border border-secondary-500/15 rounded-xl">
-                    <ShieldCheck className="h-5 w-5 text-secondary-450 shrink-0" />
-                    <p className="text-[10px] text-secondary-400 leading-snug">
-                      <span className="font-bold">Verificación completada por Médico-Paciente:</span> Las credenciales han sido validadas contra el registro MPPS y el Colegio de Médicos de Venezuela, y se encuentran vigentes a la fecha.
-                    </p>
-                  </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4"><div><h3 className="zenith-section-title text-xs">Perfil profesional</h3><p className="text-xs text-surface-400">Los datos permanecen en solo lectura hasta que confirmes la edici?n.</p></div><div className="flex flex-wrap gap-2">{isEditingDoctorProfile ? (<><button type="button" onClick={handleCancelDoctorProfileEdit} className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all">Cancelar</button><button type="button" onClick={handleConfirmDoctorProfileEdit} className="px-4 py-2.5 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Confirmar cambios</button></>) : (<button type="button" onClick={handleStartDoctorProfileEdit} className="px-4 py-2.5 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Editar perfil</button>)}</div></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3"><div className="flex items-center gap-2.5"><div className="h-10 w-10 rounded-xl bg-secondary-500/10 flex items-center justify-center shrink-0"><BadgeCheck className="h-5 w-5 text-secondary-400" /></div><div><p className="zenith-field-label">Nombre Legal</p><p className="text-sm font-semibold text-white">{doctorName}</p></div></div><div className="divide-y divide-surface-850 text-xs"><div className="flex justify-between py-2"><span className="text-surface-500">ID de registro</span><span className="text-surface-200 font-mono text-[10px]">{profileRegistryId}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Correo Institucional</span><span className="text-surface-200 font-mono text-[10px]">{doctorEmail}</span></div><div className="space-y-1.5 py-2"><label className="text-surface-500 block">Tel?fono Profesional</label><input type="text" value={profilePhone} onChange={e => setProfilePhone(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-[10px] font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div></div></div><div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3"><div className="flex items-center gap-2.5"><div className="h-10 w-10 rounded-xl bg-primary-500/10 flex items-center justify-center shrink-0"><Award className="h-5 w-5 text-primary-400" /></div><div><p className="zenith-field-label">Registro Profesional</p><p className="text-sm font-semibold text-white">{doctorMpps}</p></div></div><div className="divide-y divide-surface-850 text-xs"><div className="flex justify-between py-2"><span className="text-surface-500">Especialidad Primaria</span><span className="text-surface-200 font-semibold">{doctorSpecialty}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Colegio de M?dicos</span><span className="text-surface-200 font-semibold">{doctorMedicalCollege}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Instituci?n Certificadora</span><span className="text-surface-200 font-semibold">MPPS Venezuela</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Estado de Colegiatura</span><span className="inline-flex items-center gap-1 text-secondary-400 font-bold text-[10px]"><ShieldCheck className="h-3 w-3" /> Activo / Vigente</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Registro sanitario especial</span><span className="text-surface-200 font-mono text-[10px]">{doctorSpecialSanitaryRegistration || 'No aplica'}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Firma digital</span><span className="text-surface-200 font-mono text-[10px]">{doctorDigitalSignatureHash || 'No disponible'}</span></div></div></div></div>
+                  <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Consultorio / Direcci?n Profesional</h3><div className="grid grid-cols-1 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Direcci?n (Av., Urb., Centro M?dico, Consultorio)</label><input type="text" value={consultorioAddress} onChange={e => setConsultorioAddress(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Estado</label>{isEditingDoctorProfile ? (<VenezuelanStateSelect value={consultorioState} onChange={setConsultorioState} accent="secondary" />) : (<input type="text" value={consultorioState} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5"><label className="zenith-field-label">Municipio</label><input type="text" value={consultorioMunicipio} onChange={e => setConsultorioMunicipio(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div></div></div></div>
+                  <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Datos Bancarios para Recepci?n de Comisiones</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Titular de la Cuenta</label><input type="text" value={bankHolder} onChange={e => setBankHolder(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">ID del titular</label><input type="text" value={bankHolderId} onChange={e => setBankHolderId(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Entidad Bancaria</label><input type="text" value={bankEntity} onChange={e => setBankEntity(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Tipo de Cuenta</label>{isEditingDoctorProfile ? (<select value={bankAccountType} onChange={e => setBankAccountType(e.target.value as 'Corriente' | 'Ahorro')} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"><option value="Corriente">Corriente</option><option value="Ahorro">Ahorro</option></select>) : (<input type="text" value={bankAccountType} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">N?mero de Cuenta Bancaria</label><input type="text" value={bankAccountNumber} onChange={e => setBankAccountNumber(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Tel?fono Pago M?vil</label><input type="text" value={bankMobilePhone} onChange={e => setBankMobilePhone(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Frecuencia de Acreditaci?n</label><input type="text" value="Mensual (?ltimo d?a h?bil)" readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" /></div></div><div className="p-3 bg-primary-500/5 border border-primary-500/15 rounded-xl flex items-start gap-2 text-[10px] text-primary-400"><DollarSign className="h-3.5 w-3.5 shrink-0 mt-0.5" /><span>Las comisiones se liquidan el ?ltimo d?a h?bil de cada mes mediante transferencia o Pago M?vil en bol?vares. Verific? cuenta y tel?fono afiliado antes del d?a 25 de cada per?odo.</span></div><div className="pt-2 border-t border-surface-850 flex flex-col sm:flex-row sm:items-center justify-between gap-4"><button type="button" onClick={onLogout} className="zenith-logout-btn order-last sm:order-first"><LogOut className="h-4 w-4" /><span>Cerrar Sesi?n</span></button>{!isEditingDoctorProfile && (<button type="button" onClick={handleStartDoctorProfileEdit} className="px-6 py-2.5 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Editar perfil</button>)}</div></div>
                 </div>
-
-                {/* Consultorio Address Card */}
-                <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
-                  <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                    Consultorio / Dirección Profesional
-                  </h3>
-
-                  <div className="grid grid-cols-1 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="zenith-field-label">Dirección (Av., Urb., Centro Médico, Consultorio)</label>
-                      <input
-                        type="text"
-                        value={consultorioAddress}
-                        onChange={e => setConsultorioAddress(e.target.value)}
-                        placeholder="Ej: Av. Las Delicias, Centro Médico La Trinidad, Piso 3, Consultorio 12"
-                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">Estado</label>
-                        <VenezuelanStateSelect
-                          value={consultorioState}
-                          onChange={setConsultorioState}
-                          accent="secondary"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="zenith-field-label">Municipio</label>
-                        <input
-                          type="text"
-                          value={consultorioMunicipio}
-                          onChange={e => setConsultorioMunicipio(e.target.value)}
-                          placeholder="Ej: Baruta"
-                          className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Banking Details Card */}
-                <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
-                  <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                    Datos Bancarios para Recepción de Comisiones
-                  </h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label className="zenith-field-label">Titular de la Cuenta</label>
-                      <input
-                        type="text"
-                        value={bankHolder}
-                        onChange={e => setBankHolder(e.target.value)}
-                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="zenith-field-label">ID del titular</label>
-                      <input
-                        type="text"
-                        value={bankHolderId}
-                        onChange={e => setBankHolderId(e.target.value)}
-                        placeholder="V-12.345.678"
-                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-secondary-500"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="zenith-field-label">Entidad Bancaria</label>
-                      <input
-                        type="text"
-                        value={bankEntity}
-                        onChange={e => setBankEntity(e.target.value)}
-                        placeholder="Ej: Banesco, Mercantil, BDV"
-                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="zenith-field-label">Tipo de Cuenta</label>
-                      <select
-                        value={bankAccountType}
-                        onChange={e => setBankAccountType(e.target.value as 'Corriente' | 'Ahorro')}
-                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"
-                      >
-                        <option value="Corriente">Corriente</option>
-                        <option value="Ahorro">Ahorro</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1.5 md:col-span-2">
-                      <label className="zenith-field-label">Número de Cuenta Bancaria</label>
-                      <input
-                        type="text"
-                        value={bankAccountNumber}
-                        onChange={e => setBankAccountNumber(e.target.value)}
-                        placeholder="0134-0100-01-0101234567"
-                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-secondary-500"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="zenith-field-label">Teléfono Pago Móvil</label>
-                      <input
-                        type="text"
-                        value={bankMobilePhone}
-                        onChange={e => setBankMobilePhone(e.target.value)}
-                        placeholder="0414-1234567"
-                        className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-secondary-500"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="zenith-field-label">Frecuencia de Acreditación</label>
-                      <select
-                        disabled
-                        className="w-full bg-surface-950/50 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-500 cursor-not-allowed"
-                      >
-                        <option>Mensual (último día hábil)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-primary-500/5 border border-primary-500/15 rounded-xl flex items-start gap-2 text-[10px] text-primary-400">
-                    <DollarSign className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-                    <span>Las comisiones se liquidan el último día hábil de cada mes mediante transferencia o Pago Móvil en bolívares. Verifique cuenta y teléfono afiliado antes del día 25 de cada período.</span>
-                  </div>
-
-                  {/* Save / Logout actions */}
-                  <div className="pt-2 border-t border-surface-850 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <button
-                      type="button"
-                      onClick={onLogout}
-                      className="zenith-logout-btn order-last sm:order-first"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Cerrar Sesión</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileSaveMsg('Perfil, consultorio y datos bancarios actualizados. Los cambios bancarios surten efecto en el próximo período de liquidación.');
-                        setTimeout(() => setProfileSaveMsg(''), 4000);
-                      }}
-                      className="px-6 py-2.5 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all cursor-pointer"
-                    >
-                      Guardar Cambios
-                    </button>
-                  </div>
-                </div>
-
               </div>
             )}
 

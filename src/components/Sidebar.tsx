@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * @fileoverview Componente sidebar.
+ * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
+ */
+
 import {
   LayoutDashboard,
   ShoppingBag,

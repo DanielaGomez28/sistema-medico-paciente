@@ -1,6 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+/**
+ * @fileoverview Punto de entrada del frontend SMP Farmahumana.
+ * @description Orquesta la sesi?n, el portal activo y la composici?n principal de vistas del cliente.
+ */
+
+import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { AppShell, AppHeader, AppHeaderAction } from '../components/layout';
 import DashboardView from '../components/DashboardView';
@@ -28,14 +33,82 @@ import CmsView from '../components/CmsView';
 import DoctorsManagerView from '../components/DoctorsManagerView';
 import FinancialSettingsView from '../components/FinancialSettingsView';
 
+
+type InitialAdminState = {
+  orders: Order[];
+  products: Product[];
+  customers: Customer[];
+};
+
+/**
+ * Lee la persistencia administrativa local y devuelve un estado inicial consistente.
+ * @returns {InitialAdminState} Estado inicial hidratado para ?rdenes, productos y clientes.
+ */
+function getInitialAdminState(): InitialAdminState {
+  if (typeof window === 'undefined') {
+    return {
+      orders: INITIAL_ORDERS,
+      products: INITIAL_PRODUCTS,
+      customers: loadCustomersFromStorage(null),
+    };
+  }
+
+  try {
+    const localOrders = localStorage.getItem('zenith_orders');
+    const localProducts = localStorage.getItem('zenith_products');
+    const localCustomers = localStorage.getItem('zenith_customers');
+
+    const storedProductsVersion = Number(localStorage.getItem('zenith_products_version') ?? '0') || null;
+    const productsData = loadProductsFromStorage(localProducts);
+    const refreshProducts = shouldRefreshProductsStorage(storedProductsVersion, productsData);
+    const products = refreshProducts ? INITIAL_PRODUCTS : productsData;
+    const orders = refreshProducts
+      ? INITIAL_ORDERS
+      : localOrders && localOrders !== 'undefined' && localOrders !== 'null'
+        ? JSON.parse(localOrders)
+        : INITIAL_ORDERS;
+
+    localStorage.setItem('zenith_products', JSON.stringify(products));
+    localStorage.setItem('zenith_orders', JSON.stringify(orders));
+    localStorage.setItem('zenith_products_version', String(PRODUCTS_DATA_VERSION));
+
+    const storedCustomersVersion = Number(localStorage.getItem('zenith_customers_version') ?? '0') || null;
+    const customers = loadCustomersFromStorage(localCustomers);
+    localStorage.setItem('zenith_customers', JSON.stringify(customers));
+    if (shouldRefreshCustomersStorage(storedCustomersVersion)) {
+      localStorage.setItem('zenith_customers_version', String(CUSTOMERS_DATA_VERSION));
+    }
+
+    return { orders, products, customers };
+  } catch (error) {
+    console.error('Error cargando datos de LocalStorage en desarrollo:', error);
+    localStorage.removeItem('zenith_user');
+    return {
+      orders: INITIAL_ORDERS,
+      products: INITIAL_PRODUCTS,
+      customers: loadCustomersFromStorage(null),
+    };
+  }
+}
+
 type AuthenticatedUser = {
   role: string;
   email: string;
   name: string;
+  token?: string | null;
   userId?: string | null;
   doctorId?: string | null;
   patientId?: string | null;
   socketIdentity?: string | null;
+  doctorProfile?: {
+    mpps?: string | null;
+    specialty?: string | null;
+    medicalCollege?: string | null;
+    specialSanitaryRegistration?: string | null;
+    digitalSignatureHash?: string | null;
+    officeLocation?: string | null;
+    status?: string | null;
+  } | null;
 };
 
 /**
@@ -51,82 +124,53 @@ type AuthenticatedUser = {
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   // Master state del usuario con el nombre dinámico incluido
-  const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(() => {
+    if (typeof window === 'undefined') return null;
+
+    try {
+      const localUser = localStorage.getItem('zenith_user');
+      if (!localUser || localUser === 'undefined' || localUser === 'null') {
+        return null;
+      }
+
+      const parsed = JSON.parse(localUser);
+      return {
+        role: parsed.role || '',
+        email: parsed.email || '',
+        name: parsed.name || parsed.nombre || 'Usuario',
+        userId: parsed.userId || null,
+        doctorId: parsed.doctorId || null,
+        patientId: parsed.patientId || null,
+        socketIdentity: parsed.socketIdentity || null,
+        token: parsed.token || null,
+        doctorProfile: parsed.doctorProfile
+          ? {
+              mpps: parsed.doctorProfile.mpps || null,
+              specialty: parsed.doctorProfile.specialty || null,
+              medicalCollege: parsed.doctorProfile.medicalCollege || null,
+              specialSanitaryRegistration: parsed.doctorProfile.specialSanitaryRegistration || null,
+              digitalSignatureHash: parsed.doctorProfile.digitalSignatureHash || null,
+              officeLocation: parsed.doctorProfile.officeLocation || null,
+              status: parsed.doctorProfile.status || null,
+            }
+          : null,
+      };
+    } catch {
+      return null;
+    }
+  });
   
   // Master states
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [initialAdminState] = useState<InitialAdminState>(() => getInitialAdminState());
+  const [orders, setOrders] = useState<Order[]>(initialAdminState.orders);
+  const [products, setProducts] = useState<Product[]>(initialAdminState.products);
+  const [customers, setCustomers] = useState<Customer[]>(initialAdminState.customers);
+  const [isLoaded] = useState(true);
 
   // Modals state
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
 
-  // Load from local storage
-  // Load from local storage
-  useEffect(() => {
-    try {
-      // 1. Intentamos cargar el usuario de forma segura
-      const localUser = localStorage.getItem('zenith_user');
-      if (localUser && localUser !== 'undefined' && localUser !== 'null') {
-        const parsed = JSON.parse(localUser);
-        setCurrentUser({
-          role: parsed.role || '',
-          email: parsed.email || '',
-          name: parsed.name || parsed.nombre || 'Usuario',
-          userId: parsed.userId || null,
-          doctorId: parsed.doctorId || null,
-          patientId: parsed.patientId || null,
-          socketIdentity: parsed.socketIdentity || null,
-        });
-      }
-
-      // 2. Carga de órdenes, productos y clientes
-      const localOrders = localStorage.getItem('zenith_orders');
-      const localProducts = localStorage.getItem('zenith_products');
-      const localCustomers = localStorage.getItem('zenith_customers');
-
-      const storedProductsVersion = Number(localStorage.getItem('zenith_products_version') ?? '0') || null;
-      const productsData = loadProductsFromStorage(localProducts);
-      const refreshProducts = shouldRefreshProductsStorage(storedProductsVersion, productsData);
-
-      if (refreshProducts) {
-        setProducts(INITIAL_PRODUCTS);
-        setOrders(INITIAL_ORDERS);
-        localStorage.setItem('zenith_products', JSON.stringify(INITIAL_PRODUCTS));
-        localStorage.setItem('zenith_orders', JSON.stringify(INITIAL_ORDERS));
-        localStorage.setItem('zenith_products_version', String(PRODUCTS_DATA_VERSION));
-      } else {
-        setProducts(productsData);
-        if (localOrders && localOrders !== 'undefined' && localOrders !== 'null') {
-          setOrders(JSON.parse(localOrders));
-        } else {
-          setOrders(INITIAL_ORDERS);
-          localStorage.setItem('zenith_orders', JSON.stringify(INITIAL_ORDERS));
-        }
-        localStorage.setItem('zenith_products', JSON.stringify(productsData));
-      }
-
-      const storedCustomersVersion = Number(localStorage.getItem('zenith_customers_version') ?? '0') || null;
-      const customersData = loadCustomersFromStorage(localCustomers);
-      setCustomers(customersData);
-      localStorage.setItem('zenith_customers', JSON.stringify(customersData));
-      if (shouldRefreshCustomersStorage(storedCustomersVersion)) {
-        localStorage.setItem('zenith_customers_version', String(CUSTOMERS_DATA_VERSION));
-      }
-
-    } catch (error) {
-      // Si algo falla, lo registramos en consola pero NO congelamos la aplicación
-      console.error("⚠️ Error cargando datos de LocalStorage en desarrollo:", error);
-      
-      // Opcional: Si los datos locales causaron el colapso, los limpiamos para que empiece de cero
-      localStorage.removeItem('zenith_user');
-    } finally {
-      // 🔥 OBLIGATORIO: Pase lo que pase (éxito o error), apagamos la pantalla de carga
-      setIsLoaded(true);
-    }
-  }, []);
 
   // Sync helpers
   const handleLoginSuccess = (user: AuthenticatedUser) => {
@@ -305,12 +349,13 @@ export default function Home() {
 
   if (normalizedRole === 'medico') {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
-    const currentName = (currentUser as any).name || APP_USER_DEFAULTS.doctorName;
+    const currentName = currentUser.name || APP_USER_DEFAULTS.doctorName;
     return (
       <DoctorView
         doctorName={currentName}
         doctorEmail={currentUser.email}
         doctorId={currentUser.doctorId || currentUser.userId || currentUser.email}
+        doctorProfile={currentUser.doctorProfile || null}
         onLogout={handleLogout}
       />
     );
@@ -318,7 +363,7 @@ export default function Home() {
 
   if (normalizedRole === 'paciente') {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
-    const currentName = (currentUser as any).name || APP_USER_DEFAULTS.patientName;
+    const currentName = currentUser.name || APP_USER_DEFAULTS.patientName;
     return (
       <PatientView
         patientName={currentName}
@@ -373,10 +418,7 @@ export default function Home() {
     >
       {activeTab === 'dashboard' && (
         <DashboardView
-          orders={orders}
-          products={products}
           onNavigate={setActiveTab}
-          onSelectOrder={setSelectedOrder}
         />
       )}
 

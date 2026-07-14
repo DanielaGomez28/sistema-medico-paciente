@@ -479,3 +479,188 @@ Resultado:
 ### Resultado verificado
 
 El frontend queda documentado y coherente con el backend mock actual, sin contratos visuales mentirosos en el flujo critico de receta, reserva, pago y seguimiento.
+
+
+---
+
+## 6.1 Integracion administrativa real con backend
+
+### Que se hizo
+
+- Se conectaron las vistas administrativas del frontend con endpoints reales de dashboard, CMS, configuracion financiera y gestion de medicos.
+- Se agrego propagacion del JWT al cliente HTTP para consumir endpoints protegidos.
+- Se actualizo el portal medico para enviar metadatos exigidos por recetas de medicamentos controlados.
+
+### Logica aplicada
+
+La integracion se resolvio sin inventar estados locales paralelos cuando ya existe un contrato backend:
+
+- el dashboard consume metricas agregadas reales;
+- el CMS y la tasa de comision actualizan configuracion global real;
+- el CRUD medico opera sobre el backend administrativo;
+- el portal medico reutiliza el perfil autenticado para recetas controladas.
+
+### Solucion en codigo
+
+#### Cliente HTTP y sesion
+
+- `C:/Proyecto IDS Frontend/src/lib/api.ts`
+- `C:/Proyecto IDS Frontend/src/app/page.tsx`
+- `C:/Proyecto IDS Frontend/src/components/LoginView.tsx`
+
+#### Vistas administrativas reales
+
+- `C:/Proyecto IDS Frontend/src/components/DashboardView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/CmsView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/FinancialSettingsView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/DoctorsManagerView.tsx`
+
+#### Portal medico endurecido
+
+- `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx`
+
+### Resultado verificado
+
+Los componentes intervenidos quedaron consumiendo el backend real disponible y ya no dependen de simulaciones locales para las capacidades administrativas y sanitarias agregadas.
+
+---
+
+## 6.2 Normalizacion de documentacion por archivo
+
+### Que se hizo
+
+- Se agregaron encabezados documentales uniformes en los archivos fuente activos del frontend.
+- Se mantuvo este archivo de modificaciones y se extendio siguiendo la misma estructura existente.
+
+### Logica aplicada
+
+La documentacion se estandarizo a nivel de archivo con comentarios breves y consistentes para que cualquier lectura tecnica ubique rapido el rol de cada modulo sin alterar la semantica de la aplicacion.
+
+### Solucion en codigo
+
+Se documentaron archivos fuente de:
+
+- `src/app/`
+- `src/components/`
+- `src/components/layout/`
+- `src/components/theme/`
+- `src/components/ui/`
+- `src/data/`
+- `src/lib/`
+- `src/types/`
+
+### Resultado verificado
+
+El frontend queda con una capa documental uniforme en sus archivos activos, mejorando lectura, mantenimiento y onboarding tecnico sin introducir cambios funcionales en la UI.
+
+
+---
+
+## 6.3 Cierre de pendientes de integracion real con backend
+
+### Que se hizo
+
+- Se conecto el dashboard administrativo a metricas, recetas, catalogo y doctores reales del backend.
+- Se conecto configuracion financiera a CMS y bitacora administrativa reales.
+- Se conecto el portal medico a la agenda real de pacientes y a la actualizacion real del expediente temporal.
+- Se conecto el portal paciente al seguimiento clinico, al refresh del checkout y al estado real del pedido.
+- Se retiro el acceso visible a cuentas de prueba y se eliminaron hardcodes activos del flujo intervenido.
+
+### Solucion en codigo
+
+#### Archivos intervenidos
+
+- `C:/Proyecto IDS Frontend/src/app/page.tsx`
+- `C:/Proyecto IDS Frontend/src/components/DashboardView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/FinancialSettingsView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/LoginView.tsx`
+
+#### Endpoints consumidos
+
+- `GET /api/admin/dashboard/stats`
+- `GET /api/admin/doctors`
+- `GET /api/admin/cms/config`
+- `PUT /api/admin/cms/config`
+- `GET /api/admin/audit-log`
+- `GET /api/pacientes/medico/:doctorId`
+- `GET /api/pacientes/:patientId`
+- `PUT /api/pacientes/:patientId`
+- `GET /api/prescripciones`
+- `GET /api/prescripciones/catalogo`
+- `GET /api/prescripciones/medico/:doctorId`
+- `GET /api/seguimiento/recetas/:recipeId`
+- `POST /api/seguimiento/ingestas`
+- `GET /api/pagos/recetas/:recipeId`
+
+### Validacion ejecutada
+
+Se verifico sin build:
+
+- `npx eslint src/app/page.tsx src/components/DashboardView.tsx src/components/FinancialSettingsView.tsx src/components/DoctorView.tsx src/components/PatientView.tsx src/components/LoginView.tsx`
+
+Resultado:
+
+- sin errores de lint en los archivos intervenidos;
+- queda una advertencia informativa de Next.js sobre `<img>` en `PatientView.tsx`, sin romper contrato funcional.
+
+### Resultado verificado
+
+El frontend ya no depende de seeds activos ni de datos de prueba visibles en las areas intervenidas para dashboard, agenda medica, configuracion financiera, seguimiento clinico y login.
+
+
+---
+
+## 6.4 Cierre de la ultima deuda tecnica del frontend intervenido
+
+### Que se hizo
+
+- Se reemplazo el render del QR del portal paciente para usar `next/image` en lugar de `<img>`.
+- Se revalido el conjunto de archivos intervenidos del frontend sin hacer build.
+
+### Solucion en codigo
+
+- `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+
+### Validacion ejecutada
+
+Se verifico sin build:
+
+- `npx eslint src/components/PatientView.tsx`
+- `npx eslint src/app/page.tsx src/components/DashboardView.tsx src/components/FinancialSettingsView.tsx src/components/DoctorView.tsx src/components/PatientView.tsx src/components/LoginView.tsx`
+
+### Resultado verificado
+
+Ya no quedan advertencias ni errores de lint en los archivos intervenidos del frontend dentro del alcance de esta integracion.
+
+
+---
+
+## 6.5 Bloqueo de edicion accidental y sincronizacion real de perfiles
+
+### Que se hizo
+
+- Se conecto el perfil del paciente al endpoint real `/api/pacientes/perfil/actual`.
+- Se paso el perfil del paciente y el expediente del medico a modo lectura por defecto, habilitando cambios solo con accion explicita de editar y confirmar.
+- Se agregaron validaciones de entrada en ambos formularios antes de enviar cambios al backend.
+- Se escucho el evento realtime `patientProfileUpdated` para reflejar en la agenda del medico los cambios hechos por el paciente.
+
+### Solucion en codigo
+
+- `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+- `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx`
+
+### Validacion ejecutada
+
+Se verifico sin build:
+
+- `npx tsc --noEmit --incremental false`
+- `npx eslint src/components/PatientView.tsx src/components/DoctorView.tsx`
+
+### Resultado verificado
+
+- los campos visibles del perfil medico y paciente quedan seleccionables pero no editables hasta entrar en modo edicion;
+- el telefono del paciente vuelve a mostrarse correctamente como input controlado en modo edicion;
+- el guardado del paciente persiste contra backend real y el medico recibe la actualizacion por socket;
+- los formularios intervenidos rechazan entradas sospechosas o con formato invalido antes de enviar la solicitud.
