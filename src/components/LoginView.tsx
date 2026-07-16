@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * @fileoverview Componente login view.
@@ -18,7 +18,12 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
-import { APP_USER_DEFAULTS } from '../data/mockData';
+import {
+  APP_USER_DEFAULTS,
+  LOGIN_TEST_ACCOUNT_LABELS,
+  LOGIN_TEST_USERS,
+  LoginTestUserSeed,
+} from '../data/mockData';
 
 type LoginSuccessPayload = {
   role: string;
@@ -59,12 +64,29 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
   const validateEmail = (input: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
 
+  /**
+   * Completa el formulario con una credencial de acceso rapido validada en BD.
+   * @param {LoginTestUserSeed['role']} role Rol visible seleccionado por el usuario.
+   * @returns {void}
+   */
+  const handleQuickAccessSelect = (role: LoginTestUserSeed['role']) => {
+    const account = LOGIN_TEST_USERS.find((item) => item.role === role);
+    if (!account) {
+      return;
+    }
+
+    setEmail(account.email);
+    setPassword(account.password);
+    setEmailError('');
+    setPasswordError('');
+    setGeneralError('');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError('');
     setPasswordError('');
     setGeneralError('');
-
 
     const normalizedEmail = normalizeEmail(email);
     const normalizedPassword = password.trim();
@@ -89,8 +111,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       setPasswordError('La contrasena contiene un patron invalido.');
       hasError = true;
     }
-
-
 
     if (hasError) return;
 
@@ -126,7 +146,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         setPasswordError(data.error || 'La contrasena ingresada es incorrecta.');
       } else if (response.status === 404) {
         setEmailError(data.error || 'Usuario no registrado.');
-
       } else if (response.status === 403) {
         setGeneralError(data.error || 'La cuenta no tiene permisos o se encuentra suspendida.');
       } else {
@@ -159,6 +178,32 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
           <h1 className="login-view__title">Iniciar sesion</h1>
           <p className="login-view__subtitle">Ingrese sus datos para acceder al sistema</p>
+
+          <section className="mb-5 rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="mb-3">
+              <h2 className="text-sm font-semibold text-white">Accesos rapidos por rol</h2>
+              <p className="mt-1 text-xs text-slate-300">
+                Estos accesos completan credenciales activas validadas en la base de datos.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {LOGIN_TEST_USERS.map((account) => (
+                <button
+                  key={account.role}
+                  type="button"
+                  onClick={() => handleQuickAccessSelect(account.role)}
+                  className="rounded-xl border border-white/10 bg-slate-950/40 px-3 py-3 text-left transition hover:border-primary/50 hover:bg-slate-950/60"
+                >
+                  <span className="block text-sm font-semibold text-white">
+                    {LOGIN_TEST_ACCOUNT_LABELS[account.role]}
+                  </span>
+                  <span className="mt-1 block break-all text-[11px] leading-4 text-slate-300">
+                    {account.email}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
 
           <form onSubmit={handleSubmit} className="login-view__form">
             {generalError && (
@@ -213,8 +258,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                 </div>
                 {passwordError && <p className="login-view__field-error">{passwordError}</p>}
               </div>
-
-
             </div>
 
             <button type="submit" disabled={submitting} className={cn('login-view__submit mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 transition-opacity', submitting && 'cursor-not-allowed opacity-70')}>
@@ -226,4 +269,3 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
     </div>
   );
 }
-

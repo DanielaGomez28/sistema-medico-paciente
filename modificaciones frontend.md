@@ -1,4 +1,4 @@
-﻿# Modificaciones realizadas
+# Modificaciones realizadas
 
 ## 1. Objetivo general
 
@@ -732,3 +732,24 @@ Se contrasto el frontend con el backend real/mock actual y se valido:
 - aceptacion con vinculacion posterior -> OK por contrato backend/frontend validado
 - perfiles demo del frontend alineados con backend mock -> OK
 - `npx tsc --noEmit` en `C:/Proyecto IDS Frontend` -> OK
+
+
+## 5. Restauracion de accesos rapidos por rol en login
+
+### 5.1 Que se hizo
+
+- Se restauraron en `C:/Proyecto IDS Frontend/src/components/LoginView.tsx` los accesos rapidos por rol para administrador, medico y paciente.
+- Los accesos rapidos vuelven a autocompletar el formulario con credenciales reales del entorno actual.
+- Se agrego JSDoc al helper que resuelve la seleccion del acceso rapido.
+
+### 5.2 Validacion contra base de datos
+
+Se valido contra la tabla `usuarios` de Supabase que existen y estan activos los siguientes registros reales:
+
+- `admin@sistema.local` -> rol `SuperUsuario`
+- `roberto.gomez@clinica.local` -> rol `Medico`
+- `ana.martinez@email.com` -> rol `Paciente`
+
+### 5.3 Logica aplicada
+
+Los accesos rapidos solo vuelven porque las credenciales existen de verdad en la base de datos actual. En este contexto, el login no debe mostrar atajos que apunten a perfiles demo inexistentes, porque eso rompe la correspondencia entre interfaz, autenticacion y datos persistidos.
