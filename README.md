@@ -1,9 +1,13 @@
-﻿# Frontend SMP Farmacia
+﻿# Frontend SMP Farmahumana
 
-## Ejecucion local
+Cliente Next.js del Sistema Médico-Paciente.
+
+## Ejecución local
+
 Este frontend queda configurado para correr LOCAL contra el backend Express/Socket.IO.
 
-### Variables
+### Variables locales
+
 Copiar `.env.example` a `.env.local`.
 
 ```env
@@ -14,34 +18,31 @@ NEXT_PUBLIC_MOCK_CAPTCHA_TOKEN=FARMACIA_OK
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=
 ```
 
-### Desarrollo
+### Desarrollo local
+
 ```bash
 npm install
 npm run dev
 ```
 
-### Backend esperado
-El backend debe estar corriendo en:
+### Backend esperado en local
+
 - `http://localhost:4000`
+- Frontend: `http://localhost:3000`
 
-El frontend queda en:
-- `http://localhost:3000`
+## Despliegue actual
 
-## Escaner en tiempo real
-- En **PC** el escaner en tiempo real queda bloqueado a proposito.
-- En **movil** solo se habilita si el navegador expone acceso a camara.
-- Si no hay camara o el usuario esta en desktop, se usa la vinculacion manual.
+### Variables desplegadas
 
-## Flujo mock sin base de datos
-- El medico arma el recipe.
-- El frontend guarda la solicitud mock en `localStorage`.
-- El paciente detecta esa solicitud, la confirma y avanza al pago mock.
-- La confirmacion visible sigue dependiendo del mock local, no de una persistencia OLTP real.
+```env
+NEXT_PUBLIC_API_URL=https://proyecto-ids-backend.vercel.app/api
+NEXT_PUBLIC_SOCKET_URL=https://proyecto-ids-backend.vercel.app
+```
 
-## Archivos clave
-- `C:\Proyecto IDS Frontend\src\components\LoginView.tsx`
-- `C:\Proyecto IDS Frontend\src\components\DoctorView.tsx`
-- `C:\Proyecto IDS Frontend\src\components\PatientView.tsx`
-- `C:\Proyecto IDS Frontend\src\lib\api.ts`
-- `C:\Proyecto IDS Frontend\src\lib\socket.ts`
+## Estado actual
 
+- Login, portal médico, portal paciente y panel administrativo consumen la API real
+- El CMS legal está conectado al backend
+- El dashboard/admin médico-financiero usa endpoints reales
+- Las secciones administrativas antiguas basadas en datos locales deben usarse sólo en local
+- En Vercel no hay realtime persistente con Socket.IO; el frontend aplica degradación controlada

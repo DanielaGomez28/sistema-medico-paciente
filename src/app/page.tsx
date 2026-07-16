@@ -346,6 +346,8 @@ export default function Home() {
   }
 
   const normalizedRole = currentUser.role.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+  const enableOperationalTabs = /localhost|127\.0\.0\.1/i.test(apiBaseUrl);
 
   if (normalizedRole === 'medico') {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
@@ -385,6 +387,7 @@ export default function Home() {
           pendingOrdersCount={pendingCount}
           onLogout={handleLogout}
           adminName={currentUser?.name || APP_USER_DEFAULTS.adminName}
+          enableOperationalTabs={enableOperationalTabs}
         />
       }
       // 📄 Dentro de tu src/app/page.tsx (Sección del Header del Administrador)
@@ -407,11 +410,11 @@ export default function Home() {
             // 🚀 2. INYECTAMOS LAS PROPIEDADES DINÁMICAS AQUÍ:
             profileName={adminName}
             profileInitials={adminInitials}
-            actions={
+            actions={enableOperationalTabs ? (
               <AppHeaderAction variant="admin" onClick={() => setIsNewOrderOpen(true)}>
                 Nuevo Pedido
               </AppHeaderAction>
-            }
+            ) : undefined}
           />
         );
       }}
@@ -422,7 +425,7 @@ export default function Home() {
         />
       )}
 
-      {activeTab === 'orders' && (
+      {enableOperationalTabs && activeTab === 'orders' && (
         <OrdersView
           orders={orders}
           onSelectOrder={setSelectedOrder}
@@ -430,7 +433,7 @@ export default function Home() {
         />
       )}
 
-      {activeTab === 'customers' && (
+      {enableOperationalTabs && activeTab === 'customers' && (
         <CustomersView customers={customers} onAddCustomer={handleAddCustomer} />
       )}
 
@@ -448,7 +451,7 @@ export default function Home() {
         />
       )}
 
-      {isNewOrderOpen && (
+      {enableOperationalTabs && isNewOrderOpen && (
         <NewOrderModal
           isOpen={isNewOrderOpen}
           onClose={() => setIsNewOrderOpen(false)}

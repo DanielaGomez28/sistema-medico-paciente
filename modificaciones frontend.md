@@ -664,3 +664,71 @@ Se verifico sin build:
 - el telefono del paciente vuelve a mostrarse correctamente como input controlado en modo edicion;
 - el guardado del paciente persiste contra backend real y el medico recibe la actualizacion por socket;
 - los formularios intervenidos rechazan entradas sospechosas o con formato invalido antes de enviar la solicitud.
+
+---
+
+## 5.8 Validacion del consentimiento legal en vinculacion y perfiles de prueba
+
+### Que se hizo
+
+- Se verifico que el portal paciente consulta y muestra los terminos antes de responder una solicitud de vinculacion.
+- Se documento la degradacion controlada del flujo cuando el backend desplegado no tiene realtime persistente.
+- Se validaron los perfiles demo del frontend contra las credenciales reales soportadas por el backend mock.
+- Se restauro en `README.md` la guia de ejecucion local sin perder el estado actual del despliegue.
+
+### Logica aplicada
+
+#### Consentimiento y vinculacion
+
+En `PatientView.tsx` el orden funcional quedo validado asi:
+
+1. llega `incomingConsentRequest`
+2. se consulta `GET /api/consentimiento/terminos`
+3. se guarda `termsText`
+4. se abre `showConsentModal`
+5. solo despues el paciente pulsa aceptar o rechazar
+6. recien ahi se emite `socket.emit('consentResponse', ...)`
+
+Eso asegura que la vinculacion nunca ocurre antes de mostrar el texto legal al paciente.
+
+#### Perfiles de prueba
+
+Los perfiles demo funcionales del frontend quedaron alineados con las credenciales mock reales del backend:
+
+- `admin@sistema.local` / `admin123`
+- `roberto.gomez@clinica.local` / `medico123`
+- `ana.martinez@email.com` / `paciente123`
+
+Aunque la BD relacional este vacia, el backend ahora degrada a mocks para sostener estos accesos de prueba.
+
+### Solucion en codigo
+
+#### `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+
+- mantiene la lectura dinamica de terminos desde backend antes de la respuesta del paciente
+- conserva el modal legal como paso previo obligatorio al `consentResponse`
+- degrada el realtime cuando el backend no es local persistente
+
+#### `C:/Proyecto IDS Frontend/src/components/DoctorView.tsx`
+
+- mantiene el inicio de solicitud por `requestConsent`
+- queda a la espera del resultado emitido por el paciente despues del modal legal
+
+#### `C:/Proyecto IDS Frontend/src/data/mockData.ts`
+
+- conserva `LOGIN_TEST_USERS` alineado con las credenciales demo validadas contra backend
+
+#### `C:/Proyecto IDS Frontend/README.md`
+
+- recupera la documentacion vieja de ejecucion local
+- agrega el estado actual del despliegue y la nota sobre degradacion de realtime
+
+### Validacion ejecutada
+
+Se contrasto el frontend con el backend real/mock actual y se valido:
+
+- terminos mostrados antes de responder consentimiento -> OK por flujo verificado en codigo
+- rechazo sin vinculacion automatica previa -> OK por contrato backend/frontend validado
+- aceptacion con vinculacion posterior -> OK por contrato backend/frontend validado
+- perfiles demo del frontend alineados con backend mock -> OK
+- `npx tsc --noEmit` en `C:/Proyecto IDS Frontend` -> OK

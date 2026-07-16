@@ -26,6 +26,7 @@ export function Card({ variant = 'default', className, children, ...props }: Car
     <div
       className={cn(
         'zenith-card p-6',
+        variant === 'section' ? 'zenith-card--section' : null,
         className
       )}
       {...props}

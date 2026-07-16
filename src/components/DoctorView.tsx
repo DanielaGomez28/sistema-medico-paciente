@@ -37,7 +37,7 @@ import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, Modal, ModalBody, ListCard } from './ui';
 import apiClient from '../lib/api';
-import { socket } from '../lib/socket';
+import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
   DOCTOR_PROFILE_DEFAULTS,
@@ -361,14 +361,22 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     };
 
     void loadPatients();
+    const intervalId = setInterval(() => {
+      void loadPatients();
+    }, 15000);
 
     return () => {
       cancelled = true;
+      clearInterval(intervalId);
     };
   }, [DOCTOR_ID]);
 
   // WebSockets: Escuchar respuesta del paciente usando `patientId` interno
   useEffect(() => {
+    if (!SOCKET_RUNTIME_SUPPORTED) {
+      return undefined;
+    }
+
     const identify = () => {
       socket.emit('identifyUser', { userId: DOCTOR_ID, role: 'doctor', name: DOCTOR_NAME });
     };
@@ -883,6 +891,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
    * @returns {Promise<void>}
    */
   const linkPatientMock = async (patientQuery: string) => {
+    if (!SOCKET_RUNTIME_SUPPORTED) {
+      setScannerErrorMsg('La vinculaci?n en tiempo real requiere backend local persistente. En Vercel se debe operar con recarga de agenda y flujos HTTP.');
+      return;
+    }
     const normalized = patientQuery.toLowerCase().replace(/[\s\.-]/g, '');
     let targetPatient = patients.find((patient) =>
       patient.patientId.toLowerCase().replace(/[\s\.-]/g, '').includes(normalized)
@@ -928,6 +940,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
    * @returns {void}
    */
   const cancelConsentRequest = () => {
+    if (!SOCKET_RUNTIME_SUPPORTED) {
+      setIsWaitingConsent(false);
+      setPendingConsentPatient(null);
+      return;
+    }
     if (pendingConsentPatient) {
       socket.emit('cancelConsentRequest', {
         doctorId: DOCTOR_ID,
@@ -942,6 +959,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
    * Simula el inicio del escaneo mediante cámara.
    */
   const triggerCameraScan = () => {
+    if (!SOCKET_RUNTIME_SUPPORTED) {
+      setScannerErrorMsg('El esc?ner realtime solo queda habilitado en entorno local con Socket.IO persistente.');
+      return;
+    }
     if (!isMobileScannerCapable) {
       setScannerErrorMsg('El escaner en tiempo real solo esta habilitado en dispositivos moviles con camara.');
       setIsScanning(false);

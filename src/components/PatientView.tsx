@@ -45,7 +45,7 @@ import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, ListCard, Modal, ModalBody } from './ui';
 import apiClient from '../lib/api';
-import { socket } from '../lib/socket';
+import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
 import {
   PATIENT_PORTAL_COPY,
   PATIENT_PROFILE_DEFAULTS,
@@ -770,6 +770,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   // 1. EFECTO: Sincronización WebSockets (Tiempo Real)
   // =========================================================
   useEffect(() => {
+    if (!SOCKET_RUNTIME_SUPPORTED) {
+      return undefined;
+    }
+
     // 1. Encendemos el socket global
     socket.connect();
 

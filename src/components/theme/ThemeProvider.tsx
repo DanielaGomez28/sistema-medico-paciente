@@ -36,11 +36,7 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
  * @returns {JSX.Element} Proveedor de contexto para el tema.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>('dark');
-
-  useEffect(() => {
-    setThemeState(getStoredTheme());
-  }, []);
+  const [theme, setThemeState] = useState<ThemeMode>(() => getStoredTheme());
 
   useEffect(() => {
     applyTheme(theme);

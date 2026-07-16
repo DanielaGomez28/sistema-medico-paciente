@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 /**
  * @fileoverview Componente sidebar.
@@ -25,22 +25,24 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   pendingOrdersCount: number;
   onLogout: () => void;
-  adminName: string; // 🚀 Propiedad ya existente en tu interfaz
+  adminName: string;
+  enableOperationalTabs?: boolean;
 }
 
 /**
  * Componente contenedor que implementa el `AppSidebar` genérico con la configuración
  * específica para el portal de Administrador.
+ * @param {SidebarProps} props - Propiedades de navegación y perfil.
+ * @returns {JSX.Element}
  */
 export default function Sidebar({
   activeTab,
   setActiveTab,
   pendingOrdersCount,
   onLogout,
-  adminName, // 🚀 1. Extraemos 'adminName' para poder usarlo abajo
+  adminName,
+  enableOperationalTabs = true,
 }: SidebarProps) {
-  
-  // 🚀 2. Función helper para generar iniciales dinámicas (ej: "Administrador Sistema" -> "AS")
   const getInitials = (nameString: string) => {
     const parts = nameString.trim().split(/\s+/);
     if (parts.length >= 2) {
@@ -60,14 +62,18 @@ export default function Sidebar({
       }}
       items={[
         { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
-        {
-          id: 'orders',
-          name: 'Despacho',
-          icon: ShoppingBag,
-          badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
-          badgeColor: 'portal-nav-badge',
-        },
-        { id: 'customers', name: 'Clientes', icon: Users },
+        ...(enableOperationalTabs
+          ? [
+              {
+                id: 'orders',
+                name: 'Despacho',
+                icon: ShoppingBag,
+                badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
+                badgeColor: 'portal-nav-badge',
+              },
+              { id: 'customers', name: 'Clientes', icon: Users },
+            ]
+          : []),
         { id: 'doctors', name: 'Gestión Médicos', icon: Stethoscope },
         { id: 'financials', name: 'Comisiones', icon: DollarSign },
         { id: 'cms', name: 'Configuración Global', icon: Settings },
@@ -75,8 +81,8 @@ export default function Sidebar({
       activeId={activeTab}
       onNavigate={setActiveTab}
       profile={{
-        initials: dynamicInitials, // 🚀 3. Iniciales dinámicas automáticas
-        name: adminName || 'Administrador Sistema', // 🚀 4. Nombre real traído desde el Backend
+        initials: dynamicInitials,
+        name: adminName || 'Administrador Sistema',
         avatarClassName: 'portal-profile-avatar',
       }}
       onLogout={onLogout}

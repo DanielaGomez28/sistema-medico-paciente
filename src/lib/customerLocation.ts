@@ -104,10 +104,8 @@ export function migrateCustomer(raw: Customer & { city?: string }): Customer {
     }
   }
 
-  const { city: _city, ...rest } = raw;
-
   return {
-    ...rest,
+    ...raw,
     address,
     phone,
     municipio: legacy && !state ? 'Libertador' : municipio,
