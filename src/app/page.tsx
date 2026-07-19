@@ -33,6 +33,11 @@ import CmsView from '../components/CmsView';
 import DoctorsManagerView from '../components/DoctorsManagerView';
 import FinancialSettingsView from '../components/FinancialSettingsView';
 
+type PlatformTermsState = {
+  platformTermsVersion: number;
+  termsAndConditionsText: string;
+  usagePolicyText: string;
+};
 
 type InitialAdminState = {
   orders: Order[];
@@ -137,6 +142,10 @@ function normalizeFrontendRole(role: string | null | undefined): string {
   return normalizedRole;
 }
 
+function getPlatformTermsAcceptanceStorageKey(user: AuthenticatedUser) {
+  return `zenith_platform_terms_acceptance:${user.userId || user.email}`;
+}
+
 /**
  * Componente principal (Home) que actÃºa como controlador y orquestador (Entry Point).
  * Dependiendo del estado de autenticaciÃ³n (role: 'mÃ©dico' | 'paciente' | 'admin'), 
@@ -197,6 +206,8 @@ export default function Home() {
   // Modals state
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
+  const [platformTerms, setPlatformTerms] = useState<PlatformTermsState | null>(null);
+  const [showPlatformTermsModal, setShowPlatformTermsModal] = useState(false);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -216,6 +227,8 @@ export default function Home() {
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('zenith_user');
+    setPlatformTerms(null);
+    setShowPlatformTermsModal(false);
   };
 
   const saveOrders = (updatedOrders: Order[]) => {
@@ -366,6 +379,117 @@ export default function Home() {
 
   // Calculations for Badges
   const pendingCount = orders.filter(o => o.status === 'Pendiente').length;
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+  const enableOperationalTabs = /localhost|127\.0\.0\.1/i.test(apiBaseUrl);
+
+  useEffect(() => {
+    if (!currentUser || !isHydrated) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const syncPlatformTerms = async () => {
+      try {
+        const response = await fetch(`${apiBaseUrl}/platform/terms`);
+        const data = (await response.json()) as PlatformTermsState;
+
+        if (!response.ok || cancelled) {
+          return;
+        }
+
+        const nextTerms = {
+          platformTermsVersion: Number(data.platformTermsVersion || 1),
+          termsAndConditionsText: data.termsAndConditionsText || 'Términos de plataforma no disponibles.',
+          usagePolicyText: data.usagePolicyText || 'Política de uso no disponible.',
+        };
+
+        setPlatformTerms(nextTerms);
+        const acceptedVersion = Number(
+          localStorage.getItem(getPlatformTermsAcceptanceStorageKey(currentUser)) || '0'
+        );
+        setShowPlatformTermsModal(acceptedVersion !== nextTerms.platformTermsVersion);
+      } catch {
+        if (!cancelled) {
+          setShowPlatformTermsModal(false);
+        }
+      }
+    };
+
+    void syncPlatformTerms();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiBaseUrl, currentUser, isHydrated]);
+
+  const handleAcceptPlatformTerms = () => {
+    if (!currentUser || !platformTerms) {
+      return;
+    }
+
+    localStorage.setItem(
+      getPlatformTermsAcceptanceStorageKey(currentUser),
+      String(platformTerms.platformTermsVersion)
+    );
+    setShowPlatformTermsModal(false);
+  };
+
+  const withPlatformTermsGate = (content: React.ReactNode) => (
+    <>
+      {content}
+      {showPlatformTermsModal && platformTerms ? (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-surface-950/80 px-4 py-8 backdrop-blur-sm">
+          <div className="w-full max-w-3xl rounded-3xl border border-surface-800 bg-surface-900 p-6 shadow-2xl space-y-5">
+            <div className="space-y-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary-300">
+                Términos de la plataforma
+              </p>
+              <h2 className="text-xl font-bold text-white">
+                Debe aceptar los términos vigentes para continuar
+              </h2>
+              <p className="text-sm text-surface-400">
+                Este aviso se muestra en el primer ingreso y cada vez que la plataforma actualiza sus términos.
+              </p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <section className="rounded-2xl border border-surface-800 bg-surface-950/60 p-4 space-y-2">
+                <h3 className="text-sm font-bold text-white">Términos y condiciones</h3>
+                <div className="max-h-72 overflow-y-auto text-sm leading-relaxed text-surface-300 whitespace-pre-wrap">
+                  {platformTerms.termsAndConditionsText}
+                </div>
+              </section>
+
+              <section className="rounded-2xl border border-surface-800 bg-surface-950/60 p-4 space-y-2">
+                <h3 className="text-sm font-bold text-white">Política de uso</h3>
+                <div className="max-h-72 overflow-y-auto text-sm leading-relaxed text-surface-300 whitespace-pre-wrap">
+                  {platformTerms.usagePolicyText}
+                </div>
+              </section>
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-xl border border-surface-700 bg-surface-950 px-4 py-2.5 text-sm font-bold text-surface-300"
+              >
+                Cerrar sesión
+              </button>
+              <button
+                type="button"
+                onClick={handleAcceptPlatformTerms}
+                className="rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-bold text-surface-950"
+              >
+                Aceptar y continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
 
   if (!isLoaded || !isHydrated) {
     return (
@@ -384,13 +508,11 @@ export default function Home() {
   const isDoctorRole = normalizedRole === 'doctor';
   const isPatientRole = normalizedRole === 'patient';
   const isAdminRole = normalizedRole === 'admin';
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-  const enableOperationalTabs = /localhost|127\.0\.0\.1/i.test(apiBaseUrl);
 
   if (isDoctorRole) {
     // ðŸš€ Ommran: Nombre dinÃ¡mico si viene en las credenciales del usuario
     const currentName = currentUser.name || APP_USER_DEFAULTS.doctorName;
-    return (
+    return withPlatformTermsGate(
       <DoctorView
         doctorName={currentName}
         doctorEmail={currentUser.email}
@@ -404,7 +526,7 @@ export default function Home() {
   if (isPatientRole) {
     // ðŸš€ Ommran: Nombre dinÃ¡mico si viene en las credenciales del usuario
     const currentName = currentUser.name || APP_USER_DEFAULTS.patientName;
-    return (
+    return withPlatformTermsGate(
       <PatientView
         patientName={currentName}
         patientEmail={currentUser.email}
@@ -419,7 +541,7 @@ export default function Home() {
     return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
-  return (
+  return withPlatformTermsGate(
     <AppShell
       portal="admin"
       sidebar={
