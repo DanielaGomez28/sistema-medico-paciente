@@ -180,7 +180,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         <StatCard icon={DollarSign} label="Volumen financiero" value={formatCurrency(stats?.summary.financialVolume || 0)} hint={<><TrendingUp className="h-3 w-3" /><span>{stats?.summary.paidTreatments || 0} tratamientos pagados</span></>} />
         <StatCard icon={Heart} label="Recipes emitidos" value={stats?.summary.prescriptionsIssued || 0} accent="primary" hint={<><Activity className="h-3 w-3" /><span>{stats?.summary.activePatients || 0} pacientes activos</span></>} />
-        <StatCard icon={Stethoscope} label="M?dicos activos" value={stats?.summary.activeDoctors || 0} hint={<><span>{doctors.filter((doctor) => doctor.status === 'activo').length} habilitados</span></>} />
+        <StatCard icon={Stethoscope} label="Médicos activos" value={stats?.summary.activeDoctors || 0} hint={<><span>{doctors.filter((doctor) => doctor.status === 'activo').length} habilitados</span></>} />
         <StatCard icon={TrendingUp} label="Comisiones liquidadas" value={formatCurrency(stats?.summary.totalCommissions || 0)} accent="primary" hint={<><span>Ticket promedio {formatCurrency(stats?.summary.averageTicket || 0)}</span></>} />
       </div>
 
@@ -210,7 +210,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
 
         <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
           <div>
-            <h4 className="zenith-section-title">Directorio m?dico real</h4>
+            <h4 className="zenith-section-title">Directorio médico real</h4>
             <p className="text-xs text-surface-400">Perfiles cargados desde /api/admin/doctors.</p>
           </div>
           <div className="space-y-3">
@@ -223,7 +223,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
                 </span>
               </div>
             ))}
-            {doctors.length === 0 ? <div className="text-xs text-surface-500">Todav?a no hay m?dicos disponibles.</div> : null}
+            {doctors.length === 0 ? <div className="text-xs text-surface-500">Todavía no hay médicos disponibles.</div> : null}
           </div>
         </div>
       </div>
@@ -233,10 +233,10 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="zenith-section-title">Monitor administrativo de recipes</h4>
-              <p className="text-xs text-surface-400">Estados cl?nicos y comerciales sincronizados con backend.</p>
+              <p className="text-xs text-surface-400">Estados clínicos y comerciales sincronizados con backend.</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => onNavigate('doctors')}>
-              Gesti?n m?dica
+              Gestión m?dica
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -246,7 +246,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold text-white">{recipe.patientName || 'Paciente'}</p>
-                    <p className="text-[10px] text-surface-500 font-mono">{recipe.recipeId} ? {recipe.doctorName || 'Sin m?dico visible'}</p>
+                    <p className="text-[10px] text-surface-500 font-mono">{recipe.recipeId} ? {recipe.doctorName || 'Sin médico visible'}</p>
                   </div>
                   <div className="flex gap-2">
                     <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-primary-500/10 text-primary-300">{recipe.clinicalStatus}</span>
@@ -263,13 +263,13 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
         <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
           <div>
             <h4 className="zenith-section-title">Actividad operativa real</h4>
-            <p className="text-xs text-surface-400">Sincronizada con recipes emitidos y cat?logo activo del backend.</p>
+            <p className="text-xs text-surface-400">Sincronizada con recipes emitidos y catálogo activo del backend.</p>
           </div>
           <div className="space-y-3">
             {recentRecipes.map((recipe) => (
               <div key={`recent-${recipe.recipeId}`} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3 space-y-1">
                 <p className="text-xs font-semibold text-white">{recipe.recipeId}</p>
-                <p className="text-[10px] text-surface-500">Paciente: {recipe.patientName || 'Paciente'} ? M?dico: {recipe.doctorName || 'Sin m?dico visible'}</p>
+                <p className="text-[10px] text-surface-500">Paciente: {recipe.patientName || 'Paciente'} ? M?dico: {recipe.doctorName || 'Sin médico visible'}</p>
                 <p className="text-[10px] text-surface-400">{Array.isArray(recipe.items) ? recipe.items.map((item) => item.nombre).slice(0, 2).join(', ') : 'Sin items visibles'}</p>
               </div>
             ))}

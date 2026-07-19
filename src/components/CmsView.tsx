@@ -38,9 +38,9 @@ const sectionTabs: { id: CmsSection; label: string; icon: React.ElementType }[] 
 const DEFAULT_SETTINGS: CmsSettings = {
   logoUrl: '/images/default-logo.png',
   bannerUrl: '/images/default-banner.jpg',
-  consentTerms: 'T?rminos cl?nicos no cargados.',
-  termsAndConditions: 'T?rminos generales no cargados.',
-  usagePolicy: 'Pol?tica de uso no cargada.',
+  consentTerms: 'Términos clínicos no cargados.',
+  termsAndConditions: 'Términos generales no cargados.',
+  usagePolicy: 'Política de uso no cargada.',
 };
 
 export default function CmsView() {
@@ -131,7 +131,7 @@ export default function CmsView() {
       setBackendError(
         (error as ApiErrorPayload).response?.data?.error ||
           (error as ApiErrorPayload).response?.data?.details ||
-          'No se pudo guardar la configuraci?n global.'
+          'No se pudo guardar la configuración global.'
       );
     } finally {
       setLoadingConfig(false);
@@ -159,7 +159,7 @@ export default function CmsView() {
       {saveSuccess ? (
         <div className="p-3.5 bg-secondary-500/10 border border-secondary-500/25 rounded-xl flex items-center gap-2 text-secondary-450 text-xs">
           <CheckCircle className="h-4 w-4 shrink-0" />
-          <span><strong className="font-bold">Cambios guardados.</strong> El CMS ya est? sincronizado con el backend.</span>
+          <span><strong className="font-bold">Cambios guardados.</strong> El CMS ya está sincronizado con el backend.</span>
         </div>
       ) : null}
 
@@ -222,7 +222,7 @@ export default function CmsView() {
           <aside className="xl:col-span-2">
             <div className="zenith-panel space-y-4 sticky top-6">
               <h3 className="zenith-section-title">Vista previa</h3>
-              <p className="text-xs text-surface-500">Los textos legales s? est?n conectados al backend; las im?genes se conservan locales en esta versi?n.</p>
+              <p className="text-xs text-surface-500">Los textos legales s? están conectados al backend; las imágenes se conservan locales en esta versión.</p>
             </div>
           </aside>
         </div>
@@ -235,17 +235,17 @@ export default function CmsView() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="zenith-field-label" htmlFor="cms-consent">T?rminos de consentimiento cl?nico</label>
+              <label className="zenith-field-label" htmlFor="cms-consent">Términos de consentimiento clínico</label>
               <textarea id="cms-consent" rows={5} value={settings.consentTerms} onChange={(e) => setSettings((prev) => ({ ...prev, consentTerms: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[120px]" />
             </div>
 
             <div className="space-y-1.5">
-              <label className="zenith-field-label" htmlFor="cms-terms">T?rminos y condiciones de la plataforma</label>
+              <label className="zenith-field-label" htmlFor="cms-terms">Términos y condiciones de la plataforma</label>
               <textarea id="cms-terms" rows={5} value={settings.termsAndConditions} onChange={(e) => setSettings((prev) => ({ ...prev, termsAndConditions: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[120px]" />
             </div>
 
             <div className="space-y-1.5">
-              <label className="zenith-field-label" htmlFor="cms-policy">Pol?tica de uso</label>
+              <label className="zenith-field-label" htmlFor="cms-policy">Política de uso</label>
               <textarea id="cms-policy" rows={4} value={settings.usagePolicy} onChange={(e) => setSettings((prev) => ({ ...prev, usagePolicy: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[100px]" />
             </div>
           </section>

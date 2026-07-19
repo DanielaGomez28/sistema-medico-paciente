@@ -135,7 +135,7 @@ export default function Home() {
 
       const parsed = JSON.parse(localUser);
       return {
-        role: parsed.role || '',
+        role: parsed.role || parsed.rol || '',
         email: parsed.email || '',
         name: parsed.name || parsed.nombre || 'Usuario',
         userId: parsed.userId || null,
@@ -345,11 +345,14 @@ export default function Home() {
     return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
-  const normalizedRole = currentUser.role.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const normalizedRole = currentUser.role.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const isDoctorRole = normalizedRole === 'medico' || normalizedRole === 'doctor';
+  const isPatientRole = normalizedRole === 'paciente' || normalizedRole === 'patient';
+  const isAdminRole = normalizedRole === 'admin' || normalizedRole === 'superusuario' || normalizedRole === 'superuser';
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
   const enableOperationalTabs = /localhost|127\.0\.0\.1/i.test(apiBaseUrl);
 
-  if (normalizedRole === 'medico') {
+  if (isDoctorRole) {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
     const currentName = currentUser.name || APP_USER_DEFAULTS.doctorName;
     return (
@@ -363,7 +366,7 @@ export default function Home() {
     );
   }
 
-  if (normalizedRole === 'paciente') {
+  if (isPatientRole) {
     // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
     const currentName = currentUser.name || APP_USER_DEFAULTS.patientName;
     return (
@@ -375,6 +378,10 @@ export default function Home() {
         onLogout={handleLogout}
       />
     );
+  }
+
+  if (!isAdminRole) {
+    return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
   return (

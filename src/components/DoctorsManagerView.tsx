@@ -103,7 +103,7 @@ export default function DoctorsManagerView() {
       setErrorMsg(
         (error as ApiErrorPayload).response?.data?.error ||
           (error as ApiErrorPayload).response?.data?.details ||
-          'No se pudo cargar el directorio real de m?dicos.'
+          'No se pudo cargar el directorio real de médicos.'
       );
     } finally {
       setLoading(false);
@@ -127,7 +127,7 @@ export default function DoctorsManagerView() {
           setErrorMsg(
             apiError.response?.data?.error ||
               apiError.response?.data?.details ||
-              'No se pudo cargar el directorio real de m?dicos.'
+              'No se pudo cargar el directorio real de médicos.'
           );
         }
       } finally {
@@ -177,13 +177,13 @@ export default function DoctorsManagerView() {
       setErrorMsg('');
       await apiClient.delete(`/admin/doctors/${doctorId}`);
       await loadDoctors();
-      setSuccessMsg(`M?dico ${doctorId} suspendido correctamente.`);
+      setSuccessMsg(`Médico ${doctorId} suspendido correctamente.`);
       setTimeout(() => setSuccessMsg(''), 3000);
     } catch (error: unknown) {
       setErrorMsg(
         (error as ApiErrorPayload).response?.data?.error ||
           (error as ApiErrorPayload).response?.data?.details ||
-          'No se pudo suspender el m?dico.'
+          'No se pudo suspender el médico.'
       );
     } finally {
       setSaving(false);
@@ -212,10 +212,10 @@ export default function DoctorsManagerView() {
 
       if (editingDoctorId) {
         await apiClient.put(`/admin/doctors/${editingDoctorId}`, payload);
-        setSuccessMsg(`Perfil m?dico ${editingDoctorId} actualizado correctamente.`);
+        setSuccessMsg(`Perfil médico ${editingDoctorId} actualizado correctamente.`);
       } else {
         await apiClient.post('/admin/doctors', payload);
-        setSuccessMsg('M?dico dado de alta correctamente.');
+        setSuccessMsg('Médico registrado correctamente.');
       }
 
       resetForm();
@@ -225,7 +225,7 @@ export default function DoctorsManagerView() {
       setErrorMsg(
         (error as ApiErrorPayload).response?.data?.error ||
           (error as ApiErrorPayload).response?.data?.details ||
-          'No se pudo guardar el perfil m?dico.'
+          'No se pudo guardar el perfil médico.'
       );
     } finally {
       setSaving(false);
@@ -262,11 +262,11 @@ export default function DoctorsManagerView() {
         <div className="flex items-center justify-between gap-3 border-b border-surface-850 pb-3">
           <div className="flex items-center gap-2">
             <UserPlus className="h-4.5 w-4.5 text-surface-400" />
-            <h3 className="zenith-section-title">{editingDoctorId ? 'Editar M?dico' : 'Dar de Alta M?dico'}</h3>
+            <h3 className="zenith-section-title">{editingDoctorId ? 'Editar médico' : 'Registrar médico'}</h3>
           </div>
           {editingDoctorId ? (
             <Button type="button" variant="outline" size="sm" onClick={resetForm}>
-              Cancelar edici?n
+              Cancelar edición
             </Button>
           ) : null}
         </div>
@@ -289,7 +289,7 @@ export default function DoctorsManagerView() {
             <input value={form.mpps} onChange={(e) => handleChange('mpps', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" required />
           </div>
           <div className="space-y-1">
-            <label className="zenith-field-label">Colegio de M?dicos *</label>
+            <label className="zenith-field-label">Colegio de Médicos *</label>
             <input value={form.colegio_medicos} onChange={(e) => handleChange('colegio_medicos', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" required />
           </div>
           <div className="space-y-1">
@@ -323,7 +323,7 @@ export default function DoctorsManagerView() {
 
         <div className="flex justify-end pt-2 border-t border-surface-850">
           <Button type="submit" disabled={saving}>
-            {editingDoctorId ? 'Guardar cambios' : 'Dar de alta y registrar'}
+            {editingDoctorId ? 'Guardar cambios' : 'Registrar médico'}
           </Button>
         </div>
       </form>
@@ -344,7 +344,7 @@ export default function DoctorsManagerView() {
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-surface-500" />
             <input
               type="text"
-              placeholder="Buscar m?dico..."
+              placeholder="Buscar médico..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 pr-2.5 py-2 bg-surface-950 border border-surface-800 rounded-xl text-xs text-white placeholder-surface-700 focus:outline-none focus:border-surface-400"
@@ -353,7 +353,7 @@ export default function DoctorsManagerView() {
 
           {loading ? (
             <div className="rounded-xl border border-surface-800 bg-surface-950/60 px-3 py-4 text-xs text-surface-400">
-              Consultando directorio real de m?dicos...
+              Consultando directorio real de médicos...
             </div>
           ) : null}
 
@@ -361,7 +361,7 @@ export default function DoctorsManagerView() {
             <table className="zenith-table text-xs">
               <thead>
                 <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
-                  <th className="pb-2.5">M?dico</th>
+                  <th className="pb-2.5">Médico</th>
                   <th>Especialidad</th>
                   <th>MPPS / Colegio</th>
                   <th>Estado</th>
@@ -376,10 +376,10 @@ export default function DoctorsManagerView() {
                       <p className="font-semibold text-white">{doctor.nombre}</p>
                       <p className="text-[10px] text-surface-500 font-mono">{doctor.correo}</p>
                     </td>
-                    <td>{doctor.especialidad || '?'}</td>
+                    <td>{doctor.especialidad || 'Sin especialidad'}</td>
                     <td>
-                      <p className="font-mono text-surface-300">{doctor.mpps || '?'}</p>
-                      <p className="text-[10px] font-mono text-surface-500">{doctor.colegio_medicos || '?'}</p>
+                      <p className="font-mono text-surface-300">{doctor.mpps || 'Sin MPPS'}</p>
+                      <p className="text-[10px] font-mono text-surface-500">{doctor.colegio_medicos || 'Sin colegio'}</p>
                     </td>
                     <td>
                       <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>
@@ -411,9 +411,9 @@ export default function DoctorsManagerView() {
                 subtitle={doctor.correo}
                 badge={<span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>{doctor.status}</span>}
                 fields={[
-                  { label: 'Especialidad', value: doctor.especialidad || '?' },
-                  { label: 'MPPS', value: doctor.mpps || '?' },
-                  { label: 'Colegio', value: doctor.colegio_medicos || '?' },
+                  { label: 'Especialidad', value: doctor.especialidad || 'Sin especialidad' },
+                  { label: 'MPPS', value: doctor.mpps || 'Sin MPPS' },
+                  { label: 'Colegio', value: doctor.colegio_medicos || 'Sin colegio' },
                   { label: 'RSE', value: doctor.special_sanitary_registration || 'No aplica' },
                 ]}
                 actions={
