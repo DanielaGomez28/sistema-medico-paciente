@@ -116,7 +116,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           setError(
             apiError.response?.data?.error ||
               apiError.response?.data?.details ||
-              'No se pudo cargar el dashboard administrativo real.'
+              'No se pudo cargar el dashboard administrativo.'
           );
         }
       } finally {
@@ -188,8 +188,8 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
         <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h4 className="zenith-section-title">Tendencia administrativa real</h4>
-              <p className="text-xs text-surface-400">Datos agregados desde el backend del dashboard administrativo.</p>
+              <h4 className="zenith-section-title">Tendencia administrativa</h4>
+              <p className="text-xs text-surface-400">Datos agregados del panel administrativo.</p>
             </div>
             <div className="flex items-center gap-1 text-2xs font-bold bg-surface-950 border border-surface-850 rounded-xl p-1">
               <button type="button" onClick={() => setActiveMetricTab('sales')} className={`px-3 py-1.5 rounded-lg ${activeMetricTab === 'sales' ? 'bg-white text-surface-950' : 'text-surface-500 hover:text-foreground'}`}>Ventas</button>
@@ -211,7 +211,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
         <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
           <div>
             <h4 className="zenith-section-title">Directorio médico real</h4>
-            <p className="text-xs text-surface-400">Perfiles cargados desde /api/admin/doctors.</p>
+            <p className="text-xs text-surface-400">Perfiles registrados en la plataforma.</p>
           </div>
           <div className="space-y-3">
             {doctors.slice(0, 4).map((doctor) => (
@@ -262,7 +262,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
 
         <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
           <div>
-            <h4 className="zenith-section-title">Actividad operativa real</h4>
+            <h4 className="zenith-section-title">Actividad operativa</h4>
             <p className="text-xs text-surface-400">Sincronizada con recipes emitidos y catálogo activo del backend.</p>
           </div>
           <div className="space-y-3">

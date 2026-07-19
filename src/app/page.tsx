@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 /**
  * @fileoverview Punto de entrada del frontend SMP Farmahumana.
  * @description Orquesta la sesi?n, el portal activo y la composici?n principal de vistas del cliente.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { AppShell, AppHeader, AppHeaderAction } from '../components/layout';
 import DashboardView from '../components/DashboardView';
@@ -112,18 +112,45 @@ type AuthenticatedUser = {
 };
 
 /**
- * Componente principal (Home) que actúa como controlador y orquestador (Entry Point).
- * Dependiendo del estado de autenticación (role: 'médico' | 'paciente' | 'admin'), 
+ * Normaliza el rol autenticado del frontend para evitar bifurcaciones entre alias administrativos.
+ * @param {string | null | undefined} role - Rol crudo recibido desde login o persistencia local.
+ * @returns {string} Rol estable del cliente.
+ */
+function normalizeFrontendRole(role: string | null | undefined): string {
+  const normalizedRole = String(role || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (['superusuario', 'superuser', 'superadmin', 'admin'].includes(normalizedRole)) {
+    return 'admin';
+  }
+
+  if (['medico', 'doctor'].includes(normalizedRole)) {
+    return 'doctor';
+  }
+
+  if (['paciente', 'patient'].includes(normalizedRole)) {
+    return 'patient';
+  }
+
+  return normalizedRole;
+}
+
+/**
+ * Componente principal (Home) que actÃºa como controlador y orquestador (Entry Point).
+ * Dependiendo del estado de autenticaciÃ³n (role: 'mÃ©dico' | 'paciente' | 'admin'), 
  * renderiza el portal (vista) correspondiente.
  * 
- * También maneja el estado global maestro para la aplicación administrativa (Orders, Products, Customers)
+ * TambiÃ©n maneja el estado global maestro para la aplicaciÃ³n administrativa (Orders, Products, Customers)
  * y se encarga de hidratar la memoria local (localStorage) en el cliente para persistencia de datos simulada.
  * 
  * @returns {JSX.Element}
  */
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  // Master state del usuario con el nombre dinámico incluido
+  const [isHydrated, setIsHydrated] = useState(false);
+  // Master state del usuario con el nombre din?mico incluido
   const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(() => {
     if (typeof window === 'undefined') return null;
 
@@ -135,7 +162,7 @@ export default function Home() {
 
       const parsed = JSON.parse(localUser);
       return {
-        role: parsed.role || parsed.rol || '',
+        role: normalizeFrontendRole(parsed.role || parsed.rol),
         email: parsed.email || '',
         name: parsed.name || parsed.nombre || 'Usuario',
         userId: parsed.userId || null,
@@ -159,7 +186,7 @@ export default function Home() {
       return null;
     }
   });
-  
+
   // Master states
   const [initialAdminState] = useState<InitialAdminState>(() => getInitialAdminState());
   const [orders, setOrders] = useState<Order[]>(initialAdminState.orders);
@@ -171,8 +198,16 @@ export default function Home() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
 
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      setIsHydrated(true);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
 
   // Sync helpers
+
   const handleLoginSuccess = (user: AuthenticatedUser) => {
     setCurrentUser(user);
     localStorage.setItem('zenith_user', JSON.stringify(user));
@@ -332,11 +367,11 @@ export default function Home() {
   // Calculations for Badges
   const pendingCount = orders.filter(o => o.status === 'Pendiente').length;
 
-  if (!isLoaded) {
+  if (!isLoaded || !isHydrated) {
     return (
       <div className="flex-1 flex items-center justify-center bg-surface-950 text-primary-400 font-semibold gap-3 h-screen">
         <Activity className="h-6 w-6 animate-pulse" />
-        <span>Cargando Médico-Paciente...</span>
+        <span>Cargando MÃ©dico-Paciente...</span>
       </div>
     );
   }
@@ -345,15 +380,15 @@ export default function Home() {
     return <LoginView onLoginSuccess={handleLoginSuccess} />;
   }
 
-  const normalizedRole = currentUser.role.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const isDoctorRole = normalizedRole === 'medico' || normalizedRole === 'doctor';
-  const isPatientRole = normalizedRole === 'paciente' || normalizedRole === 'patient';
-  const isAdminRole = normalizedRole === 'admin' || normalizedRole === 'superusuario' || normalizedRole === 'superuser';
+  const normalizedRole = normalizeFrontendRole(currentUser.role);
+  const isDoctorRole = normalizedRole === 'doctor';
+  const isPatientRole = normalizedRole === 'patient';
+  const isAdminRole = normalizedRole === 'admin';
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
   const enableOperationalTabs = /localhost|127\.0\.0\.1/i.test(apiBaseUrl);
 
   if (isDoctorRole) {
-    // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
+    // ðŸš€ Ommran: Nombre dinÃ¡mico si viene en las credenciales del usuario
     const currentName = currentUser.name || APP_USER_DEFAULTS.doctorName;
     return (
       <DoctorView
@@ -367,7 +402,7 @@ export default function Home() {
   }
 
   if (isPatientRole) {
-    // 🚀 Ommran: Nombre dinámico si viene en las credenciales del usuario
+    // ðŸš€ Ommran: Nombre dinÃ¡mico si viene en las credenciales del usuario
     const currentName = currentUser.name || APP_USER_DEFAULTS.patientName;
     return (
       <PatientView
@@ -397,9 +432,9 @@ export default function Home() {
           enableOperationalTabs={enableOperationalTabs}
         />
       }
-      // 📄 Dentro de tu src/app/page.tsx (Sección del Header del Administrador)
+      // ðŸ“„ Dentro de tu src/app/page.tsx (SecciÃ³n del Header del Administrador)
       header={({ onMenuClick }) => {
-        // 🚀 1. Calculamos las iniciales en tiempo real basándonos en el backend
+        // ðŸš€ 1. Calculamos las iniciales en tiempo real basÃ¡ndonos en el backend
         const getInitials = (nameString: string) => {
           const parts = nameString.trim().split(/\s+/);
           if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
@@ -412,9 +447,9 @@ export default function Home() {
         return (
           <AppHeader
             onMenuClick={onMenuClick}
-            statusLabel={adminName} // El label que ya tenías
+            statusLabel={adminName} // El label que ya tenÃ­as
             showNotifications={false}
-            // 🚀 2. INYECTAMOS LAS PROPIEDADES DINÁMICAS AQUÍ:
+            // ðŸš€ 2. INYECTAMOS LAS PROPIEDADES DINÃMICAS AQUÃ:
             profileName={adminName}
             profileInitials={adminInitials}
             actions={enableOperationalTabs ? (
@@ -471,3 +506,4 @@ export default function Home() {
     </AppShell>
   );
 }
+

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from './theme';
 import { cn } from '../lib/utils';
-import { APP_USER_DEFAULTS } from '../data/mockData';
+import { APP_USER_DEFAULTS, LOGIN_TEST_ACCOUNT_LABELS, LOGIN_TEST_USERS } from '../data/mockData';
 
 type LoginSuccessPayload = {
   role: string;
@@ -47,6 +47,28 @@ interface LoginViewProps {
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
 
+function normalizeFrontendRole(role: string | null | undefined): string {
+  const normalizedRole = String(role || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (['superusuario', 'superuser', 'superadmin', 'admin'].includes(normalizedRole)) {
+    return 'admin';
+  }
+
+  if (['medico', 'doctor'].includes(normalizedRole)) {
+    return 'doctor';
+  }
+
+  if (['paciente', 'patient'].includes(normalizedRole)) {
+    return 'patient';
+  }
+
+  return normalizedRole;
+}
+
 export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -59,6 +81,13 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
   const validateEmail = (input: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
 
+  const handleQuickAccessSelect = (emailValue: string, passwordValue: string) => {
+    setEmail(emailValue);
+    setPassword(passwordValue);
+    setEmailError('');
+    setPasswordError('');
+    setGeneralError('');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +135,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       const data = await response.json();
 
       if (response.ok) {
-        const userRole = (data.role || data.rol || 'paciente').toLowerCase();
+        const userRole = normalizeFrontendRole(data.role || data.rol || 'paciente');
         const userEmail = data.email || data.correo || normalizedEmail;
         const userName = data.name || data.nombre || APP_USER_DEFAULTS.patientName;
         onLoginSuccess({
@@ -216,6 +245,26 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
               {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" />Entrando...</>) : 'Ingresar al sistema'}
             </button>
           </form>
+
+          <div className="mt-5 border-t border-surface-800 pt-4 space-y-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-surface-500">Perfiles de prueba</p>
+              <p className="mt-1 text-xs text-surface-400">Autocompleta credenciales de desarrollo sin escribirlas manualmente.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {LOGIN_TEST_USERS.map((account) => (
+                <button
+                  key={account.email}
+                  type="button"
+                  onClick={() => handleQuickAccessSelect(account.email, account.password)}
+                  className="rounded-xl border border-surface-800 bg-surface-950/80 px-3 py-3 text-left transition-colors hover:border-surface-700 hover:bg-surface-900"
+                >
+                  <span className="block text-xs font-bold text-white">{LOGIN_TEST_ACCOUNT_LABELS[account.role]}</span>
+                  <span className="mt-1 block text-[11px] text-surface-400 truncate">{account.email}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

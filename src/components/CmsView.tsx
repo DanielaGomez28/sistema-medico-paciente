@@ -85,7 +85,7 @@ export default function CmsView() {
           setBackendError(
             (error as ApiErrorPayload).response?.data?.error ||
               (error as ApiErrorPayload).response?.data?.details ||
-              'No se pudo cargar el CMS real del backend.'
+              'No se pudo cargar el CMS del backend.'
           );
         }
       } finally {
@@ -230,8 +230,8 @@ export default function CmsView() {
         <div className="max-w-4xl space-y-5">
           <section className="zenith-panel space-y-5">
             <div>
-              <h3 className="zenith-section-title">Textos legales reales</h3>
-              <p className="text-xs text-surface-500 mt-0.5">Sincronizados con <code>/api/admin/cms/config</code>.</p>
+              <h3 className="zenith-section-title">Textos legales</h3>
+              <p className="text-xs text-surface-500 mt-0.5">Sincronizados con la configuraci?n global del sistema.</p>
             </div>
 
             <div className="space-y-1.5">

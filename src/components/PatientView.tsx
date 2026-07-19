@@ -1533,7 +1533,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         {recipes.length === 0 && !recipesLoading && (
                           <tr>
                             <td colSpan={5} className="py-6 text-center text-xs text-surface-500">
-                              {recipesError || 'No hay recipes emitidos todavia para este paciente.'}
+                              {recipesError || 'No hay recipes emitidos todav?a para este paciente.'}
                             </td>
                           </tr>
                         )}
@@ -1572,7 +1572,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   <div className="lg:hidden space-y-3">
                     {recipes.length === 0 && !recipesLoading && (
                       <div className="py-6 text-center text-xs text-surface-500">
-                        {recipesError || 'No hay recipes emitidos todavia para este paciente.'}
+                        {recipesError || 'No hay recipes emitidos todav?a para este paciente.'}
                       </div>
                     )}
                     {recipes.map((rec) => (
@@ -1920,7 +1920,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         <History className="h-4 w-4 text-surface-500" />
                         <div>
                           <h3 className="zenith-section-title">Historial de tomas</h3>
-                          <p className="text-xs text-surface-500 mt-1">Revis?? las confirmaciones m??s recientes y detect?? omisiones o patrones de consumo.</p>
+                          <p className="text-xs text-surface-500 mt-1">Revis? las confirmaciones m?s recientes y detect? omisiones o patrones de consumo.</p>
                         </div>
                       </div>
 
@@ -2200,6 +2200,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       >
                         Volver a Propuesta
                       </button>
+                      <a
+                        href={checkoutSession?.order?.redirectUrl || '#'}
+                        target="_self"
+                        className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${checkoutSession?.order?.redirectUrl ? 'bg-secondary-500/15 border border-secondary-500/30 text-secondary-300 hover:text-white cursor-pointer' : 'bg-surface-900 border border-surface-800 text-surface-500 pointer-events-none'}`}
+                      >
+                        Ir a la pasarela temporal
+                      </a>
                       <button
                         type="button"
                         onClick={handleRefreshPaymentStatus}
@@ -2419,7 +2426,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   <div className="space-y-6">
                     <div className="space-y-4">
                       <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                        Informaci??n Personal
+                        Informaci?n Personal
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2434,7 +2441,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Correo Electr??nico</label>
+                          <label className="zenith-field-label">Correo Electr?nico</label>
                           <input
                             type="email"
                             value={patientEmail}
@@ -2443,7 +2450,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Tel??fono M??vil</label>
+                          <label className="zenith-field-label">Tel?fono M?vil</label>
                           <input
                             type="tel"
                             value={isEditingProfile ? profileDraft.phone : profilePhone}
@@ -2475,12 +2482,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
                     <div className="space-y-4">
                       <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                        Direcci??n Predeterminada de Delivery
+                        Direcci?n Predeterminada de Delivery
                       </h3>
 
                       <div className="space-y-4">
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Direcci??n (Av., Urb., Edif., Piso)</label>
+                          <label className="zenith-field-label">Direcci?n (Av., Urb., Edif., Piso)</label>
                           <input
                             type="text"
                             value={isEditingProfile ? profileDraft.deliveryAddress : deliveryAddress}

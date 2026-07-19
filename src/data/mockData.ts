@@ -715,7 +715,7 @@ export interface AppUserDefaultsSeed {
 export interface LoginTestUserSeed {
   email: string;
   password: string;
-  role: 'superadmin' | 'medico' | 'paciente';
+  role: 'admin' | 'medico' | 'paciente';
   name: string;
 }
 
@@ -784,7 +784,7 @@ export const APP_USER_DEFAULTS: AppUserDefaultsSeed = {
  * Cuentas demo centralizadas del login.
  */
 export const LOGIN_TEST_USERS: LoginTestUserSeed[] = [
-  { email: 'admin@sistema.local', password: 'admin123', role: 'superadmin', name: APP_USER_DEFAULTS.adminName },
+  { email: 'admin@sistema.local', password: 'admin123', role: 'admin', name: APP_USER_DEFAULTS.adminName },
   { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'medico', name: APP_USER_DEFAULTS.doctorName },
   { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: APP_USER_DEFAULTS.patientName },
 ];
@@ -793,7 +793,7 @@ export const LOGIN_TEST_USERS: LoginTestUserSeed[] = [
  * Etiquetas visibles para las cuentas demo del login.
  */
 export const LOGIN_TEST_ACCOUNT_LABELS: Record<string, string> = {
-  superadmin: 'Admin',
+  admin: 'Admin',
   medico: 'Médico',
   paciente: 'Paciente',
 };
