@@ -249,7 +249,6 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           <div className="mt-5 border-t border-surface-800 pt-4 space-y-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-surface-500">Perfiles de prueba</p>
-              <p className="mt-1 text-xs text-surface-400">Autocompleta credenciales de desarrollo sin escribirlas manualmente.</p>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {LOGIN_TEST_USERS.map((account) => (

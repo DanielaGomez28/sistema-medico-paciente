@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * @fileoverview Punto de entrada del frontend SMP Farmahumana.
@@ -495,7 +495,7 @@ export default function Home() {
     return (
       <div className="flex-1 flex items-center justify-center bg-surface-950 text-primary-400 font-semibold gap-3 h-screen">
         <Activity className="h-6 w-6 animate-pulse" />
-        <span>Cargando MÃ©dico-Paciente...</span>
+        <span>Cargando Médico-Paciente...</span>
       </div>
     );
   }
