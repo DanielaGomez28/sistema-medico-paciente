@@ -5,6 +5,7 @@
  * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
  */
 
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import { QrCode, RefreshCw } from 'lucide-react';
 import { useShell } from './layout';
@@ -142,6 +143,7 @@ export interface CredentialQrModalProps {
   description: string;
   displayName: string;
   credentialLine?: string;
+  qrImage?: string | null;
   qrToken: string;
   qrSecondsLeft: number;
   onRefresh: () => void;
@@ -169,6 +171,7 @@ export function CredentialQrModal({
   description,
   displayName,
   credentialLine,
+  qrImage,
   qrToken,
   qrSecondsLeft,
   onRefresh,
@@ -192,7 +195,20 @@ export function CredentialQrModal({
           <p className="text-xs text-surface-400 text-center">{description}</p>
         ) : null}
         <div className="flex flex-col items-center bg-white text-[#0a1220] p-6 sm:p-8 rounded-xl shadow-inner border border-surface-700/10 mx-auto max-w-md w-full">
-          <CredentialQrSvg />
+          {qrImage ? (
+            <div className="bg-white rounded-xl p-2">
+              <Image
+                src={qrImage}
+                alt="Credencial QR"
+                width={240}
+                height={240}
+                unoptimized
+                className="h-[240px] w-[240px] bg-white object-contain"
+              />
+            </div>
+          ) : (
+            <CredentialQrSvg />
+          )}
           <div className="mt-3 text-center space-y-1">
             {displayName ? <p className="text-sm font-bold text-[#0a1220]">{displayName}</p> : null}
             {credentialLine ? (

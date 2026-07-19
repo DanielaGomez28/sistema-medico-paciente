@@ -1348,7 +1348,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             avatarClassName: 'portal-profile-avatar',
           }}
           preProfile={
-            <SidebarCredentialButton onOpen={() => setIsCredentialModalOpen(true)} />
+            <SidebarCredentialButton
+              onOpen={() => {
+                void handleGenerarQR();
+                setIsCredentialModalOpen(true);
+              }}
+            />
           }
           onLogout={onLogout}
           logoutVariant="icon"
@@ -1514,11 +1519,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   <div className="zenith-table-wrap hidden lg:block">
                     <table className="zenith-table zenith-table--divided text-sm">
                       <colgroup>
-                        <col className="w-[13%]" />
-                        <col className="w-[14%]" />
-                        <col className="w-[32%]" />
-                        <col className="w-[24%]" />
-                        <col className="w-[17%]" />
+                        <col className="w-[18%]" />
+                        <col className="w-[12%]" />
+                        <col className="w-[29%]" />
+                        <col className="w-[23%]" />
+                        <col className="w-[18%]" />
                       </colgroup>
                       <thead>
                         <tr className="border-b border-surface-850 text-xs font-semibold text-surface-500 uppercase tracking-wider">
@@ -1539,7 +1544,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         )}
                         {recipes.map((rec) => (
                           <tr key={rec.id} className="hover:bg-surface-850/25 transition-colors group">
-                            <td className="py-4 font-mono font-bold text-xs text-white">{rec.id}</td>
+                            <td className="py-4 pr-4 font-mono font-bold text-xs text-white break-all align-top">
+                              <span className="block max-w-full">{rec.id}</span>
+                            </td>
                             <td className="py-4 text-xs text-surface-400">{rec.date}</td>
                             <td className="py-4 zenith-table__wrap">
                               <div className="flex flex-col gap-0.5 min-w-0">
@@ -1666,13 +1673,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   )}
                 </div>
 
-                {/* QR Digital Presencial (Módulo 1 / Sprint #2) */}
+                {/* Credencial QR (Módulo 1 / Sprint #2) */}
                 <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 sm:p-6 backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="space-y-2 text-left">
                     <div className="flex items-center gap-2">
                       <ShieldCheck className="h-5 w-5 text-primary-400" />
                       <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                        QR Digital Presencial
+                        Credencial QR
                       </h3>
                     </div>
                     <p className="text-xs text-surface-400 max-w-md">
@@ -1688,7 +1695,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       onClick={handleGenerarQR}
                       className="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg shadow-primary-950/20 active:scale-95 animate-pulse"
                     >
-                      Generar QR Digital Presencial
+                      Generar credencial QR
                     </button>
 
                     {/* Renderizado de la imagen Base64 del Módulo 1 */}
@@ -2391,23 +2398,23 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         Los datos quedan en modo lectura hasta que pulses editar.
                       </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
                       {isEditingProfile ? (
                         <>
                           <button
                             type="button"
-                            onClick={handleCancelProfileEdit}
-                            className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all"
+                            onClick={() => void handleConfirmProfileEdit()}
+                            disabled={profileLoading}
+                            className="w-full sm:min-w-[220px] px-4 py-2.5 bg-secondary hover:bg-secondary-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
                           >
-                            Cancelar
+                            {profileLoading ? 'Guardando...' : 'Confirmar cambios'}
                           </button>
                           <button
                             type="button"
-                            onClick={() => void handleConfirmProfileEdit()}
-                            disabled={profileLoading}
-                            className="px-4 py-2.5 bg-secondary hover:bg-secondary-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
+                            onClick={handleCancelProfileEdit}
+                            className="w-full sm:min-w-[220px] px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all"
                           >
-                            {profileLoading ? 'Guardando...' : 'Confirmar cambios'}
+                            Cancelar
                           </button>
                         </>
                       ) : (
@@ -2415,7 +2422,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           type="button"
                           onClick={handleStartProfileEdit}
                           disabled={profileLoading}
-                          className="px-4 py-2.5 bg-secondary hover:bg-secondary-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
+                          className="w-full sm:min-w-[220px] px-4 py-2.5 bg-secondary hover:bg-secondary-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
                         >
                           {profileLoading ? 'Cargando...' : 'Editar perfil'}
                         </button>
@@ -2688,9 +2695,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         displayName=""
         credentialLine={undefined}
         modalTitle={null}
+        qrImage={qrImage}
         qrToken={qrToken}
         qrSecondsLeft={qrSecondsLeft}
-        onRefresh={handleRefreshQR}
+        onRefresh={() => {
+          handleRefreshQR();
+          void handleGenerarQR();
+        }}
         onReturn={() => {
           setActiveSubTab('treatment');
         }}

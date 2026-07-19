@@ -753,3 +753,31 @@ Se valido contra la tabla `usuarios` de Supabase que existen y estan activos los
 ### 5.3 Logica aplicada
 
 Los accesos rapidos solo vuelven porque las credenciales existen de verdad en la base de datos actual. En este contexto, el login no debe mostrar atajos que apunten a perfiles demo inexistentes, porque eso rompe la correspondencia entre interfaz, autenticacion y datos persistidos.
+
+
+## 6. Unificacion de la credencial QR del paciente
+
+### 6.1 Que se hizo
+
+- Se reemplazo la vista QR decorativa/corrupta del acceso lateral del paciente por el mismo QR funcional generado por backend que ya se usa en "QR Digital Presencial".
+- Se ajusto el modal para renderizar la imagen Base64 real del QR cuando existe, manteniendo el SVG solo como fallback visual.
+- Se fijo el contenedor y la imagen del QR con fondo blanco explicito para evitar que el modo oscuro altere su lectura.
+
+### 6.2 Solucion en codigo
+
+#### `C:/Proyecto IDS Frontend/src/components/CredentialQr.tsx`
+
+- agrega soporte para recibir `qrImage` en el modal
+- renderiza el QR funcional con `next/image` y fondo blanco forzado
+- conserva el SVG unicamente como respaldo si todavia no existe una imagen generada
+
+#### `C:/Proyecto IDS Frontend/src/components/PatientView.tsx`
+
+- al abrir "Credencial QR" ahora dispara tambien `handleGenerarQR()`
+- reutiliza el mismo `qrImage` del flujo "QR Digital Presencial" dentro del modal lateral
+- al refrescar la credencial rota el token visual y vuelve a pedir el QR real al backend
+
+### 6.3 Validacion ejecutada
+
+- `npx eslint src/components/CredentialQr.tsx src/components/PatientView.tsx` en `C:/Proyecto IDS Frontend` -> OK
+- `npx tsc --noEmit --incremental false` en `C:/Proyecto IDS Frontend` -> OK
