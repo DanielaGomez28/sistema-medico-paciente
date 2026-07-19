@@ -2519,7 +2519,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
           )}
           {profileError && (
-            <div className="p-4 bg-danger-500/10 border border-danger-500/25 rounded-2xl flex items-center gap-2.5 text-danger-300 text-xs">
+            <div className="p-4 bg-danger-500/10 border border-danger-500/25 rounded-2xl flex items-center gap-2.5 text-danger-500 text-xs font-semibold">
               <Info className="h-4.5 w-4.5 shrink-0" />
               <span>{profileError.message}</span>
             </div>
@@ -2650,6 +2650,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="zenith-field-label">Estado</label>
+                      {isEditingProfile ? (
                         <div className={profileError?.field === 'deliveryState' ? 'rounded-xl ring-1 ring-danger-500 border-danger-500' : ''}>
                           <VenezuelanStateSelect
                             value={profileDraft.deliveryState}
