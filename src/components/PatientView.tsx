@@ -2376,7 +2376,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         </p>
                       </div>
                       <span className="block text-xs text-surface-300">
-                        Sucursal: <strong>{selectedBranchMeta?.label || selectedBranch}</strong>
+                        Sucursal: <strong>Sede Principal</strong>
                       </span>
                     </div>
                   </div>
@@ -2823,11 +2823,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         open={isCredentialModalOpen}
         onClose={() => setIsCredentialModalOpen(false)}
         description=""
-        displayName=""
+        displayName={patientName || ""}
         credentialLine={undefined}
         modalTitle={null}
         qrImage={qrImage}
-        qrToken={qrToken}
+        qrToken={patientId || qrToken}
         qrSecondsLeft={qrSecondsLeft}
         onRefresh={() => {
           handleRefreshQR();

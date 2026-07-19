@@ -181,11 +181,9 @@ export function CredentialQrModal({
   const modalTitleToUse = modalTitle === null ? undefined : modalTitle ?? 'Credencial QR Dinámica';
 
   const formatExpiry = (secs: number) => {
-    if (secs >= 60) {
-      const mins = Math.ceil(secs / 60);
-      return `${mins} minutos`;
-    }
-    return `${secs}s`;
+    const m = Math.floor(secs / 60);
+    const s = (secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
   };
 
   return (
@@ -214,7 +212,7 @@ export function CredentialQrModal({
             {credentialLine ? (
               <p className="text-[10px] font-mono text-surface-600">{credentialLine}</p>
             ) : null}
-            <span className="text-xs font-mono font-bold text-[#0a1220] tracking-wider block">TOKEN: {qrToken}</span>
+            <span className="text-xs font-mono font-bold text-[#0a1220] tracking-wider block uppercase">ID PACIENTE: {qrToken}</span>
             <p className="text-[10px] text-surface-600 font-medium">Vence en <span className="text-secondary-600 font-bold">{formatExpiry(qrSecondsLeft)}</span></p>
           </div>
         </div>

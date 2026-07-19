@@ -33,7 +33,7 @@ function PagoMockContent() {
       const response = await apiClient.post('/pagos/mock/decision', { recipeId, decision });
       setMessage(response.data?.message || 'Decisión procesada correctamente.');
       setTimeout(() => {
-        router.push('/');
+        router.push(`/delivery-method?recipeId=${recipeId}`);
       }, 1200);
     } catch (requestError: unknown) {
       setError(
