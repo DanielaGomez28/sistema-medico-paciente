@@ -70,36 +70,6 @@ export function useCredentialQr(tokenPrefix: string, initialSuffix: string) {
 }
 
 /**
- * Componente SVG que simula la apariencia de un código QR a nivel decorativo.
- * Adaptado a los colores de la aplicación.
- *
- * @returns {JSX.Element} SVG de un QR abstracto.
- */
-export function CredentialQrSvg() {
-  return (
-    <svg viewBox="0 0 100 100" className="w-56 h-56 sm:w-64 sm:h-64 md:w-72 md:h-72 text-[#0a1220]">
-      <rect x="0" y="0" width="20" height="20" fill="currentColor" />
-      <rect x="5" y="5" width="10" height="10" fill="white" />
-      <rect x="80" y="0" width="20" height="20" fill="currentColor" />
-      <rect x="85" y="5" width="10" height="10" fill="white" />
-      <rect x="0" y="80" width="20" height="20" fill="currentColor" />
-      <rect x="5" y="85" width="10" height="10" fill="white" />
-      <rect x="30" y="10" width="10" height="5" fill="currentColor" />
-      <rect x="45" y="5" width="5" height="15" fill="currentColor" />
-      <rect x="60" y="0" width="10" height="10" fill="currentColor" />
-      <rect x="35" y="30" width="15" height="10" fill="currentColor" />
-      <rect x="10" y="35" width="10" height="15" fill="currentColor" />
-      <rect x="55" y="45" width="20" height="5" fill="currentColor" />
-      <rect x="30" y="60" width="15" height="15" fill="currentColor" />
-      <rect x="80" y="30" width="10" height="20" fill="currentColor" />
-      <rect x="75" y="60" width="15" height="10" fill="currentColor" />
-      <rect x="50" y="80" width="25" height="15" fill="currentColor" />
-      <rect x="85" y="85" width="10" height="10" fill="white" />
-    </svg>
-  );
-}
-
-/**
  * Botón auxiliar para renderizar en el sidebar (`sidebarExtra`) que dispara la apertura
  * del modal de la credencial QR. Cierra el menú lateral automáticamente en vista móvil.
  *
@@ -205,7 +175,9 @@ export function CredentialQrModal({
               />
             </div>
           ) : (
-            <CredentialQrSvg />
+            <div className="h-[240px] w-[240px] flex items-center justify-center">
+              <span className="text-xs text-surface-400 animate-pulse">Generando QR...</span>
+            </div>
           )}
           <div className="mt-3 text-center space-y-1">
             {displayName ? <p className="text-sm font-bold text-[#0a1220]">{displayName}</p> : null}

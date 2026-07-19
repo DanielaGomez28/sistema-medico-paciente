@@ -23,7 +23,7 @@ function PagoMockContent() {
 
   const handleDecision = async (decision: 'pay' | 'cancel') => {
     if (!recipeId) {
-      setError('No se recibi? una receta válida para procesar el pago.');
+      setError('No se recibió una receta válida para procesar el pago.');
       return;
     }
 
