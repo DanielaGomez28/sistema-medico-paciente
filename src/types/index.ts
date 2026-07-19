@@ -1,6 +1,6 @@
 /**
  * @fileoverview Tipos compartidos de index.
- * @description Expone contratos de tipado reutilizados en los distintos m?dulos del frontend.
+ * @description Expone contratos de tipado reutilizados en los distintos módulos del frontend.
  */
 /**
  * Representa un producto o medicamento dentro del catálogo del sistema.

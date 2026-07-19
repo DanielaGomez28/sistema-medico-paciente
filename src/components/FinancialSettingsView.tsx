@@ -2,7 +2,7 @@
 
 /**
  * @fileoverview Componente financial settings view.
- * @description Administra la pol?tica financiera y la auditor?a real sincronizada con backend.
+ * @description Administra la política financiera y la auditoría real sincronizada con backend.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -59,7 +59,7 @@ export default function FinancialSettingsView() {
           setBackendError(
             apiError.response?.data?.error ||
               apiError.response?.data?.details ||
-              'No se pudo cargar la configuraci?n financiera real.'
+              'No se pudo cargar la configuración financiera real.'
           );
         }
       } finally {
@@ -96,7 +96,7 @@ export default function FinancialSettingsView() {
       setBackendError(
         apiError.response?.data?.error ||
           apiError.response?.data?.details ||
-          'No se pudo actualizar la comisi?n global.'
+          'No se pudo actualizar la comisión global.'
       );
     } finally {
       setLoadingConfig(false);
@@ -109,7 +109,7 @@ export default function FinancialSettingsView() {
       id: entry.id,
       actor: entry.actorUserId,
       timestamp: new Date(entry.createdAt).toLocaleString('es-ES'),
-      action: 'Actualizaci?n de comisi?n base',
+      action: 'Actualización de comisión base',
       previousValue: commissionChange?.previous ?? 'N/A',
       newValue: commissionChange?.next ?? 'N/A',
     };
@@ -136,19 +136,19 @@ export default function FinancialSettingsView() {
       {saveSuccess ? (
         <div className="p-4 bg-surface-800 border border-surface-700 rounded-2xl flex items-center gap-2.5 text-surface-200 text-xs">
           <CheckCircle className="h-4.5 w-4.5 shrink-0" />
-          <span>Pol?tica financiera sincronizada con el backend.</span>
+          <span>Política financiera sincronizada con el backend.</span>
         </div>
       ) : null}
 
       <form onSubmit={handleUpdate} className="w-full bg-surface-900 border border-surface-800 rounded-3xl p-6 space-y-5">
         <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
           <Percent className="h-4.5 w-4.5 text-surface-400" />
-          <h3 className="zenith-section-title">Comisi?n base real del sistema</h3>
+          <h3 className="zenith-section-title">Comisión base real del sistema</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-1.5">
-            <label className="zenith-field-label">Comisi?n del m?dico (%)</label>
+            <label className="zenith-field-label">Comisión del médico (%)</label>
             <div className="relative">
               <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-550 font-bold text-xs">%</div>
               <input
@@ -172,7 +172,7 @@ export default function FinancialSettingsView() {
         <div className="flex justify-end pt-2 border-t border-surface-850">
           <Button type="submit" className="w-full sm:w-auto" disabled={loadingConfig}>
             <Save className="h-4 w-4" />
-            Actualizar pol?tica financiera
+            Actualizar política financiera
           </Button>
         </div>
       </form>
@@ -181,7 +181,7 @@ export default function FinancialSettingsView() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
           <div>
             <h3 className="zenith-section-title">Historial real de cambios</h3>
-            <p className="text-xs text-surface-400 mt-0.5">Bit?cora administrativa le?da desde el backend.</p>
+            <p className="text-xs text-surface-400 mt-0.5">Bitácora administrativa leída desde el backend.</p>
           </div>
           <button type="button" onClick={() => setIsAuditLogOpen(false)} className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors cursor-pointer" aria-label="Cerrar">
             <X className="h-4 w-4" />
@@ -202,7 +202,7 @@ export default function FinancialSettingsView() {
                 ]}
               />
             ))}
-            {!auditRows.length ? <div className="text-xs text-surface-500">No hay auditor?a financiera registrada.</div> : null}
+            {!auditRows.length ? <div className="text-xs text-surface-500">No hay auditoría financiera registrada.</div> : null}
           </div>
           <div className="zenith-table-wrap hidden lg:block">
             <table className="zenith-table text-xs">
@@ -211,7 +211,7 @@ export default function FinancialSettingsView() {
                   <th className="pb-2.5">ID</th>
                   <th>Fecha/Hora</th>
                   <th>Actor</th>
-                  <th>Acci?n</th>
+                  <th>Acción</th>
                   <th>Anterior</th>
                   <th>Nuevo</th>
                 </tr>
@@ -229,7 +229,7 @@ export default function FinancialSettingsView() {
                 ))}
               </tbody>
             </table>
-            {!auditRows.length ? <div className="pt-4 text-xs text-surface-500">No hay auditor?a financiera registrada.</div> : null}
+            {!auditRows.length ? <div className="pt-4 text-xs text-surface-500">No hay auditoría financiera registrada.</div> : null}
           </div>
         </ModalBody>
       </Modal>

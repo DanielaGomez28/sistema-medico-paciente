@@ -1,6 +1,6 @@
 /**
  * @fileoverview Componente de layout nav item.
- * @description Resuelve la estructura visual reutilizable del portal y su navegaci?n principal.
+ * @description Resuelve la estructura visual reutilizable del portal y su navegación principal.
  */
 import { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';

@@ -2,7 +2,7 @@
 
 /**
  * @fileoverview Pasarela temporal de pago mock.
- * @description Permite simular una decisi?n de pago sin acoplar el flujo principal a un proveedor definitivo.
+ * @description Permite simular una decisión de pago sin acoplar el flujo principal a un proveedor definitivo.
  */
 
 import { Suspense, useMemo, useState } from 'react';
@@ -23,7 +23,7 @@ function PagoMockContent() {
 
   const handleDecision = async (decision: 'pay' | 'cancel') => {
     if (!recipeId) {
-      setError('No se recibi? una receta v?lida para procesar el pago.');
+      setError('No se recibi? una receta válida para procesar el pago.');
       return;
     }
 
@@ -31,7 +31,7 @@ function PagoMockContent() {
       setLoading(decision);
       setError('');
       const response = await apiClient.post('/pagos/mock/decision', { recipeId, decision });
-      setMessage(response.data?.message || 'Decisi?n procesada correctamente.');
+      setMessage(response.data?.message || 'Decisión procesada correctamente.');
       setTimeout(() => {
         router.push('/');
       }, 1200);
@@ -39,7 +39,7 @@ function PagoMockContent() {
       setError(
         (requestError as { response?: { data?: { error?: string; details?: string } } })?.response?.data?.error ||
           (requestError as { response?: { data?: { error?: string; details?: string } } })?.response?.data?.details ||
-          'No se pudo procesar la decisi?n en la pasarela temporal.'
+          'No se pudo procesar la decisión en la pasarela temporal.'
       );
     } finally {
       setLoading('');
@@ -55,7 +55,7 @@ function PagoMockContent() {
       </div>
 
       <div className="rounded-2xl border border-surface-800 bg-surface-950/70 p-4 text-sm text-surface-300">
-        Esta pantalla simula una pasarela externa sin acoplar la l?gica del SMP a un proveedor definitivo.
+        Esta pantalla simula una pasarela externa sin acoplar la lógica del SMP a un proveedor definitivo.
       </div>
 
       {message ? <div className="rounded-xl border border-secondary-500/30 bg-secondary-500/10 px-4 py-3 text-sm text-secondary-300">{message}</div> : null}
@@ -95,7 +95,7 @@ export default function PagoMockPage() {
           <div className="w-full max-w-lg rounded-3xl border border-surface-800 bg-surface-900/80 p-8 space-y-4 text-center">
             <p className="text-xs uppercase tracking-[0.2em] text-surface-500 font-bold">Pasarela temporal</p>
             <h1 className="text-2xl font-bold">Confirmar pago</h1>
-            <p className="text-sm text-surface-400">Cargando informaci?n de la receta...</p>
+            <p className="text-sm text-surface-400">Cargando información de la receta...</p>
           </div>
         }
       >

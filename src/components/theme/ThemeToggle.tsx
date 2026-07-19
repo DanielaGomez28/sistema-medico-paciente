@@ -2,7 +2,7 @@
 
 /**
  * @fileoverview Componente de tema theme toggle.
- * @description Gestiona apariencia, persistencia y sincronizaci?n del tema visual del frontend.
+ * @description Gestiona apariencia, persistencia y sincronización del tema visual del frontend.
  */
 
 import React from 'react';

@@ -2,7 +2,7 @@
 
 /**
  * @fileoverview Punto de entrada del frontend SMP Farmahumana.
- * @description Orquesta la sesi?n, el portal activo y la composici?n principal de vistas del cliente.
+ * @description Orquesta la sesión, el portal activo y la composición principal de vistas del cliente.
  */
 
 import { useEffect, useState } from 'react';
@@ -159,7 +159,7 @@ function getPlatformTermsAcceptanceStorageKey(user: AuthenticatedUser) {
 export default function Home() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isHydrated, setIsHydrated] = useState(false);
-  // Master state del usuario con el nombre din?mico incluido
+  // Master state del usuario con el nombre dinámico incluido
   const [currentUser, setCurrentUser] = useState<AuthenticatedUser | null>(() => {
     if (typeof window === 'undefined') return null;
 

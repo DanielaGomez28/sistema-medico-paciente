@@ -1,6 +1,6 @@
 /**
  * @fileoverview Datos de soporte mock data.
- * @description Centraliza semillas, cat?logos o estructuras temporales consumidas por la interfaz.
+ * @description Centraliza semillas, catálogos o estructuras temporales consumidas por la interfaz.
  */
 import { Product, Customer, Order } from '../types';
 
@@ -357,22 +357,22 @@ export interface DoctorRecipeLogSeed {
  * Coleccion de medicos de prueba centralizada para el dashboard.
  */
 export const DASHBOARD_DOCTOR_RECORDS: DashboardDoctorRecord[] = [
-  { id: 'MED-101', name: 'Dr. Alejandro R?os', specialty: 'Cardiolog?a', license: 'MPPS 28.490 ? CMDC-12.458', recipesCount: 120, commissionsEarned: 1450.80, status: 'Activo' },
+  { id: 'MED-101', name: 'Dr. Alejandro Ríos', specialty: 'Cardiología', license: 'MPPS 28.490 ? CMDC-12.458', recipesCount: 120, commissionsEarned: 1450.80, status: 'Activo' },
   { id: 'MED-102', name: 'Dra. Elena Vargas', specialty: 'Medicina General', license: 'MPPS 49.321 ? CMV-08.912', recipesCount: 85, commissionsEarned: 980.50, status: 'Activo' },
-  { id: 'MED-103', name: 'Dr. Juan P?rez', specialty: 'Pediatr?a', license: 'MPPS 10.293 ? CMC-05.441', recipesCount: 42, commissionsEarned: 320.00, status: 'Activo' },
-  { id: 'MED-104', name: 'Dra. Patricia G?mez', specialty: 'Endocrinolog?a', license: 'MPPS 22.810 ? CMDC-09.104', recipesCount: 68, commissionsEarned: 740.20, status: 'Activo' },
-  { id: 'MED-105', name: 'Dr. Roberto S?nchez', specialty: 'Dermatolog?a', license: 'MPPS 19.340 ? CMM-03.287', recipesCount: 15, commissionsEarned: 110.00, status: 'Inactivo' },
+  { id: 'MED-103', name: 'Dr. Juan Pérez', specialty: 'Pediatría', license: 'MPPS 10.293 ? CMC-05.441', recipesCount: 42, commissionsEarned: 320.00, status: 'Activo' },
+  { id: 'MED-104', name: 'Dra. Patricia Gómez', specialty: 'Endocrinología', license: 'MPPS 22.810 ? CMDC-09.104', recipesCount: 68, commissionsEarned: 740.20, status: 'Activo' },
+  { id: 'MED-105', name: 'Dr. Roberto Sánchez', specialty: 'Dermatología', license: 'MPPS 19.340 ? CMM-03.287', recipesCount: 15, commissionsEarned: 110.00, status: 'Inactivo' },
 ];
 
 /**
  * Coleccion de pacientes de prueba centralizada para el dashboard.
  */
 export const DASHBOARD_PATIENT_RECORDS: DashboardPatientRecord[] = [
-  { id: 'PX-992-8849', name: 'Sof?a Peralta', age: 28, condition: 'Hipertensi?n Arterial Leve', lastRecipeDate: '08 Jun, 2026', withdrawalStatus: 'Listo para retirar' },
+  { id: 'PX-992-8849', name: 'Sofía Peralta', age: 28, condition: 'Hipertensión Arterial Leve', lastRecipeDate: '08 Jun, 2026', withdrawalStatus: 'Listo para retirar' },
   { id: 'PX-992-1029', name: 'Carlos Mendoza', age: 45, condition: 'Diabetes Tipo 2 (Controlada)', lastRecipeDate: '05 Jun, 2026', withdrawalStatus: 'Retirado' },
-  { id: 'PX-992-0344', name: 'Ana G?mez Rom?n', age: 34, condition: 'Ninguna (Chequeo anual)', lastRecipeDate: '01 Jun, 2026', withdrawalStatus: 'Retirado' },
-  { id: 'PX-992-0811', name: 'Luis Rodr?guez Silva', age: 52, condition: 'Chequeo de Presi?n Arterial', lastRecipeDate: '28 May, 2026', withdrawalStatus: 'Pendiente por retirar' },
-  { id: 'PX-992-4112', name: 'David Ortiz Alarc?n', age: 39, condition: 'Hipotiroidismo Cr?nico', lastRecipeDate: '15 May, 2026', withdrawalStatus: 'Retirado' },
+  { id: 'PX-992-0344', name: 'Ana Gómez Román', age: 34, condition: 'Ninguna (Chequeo anual)', lastRecipeDate: '01 Jun, 2026', withdrawalStatus: 'Retirado' },
+  { id: 'PX-992-0811', name: 'Luis Rodríguez Silva', age: 52, condition: 'Chequeo de Presión Arterial', lastRecipeDate: '28 May, 2026', withdrawalStatus: 'Pendiente por retirar' },
+  { id: 'PX-992-4112', name: 'David Ortiz Alarcón', age: 39, condition: 'Hipotiroidismo Crónico', lastRecipeDate: '15 May, 2026', withdrawalStatus: 'Retirado' },
 ];
 
 /**
@@ -383,7 +383,7 @@ export const DASHBOARD_STOCK_MOVEMENTS: DashboardStockMovement[] = [
   { id: 'MOV-103', medication: 'Metformina 850mg', type: 'Salida', quantity: 60, date: '05 Jun, 2026', sourceDest: 'Farmacia Central Valencia' },
   { id: 'MOV-102', medication: 'Atorvastatina 20mg', type: 'Salida', quantity: 30, date: '01 Jun, 2026', sourceDest: 'Farmacia Maracaibo' },
   { id: 'MOV-101', medication: 'Ibuprofeno 600mg', type: 'Entrada', quantity: 500, date: '29 May, 2026', sourceDest: 'Laboratorio Proveedor S.A.' },
-  { id: 'MOV-100', medication: 'Amoxicilina 875mg', type: 'Entrada', quantity: 200, date: '25 May, 2026', sourceDest: 'Droguer?a M?dica S.A.' },
+  { id: 'MOV-100', medication: 'Amoxicilina 875mg', type: 'Entrada', quantity: 200, date: '25 May, 2026', sourceDest: 'Droguería Médica S.A.' },
 ];
 
 /**
@@ -393,12 +393,12 @@ export const DOCTOR_LINKED_PATIENT_SEEDS: DoctorLinkedPatientSeed[] = [
   {
     systemId: 'patient_sofia_peralta',
     patientId: 'V-28450123',
-    name: 'Sof?a Peralta',
+    name: 'Sofía Peralta',
     age: 28,
     gender: 'Femenino',
     bloodType: 'O+',
     phone: '+58 412 600 1234',
-    condition: 'Hipertensi?n Arterial Leve',
+    condition: 'Hipertensión Arterial Leve',
     allergies: 'Penicilina',
     lastVisit: '08 Jun, 2026',
     medications: ['Ramipril 5mg', 'Aspirina 100mg'],
@@ -419,7 +419,7 @@ export const DOCTOR_LINKED_PATIENT_SEEDS: DoctorLinkedPatientSeed[] = [
   {
     systemId: 'patient_ana_martinez',
     patientId: 'V-22341567',
-    name: 'Ana G?mez Rom?n',
+    name: 'Ana Gómez Román',
     age: 34,
     gender: 'Femenino',
     bloodType: 'B+',
@@ -432,12 +432,12 @@ export const DOCTOR_LINKED_PATIENT_SEEDS: DoctorLinkedPatientSeed[] = [
   {
     systemId: 'patient_luis_rodriguez',
     patientId: 'V-18765432',
-    name: 'Luis Rodr?guez Silva',
+    name: 'Luis Rodríguez Silva',
     age: 52,
     gender: 'Masculino',
     bloodType: 'O-',
     phone: '+58 416 622 3344',
-    condition: 'Hipertensi?n controlada',
+    condition: 'Hipertensión controlada',
     allergies: 'Sulfonamidas',
     lastVisit: '28 May, 2026',
     medications: ['Ibuprofeno 600mg'],
@@ -448,21 +448,21 @@ export const DOCTOR_LINKED_PATIENT_SEEDS: DoctorLinkedPatientSeed[] = [
  * Comisiones de prueba centralizadas para el portal medico.
  */
 export const DOCTOR_COMMISSION_SEEDS: DoctorCommissionSeed[] = [
-  { id: 'COM-2026-041', date: '08 Jun, 2026', patientName: 'Sof?a Peralta', medication: 'Ramipril 5mg + Aspirina 100mg', saleAmount: 18.50, commissionRate: 8, commissionAmount: 1.48, status: 'Acreditado' },
+  { id: 'COM-2026-041', date: '08 Jun, 2026', patientName: 'Sofía Peralta', medication: 'Ramipril 5mg + Aspirina 100mg', saleAmount: 18.50, commissionRate: 8, commissionAmount: 1.48, status: 'Acreditado' },
   { id: 'COM-2026-038', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', medication: 'Metformina 850mg', saleAmount: 9.80, commissionRate: 8, commissionAmount: 0.78, status: 'Acreditado' },
-  { id: 'COM-2026-031', date: '01 Jun, 2026', patientName: 'Ana G?mez Rom?n', medication: 'Atorvastatina 20mg', saleAmount: 15.40, commissionRate: 8, commissionAmount: 1.23, status: 'Acreditado' },
-  { id: 'COM-2026-029', date: '28 May, 2026', patientName: 'Luis Rodr?guez Silva', medication: 'Ibuprofeno 600mg', saleAmount: 4.50, commissionRate: 8, commissionAmount: 0.36, status: 'Pendiente' },
-  { id: 'COM-2026-022', date: '20 May, 2026', patientName: 'Sof?a Peralta', medication: 'Aspirina 100mg', saleAmount: 6.00, commissionRate: 8, commissionAmount: 0.48, status: 'Acreditado' },
+  { id: 'COM-2026-031', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', medication: 'Atorvastatina 20mg', saleAmount: 15.40, commissionRate: 8, commissionAmount: 1.23, status: 'Acreditado' },
+  { id: 'COM-2026-029', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', medication: 'Ibuprofeno 600mg', saleAmount: 4.50, commissionRate: 8, commissionAmount: 0.36, status: 'Pendiente' },
+  { id: 'COM-2026-022', date: '20 May, 2026', patientName: 'Sofía Peralta', medication: 'Aspirina 100mg', saleAmount: 6.00, commissionRate: 8, commissionAmount: 0.48, status: 'Acreditado' },
 ];
 
 /**
  * Bitacora de recipes de prueba centralizada para el portal medico.
  */
 export const DOCTOR_RECIPE_LOG_SEEDS: DoctorRecipeLogSeed[] = [
-  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sof?a Peralta', patientId: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmacia Caracas', status: 'Confirmado' },
+  { id: 'REC-2026-904', date: '08 Jun, 2026', patientName: 'Sofía Peralta', patientId: 'V-28450123', medications: ['Ramipril 5mg', 'Aspirina 100mg'], branch: 'Farmacia Caracas', status: 'Confirmado' },
   { id: 'REC-2026-901', date: '05 Jun, 2026', patientName: 'Carlos Mendoza', patientId: 'V-15234891', medications: ['Metformina 850mg'], branch: 'Farmacia Central Valencia', status: 'Retirado' },
-  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana G?mez Rom?n', patientId: 'V-22341567', medications: ['Atorvastatina 20mg'], branch: 'Farmacia Maracaibo', status: 'Retirado' },
-  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodr?guez Silva', patientId: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Farmacia Central Caracas', status: 'Enviado' },
+  { id: 'REC-2026-887', date: '01 Jun, 2026', patientName: 'Ana Gómez Román', patientId: 'V-22341567', medications: ['Atorvastatina 20mg'], branch: 'Farmacia Maracaibo', status: 'Retirado' },
+  { id: 'REC-2026-881', date: '28 May, 2026', patientName: 'Luis Rodríguez Silva', patientId: 'V-18765432', medications: ['Ibuprofeno 600mg'], branch: 'Farmacia Central Caracas', status: 'Enviado' },
 ];
 
 

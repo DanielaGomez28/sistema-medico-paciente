@@ -236,7 +236,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
               <p className="text-xs text-surface-400">Estados clínicos y comerciales sincronizados con backend.</p>
             </div>
             <Button variant="outline" size="sm" onClick={() => onNavigate('doctors')}>
-              Gestión m?dica
+              Gestión médica
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -256,7 +256,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
                 <p className="text-[10px] text-surface-500">Emitido {new Date(recipe.createdAt).toLocaleDateString('es-ES')} ? Caduca {new Date(recipe.recipeExpiresAt).toLocaleDateString('es-ES')}</p>
               </div>
             ))}
-            {!recipes.length ? <div className="text-xs text-surface-500">No hay recipes emitidos todav?a.</div> : null}
+            {!recipes.length ? <div className="text-xs text-surface-500">No hay recipes emitidos todavía.</div> : null}
           </div>
         </div>
 
@@ -269,7 +269,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
             {recentRecipes.map((recipe) => (
               <div key={`recent-${recipe.recipeId}`} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3 space-y-1">
                 <p className="text-xs font-semibold text-white">{recipe.recipeId}</p>
-                <p className="text-[10px] text-surface-500">Paciente: {recipe.patientName || 'Paciente'} ? M?dico: {recipe.doctorName || 'Sin médico visible'}</p>
+                <p className="text-[10px] text-surface-500">Paciente: {recipe.patientName || 'Paciente'} ? Médico: {recipe.doctorName || 'Sin médico visible'}</p>
                 <p className="text-[10px] text-surface-400">{Array.isArray(recipe.items) ? recipe.items.map((item) => item.nombre).slice(0, 2).join(', ') : 'Sin items visibles'}</p>
               </div>
             ))}

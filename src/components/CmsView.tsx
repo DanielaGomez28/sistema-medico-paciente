@@ -231,7 +231,7 @@ export default function CmsView() {
           <section className="zenith-panel space-y-5">
             <div>
               <h3 className="zenith-section-title">Textos legales</h3>
-              <p className="text-xs text-surface-500 mt-0.5">Sincronizados con la configuraci?n global del sistema.</p>
+              <p className="text-xs text-surface-500 mt-0.5">Sincronizados con la configuración global del sistema.</p>
             </div>
 
             <div className="space-y-1.5">

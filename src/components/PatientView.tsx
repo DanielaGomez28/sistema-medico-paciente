@@ -419,8 +419,8 @@ const buildTreatmentsFromTracking = (
         id: buildTreatmentId(profile.recipeId, item.id_producto),
         productId: item.id_producto,
         name: item.nombre,
-        dosage: prescriptionItem?.dosis || 'Seguir indicaciones m?dicas',
-        frequency: item.averageDailyConsumption > 0 ? `${item.averageDailyConsumption.toFixed(2)} dosis/d?a` : 'Seguimiento activo',
+        dosage: prescriptionItem?.dosis || 'Seguir indicaciones médicas',
+        frequency: item.averageDailyConsumption > 0 ? `${item.averageDailyConsumption.toFixed(2)} dosis/día` : 'Seguimiento activo',
         scheduleTimes: buildScheduleTimes(Number(prescriptionItem?.daily_doses || 1)),
         startDate: formatRecipeDate(recipe?.createdAt || new Date().toISOString()),
         endDate: formatRecipeDate(recipe?.recipeExpiresAt || new Date().toISOString()),
@@ -430,7 +430,7 @@ const buildTreatmentsFromTracking = (
         totalDoses,
         takenDoses,
         status: item.availableDoses <= 0 ? 'Completado' : 'En curso',
-        instructions: prescriptionItem?.dosis || 'Seguir indicaciones m?dicas.',
+        instructions: prescriptionItem?.dosis || 'Seguir indicaciones médicas.',
       };
     });
   });
@@ -459,10 +459,10 @@ const buildTreatmentAlertsFromTracking = (profiles: BackendTrackingProfile[], pr
       .map((item) => ({
         id: `refill-${profile.recipeId}-${item.id_producto}`,
         type: 'recordatorio' as const,
-        title: `Reposici?n sugerida para ${item.nombre}`,
+        title: `Reposición sugerida para ${item.nombre}`,
         message: item.estimatedDaysRemaining !== null
-          ? `Quedan aproximadamente ${item.estimatedDaysRemaining} d?as de tratamiento disponibles.`
-          : 'El tratamiento est? activo y requiere seguimiento de reposici?n.',
+          ? `Quedan aproximadamente ${item.estimatedDaysRemaining} días de tratamiento disponibles.`
+          : 'El tratamiento est? activo y requiere seguimiento de reposición.',
         date: formatDoseDateLabel(item.lastAlertAt || new Date().toISOString()),
       }))
   );
@@ -477,8 +477,8 @@ const buildTreatmentAlertsFromTracking = (profiles: BackendTrackingProfile[], pr
     .map((prescription) => ({
       id: `renewal-${prescription.recipeId}`,
       type: 'renovacion' as const,
-      title: `Renovaci?n de receta ${prescription.recipeId}`,
-      message: `La receta vence el ${formatRecipeDate(prescription.recipeExpiresAt || new Date().toISOString())}. Solicite renovaci?n con anticipaci?n.`,
+      title: `Renovación de receta ${prescription.recipeId}`,
+      message: `La receta vence el ${formatRecipeDate(prescription.recipeExpiresAt || new Date().toISOString())}. Solicite renovación con anticipación.`,
       date: formatRecipeDate(prescription.recipeExpiresAt || new Date().toISOString()),
     }));
 
@@ -512,8 +512,8 @@ const deriveOrderDeliveryStatus = (
  * @returns {JSX.Element}
  */
 export default function PatientView({ patientName, patientEmail, patientId, socketIdentity, onLogout }: PatientViewProps) {
-  // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'
-  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'profile'>('treatment');
+  // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile'
+  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile'>('treatment');
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [backendPrescriptions, setBackendPrescriptions] = useState<BackendPrescription[]>([]);
@@ -622,6 +622,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     () => deriveOrderDeliveryStatus(checkoutSession, activeCheckoutPrescription),
     [activeCheckoutPrescription, checkoutSession]
   );
+  const hasActiveCartReserve = Boolean(
+    checkoutSession?.order?.status === 'checkout_pending' && paymentTimeLeft > 0
+  );
+  const proposalStatusMessage =
+    !checkoutError && activeSubTab === 'proposals' && activeCheckoutPrescription && !hasActiveCartReserve
+      ? 'Expir? la reserva del carrito.'
+      : '';
 
   // Voucher info
   const voucherId =
@@ -783,7 +790,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       
       console.log(`?? Registrando paciente en Socket local con ID interno: ${targetPatientId}`);
       
-      // Enviamos la petici?n unificada que tu server.js espera
+      // Enviamos la petición unificada que tu server.js espera
       socket.emit('identifyUser', { 
         userId: targetPatientId, 
         role: 'patient', 
@@ -1003,7 +1010,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     if (nextSession?.order?.status === 'payment_confirmed') {
       if (moveToVoucher) {
-        setActiveSubTab('voucher');
+        setActiveSubTab('delivery');
       }
     }
   };
@@ -1149,7 +1156,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     const timeout = setTimeout(() => {
       setCheckoutError('La reserva de inventario expir?. Debe recrear el checkout desde la propuesta.');
-      setPaymentStatusMessage('La reserva venci? antes de recibir confirmaci?n de pago.');
+      setPaymentStatusMessage('La reserva venci? antes de recibir confirmación de pago.');
       setActiveSubTab('proposals');
       setCheckoutSession((current) =>
         current
@@ -1191,6 +1198,54 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     return () => clearInterval(interval);
   }, [activeSubTab, checkoutSession?.order?.recipeId, checkoutSession?.order?.status]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const paymentResult = params.get('paymentResult');
+    const returnedRecipeId = params.get('recipeId');
+
+    if (!paymentResult || !returnedRecipeId) {
+      return;
+    }
+
+    const validateReturnedPayment = async () => {
+      try {
+        setCheckoutLoading(true);
+        setCheckoutError('');
+        const session = await fetchCheckoutSession(returnedRecipeId);
+        applyCheckoutSession(session, session.order.status === 'payment_confirmed');
+        setActiveCheckoutRecipeId(returnedRecipeId);
+
+        if (paymentResult === 'paid' && session.order.status === 'payment_confirmed') {
+          setPaymentStatusMessage('Compra validada correctamente. El pedido queda listo para continuar con el proceso de delivery.');
+          setActiveSubTab('delivery');
+        } else if (paymentResult === 'cancelled') {
+          setPaymentStatusMessage('Pago cancelado. La reserva fue liberada y podés recrear el carrito si aún hay disponibilidad.');
+          setActiveSubTab('proposals');
+        } else {
+          setCheckoutError('No se pudo validar la compra finalizada. Actualizá el estado para reintentar.');
+          setActiveSubTab('payment');
+        }
+      } catch (error: unknown) {
+        const apiError = error as ApiErrorPayload;
+        setCheckoutError(
+          apiError.response?.data?.error ||
+          apiError.response?.data?.details ||
+          'No se pudo validar el resultado de la pasarela.'
+        );
+        setActiveSubTab('payment');
+      } finally {
+        setCheckoutLoading(false);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    };
+
+    void validateReturnedPayment();
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -1267,10 +1322,17 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       setActiveSubTab('payment');
     } catch (error: unknown) {
       const apiError = error as ApiErrorPayload;
-      setCheckoutError(
-        apiError.response?.data?.error ||
+      const backendMessage =
         apiError.response?.data?.details ||
-        'No se pudo iniciar la reserva de inventario para la receta seleccionada.'
+        apiError.response?.data?.error ||
+        '';
+      const inventoryUnavailable = /insuficiente|agotad|sin stock|sin inventario|reserva/i.test(backendMessage);
+      setCheckoutError(
+        inventoryUnavailable
+          ? 'Se agotaron las reservas. Se har? restock pronto.'
+          : apiError.response?.data?.error ||
+              apiError.response?.data?.details ||
+              'No se pudo iniciar la reserva de inventario para la receta seleccionada.'
       );
     } finally {
       setCheckoutLoading(false);
@@ -1309,7 +1371,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       ? 'recipes'
       : activeSubTab === 'treatment'
         ? 'treatment'
-        : activeSubTab === 'proposals' || activeSubTab === 'payment'
+        : activeSubTab === 'proposals' || activeSubTab === 'payment' || activeSubTab === 'delivery'
           ? 'proposals'
           : 'profile';
 
@@ -1538,7 +1600,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         {recipes.length === 0 && !recipesLoading && (
                           <tr>
                             <td colSpan={5} className="py-6 text-center text-xs text-surface-500">
-                              {recipesError || 'No hay recipes emitidos todav?a para este paciente.'}
+                              {recipesError || 'No hay recipes emitidos todavía para este paciente.'}
                             </td>
                           </tr>
                         )}
@@ -1579,7 +1641,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   <div className="lg:hidden space-y-3">
                     {recipes.length === 0 && !recipesLoading && (
                       <div className="py-6 text-center text-xs text-surface-500">
-                        {recipesError || 'No hay recipes emitidos todav?a para este paciente.'}
+                        {recipesError || 'No hay recipes emitidos todavía para este paciente.'}
                       </div>
                     )}
                     {recipes.map((rec) => (
@@ -1927,7 +1989,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         <History className="h-4 w-4 text-surface-500" />
                         <div>
                           <h3 className="zenith-section-title">Historial de tomas</h3>
-                          <p className="text-xs text-surface-500 mt-1">Revis? las confirmaciones m?s recientes y detect? omisiones o patrones de consumo.</p>
+                          <p className="text-xs text-surface-500 mt-1">Revis? las confirmaciones más recientes y detect? omisiones o patrones de consumo.</p>
                         </div>
                       </div>
 
@@ -2010,6 +2072,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     {checkoutError ? (
                       <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
                         {checkoutError}
+                      </div>
+                    ) : null}
+
+                    {proposalStatusMessage ? (
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                        {proposalStatusMessage}
                       </div>
                     ) : null}
 
@@ -2184,6 +2252,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       </div>
                     ) : null}
 
+                    {proposalStatusMessage ? (
+                      <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                        {proposalStatusMessage}
+                      </div>
+                    ) : null}
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="p-3 bg-surface-950/50 border border-surface-850 rounded-xl space-y-1">
                         <p className="font-semibold text-surface-500">Estado backend</p>
@@ -2259,6 +2333,63 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
                 </div>
 
+              </div>
+            )}
+
+            {/* P.4: DELIVERY / PERSONAL PICKUP SELECTION */}
+            {activeSubTab === 'delivery' && (
+              <div className="max-w-3xl mx-auto py-8 animate-in fade-in zoom-in-95 duration-200">
+                <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 sm:p-8 backdrop-blur-md space-y-6">
+                  <div className="flex items-start gap-4">
+                    <div className="h-12 w-12 rounded-2xl bg-secondary-500/15 border border-secondary-500/30 text-secondary-300 flex items-center justify-center shrink-0">
+                      <Check className="h-6 w-6 stroke-[3]" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-xs uppercase tracking-[0.2em] text-secondary-400 font-bold">Pago validado</p>
+                      <h3 className="zenith-section-title">Servicio de delivery o entrega personal</h3>
+                      <p className="text-xs text-surface-400 max-w-xl">
+                        La compra fue confirmada correctamente. El inventario reservado queda consumido y el pedido pasa a la siguiente etapa operativa.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-primary-500/25 bg-primary-500/5 p-5 space-y-3">
+                      <PackageCheck className="h-6 w-6 text-primary-300" />
+                      <div>
+                        <h4 className="text-sm font-bold text-white">Servicio de delivery</h4>
+                        <p className="text-xs text-surface-400 mt-1">
+                          Próximamente se habilitará la coordinación de despacho, dirección, operador logístico y seguimiento del pedido.
+                        </p>
+                      </div>
+                      <span className="inline-flex rounded-full border border-primary-500/25 bg-primary-500/10 px-2.5 py-1 text-[10px] font-bold text-primary-300">
+                        Próximamente
+                      </span>
+                    </div>
+
+                    <div className="rounded-2xl border border-secondary-500/25 bg-secondary-500/5 p-5 space-y-3">
+                      <Building className="h-6 w-6 text-secondary-300" />
+                      <div>
+                        <h4 className="text-sm font-bold text-white">Entrega personal</h4>
+                        <p className="text-xs text-surface-400 mt-1">
+                          El paciente podrá retirar el pedido presentando su credencial QR vigente y documento de identidad en la sucursal asignada.
+                        </p>
+                      </div>
+                      <span className="block text-xs text-surface-300">
+                        Sucursal: <strong>{selectedBranchMeta?.label || selectedBranch}</strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row justify-end gap-3">
+                    <Button variant="outline" onClick={() => setActiveSubTab('voucher')}>
+                      Ver comprobante
+                    </Button>
+                    <Button variant="patient" onClick={() => setActiveSubTab('recipes')}>
+                      Continuar
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -2433,7 +2564,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   <div className="space-y-6">
                     <div className="space-y-4">
                       <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                        Informaci?n Personal
+                        Información Personal
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2448,7 +2579,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Correo Electr?nico</label>
+                          <label className="zenith-field-label">Correo Electrónico</label>
                           <input
                             type="email"
                             value={patientEmail}
@@ -2457,7 +2588,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Tel?fono M?vil</label>
+                          <label className="zenith-field-label">Teléfono Móvil</label>
                           <input
                             type="tel"
                             value={isEditingProfile ? profileDraft.phone : profilePhone}
@@ -2489,12 +2620,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
                     <div className="space-y-4">
                       <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
-                        Direcci?n Predeterminada de Delivery
+                        Dirección Predeterminada de Delivery
                       </h3>
 
                       <div className="space-y-4">
                         <div className="space-y-1.5">
-                          <label className="zenith-field-label">Direcci?n (Av., Urb., Edif., Piso)</label>
+                          <label className="zenith-field-label">Dirección (Av., Urb., Edif., Piso)</label>
                           <input
                             type="text"
                             value={isEditingProfile ? profileDraft.deliveryAddress : deliveryAddress}

@@ -2,7 +2,7 @@
 
 /**
  * @fileoverview Componente de layout app header.
- * @description Resuelve la estructura visual reutilizable del portal y su navegaci?n principal.
+ * @description Resuelve la estructura visual reutilizable del portal y su navegación principal.
  */
 
 import React from 'react';

@@ -2,7 +2,7 @@
 
 /**
  * @fileoverview Componente de layout shell context.
- * @description Resuelve la estructura visual reutilizable del portal y su navegaci?n principal.
+ * @description Resuelve la estructura visual reutilizable del portal y su navegación principal.
  */
 
 import React, { createContext, useContext } from 'react';

@@ -281,7 +281,7 @@ export default function DoctorsManagerView() {
             <input type="email" value={form.correo} onChange={(e) => handleChange('correo', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required />
           </div>
           <div className="space-y-1">
-            <label className="zenith-field-label">Contrase?a temporal {editingDoctorId ? '(opcional)' : '*'}</label>
+            <label className="zenith-field-label">Contraseña temporal {editingDoctorId ? '(opcional)' : '*'}</label>
             <input type="text" value={form.password} onChange={(e) => handleChange('password', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required={!editingDoctorId} />
           </div>
           <div className="space-y-1">
