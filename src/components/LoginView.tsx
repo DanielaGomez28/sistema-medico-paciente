@@ -166,89 +166,118 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   };
 
   return (
-    <div className="login-view flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="login-view__bg" aria-hidden>
-        {Array.from({ length: 12 }, (_, index) => (
-          <span key={index} className={`login-view__line login-view__line--${index + 1}`} />
-        ))}
-      </div>
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#ffffff] dark:bg-[#0c1322] transition-colors duration-300" style={{ fontFamily: 'var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif' }}>
 
-      <div className="login-view__theme-wrap absolute top-4 right-4 z-20">
-        <ThemeToggle className="login-view__theme-toggle" />
-      </div>
+      {/* Left Panel - Login Card */}
+      <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 md:p-16 relative bg-[#ffffff] dark:bg-[#0c1322]">
+        
+        {/* Theme wrap inside the form panel */}
+        <div className="absolute top-6 right-6 z-20">
+          <ThemeToggle className="shadow-sm border border-gray-100 dark:border-surface-800" />
+        </div>
 
-      <div className="login-view__shell relative z-10 w-full max-w-[420px]">
-        <div className="login-view__card">
-          <div className="login-view__card-icon" aria-hidden>
-            <LogIn className="h-5 w-5" />
+        <div className="w-full max-w-[390px] space-y-7">
+          
+          {/* Form Header */}
+          <div className="text-center">
+            <h1 className="text-[32px] font-extrabold tracking-tight text-gray-900 dark:text-white">
+              Iniciar sesion
+            </h1>
+            <p className="text-base text-gray-400 dark:text-surface-400 mt-2">
+              Ingrese sus datos para acceder al sistema
+            </p>
           </div>
 
-          <h1 className="login-view__title">Iniciar sesion</h1>
-          <p className="login-view__subtitle">Ingrese sus datos para acceder al sistema</p>
+          {/* Alert */}
+          {generalError && (
+            <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 dark:border-red-950/30 bg-red-50/50 dark:bg-red-950/10 px-4 py-3 text-base text-red-600 dark:text-red-400">
+              <AlertCircle className="mt-0.5 h-4.5 w-4.5 shrink-0" />
+              <span>{generalError}</span>
+            </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="login-view__form">
-            {generalError && (
-              <div role="alert" className="login-view__alert mb-4 flex items-start gap-3 rounded-xl border px-4 py-3">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>{generalError}</span>
+          {/* Credentials Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* Email Field */}
+            <div className="space-y-1">
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-400 dark:text-surface-500 pointer-events-none" />
+                <input
+                  id="login-email"
+                  type="text"
+                  name="email"
+                  autoComplete="username"
+                  placeholder="ejemplo@ejemplo.com"
+                  aria-label="Correo electronico"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={cn(
+                    'w-full rounded-xl border border-gray-200 dark:border-surface-850 bg-[#fbfbf9] dark:bg-surface-900/50 py-3.5 pl-12 pr-4 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-surface-500 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
+                    emailError && 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
+                  )}
+                />
               </div>
-            )}
-
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <div className="relative">
-                  <Mail className="login-view__field-icon pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" />
-                  <input
-                    id="login-email"
-                    type="text"
-                    name="email"
-                    autoComplete="username"
-                    placeholder="ejemplo@ejemplo.com"
-                    aria-label="Correo electronico"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={cn('login-view__field w-full rounded-xl border-0 py-3.5 pl-11 pr-4 outline-none transition-shadow', emailError && 'login-view__field--error')}
-                  />
-                </div>
-                {emailError && <p className="login-view__field-error">{emailError}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="relative">
-                  <Lock className="login-view__field-icon pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2" />
-                  <input
-                    id="login-password"
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    autoComplete="current-password"
-                    placeholder="********"
-                    aria-label="Contrasena"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className={cn('login-view__field w-full rounded-xl border-0 py-3.5 pl-11 pr-11 outline-none transition-shadow', passwordError && 'login-view__field--error')}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="login-view__icon-btn absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 transition-colors"
-                    aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
-                    aria-pressed={showPassword}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {passwordError && <p className="login-view__field-error">{passwordError}</p>}
-              </div>
+              {emailError && <p className="text-[15px] text-red-500 pl-1">{emailError}</p>}
             </div>
 
-            <button type="submit" disabled={submitting} className={cn('login-view__submit mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 transition-opacity', submitting && 'cursor-not-allowed opacity-70')}>
-              {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" />Entrando...</>) : 'Ingresar al sistema'}
+            {/* Password Field */}
+            <div className="space-y-1">
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-400 dark:text-surface-500 pointer-events-none" />
+                <input
+                  id="login-password"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  autoComplete="current-password"
+                  placeholder="********"
+                  aria-label="Contrasena"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={cn(
+                    'w-full rounded-xl border border-gray-200 dark:border-surface-850 bg-[#fbfbf9] dark:bg-surface-900/50 py-3.5 pl-12 pr-12 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-surface-500 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
+                    passwordError && 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 dark:text-surface-500 hover:text-gray-600 dark:hover:text-white transition-colors cursor-pointer"
+                  aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+                  aria-pressed={showPassword}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              {passwordError && <p className="text-[15px] text-red-500 pl-1">{passwordError}</p>}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={submitting}
+              className={cn(
+                'mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#13379b] hover:bg-[#0f2c7d] text-white font-bold py-3.5 text-base shadow-md shadow-[#13379b]/25 hover:shadow-lg hover:shadow-[#13379b]/35 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none',
+                submitting && 'opacity-70'
+              )}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Entrando...
+                </>
+              ) : (
+                'Ingresar al sistema'
+              )}
             </button>
           </form>
 
-          <div className="mt-5 border-t border-surface-800 pt-4 space-y-3">
+          {/* Test Accounts Panel */}
+          <div className="pt-4 border-t border-gray-100 dark:border-surface-850 space-y-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-surface-500">Perfiles de prueba</p>
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-gray-400 dark:text-surface-500">
+                Perfiles de prueba
+              </p>
             </div>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {LOGIN_TEST_USERS.map((account) => (
@@ -256,16 +285,26 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   key={account.email}
                   type="button"
                   onClick={() => handleQuickAccessSelect(account.email, account.password)}
-                  className="rounded-xl border border-surface-800 bg-surface-950/80 px-3 py-3 text-left transition-colors hover:border-surface-700 hover:bg-surface-900"
+                  className="rounded-xl border border-gray-100 dark:border-surface-800 bg-[#fbfbf9] dark:bg-surface-900/50 px-3 py-2.5 text-left transition-all hover:border-[#13379b] hover:bg-[#13379b]/5 dark:hover:bg-[#13379b]/10 cursor-pointer"
                 >
-                  <span className="block text-xs font-bold text-white">{LOGIN_TEST_ACCOUNT_LABELS[account.role]}</span>
-                  <span className="mt-1 block text-[11px] text-surface-400 truncate">{account.email}</span>
+                  <span className="block text-sm font-bold text-gray-900 dark:text-white">
+                    {LOGIN_TEST_ACCOUNT_LABELS[account.role]}
+                  </span>
+                  <span className="mt-0.5 block text-[13px] text-gray-400 dark:text-surface-500 truncate">
+                    {account.email}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
+
         </div>
       </div>
+
+      {/* Right Panel - Brand Viewport */}
+      <div className="hidden md:flex md:w-[42%] lg:w-[38%] relative overflow-hidden select-none shrink-0" style={{ background: 'linear-gradient(160deg, #179150 0%, #0a6b75 55%, #13379b 100%)' }}>
+      </div>
+      
     </div>
   );
 }

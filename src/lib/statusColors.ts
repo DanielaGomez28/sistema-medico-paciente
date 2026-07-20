@@ -1,7 +1,3 @@
-/**
- * @fileoverview Utilidad de frontend status colors.
- * @description Agrupa helpers, clientes o transformaciones reutilizadas por los portales del cliente.
- */
 import { OrderStatus } from '../types';
 
 /**
@@ -27,7 +23,7 @@ export const dispatchStatusLabels: Record<OrderStatus, string> = {
   Pendiente: 'Pendiente',
   'En Preparación': 'Preparado',
   Enviado: 'Despachado',
-  Entregado: 'Despachado — Entregado',
+  Entregado: 'Despachado - Entregado',
   Cancelado: 'Cancelado',
 };
 
@@ -112,7 +108,7 @@ export const orderStatusColors: Record<OrderStatus, string> = {
 };
 
 /**
- * Traduce estados de back-end (ingl�s) a espa�ol para la UI.
+ * Traduce estados de back-end (inglés) a español para la UI.
  * @param {string} status - Estado a traducir.
  * @returns {string} Estado traducido.
  */
