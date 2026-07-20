@@ -1525,7 +1525,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 
                 <button
                   type="button"
-                  onClick={() => setActiveTab('agenda')}
+                  onClick={() => {
+                    setLinkedPatient(null);
+                    setActiveTab('agenda');
+                  }}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-400 hover:text-white transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
