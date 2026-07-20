@@ -1527,7 +1527,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                   type="button"
                   onClick={() => {
                     setLinkedPatient(null);
-                    setActiveTab('agenda');
+                    setCart([]);
                   }}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-400 hover:text-white transition-colors cursor-pointer"
                 >
