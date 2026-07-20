@@ -646,6 +646,16 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   // Profile Settings State (Pantalla P.5)
   const [patientProfile, setPatientProfile] = useState<BackendPatientProfile | null>(null);
   const [profileDraft, setProfileDraft] = useState<PatientProfileDraft>(() => createEmptyPatientProfileDraft());
+  const [unselectedItemIds, setUnselectedItemIds] = useState<Set<string>>(new Set());
+
+  const toggleItemSelection = (id: string) => {
+    setUnselectedItemIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<ValidationError | null>(null);
@@ -976,8 +986,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     let grossTotal = 0;
     let totalSavings = 0;
     proposalItems.forEach(item => {
-      grossTotal += item.unitPrice * item.quantity;
-      totalSavings += (item.unitPrice * item.quantity) * (item.discountPercent / 100);
+      if (!unselectedItemIds.has(item.id)) {
+        grossTotal += item.unitPrice * item.quantity;
+        totalSavings += (item.unitPrice * item.quantity) * (item.discountPercent / 100);
+      }
     });
 
     const netSubtotal = grossTotal - totalSavings;
@@ -1228,7 +1240,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         setActiveCheckoutRecipeId(returnedRecipeId);
 
         if (paymentResult === 'paid' && session.order.status === 'payment_confirmed') {
-          setPaymentStatusMessage('Compra validada correctamente. El pedido queda listo para continuar con el proceso de delivery.');
+          setPaymentStatusMessage('Compra validada correctamente. El pedido quedóóa listo para continuar con el proceso de delivery.');
           setActiveSubTab('delivery');
         } else if (paymentResult === 'cancelled') {
           setPaymentStatusMessage('Pago cancelado. La reserva fue liberada y podés recrear el carrito si aún hay disponibilidad.');
@@ -1315,8 +1327,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       setPaymentStatusMessage('');
       setSimulatedPaymentReference('');
 
+      const selectedItemsToBuy = proposalItems
+        .filter(i => !unselectedItemIds.has(i.id))
+        .map(i => ({ productId: i.id, quantity: i.quantity }));
+
       const response = await apiClient.post('/pagos/redireccion', {
         recipeId: activeCheckoutPrescription.recipeId,
+        selectedItems: selectedItemsToBuy,
       });
 
       const session: CheckoutSessionState = {
@@ -1701,7 +1718,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   {todayTotalCount === 0
                     ? 'Sin tomas programadas hoy'
                     : todayCompletedCount === todayTotalCount
-                      ? '¡Todas las tomas de hoy completadas!'
+                      ? '¡¡¡Todas las tomas de hoy completadas!'
                       : `${todayCompletedCount} de ${todayTotalCount} tomas completadas hoy`}
                 </h3>
                 {nextPendingDose && (
@@ -2070,6 +2087,25 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   <h3 className="zenith-section-title">Medicamentos recetados</h3>
                   <p className="text-xs text-surface-500 mt-1">Checkout asociado a la receta: <span className="font-mono text-primary-300">{activeCheckoutPrescription?.recipeId || 'SIN_RÉCIPE'}</span></p>
                 </div>
+                {backendPrescriptions.length > 1 && (
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <span className="text-xs text-surface-400 font-medium whitespace-nowrap">Seleccionar récipe:</span>
+                    <select
+                      value={activeCheckoutRecipeId || activeCheckoutPrescription?.recipeId || ''}
+                      onChange={(e) => {
+                        setActiveCheckoutRecipeId(e.target.value);
+                        setUnselectedItemIds(new Set());
+                      }}
+                      className="bg-surface-950 border border-surface-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer max-w-[200px]"
+                    >
+                      {backendPrescriptions.map(presc => (
+                        <option key={presc.recipeId} value={presc.recipeId}>
+                          {presc.recipeId} ({new Date(presc.createdAt).toLocaleDateString()})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
               </div>
 
               {checkoutError ? (
@@ -2090,14 +2126,22 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   const finalSub = calculateItemSubtotal(item);
                   const discountAmt = originalSub - finalSub;
                   return (
-                    <div key={item.id} className="py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="space-y-1">
-                        <h4 className="text-sm font-bold text-surface-200">{item.medication}</h4>
-                        <p className="text-xs text-surface-550 flex items-center gap-2">
-                          <span>Cant: {item.quantity}</span>
-                          <span>•</span>
-                          <span>Precio Unitario: {formatCurrency(item.unitPrice)}</span>
-                        </p>
+                    <div key={item.id} className={`py-4 first:pt-0 last:pb-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-opacity ${unselectedItemIds.has(item.id) ? 'opacity-40 grayscale' : ''}`}>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={!unselectedItemIds.has(item.id)}
+                          onChange={() => toggleItemSelection(item.id)}
+                          className="w-4 h-4 rounded border-surface-700 bg-surface-900 text-secondary-500 focus:ring-secondary-500 focus:ring-offset-surface-950 cursor-pointer shrink-0"
+                        />
+                        <div className="space-y-1 min-w-0">
+                          <h4 className="text-sm font-bold text-surface-200">{item.medication}</h4>
+                          <p className="text-xs text-surface-550 flex items-center gap-2">
+                            <span>Cant: {item.quantity}</span>
+                            <span>•</span>
+                            <span>Precio Unitario: {formatCurrency(item.unitPrice)}</span>
+                          </p>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-4 text-right">
@@ -2203,7 +2247,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <Button
                 variant="patient"
                 onClick={handleConfirmOrder}
-                disabled={!termsAccepted || !proposalItems.length || checkoutLoading}
+                disabled={!termsAccepted || !proposalItems.length || proposalItems.length === unselectedItemIds.size || checkoutLoading}
                 className="w-full"
                 size="lg"
               >
@@ -2238,7 +2282,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <div className="p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl flex items-start gap-3 text-xs text-surface-300">
                 <Info className="h-5 w-5 text-primary-400 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  La receta <span className="font-mono text-primary-300">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'SIN_RÉCIPE'}</span> ya quedó conectada al checkout del backend.
+                  La receta <span className="font-mono text-primary-300">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'SIN_RÉCIPE'}</span> ya quedóóó conectada al checkout del backend.
                   La redirección automática se activará cuando la pasarela entregue una URL real. Mientras tanto, esta pantalla consulta el estado de la reserva y espera el callback legítimo del backend.
                 </p>
               </div>
@@ -2307,7 +2351,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <h3 className="zenith-section-title">Resumen de Compra</h3>
 
               <div className="space-y-3">
-                {proposalItems.map((item) => (
+                {proposalItems.filter(item => !unselectedItemIds.has(item.id)).map((item) => (
                   <div key={item.id} className="flex justify-between items-center text-xs">
                     <div>
                       <p className="font-semibold text-surface-200">{item.medication}</p>
@@ -2351,7 +2395,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 <p className="text-xs uppercase tracking-[0.2em] text-secondary-400 font-bold">Pago validado</p>
                 <h3 className="zenith-section-title">Servicio de delivery o entrega personal</h3>
                 <p className="text-xs text-surface-400 max-w-xl">
-                  La compra fue confirmada correctamente. El inventario reservado queda consumido y el pedido pasa a la siguiente etapa operativa.
+                  La compra fue confirmada correctamente. El inventario reservado quedóóa consumido y el pedido pasa a la siguiente etapa operativa.
                 </p>
               </div>
             </div>
@@ -2529,7 +2573,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <div>
                 <h3 className="zenith-section-title text-xs">Perfil del paciente</h3>
                 <p className="text-xs text-surface-400">
-                  Los datos quedan en modo lectura hasta que pulses editar.
+                  Los datos quedóóan en modo lectura hasta que pulses editar.
                 </p>
               </div>
               <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
@@ -2847,7 +2891,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         credentialLine={undefined}
         modalTitle={null}
         qrImage={qrImage}
-        qrToken={patientId || qrToken}
+        qrToken={qrPatientIdentity}
         qrSecondsLeft={qrSecondsLeft}
         onRefresh={() => {
           handleRefreshQR();
@@ -2885,7 +2929,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
               <p className="font-bold text-white">2. Despacho y Recogida en Sucursales</p>
               <p>
-                {`Los medicamentos quedan reservados en la sucursal seleccionada durante un máximo de ${PATIENT_PORTAL_COPY.paymentHoldMinutes} minutos desde la emisión del recipe. Al vencer ese lapso, el sistema libera el stock y cualquier compra posterior vuelve a validar existencia real.`}
+                {`Los medicamentos quedóóan reservados en la sucursal seleccionada durante un máximo de ${PATIENT_PORTAL_COPY.paymentHoldMinutes} minutos desde la emisión del recipe. Al vencer ese lapso, el sistema libera el stock y cualquier compra posterior vuelve a validar existencia real.`}
               </p>
 
               <p className="font-bold text-white">3. Validación Física de la Receta</p>
