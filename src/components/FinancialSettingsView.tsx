@@ -108,10 +108,11 @@ export default function FinancialSettingsView() {
 
   const auditRows = useMemo(() => auditLog.map((entry) => {
     const commissionChange = entry.details?.doctorCommissionPct;
+    const dateVal = entry.createdAt || entry.fecha_hora_exacta;
     return {
       id: String(entry.id || entry.id_log || 'N/A'),
       actor: String(entry.actorUserId || entry.id_superusuario || 'N/A'),
-      timestamp: new Date(entry.createdAt || entry.fecha_hora_exacta || Date.now()).toLocaleString('es-ES'),
+      timestamp: dateVal ? new Date(dateVal).toLocaleString('es-ES') : 'N/A',
       action: 'Actualización de comisión base',
       previousValue: commissionChange?.previous ?? 'N/A',
       newValue: commissionChange?.next ?? 'N/A',

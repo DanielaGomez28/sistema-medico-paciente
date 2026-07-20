@@ -180,17 +180,17 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           
           {/* Form Header */}
           <div className="text-center">
-            <h1 className="text-[32px] font-extrabold tracking-tight text-gray-900 dark:text-white">
+            <h1 className="text-[34px] font-extrabold tracking-tight text-black dark:text-black">
               Iniciar sesion
             </h1>
-            <p className="text-base text-gray-400 dark:text-surface-400 mt-2">
+            <p className="text-base text-black mt-2">
               Ingrese sus datos para acceder al sistema
             </p>
           </div>
 
           {/* Alert */}
           {generalError && (
-            <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 dark:border-red-950/30 bg-red-50/50 dark:bg-red-950/10 px-4 py-3 text-base text-red-600 dark:text-red-400">
+            <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50/50 px-4 py-3 text-base text-red-600">
               <AlertCircle className="mt-0.5 h-4.5 w-4.5 shrink-0" />
               <span>{generalError}</span>
             </div>
@@ -202,7 +202,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             {/* Email Field */}
             <div className="space-y-1">
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-400 dark:text-surface-500 pointer-events-none" />
+                <Mail className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-black pointer-events-none" />
                 <input
                   id="login-email"
                   type="text"
@@ -213,8 +213,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={cn(
-                    'w-full rounded-xl border border-gray-200 dark:border-surface-850 bg-[#fbfbf9] dark:bg-surface-900/50 py-3.5 pl-12 pr-4 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-surface-500 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
-                    emailError && 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
+                    'w-full rounded-xl border border-gray-200 bg-[#fbfbf9] py-3.5 pl-12 pr-4 text-base text-black placeholder:text-black/50 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
+                    emailError && 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
                   )}
                 />
               </div>
@@ -224,7 +224,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             {/* Password Field */}
             <div className="space-y-1">
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-gray-400 dark:text-surface-500 pointer-events-none" />
+                <Lock className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-black pointer-events-none" />
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
@@ -235,14 +235,14 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={cn(
-                    'w-full rounded-xl border border-gray-200 dark:border-surface-850 bg-[#fbfbf9] dark:bg-surface-900/50 py-3.5 pl-12 pr-12 text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-surface-500 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
-                    passwordError && 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
+                    'w-full rounded-xl border border-gray-200 bg-[#fbfbf9] py-3.5 pl-12 pr-12 text-base text-black placeholder:text-black/50 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
+                    passwordError && 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
                   )}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-400 dark:text-surface-500 hover:text-gray-600 dark:hover:text-white transition-colors cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-black hover:text-black/70 transition-colors cursor-pointer"
                   aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                   aria-pressed={showPassword}
                 >
@@ -273,9 +273,9 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </form>
 
           {/* Test Accounts Panel */}
-          <div className="pt-4 border-t border-gray-100 dark:border-surface-850 space-y-3">
+          <div className="pt-4 border-t border-gray-100 space-y-3">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-gray-400 dark:text-surface-500">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-black">
                 Perfiles de prueba
               </p>
             </div>
@@ -285,12 +285,12 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   key={account.email}
                   type="button"
                   onClick={() => handleQuickAccessSelect(account.email, account.password)}
-                  className="rounded-xl border border-gray-100 dark:border-surface-800 bg-[#fbfbf9] dark:bg-surface-900/50 px-3 py-2.5 text-left transition-all hover:border-[#13379b] hover:bg-[#13379b]/5 dark:hover:bg-[#13379b]/10 cursor-pointer"
+                  className="rounded-xl border border-gray-100 bg-[#fbfbf9] px-3 py-2.5 text-left transition-all hover:border-[#13379b] hover:bg-[#13379b]/5 cursor-pointer"
                 >
-                  <span className="block text-sm font-bold text-gray-900 dark:text-white">
+                  <span className="block text-sm font-bold text-black">
                     {LOGIN_TEST_ACCOUNT_LABELS[account.role]}
                   </span>
-                  <span className="mt-0.5 block text-[13px] text-gray-400 dark:text-surface-500 truncate">
+                  <span className="mt-0.5 block text-[13px] text-black truncate">
                     {account.email}
                   </span>
                 </button>
