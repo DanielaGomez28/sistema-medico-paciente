@@ -1412,11 +1412,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   return (
     <AppShell
       portal="patient"
+      layout="horizontal"
       contentClassName="max-w-6xl"
       sidebar={
         <AppSidebar
           accent="primary"
-          brand={{ icon: Activity, title: 'Paciente' }}
+          brand={{ icon: Activity, title: 'Paciente', subtitle: 'Paciente' }}
           items={[
             { id: 'treatment', name: 'Seguimiento', icon: Pill },
             { id: 'recipes', name: 'Récipes médicos', icon: FileText },
@@ -1453,6 +1454,26 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           onMenuClick={onMenuClick}
           statusLabel=""
           showNotifications={false}
+          brand={{ icon: Activity, title: 'Paciente', subtitle: 'Paciente' }}
+          items={[
+            { id: 'treatment', name: 'Seguimiento', icon: Pill },
+            { id: 'recipes', name: 'Récipes médicos', icon: FileText },
+            { id: 'proposals', name: 'Confirmar pedido', icon: FileSpreadsheet },
+            { id: 'profile', name: 'Perfil', icon: User },
+          ]}
+          activeId={activeNavId}
+          onNavigate={handleNav}
+          onLogout={onLogout}
+          actions={
+            <div className="hidden lg:block shrink-0">
+              <SidebarCredentialButton
+                onOpen={() => {
+                  void handleGenerarQR();
+                  setIsCredentialModalOpen(true);
+                }}
+              />
+            </div>
+          }
           profileInitials={profileName
             .split(' ')
             .filter(Boolean)

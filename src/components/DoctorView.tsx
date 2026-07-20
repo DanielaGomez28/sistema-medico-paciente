@@ -1130,6 +1130,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
       <AppShell
         portal="doctor"
+        layout="horizontal"
         contentClassName="max-w-7xl"
         sidebar={
           <AppSidebar
@@ -1171,6 +1172,22 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             onMenuClick={onMenuClick}
             statusLabel=""
             showNotifications={false}
+            brand={{ icon: Activity, title: 'Médico', subtitle: 'Médico' }}
+            items={[
+              { id: 'agenda', name: 'Panel', icon: Calendar },
+              { id: 'reception', name: 'Pacientes', icon: Users },
+              { id: 'prescription', name: 'Generar récipe', icon: FileText },
+              { id: 'commissions', name: 'Comisiones', icon: TrendingUp },
+              { id: 'profile', name: 'Perfil', icon: Users },
+            ]}
+            activeId={activeTab}
+            onNavigate={(id) => {
+              if (id === 'reception') {
+                setPatientViewMode('list');
+              }
+              setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile');
+            }}
+            onLogout={onLogout}
             profileInitials={doctorName
               .replace(/^Dr\.\s*/i, '')
               .split(' ')

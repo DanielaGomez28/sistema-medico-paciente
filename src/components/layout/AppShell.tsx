@@ -39,6 +39,7 @@ export interface AppShellProps {
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
+  layout?: 'vertical' | 'horizontal';
 }
 
 /**
@@ -55,6 +56,7 @@ export default function AppShell({
   children,
   className,
   contentClassName,
+  layout = 'vertical',
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -92,7 +94,8 @@ export default function AppShell({
         )}
         <div
           className={cn(
-            'fixed inset-y-0 left-0 z-40 w-64 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0 shrink-0',
+            'fixed inset-y-0 left-0 z-40 w-64 transition-transform duration-200 shrink-0',
+            layout === 'horizontal' ? 'lg:hidden' : 'lg:static lg:z-auto lg:translate-x-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >

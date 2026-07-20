@@ -117,12 +117,7 @@ export default function AppSidebar({
         {/* Logo + Salud brand */}
         <img src="/logo.png" alt="Logo" width={32} height={32} style={{ display: 'block', width: '32px', height: '32px', objectFit: 'contain' }} />
         <div className="min-w-0 flex-1">
-          <h1 className="tracking-tight text-base leading-none truncate font-semibold text-foreground">+Salud</h1>
-          {brand.subtitle ? (
-            <span className="zenith-field-label tracking-wider uppercase truncate block">
-              {brand.subtitle}
-            </span>
-          ) : null}
+          <h1 className="tracking-tight leading-none truncate font-bold text-foreground" style={{ fontSize: '19px' }}>+Salud</h1>
         </div>
       </div>
 
