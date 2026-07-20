@@ -20,10 +20,13 @@ interface ApiErrorPayload {
 }
 
 interface AuditLogEntry {
-  id: string;
-  actorUserId: string;
+  id?: string;
+  id_log?: number;
+  actorUserId?: string;
+  id_superusuario?: number;
   action: string;
-  createdAt: string;
+  createdAt?: string;
+  fecha_hora_exacta?: string;
   details?: Record<string, { previous?: unknown; next?: unknown }>;
 }
 
@@ -106,9 +109,9 @@ export default function FinancialSettingsView() {
   const auditRows = useMemo(() => auditLog.map((entry) => {
     const commissionChange = entry.details?.doctorCommissionPct;
     return {
-      id: entry.id,
-      actor: entry.actorUserId,
-      timestamp: new Date(entry.createdAt).toLocaleString('es-ES'),
+      id: String(entry.id || entry.id_log || 'N/A'),
+      actor: String(entry.actorUserId || entry.id_superusuario || 'N/A'),
+      timestamp: new Date(entry.createdAt || entry.fecha_hora_exacta || Date.now()).toLocaleString('es-ES'),
       action: 'Actualización de comisión base',
       previousValue: commissionChange?.previous ?? 'N/A',
       newValue: commissionChange?.next ?? 'N/A',
@@ -121,7 +124,7 @@ export default function FinancialSettingsView() {
         actions={
           <Button variant="outline" onClick={() => setIsAuditLogOpen(true)}>
             <History className="h-4 w-4" />
-            Historial real
+            Historial de comisiones
           </Button>
         }
       />
@@ -180,7 +183,7 @@ export default function FinancialSettingsView() {
       <Modal open={isAuditLogOpen} onClose={() => setIsAuditLogOpen(false)} size="xl" className="max-w-5xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
           <div>
-            <h3 className="zenith-section-title">Historial real de cambios</h3>
+            <h3 className="zenith-section-title">Historial de comisiones</h3>
             <p className="text-xs text-surface-400 mt-0.5">Bitácora administrativa leída desde el backend.</p>
           </div>
           <button type="button" onClick={() => setIsAuditLogOpen(false)} className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors cursor-pointer" aria-label="Cerrar">

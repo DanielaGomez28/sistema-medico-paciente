@@ -806,8 +806,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       // Registramos al paciente con su ID interno mock para el flujo WebSocket
       const targetPatientId = socketPatientIdentity;
 
-      console.log(`?? Registrando paciente en Socket local con ID interno: ${targetPatientId}`);
-
       // Enviamos la petición unificada que tu server.js espera
       socket.emit('identifyUser', {
         userId: targetPatientId,
@@ -821,7 +819,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     // 2. FUSIONAMOS LAS DOS LÓGICAS EN UNA SOLA FUNCIÓN RECEPTORA
     const handleIncomingRequest = async (data: { doctorId: string; doctorName: string; patientId: string }) => {
-      console.log('🎯 ¡Solicitud de vinculación real recibida por el canal del Servidor!:', data);
 
       // Guardamos la información del médico entrante para el modal
       setIncomingConsent(data);
@@ -840,7 +837,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     // Escuchar cancelación por parte del médico
     const handleCancelRequest = (data: { doctorId: string }) => {
-      console.log('El médico canceló la solicitud:', data);
       setIncomingConsent(null);
       setShowConsentModal(false); // Cerramos el modal si el médico se arrepiente
     };

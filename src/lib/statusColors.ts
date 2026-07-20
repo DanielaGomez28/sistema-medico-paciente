@@ -110,3 +110,24 @@ export const orderStatusColors: Record<OrderStatus, string> = {
   Entregado: 'dispatch-semaphore--green',
   Cancelado: 'dispatch-semaphore--neutral',
 };
+
+/**
+ * Traduce estados de back-end (inglés) a español para la UI.
+ * @param {string} status - Estado a traducir.
+ * @returns {string} Estado traducido.
+ */
+export function translateStatus(status: string): string {
+  const map: Record<string, string> = {
+    'active': 'Activo',
+    'expired': 'Expirado',
+    'paid': 'Pagado',
+    'pending_payment': 'Pago Pendiente',
+    'unpaid': 'No Pagado',
+    'pending': 'Pendiente',
+    'partial': 'Parcial',
+    'fully_fulfilled': 'Completado',
+    'checkout_pending': 'Checkout Pendiente',
+    'payment_confirmed': 'Pago Confirmado',
+  };
+  return map[status?.toLowerCase()] || status;
+}

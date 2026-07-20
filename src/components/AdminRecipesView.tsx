@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
+import { translateStatus } from '../lib/statusColors';
 import {
   FileText,
   Eye,
@@ -41,6 +42,7 @@ interface AdminRecipe {
   doctorName?: string;
   clinicalStatus: string;
   commercialStatus: string;
+  fulfillmentStatus?: string;
   createdAt: string;
   recipeExpiresAt: string;
   items?: RecipeItem[];
@@ -196,7 +198,7 @@ export default function AdminRecipesView() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusColor(recipe.clinicalStatus)}`}>
-                      {recipe.clinicalStatus}
+                      {translateStatus(recipe.clinicalStatus)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -317,11 +319,15 @@ export default function AdminRecipesView() {
               <div className="flex gap-4 pt-2 border-t border-gray-200">
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Estado clínico</p>
-                  <p className="text-sm font-semibold text-gray-700">{selectedRecipe.clinicalStatus}</p>
+                  <p className="text-sm font-semibold text-gray-700">{translateStatus(selectedRecipe.clinicalStatus)}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Estado comercial</p>
-                  <p className="text-sm font-semibold text-gray-700">{selectedRecipe.commercialStatus}</p>
+                  <p className="text-sm font-semibold text-gray-700">{translateStatus(selectedRecipe.commercialStatus)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Estado de entrega</p>
+                  <p className="text-sm font-semibold text-gray-700">{translateStatus(selectedRecipe.fulfillmentStatus || '')}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Válido hasta</p>
