@@ -166,26 +166,34 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#ffffff] dark:bg-[#0c1322] transition-colors duration-300" style={{ fontFamily: 'var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif' }}>
+    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#ffffff] dark:bg-[#041a1d] transition-colors duration-300" style={{ fontFamily: 'var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif' }}>
 
       {/* Left Panel - Login Card */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 md:p-16 relative bg-[#ffffff] dark:bg-[#0c1322]">
-        
+      <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 md:p-16 relative bg-[#ffffff] dark:bg-[#041a1d]">
+
         {/* Theme wrap inside the form panel */}
         <div className="absolute top-6 right-6 z-20">
           <ThemeToggle className="shadow-sm border border-gray-100 dark:border-surface-800" />
         </div>
 
         <div className="w-full max-w-[390px] space-y-7">
-          
+
           {/* Form Header */}
-          <div className="text-center">
-            <h1 className="text-[34px] font-extrabold tracking-tight text-black dark:text-black">
-              Iniciar sesion
-            </h1>
-            <p className="text-base text-black mt-2">
-              Ingrese sus datos para acceder al sistema
-            </p>
+          <div className="flex flex-col items-start gap-3 -mt-4">
+            {/* Brand row: logo + name */}
+            <div className="flex items-center gap-2">
+              <img src="/logo.png" alt="Logo del Sistema" width={41} height={41} className="object-contain" style={{ display: 'block', width: '41px', height: '41px' }} />
+              <span className="font-semibold" style={{ color: '#179150', fontSize: '23px' }}>Salud</span>
+            </div>
+            {/* Title + Subtitle */}
+            <div>
+              <h1 className="font-bold tracking-tight text-black dark:text-white" style={{ fontSize: '30px', fontWeight: '700', fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
+                Iniciar sesión
+              </h1>
+              <p className="text-base text-black dark:text-surface-400 mt-1">
+                Ingrese sus datos para acceder al sistema
+              </p>
+            </div>
           </div>
 
           {/* Alert */}
@@ -198,11 +206,11 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
 
           {/* Credentials Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            
+
             {/* Email Field */}
             <div className="space-y-1">
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-black pointer-events-none" />
+                <Mail className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-black dark:text-surface-500 pointer-events-none" />
                 <input
                   id="login-email"
                   type="text"
@@ -213,8 +221,8 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className={cn(
-                    'w-full rounded-xl border border-gray-200 bg-[#fbfbf9] py-3.5 pl-12 pr-4 text-base text-black placeholder:text-black/50 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
-                    emailError && 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
+                    'w-full rounded-xl border border-gray-200 dark:border-surface-850 bg-[#fbfbf9] dark:bg-surface-900/50 py-3.5 pl-12 pr-4 text-base text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-surface-500 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
+                    emailError && 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
                   )}
                 />
               </div>
@@ -224,7 +232,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
             {/* Password Field */}
             <div className="space-y-1">
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-black pointer-events-none" />
+                <Lock className="absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-black dark:text-surface-500 pointer-events-none" />
                 <input
                   id="login-password"
                   type={showPassword ? 'text' : 'password'}
@@ -235,14 +243,14 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={cn(
-                    'w-full rounded-xl border border-gray-200 bg-[#fbfbf9] py-3.5 pl-12 pr-12 text-base text-black placeholder:text-black/50 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
-                    passwordError && 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
+                    'w-full rounded-xl border border-gray-200 dark:border-surface-850 bg-[#fbfbf9] dark:bg-surface-900/50 py-3.5 pl-12 pr-12 text-base text-black dark:text-white placeholder:text-black/50 dark:placeholder:text-surface-500 focus:outline-none focus:border-[#13379b] focus:ring-2 focus:ring-[#13379b]/10 transition-all',
+                    passwordError && 'border-red-500 dark:border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
                   )}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-black hover:text-black/70 transition-colors cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-black dark:text-surface-500 hover:text-black/70 dark:hover:text-white transition-colors cursor-pointer"
                   aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
                   aria-pressed={showPassword}
                 >
@@ -257,9 +265,10 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
               type="submit"
               disabled={submitting}
               className={cn(
-                'mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#13379b] hover:bg-[#0f2c7d] text-white font-bold py-3.5 text-base shadow-md shadow-[#13379b]/25 hover:shadow-lg hover:shadow-[#13379b]/35 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none',
+                'mt-2 flex w-full items-center justify-center gap-2 rounded-xl text-white font-bold py-3.5 text-[17px] shadow-md shadow-[#179150]/30 hover:shadow-lg hover:shadow-[#179150]/40 transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-70 disabled:shadow-none',
                 submitting && 'opacity-70'
               )}
+              style={{ backgroundColor: '#179150', color: 'white' }}
             >
               {submitting ? (
                 <>
@@ -273,9 +282,9 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           </form>
 
           {/* Test Accounts Panel */}
-          <div className="pt-4 border-t border-gray-100 space-y-3">
+          <div className="pt-4 border-t border-gray-300 dark:border-surface-850 space-y-3">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-black">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-black dark:text-surface-500" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
                 Perfiles de prueba
               </p>
             </div>
@@ -285,12 +294,12 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
                   key={account.email}
                   type="button"
                   onClick={() => handleQuickAccessSelect(account.email, account.password)}
-                  className="rounded-xl border border-gray-100 bg-[#fbfbf9] px-3 py-2.5 text-left transition-all hover:border-[#13379b] hover:bg-[#13379b]/5 cursor-pointer"
+                  className="rounded-xl border border-gray-100 dark:border-surface-800 bg-[#fbfbf9] dark:bg-surface-900/50 px-3 py-2.5 text-left transition-all hover:border-[#13379b] hover:bg-[#13379b]/5 dark:hover:bg-[#13379b]/10 cursor-pointer"
                 >
-                  <span className="block text-sm font-bold text-black">
+                  <span className="block text-sm font-bold text-black dark:text-white">
                     {LOGIN_TEST_ACCOUNT_LABELS[account.role]}
                   </span>
-                  <span className="mt-0.5 block text-[13px] text-black truncate">
+                  <span className="mt-0.5 block text-[13px] text-black dark:text-surface-500 truncate">
                     {account.email}
                   </span>
                 </button>
@@ -302,9 +311,18 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       </div>
 
       {/* Right Panel - Brand Viewport */}
-      <div className="hidden md:flex md:w-[42%] lg:w-[38%] relative overflow-hidden select-none shrink-0" style={{ background: 'linear-gradient(160deg, #179150 0%, #0a6b75 55%, #13379b 100%)' }}>
+      <div className="hidden md:flex md:w-[42%] lg:w-[38%] relative overflow-hidden select-none shrink-0 flex-col justify-center px-12" style={{ background: 'linear-gradient(160deg, #179150 0%, #50e9f8 100%)' }}>
+        <div className="space-y-6 max-w-sm">
+          <h2 style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', fontSize: '37px', fontWeight: '700', color: 'white', lineHeight: '1.2' }}>
+            Bienvenido a +Salud
+          </h2>
+          <div style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', fontSize: '18px', fontWeight: '400', color: 'rgba(255,255,255,0.72)', lineHeight: '1.65' }}>
+            <p className="mb-4">¿Eres médico? Genera y envía recetas electrónicas a tus pacientes de manera sencilla y centralizada.</p>
+            <p>¿Eres paciente? Accede a tus prescripciones médicas y compra tus medicamentos en un solo clic.</p>
+          </div>
+        </div>
       </div>
-      
+
     </div>
   );
 }
