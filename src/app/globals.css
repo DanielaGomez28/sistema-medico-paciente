@@ -4,6 +4,8 @@
  */
 @import "tailwindcss";
 
+@variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 @font-face {
   font-family: "Helvetica Neue LT Std";
   src:
@@ -283,6 +285,13 @@
 }
 
 @layer components {
+  .login-banner-text {
+    color: white;
+  }
+  [data-theme="dark"] .login-banner-text {
+    color: #041a1d;
+  }
+
   .zenith-card {
     border-radius: var(--radius-card);
     @apply bg-surface-900 border border-primary-500/10 shadow-sm;

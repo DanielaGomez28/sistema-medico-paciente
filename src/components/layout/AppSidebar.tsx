@@ -99,7 +99,6 @@ export default function AppSidebar({
   logoutVariant = 'icon',
   className,
 }: AppSidebarProps) {
-  const BrandIcon = brand.icon;
   const { closeSidebar } = useShell();
 
   const handleNavigate = (id: string) => {
@@ -115,16 +114,10 @@ export default function AppSidebar({
       )}
     >
       <div className="h-16 flex items-center gap-3 px-6 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md">
-        <div
-          className={cn(
-            'h-9 w-9 rounded-lg flex items-center justify-center text-foreground',
-            brandGradient[accent]
-          )}
-        >
-          <BrandIcon className="h-5 w-5" />
-        </div>
+        {/* Logo + Salud brand */}
+        <img src="/logo.png" alt="Logo" width={32} height={32} style={{ display: 'block', width: '32px', height: '32px', objectFit: 'contain' }} />
         <div className="min-w-0 flex-1">
-          <h1 className="text-foreground tracking-tight text-base leading-none truncate">{brand.title}</h1>
+          <h1 className="tracking-tight text-base leading-none truncate font-semibold text-foreground">+Salud</h1>
           {brand.subtitle ? (
             <span className="zenith-field-label tracking-wider uppercase truncate block">
               {brand.subtitle}
