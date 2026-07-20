@@ -1242,7 +1242,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         setActiveCheckoutRecipeId(returnedRecipeId);
 
         if (paymentResult === 'paid' && session.order.status === 'payment_confirmed') {
-          setPaymentStatusMessage('Compra validada correctamente. El pedido quedóóa listo para continuar con el proceso de delivery.');
+          setPaymentStatusMessage('Compra validada correctamente. El pedido qued\u00F3 listo para continuar con el proceso de delivery.');
           setActiveSubTab('delivery');
         } else if (paymentResult === 'cancelled') {
           setPaymentStatusMessage('Pago cancelado. La reserva fue liberada y podés recrear el carrito si aún hay disponibilidad.');
@@ -2375,7 +2375,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 <p className="text-xs uppercase tracking-[0.2em] text-secondary-400 font-bold">Pago validado</p>
                 <h3 className="zenith-section-title">Servicio de delivery o entrega personal</h3>
                 <p className="text-xs text-surface-400 max-w-xl">
-                  La compra fue confirmada correctamente. El inventario reservado quedóóa consumido y el pedido pasa a la siguiente etapa operativa.
+                  La compra fue confirmada correctamente. El inventario reservado quedó consumido y el pedido pasa a la siguiente etapa operativa.
                 </p>
               </div>
             </div>
@@ -2553,7 +2553,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <div>
                 <h3 className="zenith-section-title text-xs">Perfil del paciente</h3>
                 <p className="text-xs text-surface-400">
-                  Los datos quedóóan en modo lectura hasta que pulses editar.
+                  Los datos quedan en modo lectura hasta que pulses editar.
                 </p>
               </div>
               <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
@@ -2916,7 +2916,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
               <p className="font-bold text-white">2. Despacho y Recogida en Sucursales</p>
               <p>
-                {`Los medicamentos quedóóan reservados en la sucursal seleccionada durante un máximo de ${PATIENT_PORTAL_COPY.paymentHoldMinutes} minutos desde la emisión del recipe. Al vencer ese lapso, el sistema libera el stock y cualquier compra posterior vuelve a validar existencia real.`}
+                {`Los medicamentos quedan reservados en la sucursal seleccionada durante un m\u00E1ximo de ${PATIENT_PORTAL_COPY.paymentHoldMinutes} minutos desde la emisi\u00F3n del recipe. Al vencer ese lapso, el sistema libera el stock y cualquier compra posterior vuelve a validar existencia real.`}
               </p>
 
               <p className="font-bold text-white">3. Validación Física de la Receta</p>
