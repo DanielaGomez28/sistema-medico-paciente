@@ -33,7 +33,8 @@ import {
   Moon,
   History,
   Stethoscope,
-  RefreshCw
+  RefreshCw,
+  Download
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
 import {
@@ -575,7 +576,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       discountPercent: Number(item.beneficio_pct || 0),
     }));
   }, [activeCheckoutPrescription]);
-  const [selectedBranch, setSelectedBranch] = useState('Clínica Humana');
+  const [selectedBranch, setSelectedBranch] = useState(PATIENT_PORTAL_COPY.selectedBranchOptions[0]);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
 
@@ -2749,6 +2750,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => window.print()}
+                  className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
+                  title="Descargar"
+                >
+                  <Download className="h-4.5 w-4.5" />
+                </button>
+                <button
+                  onClick={() => window.print()}
                   className="px-3 py-1.5 text-xs bg-surface-850 hover:bg-surface-800 text-white font-semibold rounded-lg flex items-center gap-1 transition-colors cursor-pointer border border-surface-700"
                 >
                   <Printer className="h-3.5 w-3.5" />
@@ -2891,7 +2899,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         credentialLine={undefined}
         modalTitle={null}
         qrImage={qrImage}
-        qrToken={qrPatientIdentity}
+        qrToken={patientProfile?.patientId || qrPatientIdentity}
         qrSecondsLeft={qrSecondsLeft}
         onRefresh={() => {
           handleRefreshQR();

@@ -848,10 +848,12 @@ export const PATIENT_PORTAL_COPY: PatientPortalCopySeed = {
   printableSignatureLabel: 'Médico autorizado',
   printableSignatureFooter: 'Firma digital verificada',
   verificationPortalLabel: 'Verificar autenticidad en portal.zenithclinica.com',
-  pharmacyBrandName: 'Farmacia Central',
-  pharmacyLegalName: 'Farmacia Central C.A.',
+  pharmacyBrandName: 'FarmaHumana',
+  pharmacyLegalName: 'FarmaHumana C.A.',
   pharmacyLegalReference: 'RIF: J-30123456-7 • Av. Francisco de Miranda, Caracas',
-  selectedBranchOptions: ['Farmacia Central', 'Farmacia Valencia'],
+  selectedBranchOptions: [
+    'Farmahumana - Puerto Ordaz (Calle 07)'
+  ],
   paymentHoldMinutes: 20,
   paymentHoldSeconds: 20 * 60,
 };
