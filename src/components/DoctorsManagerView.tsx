@@ -61,7 +61,7 @@ const EMPTY_FORM: DoctorFormState = {
   correo: '',
   password: '',
   mpps: '',
-  especialidad: DOCTOR_SPECIALTY_OPTIONS[0] || 'Medicina General',
+  especialidad: '',
   colegio_medicos: '',
   special_sanitary_registration: '',
   digital_signature_hash: '',
@@ -74,7 +74,7 @@ const toDoctorForm = (doctor: DoctorProfile): DoctorFormState => ({
   correo: doctor.correo,
   password: '',
   mpps: doctor.mpps || '',
-  especialidad: doctor.especialidad || DOCTOR_SPECIALTY_OPTIONS[0] || 'Medicina General',
+  especialidad: doctor.especialidad || '',
   colegio_medicos: doctor.colegio_medicos || '',
   special_sanitary_registration: doctor.special_sanitary_registration || '',
   digital_signature_hash: doctor.digital_signature_hash || '',
@@ -103,7 +103,7 @@ export default function DoctorsManagerView() {
       setErrorMsg(
         (error as ApiErrorPayload).response?.data?.error ||
           (error as ApiErrorPayload).response?.data?.details ||
-          'No se pudo cargar el directorio real de médicos.'
+          'No se pudo cargar el directorio de médicos.'
       );
     } finally {
       setLoading(false);
@@ -127,7 +127,7 @@ export default function DoctorsManagerView() {
           setErrorMsg(
             apiError.response?.data?.error ||
               apiError.response?.data?.details ||
-              'No se pudo cargar el directorio real de médicos.'
+              'No se pudo cargar el directorio de médicos.'
           );
         }
       } finally {
@@ -238,7 +238,7 @@ export default function DoctorsManagerView() {
         actions={
           <Button variant="outline" onClick={() => setIsDirectoryOpen(true)}>
             <Stethoscope className="h-4 w-4" />
-            Directorio Real
+            Directorio Médico
             <span className="ml-1 text-surface-500">({doctors.length})</span>
           </Button>
         }
@@ -294,7 +294,8 @@ export default function DoctorsManagerView() {
           </div>
           <div className="space-y-1">
             <label className="zenith-field-label">Especialidad *</label>
-            <select value={form.especialidad} onChange={(e) => handleChange('especialidad', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400">
+            <select value={form.especialidad} onChange={(e) => handleChange('especialidad', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required>
+              <option value="" disabled>Seleccionar</option>
               {DOCTOR_SPECIALTY_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
@@ -304,21 +305,20 @@ export default function DoctorsManagerView() {
             <label className="zenith-field-label">Registro sanitario especial</label>
             <input value={form.special_sanitary_registration} onChange={(e) => handleChange('special_sanitary_registration', e.target.value)} placeholder="RSE-50001" className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" />
           </div>
-          <div className="space-y-1 lg:col-span-2">
-            <label className="zenith-field-label">Hash de firma digital</label>
-            <input value={form.digital_signature_hash} onChange={(e) => handleChange('digital_signature_hash', e.target.value)} placeholder="64 caracteres hexadecimales" className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" />
-          </div>
-          <div className="space-y-1 lg:col-span-2">
-            <label className="zenith-field-label">Consultorio exacto</label>
+
+          <div className={`space-y-1 ${!editingDoctorId ? 'lg:col-span-2' : ''}`}>
+            <label className="zenith-field-label">Consultorio</label>
             <input value={form.office_location} onChange={(e) => handleChange('office_location', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" />
           </div>
-          <div className="space-y-1">
-            <label className="zenith-field-label">Estado</label>
-            <select value={form.status} onChange={(e) => handleChange('status', e.target.value as DoctorFormState['status'])} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400">
-              <option value="activo">Activo</option>
-              <option value="suspendido">Suspendido</option>
-            </select>
-          </div>
+          {editingDoctorId && (
+            <div className="space-y-1">
+              <label className="zenith-field-label">Estado</label>
+              <select value={form.status} onChange={(e) => handleChange('status', e.target.value as DoctorFormState['status'])} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400">
+                <option value="activo">Activo</option>
+                <option value="suspendido">Suspendido</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end pt-2 border-t border-surface-850">
@@ -353,7 +353,7 @@ export default function DoctorsManagerView() {
 
           {loading ? (
             <div className="rounded-xl border border-surface-800 bg-surface-950/60 px-3 py-4 text-xs text-surface-400">
-              Consultando directorio real de médicos...
+              Consultando directorio de médicos...
             </div>
           ) : null}
 

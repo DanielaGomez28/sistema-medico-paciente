@@ -51,6 +51,12 @@ export default function CmsView() {
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [logoFileName, setLogoFileName] = useState('logo_zenith_vector.png');
   const [bannerFileName, setBannerFileName] = useState('banner_promocional.jpg');
+  const [isEditingLegal, setIsEditingLegal] = useState(false);
+  const [legalDraft, setLegalDraft] = useState({
+    consentTerms: '',
+    termsAndConditions: '',
+    usagePolicy: ''
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -103,9 +109,66 @@ export default function CmsView() {
   }, []);
 
   const handleImageUpload = (file: File, field: 'logoUrl' | 'bannerUrl', setFileName: (name: string) => void) => {
-    const objectUrl = URL.createObjectURL(file);
-    setSettings((prev) => ({ ...prev, [field]: objectUrl }));
-    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        setSettings((prev) => ({ ...prev, [field]: e.target!.result as string }));
+        setFileName(file.name);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleStartLegalEdit = () => {
+    setLegalDraft({
+      consentTerms: settings.consentTerms,
+      termsAndConditions: settings.termsAndConditions,
+      usagePolicy: settings.usagePolicy
+    });
+    setIsEditingLegal(true);
+  };
+
+  const handleCancelLegalEdit = () => {
+    setIsEditingLegal(false);
+  };
+
+  const handleConfirmLegalEdit = async () => {
+    try {
+      setLoadingConfig(true);
+      setBackendError('');
+      await apiClient.put('/admin/cms/config', {
+        config: {
+          consentTermsText: legalDraft.consentTerms,
+          termsAndConditionsText: legalDraft.termsAndConditions,
+          usagePolicyText: legalDraft.usagePolicy,
+        },
+      });
+
+      setSettings((prev) => ({
+        ...prev,
+        consentTerms: legalDraft.consentTerms,
+        termsAndConditions: legalDraft.termsAndConditions,
+        usagePolicy: legalDraft.usagePolicy,
+      }));
+      setIsEditingLegal(false);
+
+      localStorage.setItem(
+        'zenith_cms_settings',
+        JSON.stringify({ logoUrl: settings.logoUrl, bannerUrl: settings.bannerUrl })
+      );
+      window.dispatchEvent(new Event('zenith_cms_update'));
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error: unknown) {
+      setBackendError(
+        (error as ApiErrorPayload).response?.data?.error ||
+          (error as ApiErrorPayload).response?.data?.details ||
+          'No se pudo guardar la configuración global.'
+      );
+    } finally {
+      setLoadingConfig(false);
+    }
   };
 
   const handlePublish = async () => {
@@ -192,7 +255,6 @@ export default function CmsView() {
               <section key={item.key} className="zenith-panel space-y-4">
                 <div>
                   <h3 className="zenith-section-title">{item.label}</h3>
-                  <p className="text-xs text-surface-500 mt-0.5">Estos recursos siguen siendo locales del frontend.</p>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="h-16 w-16 rounded-xl bg-surface-950 border border-surface-800 flex items-center justify-center shrink-0 overflow-hidden">
@@ -222,31 +284,43 @@ export default function CmsView() {
           <aside className="xl:col-span-2">
             <div className="zenith-panel space-y-4 sticky top-6">
               <h3 className="zenith-section-title">Vista previa</h3>
-              <p className="text-xs text-surface-500">Los textos legales s? están conectados al backend; las imágenes se conservan locales en esta versión.</p>
+              <p className="text-xs text-surface-500">Configura la apariencia y marca de tu portal.</p>
             </div>
           </aside>
         </div>
       ) : (
         <div className="max-w-4xl space-y-5">
           <section className="zenith-panel space-y-5">
-            <div>
-              <h3 className="zenith-section-title">Textos legales</h3>
-              <p className="text-xs text-surface-500 mt-0.5">Sincronizados con la configuración global del sistema.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4">
+              <div>
+                <h3 className="zenith-section-title">Textos legales</h3>
+                <p className="text-xs text-surface-400">Los datos permanecen en solo lectura hasta que confirmes la edición.</p>
+              </div>
+              <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
+                {isEditingLegal ? (
+                  <>
+                    <button type="button" onClick={handleConfirmLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Confirmar cambios</button>
+                    <button type="button" onClick={handleCancelLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all">Cancelar</button>
+                  </>
+                ) : (
+                  <button type="button" onClick={handleStartLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Editar textos</button>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1.5">
               <label className="zenith-field-label" htmlFor="cms-consent">Términos de consentimiento clínico</label>
-              <textarea id="cms-consent" rows={5} value={settings.consentTerms} onChange={(e) => setSettings((prev) => ({ ...prev, consentTerms: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[120px]" />
+              <textarea id="cms-consent" rows={5} value={isEditingLegal ? legalDraft.consentTerms : settings.consentTerms} readOnly={!isEditingLegal} onChange={(e) => setLegalDraft((prev) => ({ ...prev, consentTerms: e.target.value }))} className={`w-full px-3.5 py-2.5 text-xs leading-relaxed resize-y min-h-[120px] rounded-xl border focus:outline-none ${isEditingLegal ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} />
             </div>
 
             <div className="space-y-1.5">
               <label className="zenith-field-label" htmlFor="cms-terms">Términos y condiciones de la plataforma</label>
-              <textarea id="cms-terms" rows={5} value={settings.termsAndConditions} onChange={(e) => setSettings((prev) => ({ ...prev, termsAndConditions: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[120px]" />
+              <textarea id="cms-terms" rows={5} value={isEditingLegal ? legalDraft.termsAndConditions : settings.termsAndConditions} readOnly={!isEditingLegal} onChange={(e) => setLegalDraft((prev) => ({ ...prev, termsAndConditions: e.target.value }))} className={`w-full px-3.5 py-2.5 text-xs leading-relaxed resize-y min-h-[120px] rounded-xl border focus:outline-none ${isEditingLegal ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} />
             </div>
 
             <div className="space-y-1.5">
               <label className="zenith-field-label" htmlFor="cms-policy">Política de uso</label>
-              <textarea id="cms-policy" rows={4} value={settings.usagePolicy} onChange={(e) => setSettings((prev) => ({ ...prev, usagePolicy: e.target.value }))} className="zenith-input px-3.5 py-2.5 leading-relaxed resize-y min-h-[100px]" />
+              <textarea id="cms-policy" rows={4} value={isEditingLegal ? legalDraft.usagePolicy : settings.usagePolicy} readOnly={!isEditingLegal} onChange={(e) => setLegalDraft((prev) => ({ ...prev, usagePolicy: e.target.value }))} className={`w-full px-3.5 py-2.5 text-xs leading-relaxed resize-y min-h-[100px] rounded-xl border focus:outline-none ${isEditingLegal ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} />
             </div>
           </section>
         </div>

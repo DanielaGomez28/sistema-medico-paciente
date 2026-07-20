@@ -820,10 +820,17 @@ export const DOCTORS_DIRECTORY_SEEDS: DoctorsDirectorySeed[] = [
  */
 export const DOCTOR_SPECIALTY_OPTIONS: string[] = [
   'Cardiología',
-  'Medicina General',
-  'Pediatría',
-  'Endocrinología',
   'Dermatología',
+  'Endocrinología',
+  'Gastroenterología',
+  'Ginecología',
+  'Medicina General',
+  'Neurología',
+  'Oftalmología',
+  'Pediatría',
+  'Psiquiatría',
+  'Traumatología',
+  'Urología'
 ];
 
 /**

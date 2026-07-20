@@ -165,7 +165,7 @@ export default function FinancialSettingsView() {
           </div>
           <div className="p-3 bg-surface-950 border border-surface-850 rounded-xl flex gap-2.5 text-[10px] text-surface-400 items-start">
             <ShieldAlert className="h-4.5 w-4.5 text-surface-400 shrink-0" />
-            <span>Este valor actualiza <code>doctorCommissionPct</code> en <code>/api/admin/cms/config</code> y su historial se audita en backend.</span>
+            <span>Este porcentaje determina la comisión retenida por la plataforma en cada consulta médica. Todo cambio queda registrado en el historial de auditoría por seguridad.</span>
           </div>
         </div>
 
