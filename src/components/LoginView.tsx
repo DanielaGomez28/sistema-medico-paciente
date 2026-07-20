@@ -314,7 +314,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       <div className="hidden md:flex md:w-[42%] lg:w-[38%] relative overflow-hidden select-none shrink-0 flex-col justify-center px-12" style={{ background: 'linear-gradient(160deg, #179150 0%, #50e9f8 100%)' }}>
         <div className="space-y-6 max-w-sm">
           <h2 className="login-banner-text" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', fontSize: '37px', fontWeight: '700', lineHeight: '1.2' }}>
-            Bienvenido a +Salud
+            ¡Bienvenido a +Salud!
           </h2>
           <div className="login-banner-text" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', fontSize: '18px', fontWeight: '400', lineHeight: '1.65' }}>
             <p className="mb-4">¿Eres médico? Genera y envía recetas electrónicas a tus pacientes de manera sencilla y centralizada.</p>
