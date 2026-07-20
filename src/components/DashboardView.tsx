@@ -223,22 +223,22 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           </div>
         </div>
 
-        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4 cursor-pointer hover:border-surface-700 transition-colors" onClick={() => onNavigate('doctors')}>
           <div>
-            <h4 className="zenith-section-title">Directorio médico</h4>
+            <h4 className="zenith-section-title">Directorio m\u00E9dico</h4>
             <p className="text-xs text-surface-400">Perfiles registrados en la plataforma.</p>
           </div>
           <div className="space-y-3">
             {doctors.slice(0, 4).map((doctor) => (
               <div key={doctor.id_usuario} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3">
                 <p className="text-xs font-semibold text-white">{doctor.nombre}</p>
-                <p className="text-[10px] text-surface-500">{doctor.especialidad || 'Sin especialidad'} ? {doctor.mpps || 'Sin MPPS'}</p>
+                <p className="text-[10px] text-surface-500">{doctor.especialidad || 'Sin especialidad'} \u2022 {doctor.mpps || 'Sin MPPS'}</p>
                 <span className={`mt-2 inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>
                   {doctor.status}
                 </span>
               </div>
             ))}
-            {doctors.length === 0 ? <div className="text-xs text-surface-500">Todavía no hay médicos disponibles.</div> : null}
+            {doctors.length === 0 ? <div className="text-xs text-surface-500">Todav\u00EDa no hay m\u00E9dicos disponibles.</div> : null}
           </div>
         </div>
       </div>
@@ -250,8 +250,8 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
               <h4 className="zenith-section-title">Monitor administrativo de recipes</h4>
               <p className="text-xs text-surface-400">Estados clínicos y comerciales sincronizados en tiempo real.</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => onNavigate('doctors')}>
-              Gestión médica
+            <Button variant="outline" size="sm" onClick={() => onNavigate('recipes')}>
+              Ver todos
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

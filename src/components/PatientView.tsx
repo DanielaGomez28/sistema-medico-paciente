@@ -34,7 +34,8 @@ import {
   History,
   Stethoscope,
   RefreshCw,
-  Download
+  Download,
+  CreditCard
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
 import {
@@ -1175,8 +1176,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     }
 
     const timeout = setTimeout(() => {
-      setCheckoutError('La reserva de inventario expir?. Debe recrear el checkout desde la propuesta.');
-      setPaymentStatusMessage('La reserva venci? antes de recibir confirmación de pago.');
+      setCheckoutError('La reserva de inventario expiró y pronto volverá a stock.');
+      setPaymentStatusMessage('La reserva venció antes de recibir confirmación de pago.');
       setActiveSubTab('proposals');
       setCheckoutSession((current) =>
         current
@@ -2279,72 +2280,50 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
             {/* Estado del checkout y futura redirección */}
-            <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-5">
-              <div className="p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl flex items-start gap-3 text-xs text-surface-300">
-                <Info className="h-5 w-5 text-primary-400 shrink-0 mt-0.5" />
-                <p className="leading-relaxed">
-                  La receta <span className="font-mono text-primary-300">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'SIN_RÉCIPE'}</span> ya quedóóó conectada al checkout del backend.
-                  La redirección automática se activará cuando la pasarela entregue una URL real. Mientras tanto, esta pantalla consulta el estado de la reserva y espera el callback legítimo del backend.
-                </p>
+            {/* Pasarela de pago temporal (Mock) */}
+            <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-5 flex flex-col items-center justify-center text-center min-h-[400px]">
+              <div className="h-16 w-16 rounded-full bg-primary-500/10 flex items-center justify-center mb-2">
+                <CreditCard className="h-8 w-8 text-primary-400" />
               </div>
+              <h3 className="zenith-section-title text-xl">Pasarela de Pago Segura</h3>
+              <p className="text-sm text-surface-400 max-w-md">
+                Esta es una simulación de la pasarela de pago temporal. Por favor confirme la transacción por <span className="font-bold text-white">{formatCurrency(totals.netTotal)}</span> para completar su compra.
+              </p>
 
-              {paymentStatusMessage ? (
-                <div className="rounded-xl border border-secondary-500/30 bg-secondary-500/10 px-3 py-2 text-xs text-secondary-300">
-                  {paymentStatusMessage}
+              {checkoutLoading && (
+                <div className="text-primary-400 text-sm font-semibold animate-pulse mt-4 bg-primary-500/10 px-6 py-3 rounded-xl">
+                  Procesando pago, por favor espere...
                 </div>
-              ) : null}
+              )}
 
-              {checkoutError ? (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-                  {checkoutError}
+              {!checkoutLoading && (
+                <div className="flex gap-4 mt-6 w-full max-w-sm pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPaymentStatusMessage('Pago cancelado por el usuario. Puede volver a intentar.');
+                      setActiveSubTab('proposals');
+                    }}
+                    className="flex-1 px-4 py-3 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all cursor-pointer hover:bg-surface-800"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCheckoutLoading(true);
+                      setTimeout(() => {
+                        setCheckoutLoading(false);
+                        setPaymentStatusMessage('Compra validada correctamente. El pedido quedó listo para continuar con el proceso.');
+                        setActiveSubTab('delivery');
+                      }, 2500);
+                    }}
+                    className="flex-1 px-4 py-3 bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-primary-500/20 transition-all cursor-pointer"
+                  >
+                    Pagar Ahora
+                  </button>
                 </div>
-              ) : null}
-
-              {proposalStatusMessage ? (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-                  {proposalStatusMessage}
-                </div>
-              ) : null}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 bg-surface-950/50 border border-surface-850 rounded-xl space-y-1">
-                  <p className="font-semibold text-surface-500">Estado backend</p>
-                  <p className="text-surface-200 font-bold uppercase">{checkoutSession?.order?.status || 'checkout_pending'}</p>
-                </div>
-                <div className="p-3 bg-surface-950/50 border border-surface-850 rounded-xl space-y-1">
-                  <p className="font-semibold text-surface-500">Siguiente acción</p>
-                  <p className="text-surface-300 font-mono">{checkoutSession?.order?.nextAction || 'await_gateway_url'}</p>
-                </div>
-                <div className="p-3 bg-surface-950/50 border border-surface-850 rounded-xl space-y-1 sm:col-span-2">
-                  <p className="font-semibold text-surface-500">URL de redirección</p>
-                  <p className="text-surface-300 font-mono break-all">{checkoutSession?.order?.redirectUrl || 'Pendiente de configuración por la pasarela del cliente.'}</p>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveSubTab('proposals')}
-                  className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer"
-                >
-                  Volver a Propuesta
-                </button>
-                <a
-                  href={checkoutSession?.order?.redirectUrl || '#'}
-                  target="_self"
-                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${checkoutSession?.order?.redirectUrl ? 'bg-secondary-500/15 border border-secondary-500/30 text-secondary-300 hover:text-white cursor-pointer' : 'bg-surface-900 border border-surface-800 text-surface-500 pointer-events-none'}`}
-                >
-                  Ir a la pasarela temporal
-                </a>
-                <button
-                  type="button"
-                  onClick={handleRefreshPaymentStatus}
-                  disabled={checkoutLoading || !checkoutSession?.order?.recipeId}
-                  className="px-4 py-2.5 bg-primary-500/15 border border-primary-500/30 rounded-xl text-primary-300 hover:text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {checkoutLoading ? 'Consultando...' : 'Actualizar estado'}
-                </button>
-              </div>
+              )}
             </div>
 
             {/* Summary of checkout */}

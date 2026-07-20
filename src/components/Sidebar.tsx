@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 /**
  * @fileoverview Componente sidebar.
@@ -13,6 +13,7 @@ import {
   Activity,
   Stethoscope,
   DollarSign,
+  FileText,
 } from 'lucide-react';
 import { AppSidebar } from './layout';
 
@@ -75,6 +76,7 @@ export default function Sidebar({
             ]
           : []),
         { id: 'doctors', name: 'Gestión Médicos', icon: Stethoscope },
+        { id: 'recipes', name: 'Recipes', icon: FileText },
         { id: 'financials', name: 'Comisiones', icon: DollarSign },
         { id: 'cms', name: 'Configuración Global', icon: Settings },
       ]}

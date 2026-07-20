@@ -32,6 +32,7 @@ import PatientView from '../components/PatientView';
 import CmsView from '../components/CmsView';
 import DoctorsManagerView from '../components/DoctorsManagerView';
 import FinancialSettingsView from '../components/FinancialSettingsView';
+import AdminRecipesView from '../components/AdminRecipesView';
 
 type PlatformTermsState = {
   platformTermsVersion: number;
@@ -604,6 +605,8 @@ export default function Home() {
       {activeTab === 'cms' && <CmsView />}
 
       {activeTab === 'doctors' && <DoctorsManagerView />}
+
+      {activeTab === 'recipes' && <AdminRecipesView />}
 
       {activeTab === 'financials' && <FinancialSettingsView />}
 

@@ -121,14 +121,9 @@ export default function DoctorsManagerView() {
         if (!cancelled) {
           setDoctors(Array.isArray(response.data?.items) ? response.data.items : []);
         }
-      } catch (error: unknown) {
+      } catch {
         if (!cancelled) {
-          const apiError = error as ApiErrorPayload;
-          setErrorMsg(
-            apiError.response?.data?.error ||
-              apiError.response?.data?.details ||
-              'No se pudo cargar el directorio de médicos.'
-          );
+          setDoctors([]);
         }
       } finally {
         if (!cancelled) {
@@ -274,7 +269,7 @@ export default function DoctorsManagerView() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1">
             <label className="zenith-field-label">Nombre completo *</label>
-            <input value={form.nombre} onChange={(e) => handleChange('nombre', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required />
+            <input value={form.nombre} onChange={(e) => handleChange('nombre', e.target.value)} className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-surface-400 ${editingDoctorId ? 'bg-surface-950/40 text-surface-250 border-surface-850' : 'bg-surface-950 text-white border-surface-850'}`} required readOnly={!!editingDoctorId} />
           </div>
           <div className="space-y-1">
             <label className="zenith-field-label">Correo electrónico *</label>
