@@ -42,6 +42,10 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
   DOCTOR_PROFILE_DEFAULTS,
   type DoctorLinkedPatientSeed as LinkedPatient,
+  DOCTOR_LINKED_PATIENT_SEEDS,
+  INITIAL_PRODUCTS,
+  DOCTOR_COMMISSION_SEEDS,
+  DOCTOR_RECIPE_LOG_SEEDS,
 } from '../data/mockData';
 
 
@@ -370,10 +374,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       try {
         setPatientsLoading(true);
         setPatientsError('');
-        const response = await apiClient.get(`/pacientes/medico/${encodeURIComponent(DOCTOR_ID)}`);
+        // const response = await apiClient.get(`/pacientes/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
-          setPatients(Array.isArray(response.data?.items) ? response.data.items : []);
+          setPatients(DOCTOR_LINKED_PATIENT_SEEDS);
         }
       } catch (error: unknown) {
         if (!cancelled) {
@@ -577,10 +581,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
     const loadCatalog = async () => {
       try {
-        const response = await apiClient.get('/prescripciones/catalogo');
-        const items = Array.isArray(response.data?.items)
-          ? response.data.items.map(mapCatalogItemToProduct)
-          : [];
+        // const response = await apiClient.get('/prescripciones/catalogo');
+        // const items = Array.isArray(response.data?.items)
+        //   ? response.data.items.map(mapCatalogItemToProduct)
+        //   : [];
+        const items = INITIAL_PRODUCTS as unknown as MedicalProduct[];
 
         if (!cancelled) {
           setInventoryPreview(items);
@@ -612,10 +617,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       }
 
       try {
-        const response = await apiClient.post('/prescripciones/buscar', { searchTerm: normalizedQuery });
-        const items = Array.isArray(response.data?.items)
-          ? response.data.items.map(mapCatalogItemToProduct)
-          : [];
+        // const response = await apiClient.post('/prescripciones/buscar', { searchTerm: normalizedQuery });
+        // const items = Array.isArray(response.data?.items)
+        //   ? response.data.items.map(mapCatalogItemToProduct)
+        //   : [];
+        const items = INITIAL_PRODUCTS.filter(p => p.name.toLowerCase().includes(normalizedQuery.toLowerCase())) as unknown as MedicalProduct[];
 
         if (!cancelled) {
           setCatalogResults(items);
@@ -654,10 +660,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       try {
         setCommissionLoading(true);
         setCommissionError('');
-        const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
+        // const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
-          const summary = response.data as DoctorCommissionSummary;
+          const summary = DOCTOR_COMMISSION_SEEDS[0] as unknown as DoctorCommissionSummary;
           setCommissionSummary(summary);
           if (Number.isFinite(summary?.commissionRatePct)) {
             setCommissionRate(Number(summary.commissionRatePct));
@@ -701,10 +707,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       try {
         setRecipeLogLoading(true);
         setRecipeLogError('');
-        const response = await apiClient.get(`/prescripciones/medico/${encodeURIComponent(DOCTOR_ID)}`);
+        // const response = await apiClient.get(`/prescripciones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
-          setDoctorRecipeLog(Array.isArray(response.data?.items) ? response.data.items : []);
+          setDoctorRecipeLog(DOCTOR_RECIPE_LOG_SEEDS as unknown as DoctorRecipeLog[]);
         }      } catch (error: unknown) {
         if (!cancelled) {
           const apiError = error as ApiErrorPayload;
@@ -1135,7 +1141,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const availablePharmacies = useMemo(() => {
     const pharmacies = new Set<string>();
     inventoryPreview.forEach(prod => {
-      pharmacies.add(prod.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMACIA');
+      pharmacies.add(process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA');
     });
     return Array.from(pharmacies);
   }, [inventoryPreview]);
@@ -1145,7 +1151,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     
     if (catalogPharmacyFilter !== 'all') {
       result = result.filter(prod => {
-        const pName = prod.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMACIA';
+        const pName = process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA';
         return pName === catalogPharmacyFilter;
       });
     }
@@ -1346,7 +1352,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             </p>
                           </div>
                           <span className="w-fit max-w-full shrink-0 truncate whitespace-nowrap text-[9px] text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
-                            {prod.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMACIA'}
+                            {process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA'}
                           </span>
                         </div>
                         <div className="text-[10px] text-surface-400 break-words line-clamp-3">{prod.description}</div>
