@@ -857,3 +857,82 @@ export const PATIENT_PORTAL_COPY: PatientPortalCopySeed = {
   paymentHoldMinutes: 20,
   paymentHoldSeconds: 20 * 60,
 };
+
+/**
+ * Paso explicativo del módulo de ayuda del portal paciente.
+ */
+export interface PatientHelpStepSeed {
+  title: string;
+  description: string;
+}
+
+/**
+ * Pregunta frecuente del módulo de ayuda del portal paciente.
+ */
+export interface PatientHelpFaqSeed {
+  question: string;
+  answer: string;
+}
+
+/** Pasos de uso de la plataforma para pacientes. */
+export const PATIENT_HELP_STEPS: PatientHelpStepSeed[] = [
+  {
+    title: 'Seguimiento de tratamiento',
+    description:
+      'Consulta las tomas programadas del día, marca cada dosis como completada y recibe alertas cuando falte una toma o se acerque el fin de un medicamento.',
+  },
+  {
+    title: 'Récipes médicos',
+    description:
+      'Revisa las prescripciones emitidas por tu médico, descarga o imprime el documento y verifica vigencia, medicamentos incluidos y estado clínico.',
+  },
+  {
+    title: 'Confirmar pedido',
+    description:
+      'Cuando tu médico active una propuesta de compra, confirma los productos, elige la sucursal de retiro o delivery y avanza al pago dentro del tiempo límite indicado.',
+  },
+  {
+    title: 'Pago y retiro',
+    description:
+      'Completa el pago de forma segura. Luego podrás consultar el comprobante, el voucher de retiro y el estado del despacho hasta la entrega.',
+  },
+  {
+    title: 'Perfil y credencial',
+    description:
+      'Actualiza tu teléfono y dirección de entrega desde Perfil. Usa la credencial QR del menú lateral para identificarte en farmacia o consultorio.',
+  },
+];
+
+/** Preguntas frecuentes del portal paciente. */
+export const PATIENT_HELP_FAQS: PatientHelpFaqSeed[] = [
+  {
+    question: '¿Cómo veo mis medicamentos del día?',
+    answer:
+      'Entra a Seguimiento. Allí verás las tomas de hoy, la próxima dosis pendiente y podrás registrar cada toma con un solo clic.',
+  },
+  {
+    question: '¿Qué hago si mi récipe aparece vencido?',
+    answer:
+      'Un récipe vencido ya no puede usarse para compra. Debes solicitar una nueva consulta a tu médico para que emita una prescripción actualizada.',
+  },
+  {
+    question: '¿Cuánto tiempo tengo para pagar un pedido?',
+    answer:
+      'Al confirmar un pedido se activa una ventana de pago limitada. Si el tiempo expira, deberás volver a iniciar el proceso desde Confirmar pedido.',
+  },
+  {
+    question: '¿Puedo cambiar mi dirección de entrega?',
+    answer:
+      'Sí. Ve a Perfil, pulsa Editar perfil, actualiza la dirección, estado y municipio, y guarda los cambios antes de confirmar un nuevo pedido.',
+  },
+  {
+    question: '¿Para qué sirve la credencial QR?',
+    answer:
+      'La credencial QR te identifica como paciente registrado en +Salud. Preséntala en farmacia o consultorio para validar tu vínculo con el médico y agilizar la atención.',
+  },
+  {
+    question: '¿Cómo sé si mi pedido fue despachado?',
+    answer:
+      'Después del pago puedes revisar el estado en las secciones de comprobante, voucher y seguimiento de entrega. Los cambios se sincronizan en tiempo real.',
+  },
+];

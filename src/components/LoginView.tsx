@@ -182,7 +182,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
           <div className="flex flex-col items-start gap-3 -mt-4">
             {/* Brand row: logo + name */}
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Logo del Sistema" width={41} height={41} className="object-contain" style={{ display: 'block', width: '41px', height: '41px' }} />
+              <img src="/logo.png" alt="Logo del Sistema" width={43} height={43} className="object-contain" style={{ display: 'block', width: '43px', height: '43px' }} />
               <span className="font-semibold" style={{ color: '#179150', fontSize: '23px' }}>+Salud</span>
             </div>
             {/* Title + Subtitle */}

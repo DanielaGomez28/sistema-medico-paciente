@@ -109,7 +109,7 @@ export default function AppHeader({
           {brand && (
             <div className="hidden lg:flex items-center gap-2.5 shrink-0 border-r border-surface-850 pr-5 h-10">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/5 bg-white shadow-sm">
-                <img src="/logo.png" alt="Logo" width={22} height={22} style={{ display: 'block', width: '22px', height: '22px', objectFit: 'contain' }} />
+                <img src="/logo.png" alt="Logo" width={24} height={24} style={{ display: 'block', width: '24px', height: '24px', objectFit: 'contain' }} />
               </div>
               <div className="min-w-0 flex flex-col justify-center leading-none">
                 <span className={cn('tracking-tight text-[22px] font-bold leading-none', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')}>+Salud</span>

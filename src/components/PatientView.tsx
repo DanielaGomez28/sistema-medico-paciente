@@ -35,9 +35,11 @@ import {
   Stethoscope,
   RefreshCw,
   Download,
-  CreditCard
+  CreditCard,
+  HelpCircle,
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
+import PatientHelpView from './PatientHelpView';
 import {
   useCredentialQr,
   SidebarCredentialButton,
@@ -526,7 +528,7 @@ const deriveOrderDeliveryStatus = (
  */
 export default function PatientView({ patientName, patientEmail, patientId, socketIdentity, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile'
-  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile'>('treatment');
+  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile' | 'help'>('treatment');
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [backendPrescriptions, setBackendPrescriptions] = useState<BackendPrescription[]>([]);
@@ -1410,12 +1412,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         ? 'treatment'
         : activeSubTab === 'proposals' || activeSubTab === 'payment' || activeSubTab === 'delivery'
           ? 'proposals'
-          : 'profile';
+          : activeSubTab === 'help'
+            ? 'help'
+            : 'profile';
 
   const handleNav = (id: string) => {
     if (id === 'recipes') setActiveSubTab('recipes');
     else if (id === 'treatment') setActiveSubTab('treatment');
     else if (id === 'proposals') setActiveSubTab('proposals');
+    else if (id === 'help') setActiveSubTab('help');
     else setActiveSubTab('profile');
   };
 
@@ -1433,6 +1438,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             { id: 'treatment', name: 'Seguimiento', icon: Pill },
             { id: 'recipes', name: 'Récipes médicos', icon: FileText },
             { id: 'proposals', name: 'Confirmar pedido', icon: FileSpreadsheet },
+            { id: 'help', name: 'Ayuda', icon: HelpCircle },
             { id: 'profile', name: 'Perfil', icon: User },
           ]}
           activeId={activeNavId}
@@ -1475,6 +1481,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             { id: 'treatment', name: 'Seguimiento', icon: Pill },
             { id: 'recipes', name: 'Récipes médicos', icon: FileText },
             { id: 'proposals', name: 'Confirmar pedido', icon: FileSpreadsheet },
+            { id: 'help', name: 'Ayuda', icon: HelpCircle },
             { id: 'profile', name: 'Perfil', icon: User },
           ]}
           activeId={activeNavId}
@@ -2555,6 +2562,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           </div>
         </div>
       )}
+
+      {/* P.H: HELP MODULE */}
+      {activeSubTab === 'help' && <PatientHelpView />}
 
       {/* P.5: PROFILE CONFIGURATION VIEW */}
       {activeSubTab === 'profile' && (

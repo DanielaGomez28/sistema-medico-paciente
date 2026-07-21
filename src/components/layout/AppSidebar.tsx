@@ -130,9 +130,9 @@ export default function AppSidebar({
           <img
             src="/logo.png"
             alt="Logo"
-            width={26}
-            height={26}
-            style={{ display: 'block', width: '26px', height: '26px', objectFit: 'contain' }}
+            width={28}
+            height={28}
+            style={{ display: 'block', width: '28px', height: '28px', objectFit: 'contain' }}
           />
         </div>
         <div className="zc-collapse-text min-w-0 flex-1">

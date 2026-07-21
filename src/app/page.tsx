@@ -497,10 +497,10 @@ export default function Home() {
         <img
           src="/logo.png"
           alt="+Salud"
-          width={72}
-          height={72}
+          width={74}
+          height={74}
           className="animate-pulse"
-          style={{ display: 'block', width: '72px', height: '72px', objectFit: 'contain' }}
+          style={{ display: 'block', width: '74px', height: '74px', objectFit: 'contain' }}
         />
         <span className="text-primary-400 font-bold tracking-tight" style={{ fontSize: '28px' }}>+Salud</span>
       </div>
