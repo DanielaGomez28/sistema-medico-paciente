@@ -30,6 +30,7 @@ import { cn } from '../../lib/utils';
  * @property {string} [activeId] - ID de navegación activo.
  * @property {(id: string) => void} [onNavigate] - Callback al navegar.
  * @property {AccentVariant} [accent='primary'] - Acento cromático del menú activo.
+ * @property {string} [className] - Clases CSS adicionales para el elemento header raíz.
  */
 export interface AppHeaderProps {
   statusLabel?: string;
@@ -46,6 +47,9 @@ export interface AppHeaderProps {
   onNavigate?: (id: string) => void;
   accent?: AccentVariant;
   onLogout?: () => void;
+  className?: string;
+  /** Si es true, los ítems de navegación y el nombre del perfil se renderizan en blanco */
+  navTextWhite?: boolean;
 }
 
 /**
@@ -71,9 +75,11 @@ export default function AppHeader({
   onNavigate,
   accent = 'primary',
   onLogout,
+  className,
+  navTextWhite = false,
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-20 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md shrink-0 px-4 py-2 sm:px-4 sm:py-0 sm:h-16 sm:min-h-16 md:px-6 lg:px-8">
+    <header className={cn('sticky top-0 z-20 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md shrink-0 px-4 py-2 sm:px-4 sm:py-0 sm:h-16 sm:min-h-16 md:px-6 lg:px-8', className)}>
       <div className="flex min-w-0 items-center gap-2 sm:h-16">
 
         {/* LEFT: Hamburger + Brand */}
@@ -116,18 +122,27 @@ export default function AppHeader({
                   onClick={() => onNavigate(item.id)}
                   className={cn(
                     'relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-[15px] font-bold transition-all duration-200 group cursor-pointer shrink-0',
-                    'hover:scale-[1.04] active:scale-[0.97]',
-                    isActive
-                      ? 'text-foreground bg-surface-800/80 shadow-sm'
-                      : 'text-surface-400 hover:text-foreground hover:bg-surface-850/60'
+                    navTextWhite
+                      ? [
+                          'hover:scale-[1.04] active:scale-[0.97] active:bg-white/15 active:shadow-sm',
+                          isActive ? 'text-white bg-white/15 shadow-sm' : 'text-white',
+                        ]
+                      : [
+                          'hover:scale-[1.04] active:scale-[0.97]',
+                          isActive
+                            ? 'text-foreground bg-surface-800/80 shadow-sm'
+                            : 'text-surface-400 hover:text-foreground hover:bg-surface-850/60',
+                        ]
                   )}
                 >
                   <Icon
                     className={cn(
                       'h-[15px] w-[15px] shrink-0 transition-all duration-200',
-                      isActive
-                        ? 'text-primary-400'
-                        : 'text-surface-500 group-hover:text-surface-300 group-hover:scale-110'
+                      navTextWhite
+                        ? isActive ? 'text-white' : 'text-white/80'
+                        : isActive
+                          ? 'text-primary-400'
+                          : 'text-surface-500 group-hover:text-surface-300 group-hover:scale-110'
                     )}
                   />
                   <span className="relative">
@@ -136,12 +151,14 @@ export default function AppHeader({
                     <span
                       className={cn(
                         'absolute -bottom-[3px] left-0 right-0 h-[2px] rounded-full transition-all duration-300',
-                        isActive ? 'bg-primary-400 opacity-100 scale-x-100' : 'opacity-0 scale-x-0'
+                        isActive
+                          ? navTextWhite ? 'bg-white opacity-100 scale-x-100' : 'bg-primary-400 opacity-100 scale-x-100'
+                          : 'opacity-0 scale-x-0'
                       )}
                     />
                   </span>
-                  {/* Hover glow ring */}
-                  {!isActive && (
+                  {/* Hover glow ring — hidden when navTextWhite */}
+                  {!isActive && !navTextWhite && (
                     <span className="absolute inset-0 rounded-lg ring-1 ring-surface-700/0 group-hover:ring-surface-700/60 transition-all duration-200" />
                   )}
                 </button>

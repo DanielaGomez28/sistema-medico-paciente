@@ -1454,6 +1454,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           onMenuClick={onMenuClick}
           statusLabel=""
           showNotifications={false}
+          className="!bg-cyan-900/95 border-cyan-800/60"
+          navTextWhite
           brand={{ icon: Activity, title: 'Paciente', subtitle: 'Paciente' }}
           items={[
             { id: 'treatment', name: 'Seguimiento', icon: Pill },
@@ -1464,16 +1466,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           activeId={activeNavId}
           onNavigate={handleNav}
           onLogout={onLogout}
-          actions={
-            <div className="hidden lg:block shrink-0">
-              <SidebarCredentialButton
-                onOpen={() => {
-                  void handleGenerarQR();
-                  setIsCredentialModalOpen(true);
-                }}
-              />
-            </div>
-          }
           profileInitials={profileName
             .split(' ')
             .filter(Boolean)
@@ -2597,7 +2589,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     type="button"
                     onClick={handleStartProfileEdit}
                     disabled={profileLoading}
-                    className="w-full sm:min-w-[220px] px-4 py-2.5 bg-secondary hover:bg-secondary-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
+                    className="w-full sm:min-w-[220px] px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
                   >
                     {profileLoading ? 'Cargando...' : 'Editar perfil'}
                   </button>
