@@ -2573,7 +2573,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       type="button"
                       onClick={() => void handleConfirmProfileEdit()}
                       disabled={profileLoading}
-                      className="w-full sm:min-w-[220px] px-4 py-2.5 bg-secondary hover:bg-secondary-600 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
+                      className="w-full sm:min-w-[220px] px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
                     >
                       {profileLoading ? 'Guardando...' : 'Confirmar cambios'}
                     </button>
