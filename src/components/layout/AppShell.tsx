@@ -98,12 +98,12 @@ export default function AppShell({
             layout === 'horizontal'
               ? 'w-64 lg:hidden transition-transform duration-200'
               : layout === 'vertical-collapsible'
-                ? 'w-64 lg:w-[1.125rem] lg:hover:w-64 transition-[width,transform] duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0'
+                ? 'sidebar-collapsible w-64 lg:w-[4.5rem] lg:hover:w-64 lg:will-change-[width] transition-[width,transform] duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0'
                 : 'w-64 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
-          <div className="w-64 h-full">
+          <div className={cn('h-full', layout === 'vertical-collapsible' ? 'w-full' : 'w-64')}>
             {sidebar}
           </div>
         </div>

@@ -82,7 +82,7 @@ export default function AppHeader({
   navTextDarkCyan = false,
 }: AppHeaderProps) {
   return (
-    <header className={cn('sticky top-0 z-20 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md shrink-0 px-4 py-2 sm:px-4 sm:py-0 sm:h-16 sm:min-h-16 md:px-6 lg:px-8', className)}>
+    <header className={cn('sticky top-0 z-20 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md shrink-0 px-4 py-2 sm:px-4 sm:py-0 sm:h-16 sm:min-h-16 md:px-6 lg:px-8', navTextWhite && 'zenith-nav-on-dark', className)}>
       <div className="flex min-w-0 items-center gap-2 sm:h-16">
 
         {/* LEFT: Hamburger + Brand */}

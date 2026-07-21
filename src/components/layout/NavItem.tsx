@@ -72,7 +72,7 @@ export default function NavItem({ item, isActive, accent, onClick, navTextWhite,
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-control)] text-sm transition-all duration-200 group relative border-l-2',
+        'zc-row w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-control)] text-sm transition-all duration-200 group relative border-l-2',
         navTextWhite
           ? (isActive ? 'bg-white/20 text-white border-white' : 'text-white border-transparent hover:bg-white/10 hover:text-white')
           : navTextDarkCyan
@@ -92,7 +92,7 @@ export default function NavItem({ item, isActive, accent, onClick, navTextWhite,
       />
       <span
         className={cn(
-          'zenith-nav-label flex-1 min-w-0 text-left whitespace-nowrap truncate',
+          'zc-collapse-text zenith-nav-label flex-1 min-w-0 text-left whitespace-nowrap truncate',
           isActive && !navTextWhite && !navTextDarkCyan && 'zenith-nav-label--active',
           navTextWhite && 'text-white font-bold',
           navTextDarkCyan && 'text-[#055058] font-bold'
@@ -102,12 +102,12 @@ export default function NavItem({ item, isActive, accent, onClick, navTextWhite,
         {item.name}
       </span>
       {item.badge != null && item.badgeColor && (
-        <span className={cn('ml-auto px-2 py-0.5 text-xs font-bold rounded-full', item.badgeColor)}>
+        <span className={cn('zc-collapse-hide ml-auto px-2 py-0.5 text-xs font-bold rounded-full', item.badgeColor)}>
           {item.badge}
         </span>
       )}
       {isActive && (
-        <span className={cn('absolute right-3 w-1.5 h-1.5 rounded-full', navTextWhite ? 'bg-white' : navTextDarkCyan ? 'bg-[#055058]' : accentDotClasses[accent])} />
+        <span className={cn('zc-collapse-hide absolute right-3 w-1.5 h-1.5 rounded-full', navTextWhite ? 'bg-white' : navTextDarkCyan ? 'bg-[#055058]' : accentDotClasses[accent])} />
       )}
     </button>
   );

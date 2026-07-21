@@ -114,13 +114,24 @@ export default function AppSidebar({
     <aside
       className={cn(
         'w-full h-full bg-surface-900 border-r border-surface-850 flex flex-col text-surface-300',
+        navTextWhite && 'zenith-nav-on-dark',
         className
       )}
     >
-      <div className={cn("h-16 flex items-center gap-3 px-6 border-b backdrop-blur-md", navTextWhite ? "bg-transparent border-white/20" : navTextDarkCyan ? "bg-transparent border-[#055058]/20" : "bg-surface-900/95 border-surface-850")}>
+      <div className={cn("zc-row h-16 flex items-center gap-3 px-5 border-b backdrop-blur-md", navTextWhite ? "bg-transparent border-white/20" : navTextDarkCyan ? "bg-transparent border-[#055058]/20" : "bg-surface-900/95 border-surface-850")}>
         {/* Logo + Salud brand */}
-        <img src="/logo.png" alt="Logo" width={32} height={32} style={{ display: 'block', width: '32px', height: '32px', objectFit: 'contain' }} />
-        <div className="min-w-0 flex-1">
+        <img
+          src="/logo.png"
+          alt="Logo"
+          width={32}
+          height={32}
+          className={cn(
+            'shrink-0 rounded-md',
+            navTextWhite ? 'border border-white/40 p-0.5 bg-white/10' : navTextDarkCyan ? 'border border-[#055058]/30 p-0.5' : ''
+          )}
+          style={{ display: 'block', width: '32px', height: '32px', objectFit: 'contain' }}
+        />
+        <div className="zc-collapse-text min-w-0 flex-1">
           <h1 className={cn('tracking-tight leading-none truncate font-bold', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')} style={{ fontSize: '19px' }}>+Salud</h1>
         </div>
       </div>
@@ -129,7 +140,7 @@ export default function AppSidebar({
 
       <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
         {sectionLabel && (
-          <div className="zenith-field-label px-4 py-2 text-[10px] uppercase tracking-wider">
+          <div className="zc-collapse-text zenith-field-label px-4 py-2 text-[10px] uppercase tracking-wider">
             {sectionLabel}
           </div>
         )}
@@ -150,7 +161,7 @@ export default function AppSidebar({
         <div className={cn("p-4 border-t border-surface-850 space-y-3", navTextWhite ? "bg-black/10" : navTextDarkCyan ? "bg-[#055058]/5" : "bg-surface-900/80")}>
           {preProfile}
           {profile && (
-            <div className={cn("flex items-center gap-3 p-2 rounded-xl transition-colors duration-150", navTextWhite ? "hover:bg-white/10" : navTextDarkCyan ? "hover:bg-[#055058]/10" : "hover:bg-surface-900/40")}>
+            <div className={cn("zc-row flex items-center gap-3 p-2 rounded-xl transition-colors duration-150", navTextWhite ? "hover:bg-white/10" : navTextDarkCyan ? "hover:bg-[#055058]/10" : "hover:bg-surface-900/40")}>
               <div
                 className={cn(
                   'h-10 w-10 rounded-full border flex items-center justify-center font-bold text-sm shrink-0',
@@ -160,7 +171,7 @@ export default function AppSidebar({
               >
                 {profile.initials}
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="zc-collapse-text flex-1 min-w-0">
                 <p className={cn("text-sm font-semibold truncate", navTextWhite ? "text-white" : navTextDarkCyan ? "text-[#055058]" : "text-foreground")}>{profile.name}</p>
                 {profile.role ? (
                   <p className={cn("text-xs truncate", navTextWhite ? "text-white/80" : navTextDarkCyan ? "text-[#055058]/80" : "text-surface-500")}>{profile.role}</p>
@@ -170,7 +181,7 @@ export default function AppSidebar({
                 <button
                   type="button"
                   onClick={onLogout}
-                  className={cn("p-2 rounded-lg transition-colors cursor-pointer shrink-0", navTextWhite ? "text-white hover:text-red-200 hover:bg-white/10" : navTextDarkCyan ? "text-[#055058] hover:text-red-800 hover:bg-[#055058]/10" : "text-surface-400 hover:text-red-500 hover:bg-surface-900")}
+                  className={cn("zc-collapse-hide p-2 rounded-lg transition-colors cursor-pointer shrink-0", navTextWhite ? "text-white hover:text-red-200 hover:bg-white/10" : navTextDarkCyan ? "text-[#055058] hover:text-red-800 hover:bg-[#055058]/10" : "text-surface-400 hover:text-red-500 hover:bg-surface-900")}
                   title={logoutLabel}
                   aria-label={logoutLabel}
                 >

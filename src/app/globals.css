@@ -557,6 +557,24 @@ table th {
   color: var(--foreground);
 }
 
+/*
+ * Barra de navegación del médico: las letras e íconos deben ser SIEMPRE
+ * blancos (modo claro, oscuro y en la animación de hover/activo), porque
+ * siempre se apoyan sobre el fondo verde oscuro del portal médico.
+ * En modo claro `.text-white` se remapea a `foreground` (texto oscuro); aquí
+ * lo revertimos únicamente dentro de la barra de navegación del médico.
+ */
+[data-theme="light"] .zenith-nav-on-dark .text-white,
+[data-theme="light"] .zenith-nav-on-dark .hover\:text-white:hover {
+  color: #ffffff;
+}
+
+/* En modo claro el sidebar móvil del médico conserva un fondo verde oscuro
+   para que el texto blanco mantenga contraste. */
+[data-theme="light"] aside.zenith-nav-on-dark {
+  background-color: #14532d;
+}
+
 [data-theme="light"] .text-surface-950 {
   color: var(--foreground);
 }
@@ -2227,4 +2245,56 @@ h5.font-mono,
 h6.font-mono {
   font-family: var(--font-mono);
   font-stretch: normal;
+}
+
+/*
+ * ── Sidebar colapsable (portal Admin) ──────────────────────────────────
+ * Cuando el sidebar está contraído (sin hover, solo en desktop) mostramos
+ * ÚNICAMENTE los íconos, centrados. Al hacer hover el sidebar se expande y
+ * el texto de cada fila (nav, logo/marca, perfil) se acomoda al lado del
+ * ícono con una animación suave. En móvil no aplica (siempre expandido).
+ */
+@media (min-width: 1024px) {
+  /*
+   * Todas las propiedades animadas del despliegue comparten la MISMA duración
+   * (300ms) y la MISMA curva (cubic-bezier .4,0,.2,1, = ease-in-out del wrapper)
+   * para que el ancho del sidebar, el gap y el texto se muevan en sincronía y
+   * el movimiento se vea continuo, sin trabarse.
+   */
+
+  /* Fila (ícono + texto): centrada y sin separación cuando está contraído */
+  .sidebar-collapsible .zc-row {
+    justify-content: center;
+    gap: 0;
+    transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar-collapsible:hover .zc-row {
+    justify-content: flex-start;
+    gap: 0.75rem;
+  }
+
+  /* Texto que se acomoda al desplegar: colapsa a ancho 0 y aparece al hover */
+  .sidebar-collapsible .zc-collapse-text {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    will-change: max-width, opacity;
+    transition:
+      max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .sidebar-collapsible:hover .zc-collapse-text {
+    max-width: 12rem;
+    opacity: 1;
+  }
+
+  /* Elementos que solo tienen sentido con el sidebar desplegado (badges,
+     punto de activo, botón de logout secundario): ocultos al contraer. */
+  .sidebar-collapsible .zc-collapse-hide {
+    display: none;
+  }
+  .sidebar-collapsible:hover .zc-collapse-hide {
+    display: inline-flex;
+  }
 }

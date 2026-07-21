@@ -58,7 +58,7 @@ export default function Sidebar({
     <AppSidebar
       accent="primary"
       navTextWhite
-      className="!bg-[#0A6B75] !border-[#0A6B75]"
+      className="!bg-[#0A6B75] !border-r-white/30"
       brand={{
         icon: Activity,
         title: 'Admin',
