@@ -5,7 +5,7 @@
  * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Users, 
   Calendar, 
@@ -587,6 +587,17 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [catalogResults, setCatalogResults] = useState<MedicalProduct[]>([]);
   const [catalogSortOrder, setCatalogSortOrder] = useState<'default' | 'asc' | 'desc'>('default');
   const [catalogPharmacyFilter, setCatalogPharmacyFilter] = useState<string>('all');
+  
+  const [expandedQtyProductId, setExpandedQtyProductId] = useState<string | null>(null);
+  const qtyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleExpandQty = (productId: string) => {
+    setExpandedQtyProductId(productId);
+    if (qtyTimeoutRef.current) clearTimeout(qtyTimeoutRef.current);
+    qtyTimeoutRef.current = setTimeout(() => {
+      setExpandedQtyProductId(null);
+    }, 3000);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -1095,7 +1106,23 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     if (cart.some(item => item.product.id === product.id)) {
       return;
     }
-    setCart([...cart, { product, posology: '', discount: 0, treatmentDays: 1, dailyDoses: 1 }]);
+    setCart([...cart, { product, posology: '', discount: 0, treatmentDays: 1, dailyDoses: 1, quantity: 1 }]);
+    handleExpandQty(product.id);
+  };
+
+  /**
+   * Actualiza la cantidad de un medicamento en el carrito.
+   */
+  const updateCartQuantity = (productId: string, delta: number) => {
+    setCart(cart.map(item => {
+      if (item.product.id === productId) {
+        const newQty = (item.quantity || 1) + delta;
+        return { ...item, quantity: newQty };
+      }
+      return item;
+    }).filter(item => (item.quantity || 1) > 0));
+    
+    handleExpandQty(productId);
   };
 
   /**
@@ -1159,7 +1186,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         items: cart.map((item) => ({
           id_producto: item.product.id,
           dosis: item.posology.trim(),
-          cantidad: item.treatmentDays * item.dailyDoses || 1,
+          cantidad: item.quantity || 1,
           aplicar_beneficio: globalDiscount > 0,
         })),
       });
@@ -1775,18 +1802,55 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                   <span className="block text-xs font-bold text-white">{formatCurrency(prod.price)}</span>
                                   <span className={`block text-[10px] ${prod.stock < 20 ? 'text-primary-500 font-medium' : 'text-surface-400'}`}>Stock: {prod.stock} u.</span>
                                 </div>
-                                <button
-                                  type="button"
-                                  disabled={isAlreadySelected}
-                                  onClick={() => addToCart(prod)}
-                                  className={`p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ${
-                                    isAlreadySelected
-                                      ? 'bg-surface-900 border-surface-850 text-surface-600'
-                                      : 'bg-secondary-500/10 hover:bg-secondary-500 border-secondary-500/20 hover:border-secondary-550 text-secondary-450 hover:text-white'
-                                  }`}
-                                >
-                                  <Plus className="h-4.5 w-4.5" />
-                                </button>
+                                {(() => {
+                                  const cartItem = cart.find(i => i.product.id === prod.id);
+                                  const isSelected = !!cartItem;
+                                  const isExpanded = expandedQtyProductId === prod.id;
+                                  
+                                  if (!isSelected) {
+                                    return (
+                                      <button
+                                        type="button"
+                                        onClick={() => addToCart(prod)}
+                                        className="p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 bg-secondary-500/10 hover:bg-secondary-500 border-secondary-500/20 hover:border-secondary-550 text-secondary-450 hover:text-white"
+                                      >
+                                        <Plus className="h-4.5 w-4.5" />
+                                      </button>
+                                    );
+                                  }
+
+                                  if (isExpanded) {
+                                    return (
+                                      <div className="flex items-center gap-2 bg-secondary-500 rounded-full border border-secondary-550 p-0.5 text-white shadow-lg shrink-0 h-8">
+                                        <button
+                                          type="button"
+                                          onClick={() => updateCartQuantity(prod.id, -1)}
+                                          className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+                                        >
+                                          -
+                                        </button>
+                                        <span className="text-xs font-bold w-3 text-center">{cartItem.quantity || 1}</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => updateCartQuantity(prod.id, 1)}
+                                          className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+                                        >
+                                          +
+                                        </button>
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleExpandQty(prod.id)}
+                                      className="h-8 w-8 rounded-full bg-secondary-500 flex items-center justify-center text-white font-bold text-xs shadow-lg transition-transform hover:scale-105 shrink-0"
+                                    >
+                                      {cartItem.quantity || 1}
+                                    </button>
+                                  );
+                                })()}
                               </div>
                             </div>
                           );
@@ -1883,7 +1947,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               </div>
                               <div className="space-y-1.5 pb-2 border-b border-surface-850/50">
                                 {cart.map((item, idx) => {
-                                  const quantity = item.treatmentDays * item.dailyDoses || 1;
+                                  const quantity = item.quantity || 1;
                                   return (
                                     <div key={`subtotal-${item.product.id}-${idx}`} className="flex justify-between text-[10px] text-surface-300">
                                       <span className="truncate pr-2">{item.product.name} x({quantity})</span>
@@ -1897,8 +1961,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 <span>Ahorro para el Paciente</span>
                                 <span>
                                   {(() => {
-                                    const totalOriginal = cart.reduce((sum, item) => sum + (item.product.price * (item.treatmentDays * item.dailyDoses || 1)), 0);
-                                    const totalDesc = cart.reduce((sum, item) => sum + ((item.product.price * (item.treatmentDays * item.dailyDoses || 1)) * (globalDiscount / 100)), 0);
+                                    const totalOriginal = cart.reduce((sum, item) => sum + (item.product.price * (item.quantity || 1)), 0);
+                                    const totalDesc = cart.reduce((sum, item) => sum + ((item.product.price * (item.quantity || 1)) * (globalDiscount / 100)), 0);
                                     const pct = totalOriginal > 0 ? Math.round((totalDesc / totalOriginal) * 100) : 0;
                                     return `${pct}% (${formatCurrency(totalDesc)} Bs)`;
                                   })()}
@@ -1909,7 +1973,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 <span>Total a pagar</span>
                                 <span className="font-mono text-secondary-400">
                                   {(() => {
-                                    const totalPay = cart.reduce((sum, item) => sum + ((item.product.price * (item.treatmentDays * item.dailyDoses || 1)) * (1 - globalDiscount / 100)), 0);
+                                    const totalPay = cart.reduce((sum, item) => sum + ((item.product.price * (item.quantity || 1)) * (1 - globalDiscount / 100)), 0);
                                     return `${formatCurrency(totalPay)} Bs`;
                                   })()}
                                 </span>
