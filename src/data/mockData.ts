@@ -936,3 +936,66 @@ export const PATIENT_HELP_FAQS: PatientHelpFaqSeed[] = [
       'Después del pago puedes revisar el estado en las secciones de comprobante, voucher y seguimiento de entrega. Los cambios se sincronizan en tiempo real.',
   },
 ];
+
+/** Pasos de uso de la plataforma para médicos. */
+export const DOCTOR_HELP_STEPS: PatientHelpStepSeed[] = [
+  {
+    title: 'Panel de control',
+    description:
+      'Revisa tu agenda del día, métricas de actividad, pacientes vinculados recientes y el estado general de tus prescripciones emitidas.',
+  },
+  {
+    title: 'Gestión de pacientes',
+    description:
+      'Consulta el directorio de pacientes vinculados, escanea el QR de credencial para registrar nuevos casos y accede al expediente clínico de cada persona.',
+  },
+  {
+    title: 'Generar récipe',
+    description:
+      'Selecciona un paciente vinculado, busca medicamentos en el catálogo autorizado, arma la prescripción y emítela con validación digital.',
+  },
+  {
+    title: 'Comisiones',
+    description:
+      'Consulta el resumen de comisiones generadas por consultas y tratamientos pagados, con detalle por periodo y estado de liquidación.',
+  },
+  {
+    title: 'Perfil profesional',
+    description:
+      'Mantén actualizados tus datos de consultorio, registro MPPS, datos bancarios para comisiones y firma digital desde la sección Perfil.',
+  },
+];
+
+/** Preguntas frecuentes del portal médico. */
+export const DOCTOR_HELP_FAQS: PatientHelpFaqSeed[] = [
+  {
+    question: '¿Cómo vinculo un paciente nuevo?',
+    answer:
+      'Ve a Pacientes y usa el escáner QR para leer la credencial del paciente. Si ya está registrado en +Salud, quedará vinculado a tu consulta automáticamente.',
+  },
+  {
+    question: '¿Puedo prescribir medicamentos que no están en el catálogo?',
+    answer:
+      'No. Solo puedes emitir récipes con productos del catálogo interno autorizado de farmacia. Esto garantiza trazabilidad y disponibilidad en despacho.',
+  },
+  {
+    question: '¿Cómo edito los datos clínicos de un paciente?',
+    answer:
+      'En Pacientes, abre el expediente del paciente seleccionado, pulsa editar y guarda los cambios. Algunos campos institucionales permanecen en solo lectura.',
+  },
+  {
+    question: '¿Cuándo se reflejan mis comisiones?',
+    answer:
+      'Las comisiones aparecen en la pestaña Comisiones cuando el paciente completa el pago del tratamiento. El estado de liquidación depende de la política financiera de la plataforma.',
+  },
+  {
+    question: '¿Dónde actualizo mis datos bancarios?',
+    answer:
+      'Entra a Perfil, pulsa Editar perfil y completa titular, entidad, tipo de cuenta y número. Confirma los cambios para que queden listos en la sesión actual.',
+  },
+  {
+    question: '¿Qué hago si falla el guardado de un récipe?',
+    answer:
+      'Verifica que el paciente esté vinculado, que todos los campos obligatorios estén completos y reintenta. Si el error persiste, revisa tu conexión o contacta al administrador.',
+  },
+];

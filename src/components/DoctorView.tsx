@@ -31,8 +31,10 @@ import {
   BadgeCheck,
   Check,
   X,
+  HelpCircle,
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
+import DoctorHelpView from './DoctorHelpView';
 // QR credential removed for doctor portal
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
@@ -281,7 +283,7 @@ const VENEZUELAN_BANKS = [
  */
 export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorProfile, onLogout }: DoctorViewProps) {
   // Navigation active tab: 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'
-  const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile'>('agenda');
+  const [activeTab, setActiveTab] = useState<'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile' | 'help'>('agenda');
 
   // Estados para manejar el Escáner y el Bloqueo MCA (Módulo 1 / Sprint #2)
   const [isScanning, setIsScanning] = useState<boolean>(false);
@@ -1239,6 +1241,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
               { id: 'reception', name: 'Pacientes', icon: Users },
               { id: 'prescription', name: 'Generar récipe', icon: FileText },
               { id: 'commissions', name: 'Comisiones', icon: TrendingUp },
+              { id: 'help', name: 'Ayuda', icon: HelpCircle },
               { id: 'profile', name: 'Perfil', icon: Users },
             ]}
             activeId={activeTab}
@@ -1246,7 +1249,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
               if (id === 'reception') {
                 setPatientViewMode('list');
               }
-              setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile');
+              setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile' | 'help');
             }}
             profile={{
               initials: doctorName
@@ -1281,6 +1284,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
               { id: 'reception', name: 'Pacientes', icon: Users },
               { id: 'prescription', name: 'Generar récipe', icon: FileText },
               { id: 'commissions', name: 'Comisiones', icon: TrendingUp },
+              { id: 'help', name: 'Ayuda', icon: HelpCircle },
               { id: 'profile', name: 'Perfil', icon: Users },
             ]}
             activeId={activeTab}
@@ -1288,7 +1292,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
               if (id === 'reception') {
                 setPatientViewMode('list');
               }
-              setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile');
+              setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile' | 'help');
             }}
             onLogout={onLogout}
             profileInitials={doctorName
@@ -2108,6 +2112,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             })()}
 
             {/* VIEW TAB 5: PROFILE CONFIGURATION (Pantalla M.4) */}
+            {activeTab === 'help' && <DoctorHelpView />}
+
             {activeTab === 'profile' && (
               <>
               <div className="space-y-6 animate-in fade-in duration-300 max-w-2xl mx-auto">

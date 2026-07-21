@@ -433,6 +433,15 @@
     vertical-align: top;
   }
 
+  .zenith-table :is(th, td).zenith-table__code {
+    white-space: normal;
+    word-break: break-all;
+    overflow-wrap: anywhere;
+    min-width: 10.5rem;
+    vertical-align: top;
+    line-height: 1.45;
+  }
+
   .zenith-table--divided {
     width: 100%;
     table-layout: fixed;

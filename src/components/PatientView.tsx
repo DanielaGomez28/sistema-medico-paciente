@@ -1638,15 +1638,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             <div className="zenith-table-wrap hidden lg:block">
               <table className="zenith-table zenith-table--divided text-sm">
                 <colgroup>
-                  <col className="w-[18%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[29%]" />
-                  <col className="w-[23%]" />
-                  <col className="w-[18%]" />
+                  <col className="w-[26%]" />
+                  <col className="w-[11%]" />
+                  <col className="w-[26%]" />
+                  <col className="w-[21%]" />
+                  <col className="w-[16%]" />
                 </colgroup>
                 <thead>
                   <tr className="border-b border-surface-850 text-xs font-semibold text-surface-500 uppercase tracking-wider">
-                    <th className="pb-3">Código</th>
+                    <th className="pb-3 zenith-table__code">Código</th>
                     <th className="pb-3">Emisión</th>
                     <th className="pb-3 zenith-table__wrap">Medicamento</th>
                     <th className="pb-3 zenith-table__wrap">Especialista</th>
@@ -1663,8 +1663,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   )}
                   {recipes.map((rec) => (
                     <tr key={rec.id} className="hover:bg-surface-850/25 transition-colors group">
-                      <td className="py-4 pr-4 font-mono font-bold text-xs text-white break-all align-top">
-                        <span className="block max-w-full">{rec.id}</span>
+                      <td className="py-4 pr-4 font-mono font-bold text-[11px] text-white zenith-table__code align-top">
+                        {rec.id}
                       </td>
                       <td className="py-4 text-xs text-surface-400">{rec.date}</td>
                       <td className="py-4 zenith-table__wrap">
