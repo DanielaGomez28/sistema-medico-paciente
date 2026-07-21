@@ -100,6 +100,7 @@ interface CartItem {
   discount: number;
   treatmentDays: number;
   dailyDoses: number;
+  quantity?: number;
 }
 
 interface DoctorCommissionTransaction {
