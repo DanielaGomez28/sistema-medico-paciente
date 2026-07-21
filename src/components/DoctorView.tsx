@@ -590,6 +590,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   useEffect(() => {
     let cancelled = false;
 
+    const capitalizeFirst = (str: string) => {
+      if (!str) return '';
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
     const loadCatalog = async () => {
       try {
         const response = await apiClient.get('/prescripciones/catalogo');
@@ -1377,13 +1382,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     {inventoryPreview.slice(0, 4).map((prod) => (
                       <div key={prod.id} className="overflow-hidden bg-surface-950/50 border border-surface-850 rounded-2xl p-4 space-y-3">
                         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-white leading-snug break-words line-clamp-2">
-                              {prod.name}
-                            </p>
-                            <p className="mt-1 text-[10px] text-surface-500 break-words">
-                              {prod.category}
-                            </p>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <span className="block min-w-0 flex-1 max-w-full text-xs text-surface-200 leading-snug break-words line-clamp-3 font-normal">
+                              <span className="font-normal text-surface-200">Principio activo: {prod.category ? prod.category.charAt(0).toUpperCase() + prod.category.slice(1).toLowerCase() : ''}</span><br />
+                              <span className="font-normal text-surface-200">{prod.name}</span>
+                            </span>
                           </div>
                           <span className="w-fit max-w-full shrink-0 truncate whitespace-nowrap text-[9px] text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
                             {process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA'}
@@ -1756,7 +1759,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               <div className="space-y-1 text-left min-w-0 flex-1">
                                 <div className="flex w-full min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-1.5">
                                   <span className="block min-w-0 flex-1 max-w-full text-xs text-surface-200 leading-snug break-words line-clamp-3 font-normal">
-                                    <span className="font-normal text-surface-200">Principio activo: {prod.category}</span><br />
+                                    <span className="font-normal text-surface-200">Principio activo: {prod.category ? prod.category.charAt(0).toUpperCase() + prod.category.slice(1).toLowerCase() : ''}</span><br />
                                     <span className="font-normal text-surface-200">{prod.name}</span>
                                     {prod.pharmacyName && (
                                       <span className="block text-[10px] text-surface-400 mt-0.5">Farmacia: {prod.pharmacyName}</span>
