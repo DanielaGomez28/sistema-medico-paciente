@@ -570,10 +570,16 @@ table th {
   color: #ffffff;
 }
 
-/* En modo claro el sidebar móvil del médico conserva un fondo verde oscuro
-   para que el texto blanco mantenga contraste. */
-[data-theme="light"] aside.zenith-nav-on-dark {
-  background-color: #14532d;
+/* Barra de navegación del portal médico — #179150 en claro y oscuro */
+[data-portal="doctor"] header.zenith-nav-on-dark,
+[data-portal="doctor"] aside.zenith-nav-on-dark {
+  background-color: #179150 !important;
+  border-color: #148047 !important;
+}
+
+/* Sidebar móvil del paciente en modo claro */
+[data-theme="light"] [data-portal="patient"] aside.zenith-nav-on-dark {
+  background-color: #0a6b75;
 }
 
 [data-theme="light"] .text-surface-950 {
@@ -1639,13 +1645,16 @@ table th {
 
 [data-portal="patient"].flex.h-screen,
 [data-portal="patient"] main,
-[data-portal="patient"] header,
 [data-portal="doctor"].flex.h-screen,
 [data-portal="doctor"] main,
-[data-portal="doctor"] header,
 [data-portal="admin"].flex.h-screen,
-[data-portal="admin"] main,
-[data-portal="admin"] header {
+[data-portal="admin"] main {
+  background-color: var(--portal-canvas) !important;
+}
+
+[data-portal="patient"] header:not(.zenith-nav-on-dark),
+[data-portal="doctor"] header:not(.zenith-nav-on-dark),
+[data-portal="admin"] header:not(.zenith-nav-on-dark) {
   background-color: var(--portal-canvas) !important;
 }
 

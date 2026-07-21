@@ -11,7 +11,6 @@ import {
   Calendar, 
   FileText, 
   PlusCircle, 
-  LogOut, 
   ShieldAlert,
   ChevronRight,
   ArrowLeft,
@@ -1243,7 +1242,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             onMenuClick={onMenuClick}
             statusLabel=""
             showNotifications={false}
-            className="!bg-green-900/95 border-green-800/60"
+            className="!bg-[#179150] border-[#148047]"
             navTextWhite
             showProfileName={false}
             showProfileAvatar={false}
@@ -2093,12 +2092,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             <div className="p-3 bg-primary-500/5 border border-primary-500/15 rounded-xl flex items-start gap-2 text-[10px] text-primary-400">
               <DollarSign className="h-3.5 w-3.5 shrink-0 mt-0.5" />
               <span>Las fechas de pago son las establecidas en la parte de la administración.</span>
-            </div>
-            <div className="pt-2 border-t border-surface-850 flex flex-col sm:flex-row sm:items-center justify-end gap-4">
-              <button type="button" onClick={onLogout} className="px-4 py-2 bg-white text-surface-950 hover:bg-surface-200 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-colors order-last sm:order-first">
-                <LogOut className="h-4 w-4" />
-                <span>Cerrar Sesión</span>
-              </button>
             </div>
                 </div>
               </div>
