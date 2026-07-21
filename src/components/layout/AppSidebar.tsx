@@ -179,7 +179,14 @@ export default function AppSidebar({
                 <button
                   type="button"
                   onClick={onLogout}
-                  className={cn("zc-collapse-hide p-2 rounded-lg transition-colors cursor-pointer shrink-0", navTextWhite ? "text-white hover:text-red-200 hover:bg-white/10" : navTextDarkCyan ? "text-[#055058] hover:text-red-800 hover:bg-[#055058]/10" : "text-surface-400 hover:text-red-500 hover:bg-surface-900")}
+                  className={cn(
+                    'zc-collapse-hide flex items-center justify-center transition-colors cursor-pointer shrink-0',
+                    navTextWhite
+                      ? 'h-10 w-10 rounded-full border border-red-500/30 bg-white text-red-500 hover:bg-white/90'
+                      : navTextDarkCyan
+                        ? 'p-2 rounded-lg text-[#055058] hover:text-red-800 hover:bg-[#055058]/10'
+                        : 'p-2 rounded-lg text-surface-400 hover:text-red-500 hover:bg-surface-900'
+                  )}
                   title={logoutLabel}
                   aria-label={logoutLabel}
                 >
@@ -199,7 +206,7 @@ export default function AppSidebar({
               <span
                 className={cn(
                   'h-10 w-10 rounded-full border flex items-center justify-center shrink-0',
-                  navTextWhite ? 'bg-white/20 border-white/40 text-white' : navTextDarkCyan ? 'bg-[#055058]/15 border-[#055058]/30 text-[#055058]' : 'bg-surface-800 border-surface-700 text-red-500'
+                  navTextWhite ? 'bg-white border-red-500/30 text-red-500' : navTextDarkCyan ? 'bg-[#055058]/15 border-[#055058]/30 text-[#055058]' : 'bg-surface-800 border-surface-700 text-red-500'
                 )}
               >
                 <LogOut className="h-4 w-4" />
