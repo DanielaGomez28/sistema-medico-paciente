@@ -29,6 +29,8 @@ import {
   DollarSign,
   Award,
   BadgeCheck,
+  Check,
+  X,
 } from 'lucide-react';
 import { AppShell, AppSidebar, AppHeader } from './layout';
 // QR credential removed for doctor portal
@@ -588,17 +590,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [catalogResults, setCatalogResults] = useState<MedicalProduct[]>([]);
   const [catalogSortOrder, setCatalogSortOrder] = useState<'default' | 'asc' | 'desc'>('default');
   const [catalogPharmacyFilter, setCatalogPharmacyFilter] = useState<string>('all');
-  
-  const [expandedQtyProductId, setExpandedQtyProductId] = useState<string | null>(null);
-  const qtyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const handleExpandQty = (productId: string) => {
-    setExpandedQtyProductId(productId);
-    if (qtyTimeoutRef.current) clearTimeout(qtyTimeoutRef.current);
-    qtyTimeoutRef.current = setTimeout(() => {
-      setExpandedQtyProductId(null);
-    }, 3000);
-  };
 
   useEffect(() => {
     let cancelled = false;
@@ -1108,23 +1099,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       return;
     }
     setCart([...cart, { product, posology: '', discount: 0, treatmentDays: 1, dailyDoses: 1, quantity: 1 }]);
-    handleExpandQty(product.id);
   };
 
-  /**
-   * Actualiza la cantidad de un medicamento en el carrito.
-   */
-  const updateCartQuantity = (productId: string, delta: number) => {
-    setCart(cart.map(item => {
-      if (item.product.id === productId) {
-        const newQty = (item.quantity || 1) + delta;
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }).filter(item => (item.quantity || 1) > 0));
-    
-    handleExpandQty(productId);
-  };
+
 
   /**
    * Remueve un medicamento del carrito de prescripción médica.
@@ -1806,7 +1783,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 {(() => {
                                   const cartItem = cart.find(i => i.product.id === prod.id);
                                   const isSelected = !!cartItem;
-                                  const isExpanded = expandedQtyProductId === prod.id;
                                   
                                   if (!isSelected) {
                                     return (
@@ -1820,35 +1796,15 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                     );
                                   }
 
-                                  if (isExpanded) {
-                                    return (
-                                      <div className="flex items-center gap-2 bg-secondary-500 rounded-full border border-secondary-550 p-0.5 text-white shadow-lg shrink-0 h-8">
-                                        <button
-                                          type="button"
-                                          onClick={() => updateCartQuantity(prod.id, -1)}
-                                          className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
-                                        >
-                                          -
-                                        </button>
-                                        <span className="text-xs font-bold w-3 text-center">{cartItem.quantity || 1}</span>
-                                        <button
-                                          type="button"
-                                          onClick={() => updateCartQuantity(prod.id, 1)}
-                                          className="h-6 w-6 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
-                                        >
-                                          +
-                                        </button>
-                                      </div>
-                                    );
-                                  }
-
                                   return (
                                     <button
                                       type="button"
-                                      onClick={() => handleExpandQty(prod.id)}
-                                      className="h-8 w-8 rounded-full bg-secondary-500 flex items-center justify-center text-white font-bold text-xs shadow-lg transition-transform hover:scale-105 shrink-0"
+                                      onClick={() => removeFromCart(prod.id)}
+                                      className="group h-8 w-8 rounded-full bg-secondary-500 hover:bg-error-500 flex items-center justify-center text-white shadow-lg shrink-0 transition-colors cursor-pointer"
+                                      title="Remover medicamento"
                                     >
-                                      {cartItem.quantity || 1}
+                                      <Check className="h-4.5 w-4.5 group-hover:hidden" />
+                                      <X className="h-4.5 w-4.5 hidden group-hover:block" />
                                     </button>
                                   );
                                 })()}
@@ -1951,7 +1907,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                   const quantity = item.quantity || 1;
                                   return (
                                     <div key={`subtotal-${item.product.id}-${idx}`} className="flex justify-between text-[10px] text-surface-300">
-                                      <span className="truncate pr-2">{item.product.name} x({quantity})</span>
+                                      <span className="truncate pr-2">{item.product.name}</span>
                                       <span className="font-mono shrink-0">{formatCurrency(item.product.price * quantity)} Bs</span>
                                     </div>
                                   );
