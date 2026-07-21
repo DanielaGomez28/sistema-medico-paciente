@@ -1374,6 +1374,41 @@ table th {
   opacity: 1;
 }
 
+[data-portal="doctor"] .doctor-recipe-log-item {
+  background: color-mix(in srgb, #179150 12%, #ffffff);
+  border: 1px solid color-mix(in srgb, #179150 30%, #cbd5e1);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+}
+
+[data-portal="doctor"] .doctor-recipe-log-item__name {
+  font-weight: 700;
+  color: #000000;
+}
+
+[data-portal="doctor"] .doctor-recipe-log-item__med {
+  background: #ffffff;
+  border: 1px solid color-mix(in srgb, #179150 22%, #cbd5e1);
+  color: #000000;
+  font-weight: 700;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-recipe-log-item {
+  background: color-mix(in srgb, #179150 16%, var(--zenith-surface-950));
+  border-color: color-mix(in srgb, #179150 35%, transparent);
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-recipe-log-item__name {
+  color: #ffffff;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-recipe-log-item__med {
+  background: #ffffff;
+  border-color: color-mix(in srgb, #179150 30%, transparent);
+  color: #000000;
+  font-weight: 700;
+}
+
 @keyframes doctor-qr-scan-blink {
   0%,
   100% {

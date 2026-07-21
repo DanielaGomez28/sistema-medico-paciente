@@ -2075,23 +2075,20 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         </div>
                       ) : null}
 
-                      <div className="divide-y divide-surface-850">
+                      <div className="space-y-2">
                         {!recipeLogLoading && doctorRecipeLog.length === 0 ? (
                           <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos por este médico.</div>
                         ) : null}
                         {doctorRecipeLog.map((rec) => (
-                          <div key={rec.recipeId} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
+                          <div key={rec.recipeId} className="doctor-recipe-log-item flex items-start justify-between gap-3">
                             <div className="space-y-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-bold text-xs text-white">{rec.patientName || rec.patientId}</span>
-                                <span className="text-[9px] font-mono text-surface-500 bg-surface-950 border border-surface-850 px-1.5 py-0.2 rounded">#R-{rec.recipeId.split('-')[0].toUpperCase()}</span>
-                              </div>
+                              <p className="doctor-recipe-log-item__name text-sm">{rec.patientName || rec.patientId}</p>
                               <div className="flex flex-wrap gap-1 pt-0.5">
                                 {rec.items.map((item, idx) => (
-                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
+                                  <span key={idx} className="doctor-recipe-log-item__med text-[9px] px-1.5 py-0.5 rounded">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
                                 ))}
                               </div>
-                              <p className="text-[10px] text-surface-500 flex items-center gap-1 flex-wrap">
+                              <p className="text-[10px] text-black dark:text-surface-300 flex items-center gap-1 flex-wrap">
                                 <span>Emitido {new Date(rec.createdAt).toLocaleDateString('es-ES')}</span>
                                 <span>•</span>
                                 <span>Caduca {new Date(rec.recipeExpiresAt).toLocaleDateString('es-ES')}</span>
