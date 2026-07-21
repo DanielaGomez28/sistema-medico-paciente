@@ -2114,25 +2114,42 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
             {/* Proposal Breakdown Table */}
             <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0 flex-1">
                   <h3 className="zenith-section-title">Medicamentos recetados</h3>
-                  <p className="text-xs text-surface-500 mt-1">Checkout asociado a la receta: <span className="font-mono text-primary-300">{activeCheckoutPrescription?.recipeId || 'SIN_RÉCIPE'}</span></p>
+                  {activeCheckoutPrescription ? (
+                    <div className="mt-1.5 space-y-0.5 text-xs text-surface-500">
+                      <p>
+                        Recetado por{' '}
+                        <span className="font-semibold text-surface-300">
+                          {activeCheckoutPrescription.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName}
+                        </span>
+                        {' · '}
+                        <span>{formatRecipeDate(activeCheckoutPrescription.createdAt)}</span>
+                      </p>
+                      <p className="break-all">
+                        Receta:{' '}
+                        <span className="font-mono text-primary-300">{activeCheckoutPrescription.recipeId}</span>
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-surface-500 mt-1">Sin receta asociada al checkout.</p>
+                  )}
                 </div>
                 {backendPrescriptions.length > 1 && (
-                  <div className="flex items-center gap-2 self-start sm:self-auto">
-                    <span className="text-xs text-surface-400 font-medium whitespace-nowrap">Seleccionar récipe:</span>
+                  <div className="flex flex-col gap-1.5 w-full lg:w-auto lg:min-w-[min(100%,320px)] lg:max-w-[420px] shrink-0">
+                    <span className="text-xs text-surface-400 font-medium">Seleccionar récipe</span>
                     <select
                       value={activeCheckoutRecipeId || activeCheckoutPrescription?.recipeId || ''}
                       onChange={(e) => {
                         setActiveCheckoutRecipeId(e.target.value);
                         setUnselectedItemIds(new Set());
                       }}
-                      className="bg-surface-950 border border-surface-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer max-w-[200px]"
+                      className="patient-checkout-recipe-select w-full bg-surface-950 border border-surface-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"
                     >
                       {backendPrescriptions.map(presc => (
-                        <option key={presc.recipeId} value={presc.recipeId}>
-                          {presc.recipeId} ({new Date(presc.createdAt).toLocaleDateString()})
+                        <option key={presc.recipeId} value={presc.recipeId} title={presc.recipeId}>
+                          {formatRecipeDate(presc.createdAt)} · {presc.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName}
                         </option>
                       ))}
                     </select>
@@ -2141,13 +2158,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               </div>
 
               {checkoutError ? (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                <div className="patient-checkout-notice rounded-xl px-3 py-2 text-xs font-medium">
                   {checkoutError}
                 </div>
               ) : null}
 
               {proposalStatusMessage ? (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+                <div className="patient-checkout-notice rounded-xl px-3 py-2 text-xs font-medium">
                   {proposalStatusMessage}
                 </div>
               ) : null}
