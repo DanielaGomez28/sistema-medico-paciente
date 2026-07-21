@@ -387,7 +387,7 @@ export default function DoctorsManagerView() {
                         <button type="button" onClick={() => handleEdit(doctor)} className="p-1.5 rounded-lg border border-surface-800 hover:border-surface-700 hover:bg-surface-900 text-surface-300">
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button type="button" onClick={() => handleSuspend(doctor.id_usuario)} className="p-1.5 rounded-lg border border-amber-500/20 hover:border-amber-500/40 hover:bg-amber-500/10 text-amber-300" disabled={saving || doctor.status === 'suspendido'}>
+                        <button type="button" onClick={() => handleSuspend(doctor.id_usuario)} className="p-1.5 rounded-lg border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/10 text-red-400" disabled={saving || doctor.status === 'suspendido'}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -414,7 +414,7 @@ export default function DoctorsManagerView() {
                 actions={
                   <div className="flex gap-2">
                     <button type="button" onClick={() => handleEdit(doctor)} className="px-2.5 py-1 text-xs font-semibold text-surface-300 bg-surface-800 rounded-md border border-surface-700">Editar</button>
-                    <button type="button" onClick={() => handleSuspend(doctor.id_usuario)} className="px-2.5 py-1 text-xs font-semibold text-amber-300 bg-amber-500/10 rounded-md border border-amber-500/20" disabled={saving || doctor.status === 'suspendido'}>Suspender</button>
+                    <button type="button" onClick={() => handleSuspend(doctor.id_usuario)} className="px-2.5 py-1 text-xs font-semibold text-red-400 bg-red-500/10 rounded-md border border-red-500/20" disabled={saving || doctor.status === 'suspendido'}>Suspender</button>
                   </div>
                 }
               />
