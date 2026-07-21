@@ -294,7 +294,7 @@
 
   .zenith-card {
     border-radius: var(--radius-card);
-    background: #ffffff;
+    background: var(--zenith-card-surface);
     @apply border border-primary-500/10 shadow-sm;
   }
 
@@ -2312,7 +2312,7 @@ h6.font-mono {
  * Tailwind (text-surface-500, border-surface-850, etc.) usadas dentro de esta
  * barra hereden los valores correctos.
  */
-.admin-sidebar-white {
+[data-theme="light"] .admin-sidebar-white {
   background: #ffffff !important;
   --background: #ffffff;
   --foreground: #0a1220;
