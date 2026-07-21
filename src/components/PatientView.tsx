@@ -53,6 +53,12 @@ import {
   PATIENT_PROFILE_DEFAULTS,
 } from '../data/mockData';
 
+const formatPhoneNumber = (val: string) => {
+  const digits = val.replace(/\D/g, '');
+  if (digits.length <= 4) return digits;
+  return `${digits.slice(0, 4)}-${digits.slice(4, 11)}`;
+};
+
 /**
  * Propiedades de la vista de portal del Paciente.
  * @interface PatientViewProps
@@ -1792,7 +1798,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 Genere un código QR de seguridad de un solo uso para autorizar accesos o validar su identidad en consultorios médicos.
               </p>
               <p className="text-xs text-surface-500">
-                ID interno del paciente: <span className="font-mono text-surface-300 font-semibold">{qrPatientIdentity}</span>
+                ID interno del paciente: <span className="font-mono text-surface-300 font-semibold">ID: {qrPatientIdentity}</span>
               </p>
             </div>
 
@@ -2611,7 +2617,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       type="tel"
                       value={isEditingProfile ? profileDraft.phone : profilePhone}
                       onChange={(e) => {
-                        setProfileDraft((prev) => ({ ...prev, phone: e.target.value }));
+                        setProfileDraft((prev) => ({ ...prev, phone: formatPhoneNumber(e.target.value) }));
                         if (profileError?.field === 'phone') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}
@@ -2622,7 +2628,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <label className="zenith-field-label">ID Interno del Sistema</label>
                     <input
                       type="text"
-                      value={qrPatientIdentity}
+                      value={`ID: ${qrPatientIdentity}`}
                       readOnly
                       className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 font-mono focus:outline-none"
                     />
@@ -2631,7 +2637,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <label className="zenith-field-label">Referencia del Perfil</label>
                     <input
                       type="text"
-                      value={patientProfile?.patientId || qrPatientIdentity}
+                      value={patientProfile?.patientId ? `ID: ${patientProfile.patientId}` : `ID: ${qrPatientIdentity}`}
                       readOnly
                       className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 font-mono focus:outline-none"
                     />
