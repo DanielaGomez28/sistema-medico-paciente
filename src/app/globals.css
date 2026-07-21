@@ -1857,26 +1857,26 @@ table th {
 }
 
 [data-portal="admin"] {
-  --color-primary: #0a6b75;
-  --color-primary-300: color-mix(in srgb, #0a6b75 52%, #4a6672);
-  --color-primary-400: color-mix(in srgb, #0a6b75 66%, #2f4f5c);
-  --color-primary-450: color-mix(in srgb, #0a6b75 72%, #24424f);
-  --color-primary-500: color-mix(in srgb, #0a6b75 78%, #1a3844);
-  --color-primary-550: #0a6b75;
-  --color-primary-600: #095c67;
-  --color-primary-650: #085862;
-  --color-primary-700: #074f58;
-  --portal-btn-bg: #0a6b75;
-  --portal-btn-hover: #095c67;
+  --color-primary: #39c4d0;
+  --color-primary-300: color-mix(in srgb, #39c4d0 52%, #4a6672);
+  --color-primary-400: color-mix(in srgb, #39c4d0 66%, #2f4f5c);
+  --color-primary-450: color-mix(in srgb, #39c4d0 72%, #24424f);
+  --color-primary-500: color-mix(in srgb, #39c4d0 78%, #1a3844);
+  --color-primary-550: #39c4d0;
+  --color-primary-600: #2fa9b4;
+  --color-primary-650: #2a99a3;
+  --color-primary-700: #248892;
+  --portal-btn-bg: #39c4d0;
+  --portal-btn-hover: #2fa9b4;
   --portal-btn-fg: #ffffff;
-  --portal-btn-border: #095c67;
-  --zenith-nav-active-bg: color-mix(in srgb, #0a6b75 14%, transparent);
-  --zenith-nav-active-border: #0a6b75;
-  --zenith-nav-active-dot: #0c8a97;
-  --zenith-btn-solid-bg: #0a6b75;
+  --portal-btn-border: #2fa9b4;
+  --zenith-nav-active-bg: color-mix(in srgb, #39c4d0 14%, transparent);
+  --zenith-nav-active-border: #39c4d0;
+  --zenith-nav-active-dot: #50e9f8;
+  --zenith-btn-solid-bg: #39c4d0;
   --zenith-btn-solid-fg: #ffffff;
-  --zenith-btn-solid-hover: #095c67;
-  --zenith-btn-solid-border: #095c67;
+  --zenith-btn-solid-hover: #2fa9b4;
+  --zenith-btn-solid-border: #2fa9b4;
 }
 
 [data-portal] .portal-profile-avatar {
@@ -1939,15 +1939,15 @@ table th {
 }
 
 [data-theme="light"] [data-portal="admin"] {
-  --color-primary: #0a6b75;
-  --color-primary-300: #064f58;
-  --color-primary-400: #08616c;
-  --color-primary-450: #096b77;
-  --color-primary-500: #0a7582;
-  --color-primary-550: #0a6b75;
-  --color-primary-600: #095c67;
-  --color-primary-650: #085862;
-  --color-primary-700: #074f58;
+  --color-primary: #1f8e99;
+  --color-primary-300: #0f5058;
+  --color-primary-400: #146672;
+  --color-primary-450: #17727e;
+  --color-primary-500: #1a7d8a;
+  --color-primary-550: #1f8e99;
+  --color-primary-600: #124850;
+  --color-primary-650: #10424a;
+  --color-primary-700: #0d383e;
 }
 
 [data-theme="light"] [data-portal] .zenith-page-title {
@@ -2297,4 +2297,52 @@ h6.font-mono {
   .sidebar-collapsible:hover .zc-collapse-hide {
     display: inline-flex;
   }
+}
+
+/*
+ * Barra de navegación del Admin: siempre blanca (sin importar modo claro u
+ * oscuro). Como el fondo blanco es fijo, también fijamos aquí la escala de
+ * texto/superficie de la barra a los valores del modo claro, para que las
+ * letras e íconos (que normalmente usan `--foreground`/`--zenith-surface-*`,
+ * variables que cambian entre modo oscuro y claro) siempre queden oscuros y
+ * legibles sobre el blanco. Gracias a la doble indirección de
+ * `--color-surface-*: var(--zenith-surface-*)` en `@theme inline`, basta con
+ * sobreescribir las variables `--zenith-*` aquí para que TODAS las utilidades
+ * Tailwind (text-surface-500, border-surface-850, etc.) usadas dentro de esta
+ * barra hereden los valores correctos.
+ */
+.admin-sidebar-white {
+  background: #ffffff !important;
+  --background: #ffffff;
+  --foreground: #0a1220;
+  --zenith-nav-active-bg: #f8f9fa;
+  --zenith-nav-active-border: #334155;
+  --zenith-canvas: #f8f9fa;
+  --zenith-card-surface: #ffffff;
+  --zenith-surface-950: #f8f9fa;
+  --zenith-surface-900: #ffffff;
+  --zenith-surface-855: #f8f9fa;
+  --zenith-surface-850: #e9ecef;
+  --zenith-surface-805: #f8f9fa;
+  --zenith-surface-800: #dee2e6;
+  --zenith-surface-750: #cbd5e1;
+  --zenith-surface-700: #94a3b8;
+  --zenith-surface-650: #64748b;
+  --zenith-surface-600: #475569;
+  --zenith-surface-555: #3d4f63;
+  --zenith-surface-550: #334155;
+  --zenith-surface-500: #2a3a4d;
+  --zenith-surface-455: #243445;
+  --zenith-surface-450: #1e2d3d;
+  --zenith-surface-400: #172433;
+  --zenith-surface-350: #121d2b;
+  --zenith-surface-300: #0e1724;
+  --zenith-surface-200: #0a1220;
+  --zenith-surface-150: #070e18;
+  --zenith-surface-100: #040a12;
+}
+
+.admin-sidebar-white > div:first-child,
+.admin-sidebar-white > div:last-child {
+  background: transparent !important;
 }

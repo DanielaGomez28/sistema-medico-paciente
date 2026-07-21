@@ -52,6 +52,10 @@ export interface AppHeaderProps {
   navTextWhite?: boolean;
   /** Si es true, los ítems de navegación y el nombre del perfil se renderizan en cyan oscuro (#055058) */
   navTextDarkCyan?: boolean;
+  /** Si es false, oculta el nombre de perfil junto al avatar (solo se muestra el círculo de iniciales) */
+  showProfileName?: boolean;
+  /** Si es false, oculta por completo el círculo de iniciales y el nombre de perfil */
+  showProfileAvatar?: boolean;
 }
 
 /**
@@ -80,6 +84,8 @@ export default function AppHeader({
   className,
   navTextWhite = false,
   navTextDarkCyan = false,
+  showProfileName = true,
+  showProfileAvatar = true,
 }: AppHeaderProps) {
   return (
     <header className={cn('sticky top-0 z-20 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md shrink-0 px-4 py-2 sm:px-4 sm:py-0 sm:h-16 sm:min-h-16 md:px-6 lg:px-8', navTextWhite && 'zenith-nav-on-dark', className)}>
@@ -101,10 +107,12 @@ export default function AppHeader({
             </button>
           )}
           {brand && (
-            <div className="hidden lg:flex items-center gap-2 shrink-0 border-r border-surface-850 pr-5 h-8">
-              <img src="/logo.png" alt="Logo" width={28} height={28} style={{ display: 'block', width: '28px', height: '28px', objectFit: 'contain' }} />
+            <div className="hidden lg:flex items-center gap-2.5 shrink-0 border-r border-surface-850 pr-5 h-10">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/5 bg-white shadow-sm">
+                <img src="/logo.png" alt="Logo" width={22} height={22} style={{ display: 'block', width: '22px', height: '22px', objectFit: 'contain' }} />
+              </div>
               <div className="min-w-0 flex flex-col justify-center leading-none">
-                <span className={cn('tracking-tight text-[18px] font-bold leading-none', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')}>+Salud</span>
+                <span className={cn('tracking-tight text-[22px] font-bold leading-none', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')}>+Salud</span>
               </div>
             </div>
           )}
@@ -186,12 +194,16 @@ export default function AppHeader({
           )}
           {trailing ?? (
             <div className="flex items-center gap-3 border-l border-surface-850 pl-3 sm:pl-4">
-              <div className="flex items-center gap-2">
-                <div className={cn('h-7 w-7 rounded-full border flex items-center justify-center text-xs font-semibold', navTextWhite ? 'bg-white/15 border-white/30 text-white' : navTextDarkCyan ? 'bg-[#055058]/15 border-[#055058]/30 text-[#055058]' : 'bg-surface-800 border-surface-700 text-foreground')}>
-                  {profileInitials}
+              {showProfileAvatar && (
+                <div className="flex items-center gap-2">
+                  <div className={cn('h-7 w-7 rounded-full border flex items-center justify-center text-xs font-semibold', navTextWhite ? 'bg-white/15 border-white/30 text-white' : navTextDarkCyan ? 'bg-[#055058]/15 border-[#055058]/30 text-[#055058]' : 'bg-surface-800 border-surface-700 text-foreground')}>
+                    {profileInitials}
+                  </div>
+                  {showProfileName && (
+                    <span className={cn('text-xs font-semibold hidden md:inline', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-surface-300')}>{profileName}</span>
+                  )}
                 </div>
-                <span className={cn('text-xs font-semibold hidden md:inline', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-surface-300')}>{profileName}</span>
-              </div>
+              )}
               {onLogout && (
                 <button
                   type="button"

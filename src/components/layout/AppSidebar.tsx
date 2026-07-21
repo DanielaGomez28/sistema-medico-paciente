@@ -120,19 +120,17 @@ export default function AppSidebar({
     >
       <div className={cn("zc-row h-16 flex items-center gap-3 px-5 border-b backdrop-blur-md", navTextWhite ? "bg-transparent border-white/20" : navTextDarkCyan ? "bg-transparent border-[#055058]/20" : "bg-surface-900/95 border-surface-850")}>
         {/* Logo + Salud brand */}
-        <img
-          src="/logo.png"
-          alt="Logo"
-          width={32}
-          height={32}
-          className={cn(
-            'shrink-0 rounded-md',
-            navTextWhite ? 'border border-white/40 p-0.5 bg-white/10' : navTextDarkCyan ? 'border border-[#055058]/30 p-0.5' : ''
-          )}
-          style={{ display: 'block', width: '32px', height: '32px', objectFit: 'contain' }}
-        />
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-black/5 bg-white shadow-sm">
+          <img
+            src="/logo.png"
+            alt="Logo"
+            width={26}
+            height={26}
+            style={{ display: 'block', width: '26px', height: '26px', objectFit: 'contain' }}
+          />
+        </div>
         <div className="zc-collapse-text min-w-0 flex-1">
-          <h1 className={cn('tracking-tight leading-none truncate font-bold', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')} style={{ fontSize: '19px' }}>+Salud</h1>
+          <h1 className={cn('tracking-tight leading-none truncate font-bold', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')} style={{ fontSize: '24px' }}>+Salud</h1>
         </div>
       </div>
 
@@ -189,6 +187,24 @@ export default function AppSidebar({
                 </button>
               )}
             </div>
+          )}
+          {!profile && onLogout && logoutVariant === 'icon' && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className={cn("zc-row w-full flex items-center gap-3 p-2 rounded-xl transition-colors duration-150 cursor-pointer", navTextWhite ? "hover:bg-white/10" : navTextDarkCyan ? "hover:bg-[#055058]/10" : "hover:bg-surface-900/40")}
+              title={logoutLabel}
+              aria-label={logoutLabel}
+            >
+              <span
+                className={cn(
+                  'h-10 w-10 rounded-full border flex items-center justify-center shrink-0',
+                  navTextWhite ? 'bg-white/20 border-white/40 text-white' : navTextDarkCyan ? 'bg-[#055058]/15 border-[#055058]/30 text-[#055058]' : 'bg-surface-800 border-surface-700 text-red-500'
+                )}
+              >
+                <LogOut className="h-4 w-4" />
+              </span>
+            </button>
           )}
           {onLogout && logoutVariant === 'full' && (
             <button type="button" onClick={onLogout} className={cn("w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition-colors duration-200", navTextWhite ? "text-white bg-white/10 hover:bg-white/20" : navTextDarkCyan ? "text-[#055058] bg-[#055058]/10 hover:bg-[#055058]/20" : "zenith-logout-btn")}>

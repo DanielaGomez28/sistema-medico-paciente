@@ -25,7 +25,6 @@ import {
   shouldRefreshProductsStorage,
 } from '../lib/productCatalog';
 import { APP_USER_DEFAULTS, INITIAL_ORDERS, INITIAL_PRODUCTS } from '../data/mockData';
-import { Activity } from 'lucide-react';
 import LoginView from '../components/LoginView';
 import DoctorView from '../components/DoctorView';
 import PatientView from '../components/PatientView';
@@ -494,9 +493,16 @@ export default function Home() {
 
   if (!isLoaded || !isHydrated) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-surface-950 text-primary-400 font-semibold gap-3 h-screen">
-        <Activity className="h-6 w-6 animate-pulse" />
-        <span>Cargando Médico-Paciente...</span>
+      <div className="flex-1 flex flex-col items-center justify-center bg-surface-950 gap-4 h-screen">
+        <img
+          src="/logo.png"
+          alt="+Salud"
+          width={72}
+          height={72}
+          className="animate-pulse"
+          style={{ display: 'block', width: '72px', height: '72px', objectFit: 'contain' }}
+        />
+        <span className="text-primary-400 font-bold tracking-tight" style={{ fontSize: '28px' }}>+Salud</span>
       </div>
     );
   }
@@ -571,11 +577,13 @@ export default function Home() {
         return (
           <AppHeader
             onMenuClick={onMenuClick}
-            statusLabel={adminName} // El label que ya tenÃ­as
+            statusLabel=""
             showNotifications={false}
             // ðŸš€ 2. INYECTAMOS LAS PROPIEDADES DINÃMICAS AQUÃ:
             profileName={adminName}
             profileInitials={adminInitials}
+            showProfileName={false}
+            showProfileAvatar={false}
             actions={enableOperationalTabs ? (
               <AppHeaderAction variant="admin" onClick={() => setIsNewOrderOpen(true)}>
                 Nuevo Pedido

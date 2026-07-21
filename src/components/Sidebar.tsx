@@ -41,24 +41,12 @@ export default function Sidebar({
   setActiveTab,
   pendingOrdersCount,
   onLogout,
-  adminName,
   enableOperationalTabs = true,
 }: SidebarProps) {
-  const getInitials = (nameString: string) => {
-    const parts = nameString.trim().split(/\s+/);
-    if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    }
-    return parts[0] ? parts[0][0].toUpperCase() : 'AD';
-  };
-
-  const dynamicInitials = getInitials(adminName || 'Administrador Sistema');
-
   return (
     <AppSidebar
       accent="primary"
-      navTextWhite
-      className="!bg-[#0A6B75] !border-r-white/30"
+      className="admin-sidebar-white !border-r-surface-850"
       brand={{
         icon: Activity,
         title: 'Admin',
@@ -84,13 +72,9 @@ export default function Sidebar({
       ]}
       activeId={activeTab}
       onNavigate={setActiveTab}
-      profile={{
-        initials: dynamicInitials,
-        name: adminName || 'Administrador Sistema',
-        avatarClassName: 'portal-profile-avatar',
-      }}
       onLogout={onLogout}
       logoutVariant="icon"
+      logoutLabel="Cerrar Sesión"
     />
   );
 }

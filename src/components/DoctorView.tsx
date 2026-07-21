@@ -1175,6 +1175,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             showNotifications={false}
             className="!bg-green-900/95 border-green-800/60"
             navTextWhite
+            showProfileName={false}
+            showProfileAvatar={false}
             brand={{ icon: Activity, title: 'Médico', subtitle: 'Médico' }}
             items={[
               { id: 'agenda', name: 'Panel', icon: Calendar },

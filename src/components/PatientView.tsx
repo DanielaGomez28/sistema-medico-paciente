@@ -1417,6 +1417,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       sidebar={
         <AppSidebar
           accent="primary"
+          className="!bg-[#0A6B75] !border-r-white/30"
           brand={{ icon: Activity, title: 'Paciente', subtitle: 'Paciente' }}
           items={[
             { id: 'treatment', name: 'Seguimiento', icon: Pill },
@@ -1447,7 +1448,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           }
           onLogout={onLogout}
           logoutVariant="icon"
-          navTextDarkCyan
+          navTextWhite
         />
       }
       header={({ onMenuClick }) => (
@@ -1455,8 +1456,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           onMenuClick={onMenuClick}
           statusLabel=""
           showNotifications={false}
-          className="!bg-[#50E9F8] border-[#50E9F8]"
-          navTextDarkCyan
+          className="!bg-[#0A6B75] border-[#0A6B75]"
+          navTextWhite
+          showProfileName={false}
+          showProfileAvatar={false}
           brand={{ icon: Activity, title: 'Paciente', subtitle: 'Paciente' }}
           items={[
             { id: 'treatment', name: 'Seguimiento', icon: Pill },
