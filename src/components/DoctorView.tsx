@@ -66,7 +66,6 @@ interface DoctorViewProps {
 interface MedicalProduct {
   id: string;
   name: string;
-  sku: string;
   category: string;
   price: number;
   stock: number;
@@ -85,7 +84,6 @@ interface PrescriptionCatalogApiItem {
   principio_activo: string;
   presentacion: string;
   laboratorio: string;
-  sku: string;
   stock: number;
   precio_base: number;
   beneficio_pct: number;
@@ -110,6 +108,8 @@ interface DoctorCommissionTransaction {
   amount: number;
   commissionAmount: number;
   settledAt: string;
+  pharmacy_name?: string;
+  medications?: string;
 }
 
 interface DoctorCommissionSummary {
@@ -117,6 +117,7 @@ interface DoctorCommissionSummary {
   currency: string;
   commissionRatePct: number;
   availableBalance: number;
+  currentPeriod?: string;
   transactions: DoctorCommissionTransaction[];
 }
 
@@ -199,6 +200,17 @@ const matchesSafePattern = (value: string, pattern: RegExp) => Boolean(value.tri
 const normalizePrescriptionSearch = (value: string) => value.trim();
 
 /**
+ * Formatea un numero de telefono agregando guiones (ej. 0414-1234567)
+ */
+export const formatPhoneNumber = (value: string) => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length > 4) {
+    return `${digits.slice(0, 4)}-${digits.slice(4)}`;
+  }
+  return digits;
+};
+
+/**
  * Adapta un item del catalogo backend al modelo visual del portal medico.
  * @param {PrescriptionCatalogApiItem} item - Item devuelto por el backend.
  * @returns {MedicalProduct} Producto adaptado para la UI.
@@ -206,7 +218,6 @@ const normalizePrescriptionSearch = (value: string) => value.trim();
 const mapCatalogItemToProduct = (item: PrescriptionCatalogApiItem): MedicalProduct => ({
   id: item.id_producto,
   name: item.nombre,
-  sku: item.sku,
   category: item.principio_activo || item.laboratorio || 'Medicamento',
   price: Number(item.precio_con_beneficio ?? item.precio_base ?? 0),
   stock: Number(item.stock ?? 0),
@@ -1602,7 +1613,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                           <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">Género</label>{isEditingPatientRecord ? (<select value={patientForm.gender} onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></select>) : (<input type="text" value={patientForm.gender} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div>
                           <div className="space-y-1.5"><label className="zenith-field-label">Grupo sanguíneo</label>{isEditingPatientRecord ? (<select value={patientForm.bloodType} onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option><option value="N/A">N/A</option></select>) : (<input type="text" value={patientForm.bloodType} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} onChange={(e) => setPatientForm({ ...patientForm, phone: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} onChange={(e) => setPatientForm({ ...patientForm, phone: formatPhoneNumber(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Condición / diagnóstico de control</label><input type="text" value={patientForm.condition} onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Alergias</label><input type="text" value={patientForm.allergies} onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Tratamientos activos (separados por coma)</label><input type="text" value={medicationsInput} onChange={(e) => setMedicationsInput(e.target.value)} readOnly={!isEditingPatientRecord} placeholder="Ej: Ramipril 5mg, Aspirina 100mg" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
@@ -1740,8 +1751,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               <div className="space-y-1 text-left min-w-0 flex-1">
                                 <div className="flex w-full min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-1.5">
                                   <span className="block min-w-0 flex-1 max-w-full text-xs text-surface-200 leading-snug break-words line-clamp-3 font-normal">
-                                    <span className="font-bold text-surface-100">Principio activo: {prod.category}</span><br />
-                                    <span className="font-bold text-surface-100">{prod.name}</span>
+                                    <span className="font-normal text-surface-200">Principio activo: {prod.category}</span><br />
+                                    <span className="font-normal text-surface-200">{prod.name}</span>
                                     {prod.pharmacyName && (
                                       <span className="block text-[10px] text-surface-400 mt-0.5">Farmacia: {prod.pharmacyName}</span>
                                     )}
@@ -1862,22 +1873,25 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 <span>Estimación Subtotal Farmacia</span>
                               </div>
                               <div className="space-y-1.5 pb-2 border-b border-surface-850/50">
-                                {cart.map((item, idx) => (
-                                  <div key={`subtotal-${item.product.id}-${idx}`} className="flex justify-between text-[10px] text-surface-300">
-                                    <span className="truncate pr-2">{item.product.name} x(1)</span>
-                                    <span className="font-mono shrink-0">{formatCurrency(item.product.price)}</span>
-                                  </div>
-                                ))}
+                                {cart.map((item, idx) => {
+                                  const quantity = item.treatmentDays * item.dailyDoses || 1;
+                                  return (
+                                    <div key={`subtotal-${item.product.id}-${idx}`} className="flex justify-between text-[10px] text-surface-300">
+                                      <span className="truncate pr-2">{item.product.name} x({quantity})</span>
+                                      <span className="font-mono shrink-0">{formatCurrency(item.product.price * quantity)} Bs</span>
+                                    </div>
+                                  );
+                                })}
                               </div>
                               
                               <div className="flex justify-between text-2xs text-secondary-400 font-semibold pt-1">
                                 <span>Ahorro para el Paciente</span>
                                 <span>
                                   {(() => {
-                                    const totalOriginal = cart.reduce((sum, item) => sum + item.product.price, 0);
-                                    const totalDesc = cart.reduce((sum, item) => sum + (item.product.price * (item.discount / 100)), 0);
+                                    const totalOriginal = cart.reduce((sum, item) => sum + (item.product.price * (item.treatmentDays * item.dailyDoses || 1)), 0);
+                                    const totalDesc = cart.reduce((sum, item) => sum + ((item.product.price * (item.treatmentDays * item.dailyDoses || 1)) * (item.discount / 100)), 0);
                                     const pct = totalOriginal > 0 ? Math.round((totalDesc / totalOriginal) * 100) : 0;
-                                    return `${pct}% (${formatCurrency(totalDesc)})`;
+                                    return `${pct}% (${formatCurrency(totalDesc)} Bs)`;
                                   })()}
                                 </span>
                               </div>
@@ -1886,8 +1900,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 <span>Total a pagar</span>
                                 <span className="font-mono text-secondary-400">
                                   {(() => {
-                                    const totalPay = cart.reduce((sum, item) => sum + (item.product.price * (1 - item.discount / 100)), 0);
-                                    return formatCurrency(totalPay);
+                                    const totalPay = cart.reduce((sum, item) => sum + ((item.product.price * (item.treatmentDays * item.dailyDoses || 1)) * (1 - item.discount / 100)), 0);
+                                    return `${formatCurrency(totalPay)} Bs`;
                                   })()}
                                 </span>
                               </div>
@@ -1972,8 +1986,12 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                           <div key={`${entry.recipeId}-${index}`} className="space-y-1.5">
                             <div className="flex justify-between items-start text-xs">
                               <div className="min-w-0">
-                                <span className="font-semibold text-surface-200 block truncate">Recipe {entry.recipeId}</span>
-                                <span className="text-[10px] text-surface-500 truncate block">Orden {entry.orderId} • Liquidada {new Date(entry.settledAt).toLocaleDateString('es-ES')}</span>
+                                <span className="font-semibold text-surface-200 block truncate">
+                                  {entry.medications || `Recipe ${entry.recipeId}`}
+                                </span>
+                                <span className="text-[10px] text-surface-500 truncate block">
+                                  {entry.pharmacy_name || `Orden ${entry.orderId}`} • Liquidada {new Date(entry.settledAt).toLocaleDateString('es-ES')}
+                                </span>
                               </div>
                               <div className="text-right shrink-0 pl-3">
                                 <span className="font-bold text-sm text-black">
@@ -1997,7 +2015,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                       {/* Totals row */}
                       <div className="border-t border-surface-850 pt-4 flex justify-between items-center text-xs">
-                        <span className="text-surface-500 font-semibold">Total Período Actual ({new Date().toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '').replace(/^\w/, c => c.toUpperCase())})</span>
+                        <span className="text-surface-500 font-semibold">Total Período Actual ({commissionSummary?.currentPeriod || new Date().toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '').replace(/^\w/, c => c.toUpperCase())})</span>
                         <span className="font-bold text-black text-sm">{formatCurrency(totalAccredited + totalPending)}</span>
                       </div>
                     </div>
@@ -2081,10 +2099,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3"><div className="flex items-center gap-2.5"><div className="h-10 w-10 rounded-xl bg-secondary-500/10 flex items-center justify-center shrink-0"><BadgeCheck className="h-5 w-5 text-secondary-400" /></div><div><p className="zenith-field-label">Nombre Legal</p><p className="text-sm font-semibold text-white">{doctorName}</p></div></div><div className="divide-y divide-surface-850 text-xs"><div className="flex justify-between py-2"><span className="text-surface-500">ID de registro</span><span className="text-surface-200 font-mono text-[10px]">{profileRegistryId}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Correo Institucional</span><span className="text-surface-200 font-mono text-[10px]">{doctorEmail}</span></div><div className="space-y-1.5 py-2"><label className="text-surface-500 block">Teléfono Profesional</label><input type="text" value={profilePhone} onChange={e => setProfilePhone(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-[10px] font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div></div></div><div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3"><div className="flex items-center gap-2.5"><div className="h-10 w-10 rounded-xl bg-primary-500/10 flex items-center justify-center shrink-0"><Award className="h-5 w-5 text-primary-400" /></div><div><p className="zenith-field-label">Registro Profesional</p><p className="text-sm font-semibold text-white">{doctorMpps}</p></div></div><div className="divide-y divide-surface-850 text-xs"><div className="flex justify-between py-2"><span className="text-surface-500">Especialidad Primaria</span><span className="text-surface-200 font-semibold">{doctorSpecialty}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Colegio de Médicos</span><span className="text-surface-200 font-semibold">{doctorMedicalCollege}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Institución Certificadora</span><span className="text-surface-200 font-semibold">MPPS Venezuela</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Estado de Colegiatura</span><span className="inline-flex items-center gap-1 text-secondary-400 font-bold text-[10px]"><ShieldCheck className="h-3 w-3" /> Activo / Vigente</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Registro sanitario especial</span><span className="text-surface-200 font-mono text-[10px]">{doctorSpecialSanitaryRegistration || 'No aplica'}</span></div></div></div></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3"><div className="flex items-center gap-2.5"><div className="h-10 w-10 rounded-xl bg-secondary-500/10 flex items-center justify-center shrink-0"><BadgeCheck className="h-5 w-5 text-secondary-400" /></div><div><p className="zenith-field-label">Nombre Legal</p><p className="text-sm font-semibold text-white">{doctorName}</p></div></div><div className="divide-y divide-surface-850 text-xs"><div className="flex justify-between py-2"><span className="text-surface-500">ID de registro</span><span className="text-surface-200 font-mono text-[10px]">{profileRegistryId}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Correo Institucional</span><span className="text-surface-200 font-mono text-[10px]">{doctorEmail}</span></div><div className="space-y-1.5 py-2"><label className="text-surface-500 block">Teléfono Profesional</label><input type="text" value={profilePhone} onChange={e => setProfilePhone(formatPhoneNumber(e.target.value))} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-[10px] font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div></div></div><div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3"><div className="flex items-center gap-2.5"><div className="h-10 w-10 rounded-xl bg-primary-500/10 flex items-center justify-center shrink-0"><Award className="h-5 w-5 text-primary-400" /></div><div><p className="zenith-field-label">Registro Profesional</p><p className="text-sm font-semibold text-white">{doctorMpps}</p></div></div><div className="divide-y divide-surface-850 text-xs"><div className="flex justify-between py-2"><span className="text-surface-500">Especialidad Primaria</span><span className="text-surface-200 font-semibold">{doctorSpecialty}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Colegio de Médicos</span><span className="text-surface-200 font-semibold">{doctorMedicalCollege}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Institución Certificadora</span><span className="text-surface-200 font-semibold">MPPS Venezuela</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Estado de Colegiatura</span><span className="inline-flex items-center gap-1 text-secondary-400 font-bold text-[10px]"><ShieldCheck className="h-3 w-3" /> Activo / Vigente</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Registro sanitario especial</span><span className="text-surface-200 font-mono text-[10px]">{doctorSpecialSanitaryRegistration || 'No aplica'}</span></div></div></div></div>
                   </div>
                   <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Consultorio / Dirección Profesional</h3><div className="grid grid-cols-1 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Dirección (Av., Urb., Centro Médico, Consultorio)</label><input type="text" value={consultorioAddress} onChange={e => setConsultorioAddress(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Estado</label>{isEditingDoctorProfile ? (<VenezuelanStateSelect value={consultorioState} onChange={setConsultorioState} accent="secondary" />) : (<input type="text" value={consultorioState} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5"><label className="zenith-field-label">Municipio</label><input type="text" value={consultorioMunicipio} onChange={e => setConsultorioMunicipio(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div></div></div></div>
-                  <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Datos Bancarios para Recepción de Comisiones</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Titular de la Cuenta</label><input type="text" value={bankHolder} onChange={e => setBankHolder(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">ID del titular</label><input type="text" value={bankHolderId} onChange={e => setBankHolderId(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Entidad Bancaria</label>{isEditingDoctorProfile ? (<select value={bankEntity} onChange={e => setBankEntity(e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"><option value="">Seleccione un banco...</option>{VENEZUELAN_BANKS.map(banco => (<option key={banco} value={banco}>{banco}</option>))}</select>) : (<input type="text" value={bankEntity} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5"><label className="zenith-field-label">Tipo de Cuenta</label>{isEditingDoctorProfile ? (<select value={bankAccountType} onChange={e => setBankAccountType(e.target.value as 'Corriente' | 'Ahorro')} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"><option value="Corriente">Corriente</option><option value="Ahorro">Ahorro</option></select>) : (<input type="text" value={bankAccountType} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Número de Cuenta Bancaria</label><input type="text" value={bankAccountNumber} onChange={e => setBankAccountNumber(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Teléfono Pago Móvil</label><input type="text" value={bankMobilePhone} onChange={e => setBankMobilePhone(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5">
+                  <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Datos Bancarios para Recepción de Comisiones</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Titular de la Cuenta</label><input type="text" value={bankHolder} onChange={e => setBankHolder(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">ID del titular</label><input type="text" value={bankHolderId} onChange={e => setBankHolderId(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Entidad Bancaria</label>{isEditingDoctorProfile ? (<select value={bankEntity} onChange={e => setBankEntity(e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"><option value="">Seleccione un banco...</option>{VENEZUELAN_BANKS.map(banco => (<option key={banco} value={banco}>{banco}</option>))}</select>) : (<input type="text" value={bankEntity} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5"><label className="zenith-field-label">Tipo de Cuenta</label>{isEditingDoctorProfile ? (<select value={bankAccountType} onChange={e => setBankAccountType(e.target.value as 'Corriente' | 'Ahorro')} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"><option value="Corriente">Corriente</option><option value="Ahorro">Ahorro</option></select>) : (<input type="text" value={bankAccountType} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Número de Cuenta Bancaria</label><input type="text" value={bankAccountNumber} onChange={e => setBankAccountNumber(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Teléfono Pago Móvil</label><input type="text" value={bankMobilePhone} onChange={e => setBankMobilePhone(formatPhoneNumber(e.target.value))} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5">
               <label className="zenith-field-label">Frecuencia de Acreditación</label>
               <input type="text" value={"Mensual (último día hábil)"} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />
             </div>
