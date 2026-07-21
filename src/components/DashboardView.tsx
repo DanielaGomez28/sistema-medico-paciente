@@ -208,9 +208,29 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
               <h4 className="zenith-section-title">Tendencia administrativa</h4>
               <p className="text-xs text-surface-400">Datos agregados del panel administrativo.</p>
             </div>
-            <div className="flex items-center gap-1 text-2xs font-bold bg-surface-950 border border-surface-850 rounded-xl p-1">
-              <button type="button" onClick={() => setActiveMetricTab('sales')} className={`px-3 py-1.5 rounded-lg ${activeMetricTab === 'sales' ? 'bg-white text-surface-950' : 'text-surface-500 hover:text-foreground'}`}>Ventas</button>
-              <button type="button" onClick={() => setActiveMetricTab('recipes')} className={`px-3 py-1.5 rounded-lg ${activeMetricTab === 'recipes' ? 'bg-white text-surface-950' : 'text-surface-500 hover:text-foreground'}`}>Recipes</button>
+            <div className="flex items-center gap-1 text-2xs font-bold rounded-xl p-1 bg-[#f8f9fa] border border-[#e9ecef] dark:bg-surface-855 dark:border-surface-800">
+              <button
+                type="button"
+                onClick={() => setActiveMetricTab('sales')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
+                  activeMetricTab === 'sales'
+                    ? 'bg-white text-surface-950 shadow-sm dark:bg-surface-800 dark:text-foreground dark:shadow-none'
+                    : 'text-surface-500 hover:text-foreground dark:text-surface-400 dark:hover:text-foreground'
+                }`}
+              >
+                Ventas
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveMetricTab('recipes')}
+                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
+                  activeMetricTab === 'recipes'
+                    ? 'bg-white text-surface-950 shadow-sm dark:bg-surface-800 dark:text-foreground dark:shadow-none'
+                    : 'text-surface-500 hover:text-foreground dark:text-surface-400 dark:hover:text-foreground'
+                }`}
+              >
+                Recipes
+              </button>
             </div>
           </div>
 
