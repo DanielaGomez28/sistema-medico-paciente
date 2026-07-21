@@ -42,10 +42,6 @@ import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
   DOCTOR_PROFILE_DEFAULTS,
   type DoctorLinkedPatientSeed as LinkedPatient,
-  DOCTOR_LINKED_PATIENT_SEEDS,
-  INITIAL_PRODUCTS,
-  DOCTOR_COMMISSION_SEEDS,
-  DOCTOR_RECIPE_LOG_SEEDS,
 } from '../data/mockData';
 
 
@@ -374,10 +370,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       try {
         setPatientsLoading(true);
         setPatientsError('');
-        // const response = await apiClient.get(`/pacientes/medico/${encodeURIComponent(DOCTOR_ID)}`);
+        const response = await apiClient.get(`/pacientes/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
-          setPatients(DOCTOR_LINKED_PATIENT_SEEDS);
+          setPatients(Array.isArray(response.data?.items) ? response.data.items : []);
         }
       } catch (error: unknown) {
         if (!cancelled) {
@@ -581,11 +577,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
     const loadCatalog = async () => {
       try {
-        // const response = await apiClient.get('/prescripciones/catalogo');
-        // const items = Array.isArray(response.data?.items)
-        //   ? response.data.items.map(mapCatalogItemToProduct)
-        //   : [];
-        const items = INITIAL_PRODUCTS as unknown as MedicalProduct[];
+        const response = await apiClient.get('/prescripciones/catalogo');
+        const items = Array.isArray(response.data?.items)
+          ? response.data.items.map(mapCatalogItemToProduct)
+          : [];
 
         if (!cancelled) {
           setInventoryPreview(items);
@@ -617,11 +612,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       }
 
       try {
-        // const response = await apiClient.post('/prescripciones/buscar', { searchTerm: normalizedQuery });
-        // const items = Array.isArray(response.data?.items)
-        //   ? response.data.items.map(mapCatalogItemToProduct)
-        //   : [];
-        const items = INITIAL_PRODUCTS.filter(p => p.name.toLowerCase().includes(normalizedQuery.toLowerCase())) as unknown as MedicalProduct[];
+        const response = await apiClient.post('/prescripciones/buscar', { searchTerm: normalizedQuery });
+        const items = Array.isArray(response.data?.items)
+          ? response.data.items.map(mapCatalogItemToProduct)
+          : [];
 
         if (!cancelled) {
           setCatalogResults(items);
@@ -660,10 +654,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       try {
         setCommissionLoading(true);
         setCommissionError('');
-        // const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
+        const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
-          const summary = DOCTOR_COMMISSION_SEEDS[0] as unknown as DoctorCommissionSummary;
+          const summary = response.data as DoctorCommissionSummary;
           setCommissionSummary(summary);
           if (Number.isFinite(summary?.commissionRatePct)) {
             setCommissionRate(Number(summary.commissionRatePct));
@@ -707,10 +701,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       try {
         setRecipeLogLoading(true);
         setRecipeLogError('');
-        // const response = await apiClient.get(`/prescripciones/medico/${encodeURIComponent(DOCTOR_ID)}`);
+        const response = await apiClient.get(`/prescripciones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
-          setDoctorRecipeLog(DOCTOR_RECIPE_LOG_SEEDS as unknown as DoctorRecipeLog[]);
+          setDoctorRecipeLog(Array.isArray(response.data?.items) ? response.data.items : []);
         }      } catch (error: unknown) {
         if (!cancelled) {
           const apiError = error as ApiErrorPayload;
@@ -785,14 +779,18 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       return;
     }
 
-    if (patientForm.condition && patientForm.condition !== 'N/A' && !matchesSafePattern(patientForm.condition, /^[\p{L}\p{N}\s.,()'\/-]{2,160}$/u)) {
-      alert('La condición del paciente contiene caracteres inválidos.');
-      return;
+    if (patientForm.condition && patientForm.condition !== 'N/A' && patientForm.condition.trim() !== '') {
+      if (!matchesSafePattern(patientForm.condition, /^[\p{L}\p{N}\s.,()'\/-]{2,160}$/u)) {
+        alert('La condición del paciente contiene caracteres inválidos.');
+        return;
+      }
     }
 
-    if (patientForm.allergies && patientForm.allergies !== 'N/A' && !matchesSafePattern(patientForm.allergies, /^[\p{L}\p{N}\s.,()'\/-]{2,160}$/u)) {
-      alert('Las alergias del paciente contienen caracteres inválidos.');
-      return;
+    if (patientForm.allergies && patientForm.allergies !== 'N/A' && patientForm.allergies.trim() !== '') {
+      if (!matchesSafePattern(patientForm.allergies, /^[\p{L}\p{N}\s.,()'\/-]{2,160}$/u)) {
+        alert('Las alergias del paciente contienen caracteres inválidos.');
+        return;
+      }
     }
 
     const medications = medicationsInput
@@ -903,7 +901,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
    * Confirma la edicion local del perfil profesional tras validar entradas.
    * @returns {void}
    */
-  const handleConfirmDoctorProfileEdit = () => {
+  const handleConfirmDoctorProfileEdit = async () => {
     const doctorPhoneIsValid = matchesSafePattern(profilePhone, /^[+\d\s()-]{7,20}$/);
     const bankHolderIsValid = matchesSafePattern(bankHolder, /^[\p{L}\p{N}\s.'-]{3,120}$/u);
     const bankHolderIdIsValid = matchesSafePattern(bankHolderId, /^[VEJGP-\d\s.]{5,20}$/i);
@@ -918,10 +916,32 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       return;
     }
 
-    setProfileErrorMsg('');
-    setIsEditingDoctorProfile(false);
-    setProfileSaveMsg('Perfil, consultorio y datos bancarios listos y confirmados para la sesión actual.');
-    setTimeout(() => setProfileSaveMsg(''), 4000);
+    try {
+      await apiClient.put(`/medicos/${encodeURIComponent(DOCTOR_ID)}/perfil`, {
+        bankHolder,
+        bankHolderId,
+        bankEntity,
+        bankAccountType,
+        bankAccountNumber,
+        bankMobilePhone,
+        profilePhone,
+        consultorioAddress,
+        consultorioState,
+        consultorioMunicipio,
+      });
+
+      setProfileErrorMsg('');
+      setIsEditingDoctorProfile(false);
+      setProfileSaveMsg('Perfil, consultorio y datos bancarios listos y confirmados para la sesión actual.');
+      setTimeout(() => setProfileSaveMsg(''), 4000);
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      setProfileErrorMsg(
+        apiError.response?.data?.error ||
+        apiError.response?.data?.details ||
+        'Ocurrió un error al guardar el perfil en el servidor.'
+      );
+    }
   };
 
   /**
@@ -1276,7 +1296,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="flex items-center gap-2">
                               <p className="text-sm font-semibold text-white">{patient.name}</p>
                               <span className="text-[9px] font-mono text-surface-500 bg-surface-950 px-1.5 py-0.5 rounded border border-surface-850">
-                                {patient.patientId}
+                                ID: {patient.patientId}
                               </span>
                             </div>
                             <p className="text-xs text-surface-400 mt-1">
@@ -1306,8 +1326,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         .filter(
                           (patient) =>
                             patient.allergies &&
-                            patient.allergies.toLowerCase() !== 'ninguna conocida' &&
-                            patient.allergies.toLowerCase() !== 'ninguna' &&
+                            !patient.allergies.toLowerCase().includes('ningun') &&
                             patient.allergies.trim() !== ''
                         )
                         .map((patient) => (
@@ -1417,7 +1436,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         <div>
                           <span className="zenith-field-label">Con alergias registradas</span>
                           <p className="text-lg font-semibold text-white mt-0.5">
-                            {patients.filter((p) => p.allergies && p.allergies.toLowerCase() !== 'ninguna conocida' && p.allergies.trim() !== '').length}
+                            {patients.filter((p) => p.allergies && !p.allergies.toLowerCase().includes('ningun') && p.allergies.trim() !== '').length}
                           </p>
                         </div>
                       </div>
@@ -1463,7 +1482,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                         </div>
                                         <div>
                                           <p className="font-semibold text-surface-200 leading-none">{patient.name}</p>
-                                          <span className="text-[10px] text-surface-500 font-mono mt-1 block">{patient.patientId}</span>
+                                          <span className="text-[10px] text-surface-500 font-mono mt-1 block">ID: {patient.patientId}</span>
                                         </div>
                                       </div>
                                     </td>
@@ -1475,7 +1494,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                     </td>
                                     <td className="px-6 py-4.5 zenith-table__wrap">
                                       <p className="text-xs text-surface-300">{patient.condition || 'Sin condición registrada'}</p>
-                                      {patient.allergies && patient.allergies !== 'Ninguna conocida' && (
+                                      {patient.allergies && !patient.allergies.toLowerCase().includes('ningun') && patient.allergies.trim() !== '' && (
                                         <p className="text-[10px] text-secondary-455 mt-1 flex items-center gap-1">
                                           <ShieldAlert className="h-3 w-3 shrink-0" />
                                           {patient.allergies}
@@ -1501,10 +1520,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               <ListCard
                                 key={patient.patientId}
                                 title={patient.name}
-                                subtitle={patient.patientId}
+                                subtitle={`ID: ${patient.patientId}`}
                                 onClick={() => openPatientForm(patient)}
                                 badge={
-                                  patient.allergies && patient.allergies !== 'Ninguna conocida' ? (
+                                  patient.allergies && !patient.allergies.toLowerCase().includes('ningun') && patient.allergies.trim() !== '' ? (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-secondary-500/10 text-secondary-400 border border-secondary-500/25">
                                       <ShieldAlert className="h-3 w-3" />
                                       Alergia
@@ -1722,7 +1741,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               <div className="space-y-1 text-left min-w-0 flex-1">
                                 <div className="flex w-full min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-1.5">
                                   <span className="block min-w-0 flex-1 max-w-full text-xs text-surface-200 leading-snug break-words line-clamp-3 font-normal">
-                                    <span className="font-semibold text-white">Principio activo: {prod.category}</span><br />
+                                    <span className="font-bold text-surface-100">Principio activo: {prod.category}</span><br />
                                     <span className="font-bold text-surface-100">{prod.name}</span>
                                     {prod.pharmacyName && (
                                       <span className="block text-[10px] text-surface-400 mt-0.5">Farmacia: {prod.pharmacyName}</span>
@@ -1730,27 +1749,26 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                   </span>
                                 </div>
                                 <p className="text-[10px] text-surface-500 break-words line-clamp-2">{prod.description}</p>
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-surface-400 pt-0.5">
-                                  <span>Precio: {formatCurrency(prod.price)}</span>
-                                  <span>•</span>
-                                  <span className={prod.stock < 20 ? 'text-primary-500 font-medium' : ''}>
-                                    Stock: {prod.stock} u.
-                                  </span>
-                                </div>
                               </div>
 
-                              <button
-                                type="button"
-                                disabled={isAlreadySelected}
-                                onClick={() => addToCart(prod)}
-                                className={`p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ${
-                                  isAlreadySelected
-                                    ? 'bg-surface-900 border-surface-850 text-surface-600'
-                                    : 'bg-secondary-500/10 hover:bg-secondary-500 border-secondary-500/20 hover:border-secondary-550 text-secondary-450 hover:text-white'
-                                }`}
-                              >
-                                <Plus className="h-4.5 w-4.5" />
-                              </button>
+                              <div className="flex flex-col items-end justify-between gap-2 shrink-0">
+                                <div className="text-right">
+                                  <span className="block text-xs font-bold text-white">{formatCurrency(prod.price)}</span>
+                                  <span className={`block text-[10px] ${prod.stock < 20 ? 'text-primary-500 font-medium' : 'text-surface-400'}`}>Stock: {prod.stock} u.</span>
+                                </div>
+                                <button
+                                  type="button"
+                                  disabled={isAlreadySelected}
+                                  onClick={() => addToCart(prod)}
+                                  className={`p-1.5 rounded-lg border transition-colors cursor-pointer shrink-0 ${
+                                    isAlreadySelected
+                                      ? 'bg-surface-900 border-surface-850 text-surface-600'
+                                      : 'bg-secondary-500/10 hover:bg-secondary-500 border-secondary-500/20 hover:border-secondary-550 text-secondary-450 hover:text-white'
+                                  }`}
+                                >
+                                  <Plus className="h-4.5 w-4.5" />
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
@@ -1814,7 +1832,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                   <div className="space-y-1.5">
                                     <span className="zenith-field-label flex items-center gap-1">
                                       <Percent className="h-3 w-3 text-secondary-455" />
-                                      <span>Asignación de Incentivo / Descuento Exclusivo</span>
+                                      <span>Descuento exclusivo</span>
                                     </span>
                                     
                                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
@@ -1848,7 +1866,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 {cart.map((item, idx) => (
                                   <div key={`subtotal-${item.product.id}-${idx}`} className="flex justify-between text-[10px] text-surface-300">
                                     <span className="truncate pr-2">{item.product.name} x(1)</span>
-                                    <span className="font-mono shrink-0">{item.product.price} Bs.</span>
+                                    <span className="font-mono shrink-0">{formatCurrency(item.product.price)}</span>
                                   </div>
                                 ))}
                               </div>
@@ -1867,10 +1885,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                               <div className="flex justify-between text-xs text-white font-bold pt-1">
                                 <span>Total a pagar</span>
-                                <span className="font-mono">
+                                <span className="font-mono text-secondary-400">
                                   {(() => {
                                     const totalPay = cart.reduce((sum, item) => sum + (item.product.price * (1 - item.discount / 100)), 0);
-                                    return `${totalPay} Bs.`;
+                                    return formatCurrency(totalPay);
                                   })()}
                                 </span>
                               </div>
@@ -1980,7 +1998,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                       {/* Totals row */}
                       <div className="border-t border-surface-850 pt-4 flex justify-between items-center text-xs">
-                        <span className="text-surface-500 font-semibold">Total Período Actual (Jun 2026)</span>
+                        <span className="text-surface-500 font-semibold">Total Período Actual ({new Date().toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '').replace(/^\w/, c => c.toUpperCase())})</span>
                         <span className="font-bold text-black text-sm">{formatCurrency(totalAccredited + totalPending)}</span>
                       </div>
                     </div>
@@ -2048,13 +2066,38 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 {profileSaveMsg && (<div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-400 text-xs animate-in fade-in slide-in-from-top-2 duration-300"><CheckCircle2 className="h-4.5 w-4.5 shrink-0" /><span>{profileSaveMsg}</span></div>)}
                 {profileErrorMsg && (<div className="p-4 bg-danger-500/10 border border-danger-500/25 rounded-2xl flex items-center gap-2.5 text-danger-500 text-xs font-semibold animate-in fade-in slide-in-from-top-2 duration-300"><AlertCircle className="h-4.5 w-4.5 shrink-0" /><span>{profileErrorMsg}</span></div>)}
                 <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4"><div><h3 className="zenith-section-title text-xs">Perfil profesional</h3><p className="text-xs text-surface-400">Los datos permanecen en solo lectura hasta que confirmes la edición.</p></div><div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">{isEditingDoctorProfile ? (<><button type="button" onClick={handleConfirmDoctorProfileEdit} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-[#179150] hover:bg-[#148047] text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Confirmar cambios</button><button type="button" onClick={handleCancelDoctorProfileEdit} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all">Cancelar</button></>) : (<button type="button" onClick={handleStartDoctorProfileEdit} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-[#179150] hover:bg-[#148047] text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Editar perfil</button>)}</div></div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4">
+                    <div>
+                      <h3 className="zenith-section-title text-xs">Perfil profesional</h3>
+                      <p className="text-xs text-surface-400">Los datos permanecen en solo lectura hasta que confirmes la edición.</p>
+                    </div>
+                    <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
+                      {isEditingDoctorProfile ? (
+                        <>
+                          <button type="button" onClick={handleConfirmDoctorProfileEdit} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-[#179150] hover:bg-[#148047] text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Confirmar cambios</button>
+                          <button type="button" onClick={handleCancelDoctorProfileEdit} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl dark:text-white text-surface-900 hover:text-white text-xs font-bold transition-all">Cancelar</button>
+                        </>
+                      ) : (
+                        <button type="button" onClick={handleStartDoctorProfileEdit} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-[#179150] hover:bg-[#148047] text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Editar perfil</button>
+                      )}
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3"><div className="flex items-center gap-2.5"><div className="h-10 w-10 rounded-xl bg-secondary-500/10 flex items-center justify-center shrink-0"><BadgeCheck className="h-5 w-5 text-secondary-400" /></div><div><p className="zenith-field-label">Nombre Legal</p><p className="text-sm font-semibold text-white">{doctorName}</p></div></div><div className="divide-y divide-surface-850 text-xs"><div className="flex justify-between py-2"><span className="text-surface-500">ID de registro</span><span className="text-surface-200 font-mono text-[10px]">{profileRegistryId}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Correo Institucional</span><span className="text-surface-200 font-mono text-[10px]">{doctorEmail}</span></div><div className="space-y-1.5 py-2"><label className="text-surface-500 block">Teléfono Profesional</label><input type="text" value={profilePhone} onChange={e => setProfilePhone(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-[10px] font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div></div></div><div className="bg-surface-950/60 border border-surface-850 rounded-2xl p-4 space-y-3"><div className="flex items-center gap-2.5"><div className="h-10 w-10 rounded-xl bg-primary-500/10 flex items-center justify-center shrink-0"><Award className="h-5 w-5 text-primary-400" /></div><div><p className="zenith-field-label">Registro Profesional</p><p className="text-sm font-semibold text-white">{doctorMpps}</p></div></div><div className="divide-y divide-surface-850 text-xs"><div className="flex justify-between py-2"><span className="text-surface-500">Especialidad Primaria</span><span className="text-surface-200 font-semibold">{doctorSpecialty}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Colegio de Médicos</span><span className="text-surface-200 font-semibold">{doctorMedicalCollege}</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Institución Certificadora</span><span className="text-surface-200 font-semibold">MPPS Venezuela</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Estado de Colegiatura</span><span className="inline-flex items-center gap-1 text-secondary-400 font-bold text-[10px]"><ShieldCheck className="h-3 w-3" /> Activo / Vigente</span></div><div className="flex justify-between py-2"><span className="text-surface-500">Registro sanitario especial</span><span className="text-surface-200 font-mono text-[10px]">{doctorSpecialSanitaryRegistration || 'No aplica'}</span></div></div></div></div>
                   <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Consultorio / Dirección Profesional</h3><div className="grid grid-cols-1 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Dirección (Av., Urb., Centro Médico, Consultorio)</label><input type="text" value={consultorioAddress} onChange={e => setConsultorioAddress(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Estado</label>{isEditingDoctorProfile ? (<VenezuelanStateSelect value={consultorioState} onChange={setConsultorioState} accent="secondary" />) : (<input type="text" value={consultorioState} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5"><label className="zenith-field-label">Municipio</label><input type="text" value={consultorioMunicipio} onChange={e => setConsultorioMunicipio(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div></div></div></div>
                   <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 backdrop-blur-md space-y-5"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Datos Bancarios para Recepción de Comisiones</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Titular de la Cuenta</label><input type="text" value={bankHolder} onChange={e => setBankHolder(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">ID del titular</label><input type="text" value={bankHolderId} onChange={e => setBankHolderId(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Entidad Bancaria</label>{isEditingDoctorProfile ? (<select value={bankEntity} onChange={e => setBankEntity(e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"><option value="">Seleccione un banco...</option>{VENEZUELAN_BANKS.map(banco => (<option key={banco} value={banco}>{banco}</option>))}</select>) : (<input type="text" value={bankEntity} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5"><label className="zenith-field-label">Tipo de Cuenta</label>{isEditingDoctorProfile ? (<select value={bankAccountType} onChange={e => setBankAccountType(e.target.value as 'Corriente' | 'Ahorro')} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500"><option value="Corriente">Corriente</option><option value="Ahorro">Ahorro</option></select>) : (<input type="text" value={bankAccountType} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Número de Cuenta Bancaria</label><input type="text" value={bankAccountNumber} onChange={e => setBankAccountNumber(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Teléfono Pago Móvil</label><input type="text" value={bankMobilePhone} onChange={e => setBankMobilePhone(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div><div className="space-y-1.5">
               <label className="zenith-field-label">Frecuencia de Acreditación</label>
-              <input type="text" value={"Mensual (\u00FAltimo día hábil)"} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />
-            </div><div className="p-3 bg-primary-500/5 border border-primary-500/15 rounded-xl flex items-start gap-2 text-[10px] text-primary-400"><DollarSign className="h-3.5 w-3.5 shrink-0 mt-0.5" /><span>Las comisiones se liquidan el último día hábil de cada mes mediante transferencia o Pago Móvil en bolívares. Verifique cuenta y teléfono afiliado antes del día 25 de cada período.</span></div><div className="pt-2 border-t border-surface-850 flex flex-col sm:flex-row sm:items-center justify-end gap-4"><button type="button" onClick={onLogout} className="zenith-logout-btn order-last sm:order-first"><LogOut className="h-4 w-4" /><span>Cerrar Sesión</span></button></div></div>
+              <input type="text" value={"Mensual (último día hábil)"} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />
+            </div>
+            <div className="p-3 bg-primary-500/5 border border-primary-500/15 rounded-xl flex items-start gap-2 text-[10px] text-primary-400">
+              <DollarSign className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+              <span>Las fechas de pago son las establecidas en la parte de la administración.</span>
+            </div>
+            <div className="pt-2 border-t border-surface-850 flex flex-col sm:flex-row sm:items-center justify-end gap-4">
+              <button type="button" onClick={onLogout} className="px-4 py-2 bg-white text-surface-950 hover:bg-surface-200 rounded-xl flex items-center justify-center gap-2 text-xs font-bold transition-colors order-last sm:order-first">
+                <LogOut className="h-4 w-4" />
+                <span>Cerrar Sesión</span>
+              </button>
+            </div>
                 </div>
               </div>
             </div>
