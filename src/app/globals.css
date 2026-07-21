@@ -294,11 +294,12 @@
 
   .zenith-card {
     border-radius: var(--radius-card);
-    @apply bg-surface-900 border border-primary-500/10 shadow-sm;
+    background: #ffffff;
+    @apply border border-primary-500/10 shadow-sm;
   }
 
   [data-theme="light"] .zenith-card {
-    background: var(--zenith-card-surface);
+    background: #ffffff;
     border-color: var(--zenith-surface-850);
     box-shadow: 0 1px 3px color-mix(in srgb, #0a1220 6%, transparent);
   }
@@ -319,7 +320,7 @@
   }
 
 [data-theme="light"] .zenith-input {
-  background: var(--zenith-white-surface);
+  background: #ffffff;
   border-color: var(--zenith-surface-800);
 }
 
@@ -338,7 +339,7 @@
   }
 
   [data-theme="light"] .zenith-filter-bar {
-    background: var(--zenith-card-surface);
+    background: #ffffff;
     border-color: var(--zenith-surface-850);
   }
 
