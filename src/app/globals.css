@@ -1350,6 +1350,30 @@ table th {
   --zenith-nav-active-dot: #3dba72;
 }
 
+@keyframes doctor-generate-recipe-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+[data-portal="doctor"] .doctor-generate-recipe-btn {
+  background-color: #179150;
+  border-color: #148047;
+  color: #ffffff;
+  animation: doctor-generate-recipe-blink 2.75s ease-in-out infinite;
+}
+
+[data-portal="doctor"] .doctor-generate-recipe-btn:hover {
+  background-color: #148047;
+  animation-play-state: paused;
+  opacity: 1;
+}
+
 @keyframes doctor-qr-scan-blink {
   0%,
   100% {
