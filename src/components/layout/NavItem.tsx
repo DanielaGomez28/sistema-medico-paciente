@@ -42,10 +42,8 @@ interface NavItemProps {
 }
 
 const accentActiveClasses: Record<AccentVariant, string> = {
-  primary:
-    'bg-[var(--zenith-nav-active-bg)] text-foreground border-l-2 border-[var(--zenith-nav-active-border)]',
-  secondary:
-    'bg-[var(--zenith-nav-active-bg)] text-foreground border-l-2 border-[var(--zenith-nav-active-border)]',
+  primary: 'bg-[var(--zenith-nav-active-bg)] text-foreground shadow-sm',
+  secondary: 'bg-[var(--zenith-nav-active-bg)] text-foreground shadow-sm',
 };
 
 const accentIconClasses: Record<AccentVariant, string> = {
@@ -53,9 +51,9 @@ const accentIconClasses: Record<AccentVariant, string> = {
   secondary: 'text-foreground',
 };
 
-const accentDotClasses: Record<AccentVariant, string> = {
-  primary: 'bg-[var(--zenith-nav-active-dot)]',
-  secondary: 'bg-[var(--zenith-nav-active-dot)]',
+const accentUnderlineClasses: Record<AccentVariant, string> = {
+  primary: 'bg-[var(--zenith-nav-active-border)]',
+  secondary: 'bg-[var(--zenith-nav-active-border)]',
 };
 
 /**
@@ -72,12 +70,12 @@ export default function NavItem({ item, isActive, accent, onClick, navTextWhite,
     <button
       onClick={onClick}
       className={cn(
-        'zc-row w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-control)] text-sm transition-all duration-200 group relative border-l-2',
+        'zc-row w-full flex items-center gap-3 px-4 py-3 rounded-[var(--radius-control)] text-sm transition-all duration-200 group relative hover:scale-[1.02] active:scale-[0.98]',
         navTextWhite
-          ? (isActive ? 'bg-white/20 text-white border-white' : 'text-white border-transparent hover:bg-white/10 hover:text-white')
+          ? (isActive ? 'bg-white/20 text-white shadow-sm' : 'text-white hover:bg-white/10 hover:text-white')
           : navTextDarkCyan
-            ? (isActive ? 'bg-[#055058]/20 text-[#055058] border-[#055058]' : 'text-[#055058] border-transparent hover:bg-[#055058]/10 hover:text-[#055058]')
-            : (isActive ? accentActiveClasses[accent] : 'text-surface-500 hover:text-foreground hover:bg-surface-850 border-transparent')
+            ? (isActive ? 'bg-[#055058]/20 text-[#055058] shadow-sm' : 'text-[#055058] hover:bg-[#055058]/10 hover:text-[#055058]')
+            : (isActive ? accentActiveClasses[accent] : 'text-surface-500 hover:text-foreground hover:bg-surface-850')
       )}
     >
       <Icon
@@ -99,15 +97,26 @@ export default function NavItem({ item, isActive, accent, onClick, navTextWhite,
         )}
         title={item.name}
       >
-        {item.name}
+        {/* Envoltorio 'inline-block': se ajusta al ancho exacto de la
+            palabra, para que la barrita quede debajo del texto y no de
+            toda la fila. Al estar dentro de zc-collapse-text, se oculta
+            igual que el texto cuando la barra está contraída. */}
+        <span className="relative inline-block">
+          {item.name}
+          <span
+            className={cn(
+              'pointer-events-none absolute left-0 right-0 -bottom-0.5 h-[2px] rounded-full transition-all duration-300',
+              isActive
+                ? (navTextWhite ? 'bg-white opacity-100 scale-x-100' : navTextDarkCyan ? 'bg-[#055058] opacity-100 scale-x-100' : cn(accentUnderlineClasses[accent], 'opacity-100 scale-x-100'))
+                : 'opacity-0 scale-x-0'
+            )}
+          />
+        </span>
       </span>
       {item.badge != null && item.badgeColor && (
         <span className={cn('zc-collapse-hide ml-auto px-2 py-0.5 text-xs font-bold rounded-full', item.badgeColor)}>
           {item.badge}
         </span>
-      )}
-      {isActive && (
-        <span className={cn('zc-collapse-hide absolute right-3 w-1.5 h-1.5 rounded-full', navTextWhite ? 'bg-white' : navTextDarkCyan ? 'bg-[#055058]' : accentDotClasses[accent])} />
       )}
     </button>
   );

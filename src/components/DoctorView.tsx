@@ -1946,7 +1946,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             {/* Main action submit */}
                             <button
                               type="submit"
-                              className="w-full mt-2 py-3 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-black shadow-lg shadow-secondary-550/10 hover:shadow-secondary-550/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="w-full mt-2 py-3 bg-secondary-600 hover:bg-secondary-700 text-white rounded-xl text-xs font-black shadow-lg shadow-secondary-550/10 hover:shadow-secondary-550/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               <Send className="h-4 w-4" />
                               <span>Registrar e Iniciar Envío de Récipe</span>

@@ -98,7 +98,7 @@ export default function AppShell({
             layout === 'horizontal'
               ? 'w-64 lg:hidden transition-transform duration-200'
               : layout === 'vertical-collapsible'
-                ? 'sidebar-collapsible w-64 lg:w-[4.5rem] lg:hover:w-64 lg:will-change-[width] transition-[width,transform] duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0'
+                ? 'sidebar-collapsible w-64 lg:w-[5rem] lg:hover:w-64 lg:will-change-[width] transition-[width,transform] duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0'
                 : 'w-64 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}

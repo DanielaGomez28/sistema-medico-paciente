@@ -299,7 +299,7 @@ export default function CmsView() {
               <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
                 {isEditingLegal ? (
                   <>
-                    <button type="button" onClick={handleConfirmLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Confirmar cambios</button>
+                    <button type="button" onClick={handleConfirmLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-[var(--portal-btn-bg)] hover:bg-[var(--portal-btn-hover)] text-[var(--portal-btn-fg)] rounded-xl text-xs font-extrabold shadow-md transition-colors">Confirmar cambios</button>
                     <button type="button" onClick={handleCancelLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all">Cancelar</button>
                   </>
                 ) : (

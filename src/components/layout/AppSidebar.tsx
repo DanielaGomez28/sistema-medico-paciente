@@ -188,7 +188,7 @@ export default function AppSidebar({
                   className={cn(
                     'zc-collapse-hide flex items-center justify-center transition-colors cursor-pointer shrink-0',
                     navTextWhite
-                      ? 'h-10 w-10 rounded-full border border-red-500/30 bg-white text-red-500 hover:bg-white/90'
+                      ? 'h-10 w-10 rounded-xl border border-surface-800 bg-surface-900 text-foreground hover:bg-surface-850 shadow-sm'
                       : navTextDarkCyan
                         ? 'p-2 rounded-lg text-[#055058] hover:text-red-800 hover:bg-[#055058]/10'
                         : 'p-2 rounded-lg text-surface-400 hover:text-red-500 hover:bg-surface-900'
@@ -211,8 +211,8 @@ export default function AppSidebar({
             >
               <span
                 className={cn(
-                  'h-10 w-10 rounded-full border flex items-center justify-center shrink-0',
-                  navTextWhite ? 'bg-white border-red-500/30 text-red-500' : navTextDarkCyan ? 'bg-[#055058]/15 border-[#055058]/30 text-[#055058]' : 'bg-surface-800 border-surface-700 text-red-500'
+                  'h-10 w-10 rounded-xl border flex items-center justify-center shrink-0',
+                  navTextWhite ? 'bg-surface-900 border-surface-800 text-foreground shadow-sm' : navTextDarkCyan ? 'bg-[#055058]/15 border-[#055058]/30 text-[#055058]' : 'bg-surface-800 border-surface-700 text-red-500'
                 )}
               >
                 <LogOut className="h-4 w-4" />
@@ -220,8 +220,8 @@ export default function AppSidebar({
             </button>
           )}
           {onLogout && logoutVariant === 'full' && (
-            <button type="button" onClick={onLogout} className={cn("zc-row w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold transition-colors duration-200", navTextWhite ? "text-white bg-white/10 hover:bg-white/20" : navTextDarkCyan ? "text-[#055058] bg-[#055058]/10 hover:bg-[#055058]/20" : "zenith-logout-btn", logoutClassName)}>
-              <LogOut className="h-4 w-4 shrink-0" />
+            <button type="button" onClick={onLogout} className={cn("zc-row w-full flex items-center gap-2 py-2 px-4 rounded-xl font-bold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]", navTextWhite ? "text-white bg-white/10 hover:bg-white/20" : navTextDarkCyan ? "text-[#055058] bg-[#055058]/10 hover:bg-[#055058]/20" : "zenith-logout-btn", logoutClassName)}>
+              <LogOut className="h-3.5 w-3.5 shrink-0" />
               <span className="zc-collapse-text">{logoutLabel}</span>
             </button>
           )}

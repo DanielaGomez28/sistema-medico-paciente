@@ -211,13 +211,13 @@ export default function AppHeader({
                   className={cn(
                     'transition-colors cursor-pointer shrink-0',
                     navTextWhite || navTextDarkCyan
-                      ? 'h-10 w-10 rounded-full border flex items-center justify-center text-red-500 border-red-500/30 bg-white hover:bg-white/90'
+                      ? 'h-[30px] w-[30px] rounded-lg border border-surface-800 flex items-center justify-center text-foreground bg-surface-900 hover:bg-surface-850 shadow-sm'
                       : 'p-1.5 rounded-lg text-surface-400 hover:text-red-500 hover:bg-surface-900'
                   )}
                   title="Cerrar Sesión"
                   aria-label="Cerrar Sesión"
                 >
-                  <LogOut className="h-4 w-4" />
+                  <LogOut className={cn(navTextWhite || navTextDarkCyan ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
                 </button>
               )}
             </div>

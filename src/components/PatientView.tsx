@@ -2365,7 +2365,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         setActiveSubTab('delivery');
                       }, 2500);
                     }}
-                    className="flex-1 px-4 py-3 bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-primary-500/20 transition-all cursor-pointer"
+                    className="flex-1 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-primary-500/20 transition-colors cursor-pointer"
                   >
                     Pagar Ahora
                   </button>
