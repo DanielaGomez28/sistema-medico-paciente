@@ -166,10 +166,10 @@
   --portal-btn-hover: #095c67;
   --portal-btn-border: #095c67;
 
-  --portal-patient-btn-bg: var(--portal-btn-bg);
-  --portal-patient-btn-fg: var(--portal-btn-fg);
-  --portal-patient-btn-hover: var(--portal-btn-hover);
-  --portal-patient-btn-border: var(--portal-btn-border);
+  --portal-patient-btn-bg: #39c4d0;
+  --portal-patient-btn-fg: #ffffff;
+  --portal-patient-btn-hover: #2ba0aa;
+  --portal-patient-btn-border: #2ba0aa;
 
   --portal-doctor-btn-bg: var(--portal-btn-bg);
   --portal-doctor-btn-fg: var(--portal-btn-fg);

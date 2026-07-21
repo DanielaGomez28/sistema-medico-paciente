@@ -70,6 +70,8 @@ export interface AppSidebarProps {
   logoutLabel?: string;
   logoutVariant?: 'icon' | 'full';
   className?: string;
+  navTextWhite?: boolean;
+  navTextDarkCyan?: boolean;
 }
 
 const brandGradient: Record<AccentVariant, string> = {
@@ -98,6 +100,8 @@ export default function AppSidebar({
   logoutLabel = 'Cerrar Sesión',
   logoutVariant = 'icon',
   className,
+  navTextWhite = false,
+  navTextDarkCyan = false,
 }: AppSidebarProps) {
   const { closeSidebar } = useShell();
 
@@ -117,7 +121,7 @@ export default function AppSidebar({
         {/* Logo + Salud brand */}
         <img src="/logo.png" alt="Logo" width={32} height={32} style={{ display: 'block', width: '32px', height: '32px', objectFit: 'contain' }} />
         <div className="min-w-0 flex-1">
-          <h1 className="tracking-tight leading-none truncate font-bold text-foreground" style={{ fontSize: '19px' }}>+Salud</h1>
+          <h1 className={cn('tracking-tight leading-none truncate font-bold', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')} style={{ fontSize: '19px' }}>+Salud</h1>
         </div>
       </div>
 
@@ -136,34 +140,37 @@ export default function AppSidebar({
             isActive={activeId === item.id}
             accent={accent}
             onClick={() => handleNavigate(item.id)}
+            navTextWhite={navTextWhite}
+            navTextDarkCyan={navTextDarkCyan}
           />
         ))}
       </nav>
 
       {(profile || onLogout || preProfile) && (
-        <div className="p-4 border-t border-surface-850 bg-surface-900/80 space-y-3">
+        <div className={cn("p-4 border-t border-surface-850 space-y-3", navTextWhite ? "bg-black/10" : navTextDarkCyan ? "bg-[#055058]/5" : "bg-surface-900/80")}>
           {preProfile}
           {profile && (
-            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-surface-900/40 transition-colors duration-150">
+            <div className={cn("flex items-center gap-3 p-2 rounded-xl transition-colors duration-150", navTextWhite ? "hover:bg-white/10" : navTextDarkCyan ? "hover:bg-[#055058]/10" : "hover:bg-surface-900/40")}>
               <div
                 className={cn(
-                  'h-10 w-10 rounded-full border border-surface-700 flex items-center justify-center font-bold text-foreground text-sm shrink-0',
-                  profile.avatarClassName ?? 'bg-surface-800'
+                  'h-10 w-10 rounded-full border flex items-center justify-center font-bold text-sm shrink-0',
+                  navTextWhite ? 'bg-white/20 border-white/40 text-white' : navTextDarkCyan ? 'bg-[#055058]/15 border-[#055058]/30 text-[#055058]' : 'bg-surface-800 border-surface-700 text-foreground',
+                  profile.avatarClassName
                 )}
               >
                 {profile.initials}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground truncate">{profile.name}</p>
+                <p className={cn("text-sm font-semibold truncate", navTextWhite ? "text-white" : navTextDarkCyan ? "text-[#055058]" : "text-foreground")}>{profile.name}</p>
                 {profile.role ? (
-                  <p className="text-xs text-surface-500 truncate">{profile.role}</p>
+                  <p className={cn("text-xs truncate", navTextWhite ? "text-white/80" : navTextDarkCyan ? "text-[#055058]/80" : "text-surface-500")}>{profile.role}</p>
                 ) : null}
               </div>
               {onLogout && logoutVariant === 'icon' && (
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="zenith-logout-btn zenith-logout-btn--icon"
+                  className={cn("p-2 rounded-lg transition-colors cursor-pointer shrink-0", navTextWhite ? "text-white hover:text-red-200 hover:bg-white/10" : navTextDarkCyan ? "text-[#055058] hover:text-red-800 hover:bg-[#055058]/10" : "text-surface-400 hover:text-red-500 hover:bg-surface-900")}
                   title={logoutLabel}
                   aria-label={logoutLabel}
                 >
@@ -173,7 +180,7 @@ export default function AppSidebar({
             </div>
           )}
           {onLogout && logoutVariant === 'full' && (
-            <button type="button" onClick={onLogout} className="zenith-logout-btn w-full">
+            <button type="button" onClick={onLogout} className={cn("w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition-colors duration-200", navTextWhite ? "text-white bg-white/10 hover:bg-white/20" : navTextDarkCyan ? "text-[#055058] bg-[#055058]/10 hover:bg-[#055058]/20" : "zenith-logout-btn")}>
               <LogOut className="h-3.5 w-3.5" />
               <span>{logoutLabel}</span>
             </button>

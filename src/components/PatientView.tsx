@@ -1447,6 +1447,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           }
           onLogout={onLogout}
           logoutVariant="icon"
+          navTextDarkCyan
         />
       }
       header={({ onMenuClick }) => (
@@ -1454,8 +1455,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           onMenuClick={onMenuClick}
           statusLabel=""
           showNotifications={false}
-          className="!bg-cyan-900/95 border-cyan-800/60"
-          navTextWhite
+          className="!bg-[#50E9F8] border-[#50E9F8]"
+          navTextDarkCyan
           brand={{ icon: Activity, title: 'Paciente', subtitle: 'Paciente' }}
           items={[
             { id: 'treatment', name: 'Seguimiento', icon: Pill },

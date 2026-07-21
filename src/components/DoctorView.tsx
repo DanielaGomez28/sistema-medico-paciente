@@ -1165,6 +1165,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             preProfile={null}
             onLogout={onLogout}
             logoutVariant="icon"
+            navTextWhite
           />
         }
         header={({ onMenuClick }) => (
