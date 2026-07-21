@@ -1350,6 +1350,36 @@ table th {
   --zenith-nav-active-dot: #3dba72;
 }
 
+@keyframes doctor-qr-scan-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+[data-portal="doctor"] .doctor-qr-scan-link {
+  color: #0d5735;
+  animation: doctor-qr-scan-blink 1.25s ease-in-out infinite;
+}
+
+[data-portal="doctor"] .doctor-qr-scan-link:hover {
+  color: #11623c;
+  animation-play-state: paused;
+  opacity: 1;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-qr-scan-link {
+  color: #3dba72;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-qr-scan-link:hover {
+  color: #86efac;
+}
+
 [data-portal="patient"] {
   --color-primary: #50e9f8;
   --color-primary-300: color-mix(in srgb, #50e9f8 52%, #4a6672);

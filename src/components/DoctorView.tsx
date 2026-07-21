@@ -1377,7 +1377,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                     <button
                       onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}
-                      className="w-full text-center text-xs text-secondary-400 font-semibold hover:text-secondary-300 transition-colors pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
+                      className="doctor-qr-scan-link w-full text-center text-xs font-semibold pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
                     >
                       <span>Escanear código qr</span>
                       <ChevronRight className="h-3.5 w-3.5" />
