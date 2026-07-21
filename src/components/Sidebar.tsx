@@ -46,7 +46,8 @@ export default function Sidebar({
   return (
     <AppSidebar
       accent="primary"
-      className="admin-sidebar-white !border-r-surface-850"
+      className="admin-sidebar-shell !border-r-surface-850"
+      navClassName="admin-nav-cyan"
       brand={{
         icon: Activity,
         title: 'Admin',
@@ -73,8 +74,10 @@ export default function Sidebar({
       activeId={activeTab}
       onNavigate={setActiveTab}
       onLogout={onLogout}
-      logoutVariant="icon"
-      logoutLabel="Cerrar Sesión"
+      logoutVariant="full"
+      logoutLabel="Salida"
+      footerClassName="admin-sidebar-footer-cyan"
+      logoutClassName="admin-logout-btn"
     />
   );
 }

@@ -144,7 +144,7 @@ export default function FinancialSettingsView() {
         </div>
       ) : null}
 
-      <form onSubmit={handleUpdate} className="w-full bg-surface-900 border border-surface-800 rounded-3xl p-6 space-y-5">
+      <form onSubmit={handleUpdate} className="admin-surface-card w-full border rounded-3xl p-6 space-y-5">
         <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
           <Percent className="h-4.5 w-4.5 text-surface-400" />
           <h3 className="zenith-section-title">Comisión base real del sistema</h3>

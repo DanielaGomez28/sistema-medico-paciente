@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { translateStatus } from '../lib/statusColors';
+import { translateStatus, getRecipeStatusBadgeClassName } from '../lib/statusColors';
 import {
   FileText,
   Eye,
@@ -106,21 +106,7 @@ export default function AdminRecipesView() {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'activa':
-      case 'active':
-        return 'bg-secondary-500/10 text-secondary-400 border-secondary-500/25';
-      case 'dispensada':
-      case 'dispensed':
-        return 'bg-primary-500/10 text-primary-400 border-primary-500/25';
-      case 'vencida':
-      case 'expired':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/25';
-      default:
-        return 'bg-surface-800/50 text-surface-400 border-surface-700';
-    }
-  };
+  const getStatusColor = (status: string) => getRecipeStatusBadgeClassName(status);
 
   const getMedicationSummary = (recipe: AdminRecipe) => {
     if (!recipe.items || recipe.items.length === 0) return 'Sin medicamentos';
@@ -197,7 +183,7 @@ export default function AdminRecipesView() {
                     <p className="text-[10px] text-surface-500 mt-0.5">Prescripción clínica</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusColor(recipe.clinicalStatus)}`}>
+                    <span className={`recipe-status-badge ${getStatusColor(recipe.clinicalStatus)}`}>
                       {translateStatus(recipe.clinicalStatus)}
                     </span>
                   </td>

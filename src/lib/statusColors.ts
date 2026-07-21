@@ -115,15 +115,40 @@ export const orderStatusColors: Record<OrderStatus, string> = {
 export function translateStatus(status: string): string {
   const map: Record<string, string> = {
     'active': 'Activo',
+    'activo': 'Activo',
+    'activa': 'Activo',
     'expired': 'Expirado',
     'paid': 'Pagado',
     'pending_payment': 'Pago Pendiente',
+    'awaiting_payment': 'Pago pendiente',
     'unpaid': 'No Pagado',
     'pending': 'Pendiente',
     'partial': 'Parcial',
     'fully_fulfilled': 'Completado',
+    'not_fulfilled': 'No surtido',
+    'inventory_reserved': 'Inventario reservado',
+    'dispatched_to_pharmacy': 'Despachado a farmacia',
     'checkout_pending': 'Checkout Pendiente',
     'payment_confirmed': 'Pago Confirmado',
   };
   return map[status?.toLowerCase()] || status;
+}
+
+/**
+ * Clase CSS del badge de estado de recipe (clínico, comercial o surtido).
+ */
+export function getRecipeStatusBadgeClassName(status: string): string {
+  const normalized = status?.toLowerCase().trim().replace(/\s+/g, '_') || '';
+
+  const map: Record<string, string> = {
+    active: 'recipe-status-badge--active',
+    activo: 'recipe-status-badge--active',
+    activa: 'recipe-status-badge--active',
+    inventory_reserved: 'recipe-status-badge--inventory-reserved',
+    dispatched_to_pharmacy: 'recipe-status-badge--dispatched-pharmacy',
+    awaiting_payment: 'recipe-status-badge--awaiting-payment',
+    not_fulfilled: 'recipe-status-badge--not-fulfilled',
+  };
+
+  return map[normalized] ?? 'recipe-status-badge--neutral';
 }

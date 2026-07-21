@@ -253,7 +253,7 @@ export default function DoctorsManagerView() {
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="w-full bg-surface-900 border border-surface-800 rounded-3xl p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="admin-surface-card w-full border rounded-3xl p-6 space-y-5">
         <div className="flex items-center justify-between gap-3 border-b border-surface-850 pb-3">
           <div className="flex items-center gap-2">
             <UserPlus className="h-4.5 w-4.5 text-surface-400" />

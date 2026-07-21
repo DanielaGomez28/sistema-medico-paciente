@@ -70,6 +70,9 @@ export interface AppSidebarProps {
   logoutLabel?: string;
   logoutVariant?: 'icon' | 'full';
   className?: string;
+  navClassName?: string;
+  footerClassName?: string;
+  logoutClassName?: string;
   navTextWhite?: boolean;
   navTextDarkCyan?: boolean;
 }
@@ -100,6 +103,9 @@ export default function AppSidebar({
   logoutLabel = 'Cerrar Sesión',
   logoutVariant = 'icon',
   className,
+  navClassName,
+  footerClassName,
+  logoutClassName,
   navTextWhite = false,
   navTextDarkCyan = false,
 }: AppSidebarProps) {
@@ -136,7 +142,7 @@ export default function AppSidebar({
 
       {sidebarExtra}
 
-      <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+      <nav className={cn('flex-1 px-4 py-6 space-y-1 overflow-y-auto', navClassName)}>
         {sectionLabel && (
           <div className="zc-collapse-text zenith-field-label px-4 py-2 text-[10px] uppercase tracking-wider">
             {sectionLabel}
@@ -156,7 +162,7 @@ export default function AppSidebar({
       </nav>
 
       {(profile || onLogout || preProfile) && (
-        <div className={cn("p-4 border-t border-surface-850 space-y-3", navTextWhite ? "bg-black/10" : navTextDarkCyan ? "bg-[#055058]/5" : "bg-surface-900/80")}>
+        <div className={cn("p-4 border-t border-surface-850 space-y-3", navTextWhite ? "bg-black/10" : navTextDarkCyan ? "bg-[#055058]/5" : "bg-surface-900/80", footerClassName)}>
           {preProfile}
           {profile && (
             <div className={cn("zc-row flex items-center gap-3 p-2 rounded-xl transition-colors duration-150", navTextWhite ? "hover:bg-white/10" : navTextDarkCyan ? "hover:bg-[#055058]/10" : "hover:bg-surface-900/40")}>
@@ -214,9 +220,9 @@ export default function AppSidebar({
             </button>
           )}
           {onLogout && logoutVariant === 'full' && (
-            <button type="button" onClick={onLogout} className={cn("w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium transition-colors duration-200", navTextWhite ? "text-white bg-white/10 hover:bg-white/20" : navTextDarkCyan ? "text-[#055058] bg-[#055058]/10 hover:bg-[#055058]/20" : "zenith-logout-btn")}>
-              <LogOut className="h-3.5 w-3.5" />
-              <span>{logoutLabel}</span>
+            <button type="button" onClick={onLogout} className={cn("zc-row w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold transition-colors duration-200", navTextWhite ? "text-white bg-white/10 hover:bg-white/20" : navTextDarkCyan ? "text-[#055058] bg-[#055058]/10 hover:bg-[#055058]/20" : "zenith-logout-btn", logoutClassName)}>
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span className="zc-collapse-text">{logoutLabel}</span>
             </button>
           )}
         </div>

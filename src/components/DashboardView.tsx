@@ -9,7 +9,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Activity, ChevronRight, DollarSign, Heart, RefreshCw, Stethoscope, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '../lib/currency';
 import apiClient from '../lib/api';
-import { translateStatus } from '../lib/statusColors';
+import { translateStatus, getRecipeStatusBadgeClassName } from '../lib/statusColors';
 import { Button, PageHeader, StatCard } from './ui';
 
 interface ApiErrorPayload {
@@ -265,10 +265,16 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
                     <p className="text-xs font-semibold text-white">{recipe.patientName || 'Paciente'}</p>
                     <p className="text-[10px] text-surface-500 font-mono">{recipe.recipeId} &bull; {recipe.doctorName || 'Sin médico visible'}</p>
                   </div>
-                  <div className="flex gap-2">
-                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-primary-500/10 text-primary-300">{translateStatus(recipe.clinicalStatus)}</span>
-                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-secondary-500/10 text-secondary-300">{translateStatus(recipe.commercialStatus)}</span>
-                    <span className="inline-flex px-2 py-0.5 rounded text-[10px] font-bold bg-surface-500/20 text-surface-300">{translateStatus(recipe.fulfillmentStatus || 'pending')}</span>
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <span className={`recipe-status-badge ${getRecipeStatusBadgeClassName(recipe.clinicalStatus)}`}>
+                      {translateStatus(recipe.clinicalStatus)}
+                    </span>
+                    <span className={`recipe-status-badge ${getRecipeStatusBadgeClassName(recipe.commercialStatus)}`}>
+                      {translateStatus(recipe.commercialStatus)}
+                    </span>
+                    <span className={`recipe-status-badge ${getRecipeStatusBadgeClassName(recipe.fulfillmentStatus || 'pending')}`}>
+                      {translateStatus(recipe.fulfillmentStatus || 'pending')}
+                    </span>
                   </div>
                 </div>
                 <p className="text-[10px] text-surface-500">Emitido {new Date(recipe.createdAt).toLocaleDateString('es-ES')} &bull; Caduca {new Date(recipe.recipeExpiresAt).toLocaleDateString('es-ES')}</p>

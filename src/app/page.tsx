@@ -579,6 +579,7 @@ export default function Home() {
             onMenuClick={onMenuClick}
             statusLabel=""
             showNotifications={false}
+            className="admin-header-white"
             // ðŸš€ 2. INYECTAMOS LAS PROPIEDADES DINÃMICAS AQUÃ:
             profileName={adminName}
             profileInitials={adminInitials}

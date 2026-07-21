@@ -252,7 +252,7 @@ export default function CmsView() {
               { key: 'logoUrl', label: 'Logotipo', fileName: logoFileName, setter: setLogoFileName },
               { key: 'bannerUrl', label: 'Banner principal', fileName: bannerFileName, setter: setBannerFileName },
             ] as const).map((item) => (
-              <section key={item.key} className="zenith-panel space-y-4">
+              <section key={item.key} className="admin-surface-card zenith-panel space-y-4">
                 <div>
                   <h3 className="zenith-section-title">{item.label}</h3>
                 </div>
@@ -282,7 +282,7 @@ export default function CmsView() {
           </div>
 
           <aside className="xl:col-span-2">
-            <div className="zenith-panel space-y-4 sticky top-6">
+            <div className="admin-surface-card zenith-panel space-y-4 sticky top-6">
               <h3 className="zenith-section-title">Vista previa</h3>
               <p className="text-xs text-surface-500">Configura la apariencia y marca de tu portal.</p>
             </div>
@@ -290,7 +290,7 @@ export default function CmsView() {
         </div>
       ) : (
         <div className="max-w-4xl space-y-5">
-          <section className="zenith-panel space-y-5">
+          <section className="admin-surface-card zenith-panel space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4">
               <div>
                 <h3 className="zenith-section-title">Textos legales</h3>
