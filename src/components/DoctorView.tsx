@@ -580,6 +580,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   // Prescription states (M.2)
   const [searchQuery, setSearchQuery] = useState('');
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [globalDiscount, setGlobalDiscount] = useState<number>(0);
   const [successMsg, setSuccessMsg] = useState('');
   const [inventoryPreview, setInventoryPreview] = useState<MedicalProduct[]>([]);
   const [catalogResults, setCatalogResults] = useState<MedicalProduct[]>([]);
@@ -1152,8 +1153,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         items: cart.map((item) => ({
           id_producto: item.product.id,
           dosis: item.posology.trim(),
-          cantidad: 1,
-          aplicar_beneficio: Number(item.discount || 0) > 0,
+          cantidad: item.treatmentDays * item.dailyDoses || 1,
+          aplicar_beneficio: globalDiscount > 0,
         })),
       });
 
@@ -1842,33 +1843,33 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                     />
                                   </div>
 
-                                  {/* Incentives / Discounts Selector */}
-                                  <div className="space-y-1.5">
-                                    <span className="zenith-field-label flex items-center gap-1">
-                                      <Percent className="h-3 w-3 text-secondary-455" />
-                                      <span>Descuento exclusivo</span>
-                                    </span>
-                                    
-                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5">
-                                      {[0, 10, 15, 20, 30].map((disc) => (
-                                        <button
-                                          key={disc}
-                                          type="button"
-                                          onClick={() => updateCartDiscount(item.product.id, disc)}
-                                          className={`py-1 rounded-lg text-2xs font-bold border transition-colors cursor-pointer ${
-                                            item.discount === disc
-                                              ? 'bg-secondary-500 border-secondary-550 text-white'
-                                              : 'bg-surface-950/60 border-surface-800 text-surface-400 hover:text-white'
-                                          }`}
-                                        >
-                                          {disc}%
-                                        </button>
-                                      ))}
-                                    </div>
                                   </div>
-
-                                </div>
                               ))}
+                            </div>
+
+                            {/* Global Discount Selector */}
+                            <div className="pt-4 space-y-2">
+                              <span className="zenith-field-label flex items-center gap-1">
+                                <Percent className="h-3 w-3 text-secondary-455" />
+                                <span>Descuento Exclusivo (Aplica a toda la prescripción)</span>
+                              </span>
+                              
+                              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                                {[0, 10, 15, 20, 30].map((disc) => (
+                                  <button
+                                    key={disc}
+                                    type="button"
+                                    onClick={() => setGlobalDiscount(disc)}
+                                    className={`py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
+                                      globalDiscount === disc
+                                        ? 'bg-secondary-500 border-secondary-550 text-white'
+                                        : 'bg-surface-950/60 border-surface-800 text-surface-400 hover:text-white'
+                                    }`}
+                                  >
+                                    {disc}%
+                                  </button>
+                                ))}
+                              </div>
                             </div>
 
                             {/* Cart totals preview */}
@@ -1893,7 +1894,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 <span>
                                   {(() => {
                                     const totalOriginal = cart.reduce((sum, item) => sum + (item.product.price * (item.treatmentDays * item.dailyDoses || 1)), 0);
-                                    const totalDesc = cart.reduce((sum, item) => sum + ((item.product.price * (item.treatmentDays * item.dailyDoses || 1)) * (item.discount / 100)), 0);
+                                    const totalDesc = cart.reduce((sum, item) => sum + ((item.product.price * (item.treatmentDays * item.dailyDoses || 1)) * (globalDiscount / 100)), 0);
                                     const pct = totalOriginal > 0 ? Math.round((totalDesc / totalOriginal) * 100) : 0;
                                     return `${pct}% (${formatCurrency(totalDesc)} Bs)`;
                                   })()}
@@ -1904,7 +1905,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 <span>Total a pagar</span>
                                 <span className="font-mono text-secondary-400">
                                   {(() => {
-                                    const totalPay = cart.reduce((sum, item) => sum + ((item.product.price * (item.treatmentDays * item.dailyDoses || 1)) * (1 - item.discount / 100)), 0);
+                                    const totalPay = cart.reduce((sum, item) => sum + ((item.product.price * (item.treatmentDays * item.dailyDoses || 1)) * (1 - globalDiscount / 100)), 0);
                                     return `${formatCurrency(totalPay)} Bs`;
                                   })()}
                                 </span>

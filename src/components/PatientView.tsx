@@ -53,6 +53,12 @@ import {
   PATIENT_PROFILE_DEFAULTS,
 } from '../data/mockData';
 
+const formatPhoneNumber = (val: string) => {
+  const digits = val.replace(/\D/g, '');
+  if (digits.length <= 4) return digits;
+  return `${digits.slice(0, 4)}-${digits.slice(4, 11)}`;
+};
+
 /**
  * Propiedades de la vista de portal del Paciente.
  * @interface PatientViewProps
