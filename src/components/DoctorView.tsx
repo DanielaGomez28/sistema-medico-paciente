@@ -1876,7 +1876,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="pt-4 space-y-2">
                               <span className="zenith-field-label flex items-center gap-1">
                                 <Percent className="h-3 w-3 text-secondary-455" />
-                                <span>Descuento Exclusivo (Aplica a toda la prescripción)</span>
+                                <span>Descuento Exclusivo</span>
                               </span>
                               
                               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
