@@ -124,15 +124,15 @@ export default function AppHeader({
                     'relative flex items-center gap-2 px-3.5 py-2 rounded-lg text-[15px] font-bold transition-all duration-200 group cursor-pointer shrink-0',
                     navTextWhite
                       ? [
-                          'hover:scale-[1.04] active:scale-[0.97] active:bg-white/15 active:shadow-sm',
-                          isActive ? 'text-white bg-white/15 shadow-sm' : 'text-white',
-                        ]
+                        'hover:scale-[1.04] active:scale-[0.97] active:bg-white/15 active:shadow-sm',
+                        isActive ? 'text-white bg-white/15 shadow-sm' : 'text-white',
+                      ]
                       : [
-                          'hover:scale-[1.04] active:scale-[0.97]',
-                          isActive
-                            ? 'text-foreground bg-surface-800/80 shadow-sm'
-                            : 'text-surface-400 hover:text-foreground hover:bg-surface-850/60',
-                        ]
+                        'hover:scale-[1.04] active:scale-[0.97]',
+                        isActive
+                          ? 'text-foreground bg-surface-800/80 shadow-sm'
+                          : 'text-surface-400 hover:text-foreground hover:bg-surface-850/60',
+                      ]
                   )}
                 >
                   <Icon
