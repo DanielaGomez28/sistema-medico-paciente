@@ -126,6 +126,7 @@ interface DoctorRecipeLogItem {
   nombre: string;
   cantidad_prescrita?: number;
   remaining_quantity?: number;
+  pharmacy_name?: string;
 }
 
 interface DoctorRecipeLogRecord {
@@ -2056,16 +2057,14 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="space-y-1 min-w-0">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className="font-bold text-xs text-white">{rec.patientName || rec.patientId}</span>
-                                <span className="text-[9px] font-mono text-surface-500 bg-surface-950 border border-surface-850 px-1.5 py-0.2 rounded">{rec.recipeId}</span>
+                                <span className="text-[9px] font-mono text-surface-500 bg-surface-950 border border-surface-850 px-1.5 py-0.2 rounded">#R-{rec.recipeId.split('-')[0].toUpperCase()}</span>
                               </div>
                               <div className="flex flex-wrap gap-1 pt-0.5">
                                 {rec.items.map((item, idx) => (
-                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0})</span>
+                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA'}</span>
                                 ))}
                               </div>
                               <p className="text-[10px] text-surface-500 flex items-center gap-1 flex-wrap">
-                                <span>{rec.pharmacyDispatch?.branchName || 'Farmacia Central'}</span>
-                                <span>•</span>
                                 <span>Emitido {new Date(rec.createdAt).toLocaleDateString('es-ES')}</span>
                                 <span>•</span>
                                 <span>Caduca {new Date(rec.recipeExpiresAt).toLocaleDateString('es-ES')}</span>
