@@ -117,7 +117,7 @@ export default function AppSidebar({
         className
       )}
     >
-      <div className="h-16 flex items-center gap-3 px-6 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md">
+      <div className={cn("h-16 flex items-center gap-3 px-6 border-b backdrop-blur-md", navTextWhite ? "bg-transparent border-white/20" : navTextDarkCyan ? "bg-transparent border-[#055058]/20" : "bg-surface-900/95 border-surface-850")}>
         {/* Logo + Salud brand */}
         <img src="/logo.png" alt="Logo" width={32} height={32} style={{ display: 'block', width: '32px', height: '32px', objectFit: 'contain' }} />
         <div className="min-w-0 flex-1">

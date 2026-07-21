@@ -39,7 +39,7 @@ export interface AppShellProps {
   children: React.ReactNode;
   className?: string;
   contentClassName?: string;
-  layout?: 'vertical' | 'horizontal';
+  layout?: 'vertical' | 'horizontal' | 'vertical-collapsible';
 }
 
 /**
@@ -94,12 +94,18 @@ export default function AppShell({
         )}
         <div
           className={cn(
-            'fixed inset-y-0 left-0 z-40 w-64 transition-transform duration-200 shrink-0',
-            layout === 'horizontal' ? 'lg:hidden' : 'lg:static lg:z-auto lg:translate-x-0',
+            'fixed inset-y-0 left-0 z-40 shrink-0 group overflow-hidden',
+            layout === 'horizontal'
+              ? 'w-64 lg:hidden transition-transform duration-200'
+              : layout === 'vertical-collapsible'
+                ? 'w-64 lg:w-[1.125rem] lg:hover:w-64 transition-[width,transform] duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0'
+                : 'w-64 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
         >
-          {sidebar}
+          <div className="w-64 h-full">
+            {sidebar}
+          </div>
         </div>
         <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
           {headerContent}

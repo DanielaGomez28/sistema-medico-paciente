@@ -182,14 +182,14 @@ export default function Home() {
         token: parsed.token || null,
         doctorProfile: parsed.doctorProfile
           ? {
-              mpps: parsed.doctorProfile.mpps || null,
-              specialty: parsed.doctorProfile.specialty || null,
-              medicalCollege: parsed.doctorProfile.medicalCollege || null,
-              specialSanitaryRegistration: parsed.doctorProfile.specialSanitaryRegistration || null,
-              digitalSignatureHash: parsed.doctorProfile.digitalSignatureHash || null,
-              officeLocation: parsed.doctorProfile.officeLocation || null,
-              status: parsed.doctorProfile.status || null,
-            }
+            mpps: parsed.doctorProfile.mpps || null,
+            specialty: parsed.doctorProfile.specialty || null,
+            medicalCollege: parsed.doctorProfile.medicalCollege || null,
+            specialSanitaryRegistration: parsed.doctorProfile.specialSanitaryRegistration || null,
+            digitalSignatureHash: parsed.doctorProfile.digitalSignatureHash || null,
+            officeLocation: parsed.doctorProfile.officeLocation || null,
+            status: parsed.doctorProfile.status || null,
+          }
           : null,
       };
     } catch {
@@ -318,7 +318,7 @@ export default function Home() {
 
   const handleUpdateOrderStatus = (orderId: string, nextStatus: OrderStatus, note: string) => {
     const timestamp = new Date().toISOString();
-    
+
     const updatedOrders = orders.map(order => {
       if (order.id === orderId) {
         const updatedHistory = [
@@ -370,7 +370,7 @@ export default function Home() {
     }
 
     saveOrders(updatedOrders);
-    
+
     // Sync current modal detail view
     const currentOrder = updatedOrders.find(o => o.id === orderId);
     if (currentOrder) {
@@ -545,6 +545,7 @@ export default function Home() {
   return withPlatformTermsGate(
     <AppShell
       portal="admin"
+      layout="vertical-collapsible"
       sidebar={
         <Sidebar
           activeTab={activeTab}

@@ -57,6 +57,8 @@ export default function Sidebar({
   return (
     <AppSidebar
       accent="primary"
+      navTextWhite
+      className="!bg-[#0A6B75] !border-[#0A6B75]"
       brand={{
         icon: Activity,
         title: 'Admin',
@@ -65,15 +67,15 @@ export default function Sidebar({
         { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
         ...(enableOperationalTabs
           ? [
-              {
-                id: 'orders',
-                name: 'Despacho',
-                icon: ShoppingBag,
-                badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
-                badgeColor: 'portal-nav-badge',
-              },
-              { id: 'customers', name: 'Clientes', icon: Users },
-            ]
+            {
+              id: 'orders',
+              name: 'Despacho',
+              icon: ShoppingBag,
+              badge: pendingOrdersCount > 0 ? pendingOrdersCount : null,
+              badgeColor: 'portal-nav-badge',
+            },
+            { id: 'customers', name: 'Clientes', icon: Users },
+          ]
           : []),
         { id: 'doctors', name: 'Gestión Médicos', icon: Stethoscope },
         { id: 'recipes', name: 'Gestión Recipes', icon: FileText },
