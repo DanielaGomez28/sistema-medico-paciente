@@ -662,6 +662,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<ValidationError | null>(null);
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
+  const patientProfileFieldReadonly =
+    'bg-surface-950/40 text-surface-250 border-surface-850';
+  const patientProfileFieldEditing =
+    'bg-[#50e9f8]/15 text-[#0a1220] dark:!text-white border-[#0A6B75]/35 focus:border-[#0A6B75]';
   const profileName = patientProfile?.name || patientName;
   const profilePhone = patientProfile?.phone || PATIENT_PROFILE_DEFAULTS.profilePhone;
   const deliveryAddress = patientProfile?.deliveryAddress || PATIENT_PROFILE_DEFAULTS.deliveryAddress;
@@ -2548,6 +2552,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
       {/* P.5: PROFILE CONFIGURATION VIEW */}
       {activeSubTab === 'profile' && (
+        <>
         <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
           {profileSaveMsg && (
             <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-400 text-xs">
@@ -2562,42 +2567,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
           )}
           <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-8 backdrop-blur-md space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4">
+            <div className="border-b border-surface-850 pb-4">
               <div>
                 <h3 className="zenith-section-title text-xs">Perfil del paciente</h3>
                 <p className="text-xs text-surface-400">
                   Los datos quedan en modo lectura hasta que pulses editar.
                 </p>
-              </div>
-              <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
-                {isEditingProfile ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => void handleConfirmProfileEdit()}
-                      disabled={profileLoading}
-                      className="w-full sm:min-w-[220px] px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
-                    >
-                      {profileLoading ? 'Guardando...' : 'Confirmar cambios'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleCancelProfileEdit}
-                      className="w-full sm:min-w-[220px] px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all"
-                    >
-                      Cancelar
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleStartProfileEdit}
-                    disabled={profileLoading}
-                    className="w-full sm:min-w-[220px] px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white rounded-xl text-xs font-bold transition-all"
-                  >
-                    {profileLoading ? 'Cargando...' : 'Editar perfil'}
-                  </button>
-                )}
               </div>
             </div>
 
@@ -2618,7 +2593,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         if (profileError?.field === 'name') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}
-                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'name' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500') : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'name' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2640,7 +2615,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         if (profileError?.field === 'phone') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}
-                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingProfile ? (profileError?.field === 'phone' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500') : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingProfile ? (profileError?.field === 'phone' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
                   <div className="space-y-1.5">
@@ -2680,7 +2655,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         if (profileError?.field === 'deliveryAddress') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}
-                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'deliveryAddress' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500') : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'deliveryAddress' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
 
@@ -2695,6 +2670,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                               setProfileDraft((prev) => ({ ...prev, deliveryState: value }));
                               if (profileError?.field === 'deliveryState') setProfileError(null);
                             }}
+                            className={patientProfileFieldEditing}
                           />
                         </div>
                       ) : (
@@ -2716,7 +2692,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           if (profileError?.field === 'deliveryMunicipio') setProfileError(null);
                         }}
                         readOnly={!isEditingProfile}
-                        className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'deliveryMunicipio' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500') : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
+                        className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'deliveryMunicipio' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                       />
                     </div>
                   </div>
@@ -2725,6 +2701,39 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
           </div>
         </div>
+        <div className="fixed z-30 flex flex-col items-end gap-2 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] pointer-events-none">
+          <div className="pointer-events-auto flex flex-col items-end gap-2">
+            {isEditingProfile ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => void handleConfirmProfileEdit()}
+                  disabled={profileLoading}
+                  className="min-w-[220px] px-4 py-2.5 bg-[#0A6B75] hover:bg-[#095c67] disabled:opacity-60 !text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
+                >
+                  {profileLoading ? 'Guardando...' : 'Confirmar cambios'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelProfileEdit}
+                  className="min-w-[220px] px-4 py-2.5 bg-white dark:bg-surface-900 border border-[#0A6B75]/35 dark:border-surface-700 text-[#0A6B75] dark:!text-white hover:bg-[#0A6B75]/10 dark:hover:bg-surface-800 hover:text-[#095c67] dark:hover:!text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
+                >
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleStartProfileEdit}
+                disabled={profileLoading}
+                className="min-w-[220px] px-4 py-2.5 bg-[#0A6B75] hover:bg-[#095c67] disabled:opacity-60 !text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
+              >
+                {profileLoading ? 'Cargando...' : 'Editar perfil'}
+              </button>
+            )}
+          </div>
+        </div>
+        </>
       )}
 
       {/* Printable Clinical Prescription Modal */}
