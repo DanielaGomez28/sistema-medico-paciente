@@ -1210,7 +1210,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const availablePharmacies = useMemo(() => {
     const pharmacies = new Set<string>();
     inventoryPreview.forEach(prod => {
-      pharmacies.add(process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA');
+      pharmacies.add(process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia');
     });
     return Array.from(pharmacies);
   }, [inventoryPreview]);
@@ -1220,7 +1220,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     
     if (catalogPharmacyFilter !== 'all') {
       result = result.filter(prod => {
-        const pName = process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA';
+        const pName = process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia';
         return pName === catalogPharmacyFilter;
       });
     }
@@ -1418,7 +1418,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             </span>
                           </div>
                           <span className="w-fit max-w-full shrink-0 truncate whitespace-nowrap text-[9px] text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
-                            {process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA'}
+                            {process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}
                           </span>
                         </div>
                         <div className="text-[10px] text-surface-400 break-words line-clamp-3">{prod.description}</div>
@@ -2126,7 +2126,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               </div>
                               <div className="flex flex-wrap gap-1 pt-0.5">
                                 {rec.items.map((item, idx) => (
-                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'FARMAHUMANA'}</span>
+                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
                                 ))}
                               </div>
                               <p className="text-[10px] text-surface-500 flex items-center gap-1 flex-wrap">
