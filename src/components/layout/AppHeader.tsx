@@ -126,7 +126,7 @@ export default function AppHeader({
 
         {/* CENTER-RIGHT: Navigation items pushed to right */}
         {items && onNavigate && (
-          <nav className="hidden lg:flex items-center gap-1 flex-1 justify-end mr-4">
+          <nav className="hidden lg:flex items-center gap-5 flex-1 justify-end mr-4">
             {items.map((item) => {
               const Icon = item.icon;
               const isActive = activeId === item.id;
@@ -208,7 +208,12 @@ export default function AppHeader({
                 <button
                   type="button"
                   onClick={onLogout}
-                  className={cn('p-1.5 rounded-lg transition-colors cursor-pointer shrink-0', navTextWhite ? 'text-white hover:text-red-200 hover:bg-white/10' : navTextDarkCyan ? 'text-[#055058] hover:text-red-800 hover:bg-[#055058]/10' : 'text-surface-400 hover:text-red-500 hover:bg-surface-900')}
+                  className={cn(
+                    'transition-colors cursor-pointer shrink-0',
+                    navTextWhite || navTextDarkCyan
+                      ? 'h-10 w-10 rounded-full border flex items-center justify-center text-red-500 border-red-500/30 bg-white/40 hover:bg-white/50'
+                      : 'p-1.5 rounded-lg text-surface-400 hover:text-red-500 hover:bg-surface-900'
+                  )}
                   title="Cerrar Sesión"
                   aria-label="Cerrar Sesión"
                 >
