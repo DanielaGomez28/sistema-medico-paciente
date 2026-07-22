@@ -975,10 +975,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       return;
     }
 
-    if (patientForm.phone !== 'Sin registrar' && !matchesSafePattern(patientForm.phone, /^[+\d\s()-]{7,20}$/)) {
-      alert('El teléfono del paciente no cumple el formato esperado.');
-      return;
-    }
 
     if (!patientForm.patientId.trim()) {
       alert('El ID interno del paciente es obligatorio.');
@@ -1005,8 +1001,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       .filter(Boolean);
 
     try {
+      const editablePatientPayload: Partial<LinkedPatient> = { ...patientForm };
+      delete editablePatientPayload.age;
+      delete editablePatientPayload.phone;
       const response = await apiClient.put(`/pacientes/${encodeURIComponent(patientForm.systemId || patientForm.patientId)}`, {
-        ...patientForm,
+        ...editablePatientPayload,
         medications,
       });
       const updatedPatient = response.data?.patient as LinkedPatient;
@@ -1861,10 +1860,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-1.5"><label className="zenith-field-label">Nombre completo</label><input type="text" value={patientForm.name} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">ID interno</label><input type="text" value={patientForm.patientId} readOnly placeholder="Ej: patient_sofia_peralta" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none uppercase ${doctorProfileFieldReadonly}`} /></div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">Género</label><input type="text" value={patientForm.gender} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">Grupo sanguíneo</label><input type="text" value={patientForm.bloodType} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} onChange={(e) => setPatientForm({ ...patientForm, phone: formatPhoneNumber(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Condición / diagnóstico de control</label><input type="text" value={patientForm.condition} onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Alergias</label><input type="text" value={patientForm.allergies} onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Tratamientos activos (separados por coma)</label><input type="text" value={medicationsInput} onChange={(e) => setMedicationsInput(e.target.value)} readOnly={!isEditingPatientRecord} placeholder="Ej: Ramipril 5mg, Aspirina 100mg" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
