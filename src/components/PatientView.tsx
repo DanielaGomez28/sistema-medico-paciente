@@ -97,6 +97,12 @@ interface BackendPatientProfile {
 interface PatientProfileDraft {
   name: string;
   phone: string;
+  age: string;
+  gender: string;
+  bloodType: string;
+  condition: string;
+  allergies: string;
+  medications: string;
   deliveryAddress: string;
   deliveryState: string;
   deliveryMunicipio: string;
@@ -117,6 +123,12 @@ function createEmptyPatientProfileDraft(): PatientProfileDraft {
   return {
     name: '',
     phone: PATIENT_PROFILE_DEFAULTS.profilePhone,
+    age: '',
+    gender: '',
+    bloodType: '',
+    condition: '',
+    allergies: '',
+    medications: '',
     deliveryAddress: PATIENT_PROFILE_DEFAULTS.deliveryAddress,
     deliveryState: PATIENT_PROFILE_DEFAULTS.deliveryState,
     deliveryMunicipio: PATIENT_PROFILE_DEFAULTS.deliveryMunicipio,
@@ -133,6 +145,12 @@ function buildPatientProfileDraft(profile: BackendPatientProfile | null, fallbac
   return {
     name: profile?.name || fallbackName || '',
     phone: profile?.phone || PATIENT_PROFILE_DEFAULTS.profilePhone,
+    age: profile?.age ? String(profile.age) : '',
+    gender: profile?.gender || '',
+    bloodType: profile?.bloodType || '',
+    condition: profile?.condition || '',
+    allergies: profile?.allergies || '',
+    medications: profile?.medications?.length ? profile.medications.join(', ') : '',
     deliveryAddress: profile?.deliveryAddress || PATIENT_PROFILE_DEFAULTS.deliveryAddress,
     deliveryState: profile?.deliveryState || PATIENT_PROFILE_DEFAULTS.deliveryState,
     deliveryMunicipio: profile?.deliveryMunicipio || PATIENT_PROFILE_DEFAULTS.deliveryMunicipio,
@@ -153,6 +171,12 @@ function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationErro
   const normalized = {
     name: draft.name.trim(),
     phone: draft.phone.trim(),
+    age: draft.age.trim(),
+    gender: draft.gender.trim(),
+    bloodType: draft.bloodType.trim(),
+    condition: draft.condition.trim(),
+    allergies: draft.allergies.trim(),
+    medications: draft.medications.trim(),
     deliveryAddress: draft.deliveryAddress.trim(),
     deliveryState: draft.deliveryState.trim(),
     deliveryMunicipio: draft.deliveryMunicipio.trim(),
@@ -168,6 +192,30 @@ function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationErro
 
   if (!/^[+\d\s()-]{7,20}$/.test(normalized.phone)) {
     return { field: 'phone', message: 'No se pudo modificar los datos del usuario. Teléfono inválido. Formato esperado: Ej. +58 412 1234567 (entre 7 y 20 caracteres).' };
+  }
+
+  if (normalized.age && (!/^\d{1,3}$/.test(normalized.age) || Number(normalized.age) > 130)) {
+    return { field: 'age', message: 'No se pudo modificar los datos del usuario. Edad inválida. Formato esperado: número entre 0 y 130.' };
+  }
+
+  if (normalized.gender && !/^[\p{L}\s.'-]{2,40}$/u.test(normalized.gender)) {
+    return { field: 'gender', message: 'No se pudo modificar los datos del usuario. Género inválido. Formato esperado: texto corto sin símbolos especiales.' };
+  }
+
+  if (normalized.bloodType && !/^(A|B|AB|O)[+-]$/i.test(normalized.bloodType)) {
+    return { field: 'bloodType', message: 'No se pudo modificar los datos del usuario. Grupo sanguíneo inválido. Formato esperado: A+, A-, B+, B-, AB+, AB-, O+ u O-.' };
+  }
+
+  if (normalized.condition && !/^[\p{L}\p{N}\s.,()/'-]{2,200}$/u.test(normalized.condition)) {
+    return { field: 'condition', message: 'No se pudo modificar los datos del usuario. Condición inválida. Formato esperado: texto clínico breve.' };
+  }
+
+  if (normalized.allergies && !/^[\p{L}\p{N}\s.,()/'-]{2,200}$/u.test(normalized.allergies)) {
+    return { field: 'allergies', message: 'No se pudo modificar los datos del usuario. Alergias inválidas. Formato esperado: lista breve separada por comas.' };
+  }
+
+  if (normalized.medications && !/^[\p{L}\p{N}\s.,()/%+-]{2,300}$/u.test(normalized.medications)) {
+    return { field: 'medications', message: 'No se pudo modificar los datos del usuario. Tratamientos inválidos. Formato esperado: lista breve separada por comas.' };
   }
 
   if (!/^[\p{L}\p{N}\s.,#()"'-]{5,200}$/u.test(normalized.deliveryAddress)) {
@@ -1058,6 +1106,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       const payload = {
         name: profileDraft.name.trim(),
         phone: profileDraft.phone.trim(),
+        age: profileDraft.age.trim() ? Number(profileDraft.age.trim()) : 0,
+        gender: profileDraft.gender.trim(),
+        bloodType: profileDraft.bloodType.trim().toUpperCase(),
+        condition: profileDraft.condition.trim(),
+        allergies: profileDraft.allergies.trim(),
+        medications: profileDraft.medications.split(',').map((item) => item.trim()).filter(Boolean),
         deliveryAddress: profileDraft.deliveryAddress.trim(),
         deliveryState: profileDraft.deliveryState.trim(),
         deliveryMunicipio: profileDraft.deliveryMunicipio.trim(),
@@ -2870,17 +2924,19 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <label className="zenith-field-label">Edad</label>
                     <input
                       type="text"
-                      value={patientProfile?.age ? `${patientProfile.age} años` : 'Sin especificar'}
-                      readOnly
-                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                      value={isEditingProfile ? profileDraft.age : (patientProfile?.age ? `${patientProfile.age} años` : 'Sin especificar')}
+                      onChange={(e) => {
+                        setProfileDraft((prev) => ({ ...prev, age: e.target.value.replace(/\D/g, '').slice(0, 3) }));
+                        if (profileError?.field === 'age') setProfileError(null);
+                      }}
+                      readOnly={!isEditingProfile}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'age' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Datos clínicos: los mismos que ve el médico en la ficha, en solo
-                  lectura. Los mantiene y actualiza el especialista durante la
-                  consulta, no el paciente desde su portal. */}
+              {/* Datos clínicos editables por el paciente desde su perfil. */}
               <div className="space-y-4">
                 <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
                   Datos Clínicos
@@ -2891,45 +2947,65 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <label className="zenith-field-label">Género</label>
                     <input
                       type="text"
-                      value={patientProfile?.gender || 'Sin especificar'}
-                      readOnly
-                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                      value={isEditingProfile ? profileDraft.gender : (patientProfile?.gender || 'Sin especificar')}
+                      onChange={(e) => {
+                        setProfileDraft((prev) => ({ ...prev, gender: e.target.value }));
+                        if (profileError?.field === 'gender') setProfileError(null);
+                      }}
+                      readOnly={!isEditingProfile}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'gender' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="zenith-field-label">Grupo sanguíneo</label>
                     <input
                       type="text"
-                      value={patientProfile?.bloodType || 'Sin especificar'}
-                      readOnly
-                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                      value={isEditingProfile ? profileDraft.bloodType : (patientProfile?.bloodType || 'Sin especificar')}
+                      onChange={(e) => {
+                        setProfileDraft((prev) => ({ ...prev, bloodType: e.target.value.toUpperCase() }));
+                        if (profileError?.field === 'bloodType') setProfileError(null);
+                      }}
+                      readOnly={!isEditingProfile}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'bloodType' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
                     <label className="zenith-field-label">Condición / diagnóstico de control</label>
                     <input
                       type="text"
-                      value={patientProfile?.condition || 'Sin condiciones registradas'}
-                      readOnly
-                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                      value={isEditingProfile ? profileDraft.condition : (patientProfile?.condition || 'Sin condiciones registradas')}
+                      onChange={(e) => {
+                        setProfileDraft((prev) => ({ ...prev, condition: e.target.value }));
+                        if (profileError?.field === 'condition') setProfileError(null);
+                      }}
+                      readOnly={!isEditingProfile}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'condition' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
                     <label className="zenith-field-label">Alergias</label>
                     <input
                       type="text"
-                      value={patientProfile?.allergies || 'Ninguna conocida'}
-                      readOnly
-                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                      value={isEditingProfile ? profileDraft.allergies : (patientProfile?.allergies || 'Ninguna conocida')}
+                      onChange={(e) => {
+                        setProfileDraft((prev) => ({ ...prev, allergies: e.target.value }));
+                        if (profileError?.field === 'allergies') setProfileError(null);
+                      }}
+                      readOnly={!isEditingProfile}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'allergies' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
                     <label className="zenith-field-label">Tratamientos activos</label>
                     <input
                       type="text"
-                      value={patientProfile?.medications?.length ? patientProfile.medications.join(', ') : 'Sin tratamientos activos'}
-                      readOnly
-                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                      value={isEditingProfile ? profileDraft.medications : (patientProfile?.medications?.length ? patientProfile.medications.join(', ') : 'Sin tratamientos activos')}
+                      onChange={(e) => {
+                        setProfileDraft((prev) => ({ ...prev, medications: e.target.value }));
+                        if (profileError?.field === 'medications') setProfileError(null);
+                      }}
+                      readOnly={!isEditingProfile}
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'medications' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
                     />
                   </div>
                 </div>
