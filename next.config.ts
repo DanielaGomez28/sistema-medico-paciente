@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Documenta el modulo next.config de +Salud.
+ * @module next.config
+ */
 import type { NextConfig } from "next";
 
 /**
