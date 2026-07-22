@@ -261,9 +261,9 @@
   --color-muted: var(--color-surface-400);
   --color-muted-foreground: var(--color-surface-500);
 
-  --radius-control: 0;
-  --radius-card: 0;
-  --radius-section: 0;
+  --radius-control: 6px;
+  --radius-card: 6px;
+  --radius-section: 6px;
   --zenith-logout-red: #dc2626;
   --zenith-logout-red-hover: #b91c1c;
   --text-caption: 0.6875rem;
@@ -955,7 +955,7 @@ table th {
 
 .login-view__card {
   background: var(--login-card);
-  border-radius: 0;
+  border-radius: var(--radius-card);
   padding: 2rem 1.75rem 1.75rem;
   box-shadow: var(--login-card-shadow);
   text-align: center;
@@ -971,7 +971,7 @@ table th {
   width: 3rem;
   height: 3rem;
   margin-bottom: 1.25rem;
-  border-radius: 0;
+  border-radius: var(--radius-card);
   background: #ffffff;
   color: #334155;
   box-shadow: var(--login-icon-shadow);
@@ -1377,7 +1377,7 @@ table th {
 [data-portal="doctor"] .doctor-recipe-log-item {
   background: color-mix(in srgb, #179150 12%, #ffffff);
   border: 1px solid color-mix(in srgb, #179150 30%, #cbd5e1);
-  border-radius: 0;
+  border-radius: var(--radius-card);
   padding: 0.875rem 1rem;
 }
 
@@ -1714,6 +1714,56 @@ table th {
 
 [data-portal="patient"] .patient-progress-bar__fill {
   background-color: #50e9f8;
+}
+
+[data-portal="patient"] .patient-treatment-card {
+  background: color-mix(in srgb, var(--zenith-surface-900) 60%, transparent);
+  border: 1px solid var(--zenith-surface-800);
+  border-radius: var(--radius-card);
+  padding: 1.25rem 1.5rem;
+  backdrop-filter: blur(12px);
+}
+
+[data-portal="patient"] .patient-treatment-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-height: 100%;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--zenith-surface-850);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--zenith-surface-950) 50%, transparent);
+}
+
+[data-portal="patient"] .patient-treatment-stat__label {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--zenith-surface-500);
+}
+
+[data-portal="patient"] .patient-treatment-stat__value {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--foreground);
+  line-height: 1.35;
+}
+
+[data-portal="patient"] .patient-treatment-stat__meta {
+  font-size: 0.6875rem;
+  color: var(--zenith-surface-400);
+  line-height: 1.45;
+}
+
+[data-theme="light"] [data-portal="patient"] .patient-treatment-card,
+[data-theme="light"] [data-portal="patient"] .patient-treatment-stat {
+  background: #ffffff;
+  border-color: #e9ecef;
+}
+
+[data-theme="light"] [data-portal="patient"] .patient-treatment-stat__value {
+  color: #0a1220;
 }
 
 [data-portal="patient"] .patient-checkout-notice {
@@ -2160,7 +2210,7 @@ table th {
   display: inline-flex;
   align-items: center;
   padding: 0.125rem 0.5rem;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-control);
   border: 1px solid transparent;
   font-size: 0.625rem;
   font-weight: 700;
@@ -2848,22 +2898,22 @@ body {
 }
 
 /*
- * Tarjetas y superficies — esquinas mínimas en toda la aplicación
+ * Tarjetas y superficies — 6px en toda la aplicación
  */
-body :is(.rounded-3xl, .rounded-2xl, .rounded-xl, .rounded-lg):not(.rounded-full) {
-  border-radius: 0 !important;
+body :is(.rounded-sm, .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl):not(.rounded-full) {
+  border-radius: var(--radius-card) !important;
 }
 
-body :is(.admin-surface-card, .zenith-panel, .zenith-card, .zenith-filter-bar, .doctor-recipe-log-item, .patient-checkout-notice, .login-view__card) {
-  border-radius: 0 !important;
+body :is(.admin-surface-card, .zenith-panel, .zenith-card, .zenith-filter-bar, .doctor-recipe-log-item, .patient-checkout-notice, .login-view__card, .patient-treatment-card, .patient-treatment-stat) {
+  border-radius: var(--radius-card) !important;
 }
 
 body :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
-  border-radius: 0 !important;
+  border-radius: var(--radius-control) !important;
 }
 
-body :is(button, [role="button"]) {
-  border-radius: 0 !important;
+body :is(button, [role="button"]):not(.rounded-full) {
+  border-radius: var(--radius-control) !important;
 }
 
 body .rounded-full {

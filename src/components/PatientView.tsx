@@ -1813,7 +1813,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
       {/* P.T: TREATMENT TRACKING */}
       {activeSubTab === 'treatment' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-4 animate-in fade-in duration-300">
           {doseSuccessMsg && (
             <div className="p-4 bg-secondary-500/10 border border-secondary-500/30 rounded-2xl flex items-center gap-2.5 text-secondary-450 text-xs animate-in fade-in slide-in-from-top-2 duration-300">
               <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
@@ -1822,45 +1822,50 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           )}
 
           {/* Resumen del día */}
-          <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 sm:p-6 backdrop-blur-md">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-2 min-w-0">
+          <div className="patient-treatment-card space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="patient-treatment-stat">
                 <div className="flex items-center gap-2 text-surface-400">
                   <Calendar className="h-4 w-4 shrink-0" />
-                  <span className="text-xs font-semibold">{todayLabel}</span>
+                  <span className="patient-treatment-stat__label">Hoy</span>
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-white">
+                <p className="patient-treatment-stat__value">{todayLabel}</p>
+                <p className="patient-treatment-stat__meta">
                   {todayTotalCount === 0
                     ? 'Sin tomas programadas hoy'
                     : todayCompletedCount === todayTotalCount
-                      ? '¡¡¡Todas las tomas de hoy completadas!'
-                      : `${todayCompletedCount} de ${todayTotalCount} tomas completadas hoy`}
-                </h3>
-                {nextPendingDose && (
-                  <p className="text-xs text-surface-400">
+                      ? 'Todas las tomas de hoy completadas'
+                      : `${todayCompletedCount} de ${todayTotalCount} tomas completadas`}
+                </p>
+                {nextPendingDose ? (
+                  <p className="patient-treatment-stat__meta">
                     Próxima: <span className="text-surface-200 font-medium">{nextPendingDose.medicationName}</span> a las{' '}
                     <span className="font-mono text-primary-400">{nextPendingDose.scheduledTime}</span>
                   </p>
-                )}
+                ) : null}
               </div>
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 w-full sm:w-auto sm:min-w-[16rem] shrink-0">
-                <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-surface-950/50 border border-surface-850 rounded-xl min-w-0">
+
+              <div className="patient-treatment-stat">
+                <div className="flex items-center gap-2 text-surface-400">
                   <Pill className="h-4 w-4 text-[#179150] shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] text-surface-500 truncate">Medicamentos activos</p>
-                    <p className="text-sm font-semibold text-white tabular-nums">{activeTreatments.length}</p>
-                  </div>
+                  <span className="patient-treatment-stat__label">Medicamentos activos</span>
                 </div>
-                <div className="flex items-center gap-2 px-2.5 sm:px-3 py-2 bg-amber-500/5 border border-amber-500/20 rounded-xl min-w-0">
+                <p className="patient-treatment-stat__value tabular-nums">{activeTreatments.length}</p>
+                <p className="patient-treatment-stat__meta">Tratamientos en curso en su plan</p>
+              </div>
+
+              <div className="patient-treatment-stat">
+                <div className="flex items-center gap-2 text-surface-400">
                   <Bell className="h-4 w-4 text-amber-400 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-[10px] text-surface-500 truncate">Alertas</p>
-                    <p className="text-sm font-semibold text-white tabular-nums">{treatmentAlerts.length}</p>
-                  </div>                      </div>
+                  <span className="patient-treatment-stat__label">Alertas</span>
+                </div>
+                <p className="patient-treatment-stat__value tabular-nums">{treatmentAlerts.length}</p>
+                <p className="patient-treatment-stat__meta">Recordatorios y avisos pendientes</p>
               </div>
             </div>
+
             {todayTotalCount > 0 && (
-              <div className="mt-4 space-y-1.5">
+              <div className="space-y-1.5">
                 <div className="flex justify-between text-[10px] text-surface-500">
                   <span>Progreso de hoy</span>
                   <span className="tabular-nums font-semibold text-surface-300">{todayProgressPercent}%</span>
@@ -1875,80 +1880,80 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             )}
           </div>
 
-          {/* Credencial QR (Módulo 1 / Sprint #2) */}
-          <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 sm:p-6 backdrop-blur-md flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="space-y-2 text-left">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5 text-primary-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Credencial QR
-                </h3>
-              </div>
-              <p className="text-xs text-surface-400 max-w-md">
-                Genere un código QR de seguridad de un solo uso para autorizar accesos o validar su identidad en consultorios médicos.
-              </p>
-              <p className="text-xs text-surface-500">
-                ID interno del paciente: <span className="font-mono text-surface-300 font-semibold">ID: {qrPatientIdentity}</span>
-              </p>
-            </div>
-
-            <div className="flex flex-col items-center gap-3 shrink-0">
-              <button
-                onClick={handleGenerarQR}
-                className="px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg shadow-primary-950/20 active:scale-95 animate-pulse"
-              >
-                Generar credencial QR
-              </button>
-
-              {/* Renderizado de la imagen Base64 del Módulo 1 */}
-              {qrImage && (
-                <div className="mt-2 bg-white p-3.5 rounded-2xl border border-surface-200 flex flex-col items-center gap-2 animate-in zoom-in-95 duration-200">
-                  <Image src={qrImage} alt="QR Efímero Paciente" width={180} height={180} unoptimized className="h-[180px] w-[180px]" />
-                  <p className={`text-xs font-bold ${timeLeft < 60 ? 'text-[#e11d48]' : 'text-[#179150]'}`}>
-                    Expira en: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                  </p>
+          {/* Credencial QR */}
+          <div className="patient-treatment-card">
+            <div className="flex flex-col md:flex-row md:items-stretch md:justify-between gap-6">
+              <div className="space-y-4 flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-primary-400 shrink-0" />
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Credencial QR</h3>
                 </div>
-              )}
+                <p className="text-xs text-surface-400 leading-relaxed">
+                  Genere un código QR de seguridad de un solo uso para autorizar accesos o validar su identidad en consultorios médicos.
+                </p>
+                <p className="text-xs text-surface-500">
+                  ID interno del paciente: <span className="font-mono text-surface-300 font-semibold">{qrPatientIdentity}</span>
+                </p>
+                <button
+                  onClick={handleGenerarQR}
+                  className="w-full sm:w-auto px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg shadow-primary-950/20 active:scale-95"
+                >
+                  Generar credencial QR
+                </button>
+              </div>
+
+              <div className="flex shrink-0 items-center justify-center md:justify-end md:min-w-[12.5rem]">
+                {qrImage ? (
+                  <div className="bg-white p-3.5 border border-surface-200 flex flex-col items-center gap-2 animate-in zoom-in-95 duration-200">
+                    <Image src={qrImage} alt="QR Efímero Paciente" width={180} height={180} unoptimized className="h-[180px] w-[180px]" />
+                    <p className={`text-xs font-bold ${timeLeft < 60 ? 'text-[#e11d48]' : 'text-[#179150]'}`}>
+                      Expira en: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
 
-          {/* Navegación interna */}
-          <div className="flex flex-nowrap gap-2 p-1 bg-surface-950/50 border border-surface-850 rounded-xl overflow-x-auto">
-            {([
-              { id: 'today' as const, label: 'Hoy', icon: Clock, count: pendingTodayDoses.length },
-              { id: 'medications' as const, label: 'Medicamentos', icon: Pill, count: activeTreatments.length },
-              { id: 'progress' as const, label: 'Progreso', icon: TrendingUp },
-            ]).map((tab) => {
-              const TabIcon = tab.icon;
-              const isActive = treatmentPanel === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setTreatmentPanel(tab.id)}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${isActive
-                      ? 'patient-treatment-tab--active shadow-sm'
-                      : 'text-surface-400 hover:text-surface-200 hover:bg-surface-850'
-                    }`}
-                >
-                  <TabIcon className="h-3.5 w-3.5 shrink-0" />
-                  {tab.label}
-                  {tab.count !== undefined && tab.count > 0 && (
-                    <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold tabular-nums ${isActive ? 'bg-white/20 text-white' : 'bg-primary-500/15 text-primary-400'
-                      }`}>
-                      {tab.count}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          {/* Panel de actividad */}
+          <div className="patient-treatment-card p-0 overflow-hidden">
+            <div className="flex flex-nowrap gap-2 p-3 border-b border-surface-850 overflow-x-auto">
+              {([
+                { id: 'today' as const, label: 'Hoy', icon: Clock, count: pendingTodayDoses.length },
+                { id: 'medications' as const, label: 'Medicamentos', icon: Pill, count: activeTreatments.length },
+                { id: 'progress' as const, label: 'Progreso', icon: TrendingUp },
+              ]).map((tab) => {
+                const TabIcon = tab.icon;
+                const isActive = treatmentPanel === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setTreatmentPanel(tab.id)}
+                    className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold transition-colors cursor-pointer shrink-0 whitespace-nowrap ${isActive
+                        ? 'patient-treatment-tab--active shadow-sm'
+                        : 'text-surface-400 hover:text-surface-200 hover:bg-surface-850'
+                      }`}
+                  >
+                    <TabIcon className="h-3.5 w-3.5 shrink-0" />
+                    {tab.label}
+                    {tab.count !== undefined && tab.count > 0 && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold tabular-nums ${isActive ? 'bg-white/20 text-white' : 'bg-primary-500/15 text-primary-400'
+                        }`}>
+                        {tab.count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
 
+            <div className="p-5 sm:p-6 space-y-4">
           {/* Panel: Hoy */}
           {treatmentPanel === 'today' && (
             <div className="space-y-4">
               {sortedTodayDoses.length === 0 ? (
-                <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-8 text-center backdrop-blur-md">
+                <div className="py-10 text-center">
                   <Pill className="h-8 w-8 text-surface-600 mx-auto mb-3" />
                   <p className="text-sm font-semibold text-surface-300">No hay tomas programadas para hoy</p>
                   <p className="text-xs text-surface-500 mt-1">Vuelva mañana para registrar su próxima dosis.</p>
@@ -1961,11 +1966,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   return (
                     <div
                       key={dose.id}
-                      className={`p-5 sm:p-6 rounded-2xl border backdrop-blur-md transition-colors bg-surface-900/60 ${isPending
+                      className={`p-4 sm:p-5 border transition-colors patient-treatment-stat ${isPending
                           ? 'border-primary-500/30'
                           : isTaken
                             ? 'border-secondary-500/25'
-                            : 'border-surface-800'
+                            : ''
                         }`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -2022,7 +2027,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 return (
                   <div
                     key={treatment.id}
-                    className="bg-surface-900/60 border border-surface-800 rounded-2xl p-5 sm:p-6 backdrop-blur-md space-y-4"
+                    className="patient-treatment-stat space-y-4"
                   >
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                       <div className="space-y-1 min-w-0">
@@ -2073,7 +2078,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           {treatmentPanel === 'progress' && (
             <div className="space-y-6">
               {treatmentAlerts.length > 0 && (
-                <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+                <div className="patient-treatment-stat space-y-4">
                   <div>
                     <h3 className="zenith-section-title">Alertas y recordatorios</h3>
                   </div>
@@ -2102,24 +2107,24 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="rounded-2xl border border-surface-800 bg-surface-900/60 p-4 backdrop-blur-md">
-                  <p className="text-[10px] uppercase tracking-wide text-surface-500">Adherencia global</p>
-                  <p className="mt-1 text-2xl font-bold text-white tabular-nums">{globalAdherencePercent}%</p>
-                  <p className="text-[11px] text-surface-500 mt-1">Basada en tratamientos activos</p>
+                <div className="patient-treatment-stat">
+                  <span className="patient-treatment-stat__label">Adherencia global</span>
+                  <p className="patient-treatment-stat__value tabular-nums text-2xl">{globalAdherencePercent}%</p>
+                  <p className="patient-treatment-stat__meta">Basada en tratamientos activos</p>
                 </div>
-                <div className="rounded-2xl border border-surface-800 bg-surface-900/60 p-4 backdrop-blur-md">
-                  <p className="text-[10px] uppercase tracking-wide text-surface-500">Tomas registradas</p>
-                  <p className="mt-1 text-2xl font-bold text-white tabular-nums">{doseLogs.length}</p>
-                  <p className="text-[11px] text-surface-500 mt-1">Historial total disponible</p>
+                <div className="patient-treatment-stat">
+                  <span className="patient-treatment-stat__label">Tomas registradas</span>
+                  <p className="patient-treatment-stat__value tabular-nums text-2xl">{doseLogs.length}</p>
+                  <p className="patient-treatment-stat__meta">Historial total disponible</p>
                 </div>
-                <div className="rounded-2xl border border-surface-800 bg-surface-900/60 p-4 backdrop-blur-md">
-                  <p className="text-[10px] uppercase tracking-wide text-surface-500">Tratamientos cerrados</p>
-                  <p className="mt-1 text-2xl font-bold text-white tabular-nums">{completedTreatments}</p>
-                  <p className="text-[11px] text-surface-500 mt-1">Ciclos ya completados</p>
+                <div className="patient-treatment-stat">
+                  <span className="patient-treatment-stat__label">Tratamientos cerrados</span>
+                  <p className="patient-treatment-stat__value tabular-nums text-2xl">{completedTreatments}</p>
+                  <p className="patient-treatment-stat__meta">Ciclos ya completados</p>
                 </div>
               </div>
 
-              <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+              <div className="patient-treatment-stat space-y-4">
                 <div className="flex items-center gap-2">
                   <History className="h-4 w-4 text-surface-500" />
                   <div>
@@ -2187,6 +2192,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               </div>
             </div>
           )}
+            </div>
+          </div>
         </div>
       )}
 
