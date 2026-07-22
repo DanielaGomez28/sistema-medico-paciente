@@ -144,6 +144,7 @@ interface DoctorRecipeLogRecord {
   patientId: string;
   patientName?: string;
   doctorName?: string;
+  doctorId?: string;
   clinicalStatus: string;
   commercialStatus: string;
   fulfillmentStatus: string;
@@ -820,11 +821,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
       try {
         setRecipeLogLoading(true);
+        setDoctorRecipeLog([]);
         setRecipeLogError('');
         const response = await apiClient.get(`/prescripciones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
-          setDoctorRecipeLog(Array.isArray(response.data?.items) ? response.data.items : []);
+          const items = Array.isArray(response.data?.items) ? response.data.items : [];
+          setDoctorRecipeLog(items.filter((recipe: DoctorRecipeLogRecord) => !recipe.doctorId || String(recipe.doctorId) === String(DOCTOR_ID)));
         }      } catch (error: unknown) {
         if (!cancelled) {
           const apiError = error as ApiErrorPayload;
