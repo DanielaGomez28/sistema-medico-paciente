@@ -1368,6 +1368,22 @@ table th {
   color: #64748b;
 }
 
+
+[data-portal="doctor"] .doctor-registered-patient-id {
+  display: inline;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  color: var(--zenith-surface-500);
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+}
+
+[data-theme="light"] [data-portal="doctor"] .doctor-registered-patient-id {
+  color: #64748b;
+}
+
 [data-portal="doctor"] .doctor-recipe-log-item {
   background: color-mix(in srgb, #179150 12%, #ffffff);
   border: 1px solid color-mix(in srgb, #179150 30%, #cbd5e1);

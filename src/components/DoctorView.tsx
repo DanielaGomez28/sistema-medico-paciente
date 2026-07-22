@@ -1654,7 +1654,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                           <div>
                             <div className="flex items-baseline gap-2 flex-wrap">
                               <p className="doctor-prescription-patient-name text-sm font-semibold">{patient.name}</p>
-                              <span className="doctor-prescription-patient-id inline-block font-mono break-all">
+                              <span className="doctor-registered-patient-id font-mono break-all">
                                 ID: {patient.patientId}
                               </span>
                             </div>
