@@ -43,11 +43,11 @@ interface AdminDashboardStats {
 }
 
 interface AdminDoctorProfile {
-  id_usuario: number;
-  nombre: string;
-  correo: string;
+  id: number;
+  name: string;
+  email: string;
   status: 'activo' | 'suspendido';
-  especialidad?: string | null;
+  specialty?: string | null;
   mpps?: string | null;
 }
 
@@ -60,14 +60,14 @@ interface AdminRecipeRecord {
   fulfillmentStatus?: string;
   createdAt: string;
   recipeExpiresAt: string;
-  items?: Array<{ id_producto: string; nombre: string; cantidad?: number }>;
+  items?: Array<{ id: string; name: string; cantidad?: number }>;
 }
 
 interface CatalogRecord {
-  id_producto: string;
-  nombre: string;
+  id: string;
+  name: string;
   stock: number;
-  principio_activo?: string;
+  activeIngredient?: string;
 }
 
 const buildPolyline = (values: Array<{ label: string; value: number }>) => {
@@ -252,9 +252,9 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           </div>
           <div className="space-y-3">
             {doctors.slice(0, 4).map((doctor) => (
-              <div key={doctor.id_usuario} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3">
-                <p className="text-xs font-semibold text-white">{doctor.nombre}</p>
-                <p className="text-[10px] text-surface-500">{doctor.especialidad || 'Sin especialidad'} &bull; {doctor.mpps || 'Sin MPPS'}</p>
+              <div key={doctor.id} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3">
+                <p className="text-xs font-semibold text-white">{doctor.name}</p>
+                <p className="text-[10px] text-surface-500">{doctor.specialty || 'Sin especialidad'} &bull; {doctor.mpps || 'Sin MPPS'}</p>
                 <span className={`mt-2 inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>
                   {doctor.status}
                 </span>
@@ -314,7 +314,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
               <div key={`recent-${recipe.recipeId}`} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3 space-y-1">
                 <p className="text-xs font-semibold text-white">{recipe.recipeId}</p>
                 <p className="text-[10px] text-surface-500">Paciente: {recipe.patientName || 'Paciente'} &bull; Médico: {recipe.doctorName || 'Sin médico visible'}</p>
-                <p className="text-[10px] text-surface-400">{Array.isArray(recipe.items) ? recipe.items.map((item) => item.nombre).slice(0, 2).join(', ') : 'Sin items visibles'}</p>
+                <p className="text-[10px] text-surface-400">{Array.isArray(recipe.items) ? recipe.items.map((item) => item.name).slice(0, 2).join(', ') : 'Sin items visibles'}</p>
               </div>
             ))}
             {!recentRecipes.length ? <div className="text-xs text-surface-500">Sin actividad reciente.</div> : null}
@@ -322,8 +322,8 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           <div className="border-t border-surface-850 pt-3 space-y-2">
             <p className="text-xs font-semibold text-white">Alertas de stock bajo</p>
             {lowStockProducts.map((product) => (
-              <div key={product.id_producto} className="flex items-center justify-between gap-3 rounded-lg border border-surface-800 bg-surface-950/40 px-3 py-2 text-xs">
-                <span className="text-surface-200">{product.nombre}</span>
+              <div key={product.id} className="flex items-center justify-between gap-3 rounded-lg border border-surface-800 bg-surface-950/40 px-3 py-2 text-xs">
+                <span className="text-surface-200">{product.name}</span>
                 <span className="font-mono text-amber-300">{product.stock} u.</span>
               </div>
             ))}

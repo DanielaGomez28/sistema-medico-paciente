@@ -30,9 +30,9 @@ interface ApiErrorPayload {
 }
 
 interface RecipeItem {
-  id_producto: string;
-  nombre: string;
-  cantidad_prescrita?: number;
+  id: string;
+  name: string;
+  prescribedQuantity?: number;
   remaining_quantity?: number;
 }
 
@@ -110,7 +110,7 @@ export default function AdminRecipesView() {
 
   const getMedicationSummary = (recipe: AdminRecipe) => {
     if (!recipe.items || recipe.items.length === 0) return 'Sin medicamentos';
-    return recipe.items.map((item) => item.nombre).join(', ');
+    return recipe.items.map((item) => item.name).join(', ');
   };
 
   return (
@@ -288,8 +288,8 @@ export default function AdminRecipesView() {
                     {selectedRecipe.items && selectedRecipe.items.length > 0 ? (
                       selectedRecipe.items.map((item, idx) => (
                         <tr key={idx}>
-                          <td className="px-4 py-3 font-semibold text-gray-800">{item.nombre}</td>
-                          <td className="px-4 py-3 text-center text-gray-600">{item.cantidad_prescrita || '-'}</td>
+                          <td className="px-4 py-3 font-semibold text-gray-800">{item.name}</td>
+                          <td className="px-4 py-3 text-center text-gray-600">{item.prescribedQuantity || '-'}</td>
                         </tr>
                       ))
                     ) : (

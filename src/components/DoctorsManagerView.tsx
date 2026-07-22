@@ -30,55 +30,51 @@ interface ApiErrorPayload {
 }
 
 interface DoctorProfile {
-  id_usuario: number;
-  nombre: string;
-  correo: string;
+  id: number;
+  name: string;
+  email: string;
   status: 'activo' | 'suspendido';
-  legacy_doctor_id?: string | null;
+  legacyDoctorId?: string | null;
   mpps?: string | null;
-  especialidad?: string | null;
-  colegio_medicos?: string | null;
-  special_sanitary_registration?: string | null;
-  digital_signature_hash?: string | null;
-  office_location?: string | null;
+  specialty?: string | null;
+  medicalBoard?: string | null;
+  specialSanitaryRegistration?: string | null;
+  officeLocation?: string | null;
 }
 
 interface DoctorFormState {
-  nombre: string;
-  correo: string;
+  name: string;
+  email: string;
   password: string;
   mpps: string;
-  especialidad: string;
-  colegio_medicos: string;
-  special_sanitary_registration: string;
-  digital_signature_hash: string;
-  office_location: string;
+  specialty: string;
+  medicalBoard: string;
+  specialSanitaryRegistration: string;
+  officeLocation: string;
   status: 'activo' | 'suspendido';
 }
 
 const EMPTY_FORM: DoctorFormState = {
-  nombre: '',
-  correo: '',
+  name: '',
+  email: '',
   password: '',
   mpps: '',
-  especialidad: '',
-  colegio_medicos: '',
-  special_sanitary_registration: '',
-  digital_signature_hash: '',
-  office_location: '',
+  specialty: '',
+  medicalBoard: '',
+  specialSanitaryRegistration: '',
+  officeLocation: '',
   status: 'activo',
 };
 
 const toDoctorForm = (doctor: DoctorProfile): DoctorFormState => ({
-  nombre: doctor.nombre,
-  correo: doctor.correo,
+  name: doctor.name,
+  email: doctor.email,
   password: '',
   mpps: doctor.mpps || '',
-  especialidad: doctor.especialidad || '',
-  colegio_medicos: doctor.colegio_medicos || '',
-  special_sanitary_registration: doctor.special_sanitary_registration || '',
-  digital_signature_hash: doctor.digital_signature_hash || '',
-  office_location: doctor.office_location || '',
+  specialty: doctor.specialty || '',
+  medicalBoard: doctor.medicalBoard || '',
+  specialSanitaryRegistration: doctor.specialSanitaryRegistration || '',
+  officeLocation: doctor.officeLocation || '',
   status: doctor.status,
 });
 
@@ -144,7 +140,7 @@ export default function DoctorsManagerView() {
     if (!query) return doctors;
 
     return doctors.filter((doctor) =>
-      [doctor.nombre, doctor.correo, doctor.mpps || '', doctor.colegio_medicos || '', doctor.especialidad || '']
+      [doctor.name, doctor.email, doctor.mpps || '', doctor.medicalBoard || '', doctor.specialty || '']
         .join(' ')
         .toLowerCase()
         .includes(query)
@@ -162,7 +158,7 @@ export default function DoctorsManagerView() {
 
   const handleEdit = (doctor: DoctorProfile) => {
     setForm(toDoctorForm(doctor));
-    setEditingDoctorId(doctor.id_usuario);
+    setEditingDoctorId(doctor.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -193,15 +189,14 @@ export default function DoctorsManagerView() {
       setErrorMsg('');
 
       const payload = {
-        nombre: form.nombre,
-        correo: form.correo,
+        name: form.name,
+        email: form.email,
         ...(editingDoctorId ? {} : { password: form.password }),
         mpps: form.mpps,
-        especialidad: form.especialidad,
-        colegio_medicos: form.colegio_medicos,
-        special_sanitary_registration: form.special_sanitary_registration || undefined,
-        digital_signature_hash: form.digital_signature_hash || undefined,
-        office_location: form.office_location || undefined,
+        specialty: form.specialty,
+        medicalBoard: form.medicalBoard,
+        specialSanitaryRegistration: form.specialSanitaryRegistration || undefined,
+        officeLocation: form.officeLocation || undefined,
         status: form.status,
       };
 
@@ -269,11 +264,11 @@ export default function DoctorsManagerView() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="space-y-1">
             <label className="zenith-field-label">Nombre completo *</label>
-            <input value={form.nombre} onChange={(e) => handleChange('nombre', e.target.value)} className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-surface-400 ${editingDoctorId ? 'bg-surface-950/40 text-surface-250 border-surface-850' : 'bg-surface-950 text-white border-surface-850'}`} required readOnly={!!editingDoctorId} />
+            <input value={form.name} onChange={(e) => handleChange('name', e.target.value)} className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-surface-400 ${editingDoctorId ? 'bg-surface-950/40 text-surface-250 border-surface-850' : 'bg-surface-950 text-white border-surface-850'}`} required readOnly={!!editingDoctorId} />
           </div>
           <div className="space-y-1">
             <label className="zenith-field-label">Correo electrónico *</label>
-            <input type="email" value={form.correo} onChange={(e) => handleChange('correo', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required />
+            <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required />
           </div>
           <div className="space-y-1">
             <label className="zenith-field-label">Contraseña {editingDoctorId ? '(opcional)' : '*'}</label>
@@ -285,11 +280,11 @@ export default function DoctorsManagerView() {
           </div>
           <div className="space-y-1">
             <label className="zenith-field-label">Colegio de Médicos *</label>
-            <input value={form.colegio_medicos} onChange={(e) => handleChange('colegio_medicos', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" required />
+            <input value={form.medicalBoard} onChange={(e) => handleChange('medicalBoard', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" required />
           </div>
           <div className="space-y-1">
             <label className="zenith-field-label">Especialidad *</label>
-            <select value={form.especialidad} onChange={(e) => handleChange('especialidad', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required>
+            <select value={form.specialty} onChange={(e) => handleChange('specialty', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required>
               <option value="" disabled>Seleccionar</option>
               {DOCTOR_SPECIALTY_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option}</option>
@@ -298,12 +293,12 @@ export default function DoctorsManagerView() {
           </div>
           <div className="space-y-1">
             <label className="zenith-field-label">Registro sanitario especial</label>
-            <input value={form.special_sanitary_registration} onChange={(e) => handleChange('special_sanitary_registration', e.target.value)} placeholder="RSE-50001" className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" />
+            <input value={form.specialSanitaryRegistration} onChange={(e) => handleChange('specialSanitaryRegistration', e.target.value)} placeholder="RSE-50001" className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" />
           </div>
 
           <div className={`space-y-1 ${!editingDoctorId ? 'lg:col-span-2' : ''}`}>
             <label className="zenith-field-label">Consultorio</label>
-            <input value={form.office_location} onChange={(e) => handleChange('office_location', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" />
+            <input value={form.officeLocation} onChange={(e) => handleChange('officeLocation', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" />
           </div>
           {editingDoctorId && (
             <div className="space-y-1">
@@ -366,28 +361,28 @@ export default function DoctorsManagerView() {
               </thead>
               <tbody className="divide-y divide-surface-850/60 text-surface-300">
                 {filteredDoctors.map((doctor) => (
-                  <tr key={doctor.id_usuario} className="hover:bg-surface-950/10">
+                  <tr key={doctor.id} className="hover:bg-surface-950/10">
                     <td className="py-3">
-                      <p className="font-semibold text-white">{doctor.nombre}</p>
-                      <p className="text-[10px] text-surface-500 font-mono">{doctor.correo}</p>
+                      <p className="font-semibold text-white">{doctor.name}</p>
+                      <p className="text-[10px] text-surface-500 font-mono">{doctor.email}</p>
                     </td>
-                    <td>{doctor.especialidad || 'Sin especialidad'}</td>
+                    <td>{doctor.specialty || 'Sin especialidad'}</td>
                     <td>
                       <p className="font-mono text-surface-300">{doctor.mpps || 'Sin MPPS'}</p>
-                      <p className="text-[10px] font-mono text-surface-500">{doctor.colegio_medicos || 'Sin colegio'}</p>
+                      <p className="text-[10px] font-mono text-surface-500">{doctor.medicalBoard || 'Sin colegio'}</p>
                     </td>
                     <td>
                       <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>
                         {doctor.status}
                       </span>
                     </td>
-                    <td className="text-[10px] font-mono text-surface-400">{doctor.special_sanitary_registration || 'No aplica'}</td>
+                    <td className="text-[10px] font-mono text-surface-400">{doctor.specialSanitaryRegistration || 'No aplica'}</td>
                     <td className="text-right">
                       <div className="inline-flex items-center gap-2">
                         <button type="button" onClick={() => handleEdit(doctor)} className="p-1.5 rounded-lg border border-surface-800 hover:border-surface-700 hover:bg-surface-900 text-surface-300">
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button type="button" onClick={() => handleSuspend(doctor.id_usuario)} className="p-1.5 rounded-lg border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/10 text-red-400" disabled={saving || doctor.status === 'suspendido'}>
+                        <button type="button" onClick={() => handleSuspend(doctor.id)} className="p-1.5 rounded-lg border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/10 text-red-400" disabled={saving || doctor.status === 'suspendido'}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -401,20 +396,20 @@ export default function DoctorsManagerView() {
           <div className="lg:hidden space-y-3">
             {filteredDoctors.map((doctor) => (
               <ListCard
-                key={doctor.id_usuario}
-                title={doctor.nombre}
-                subtitle={doctor.correo}
+                key={doctor.id}
+                title={doctor.name}
+                subtitle={doctor.email}
                 badge={<span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>{doctor.status}</span>}
                 fields={[
-                  { label: 'Especialidad', value: doctor.especialidad || 'Sin especialidad' },
+                  { label: 'Especialidad', value: doctor.specialty || 'Sin especialidad' },
                   { label: 'MPPS', value: doctor.mpps || 'Sin MPPS' },
-                  { label: 'Colegio', value: doctor.colegio_medicos || 'Sin colegio' },
-                  { label: 'RSE', value: doctor.special_sanitary_registration || 'No aplica' },
+                  { label: 'Colegio', value: doctor.medicalBoard || 'Sin colegio' },
+                  { label: 'RSE', value: doctor.specialSanitaryRegistration || 'No aplica' },
                 ]}
                 actions={
                   <div className="flex gap-2">
                     <button type="button" onClick={() => handleEdit(doctor)} className="px-2.5 py-1 text-xs font-semibold text-surface-300 bg-surface-800 rounded-md border border-surface-700">Editar</button>
-                    <button type="button" onClick={() => handleSuspend(doctor.id_usuario)} className="px-2.5 py-1 text-xs font-semibold text-red-400 bg-red-500/10 rounded-md border border-red-500/20" disabled={saving || doctor.status === 'suspendido'}>Suspender</button>
+                    <button type="button" onClick={() => handleSuspend(doctor.id)} className="px-2.5 py-1 text-xs font-semibold text-red-400 bg-red-500/10 rounded-md border border-red-500/20" disabled={saving || doctor.status === 'suspendido'}>Suspender</button>
                   </div>
                 }
               />

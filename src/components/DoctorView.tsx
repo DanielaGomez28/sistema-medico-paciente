@@ -83,19 +83,19 @@ interface MedicalProduct {
 }
 
 interface PrescriptionCatalogApiItem {
-  id_producto: string;
-  nombre: string;
-  principio_activo: string;
-  presentacion: string;
-  laboratorio: string;
+  id: string;
+  name: string;
+  activeIngredient: string;
+  presentation: string;
+  laboratory: string;
   stock: number;
-  precio_base: number;
-  beneficio_pct: number;
+  basePrice: number;
+  benefitPct: number;
   precio_con_beneficio: number;
-  sanitary_category?: string;
-  is_controlled?: boolean;
-  controlled_substance_type?: string | null;
-  pharmacy_name?: string;
+  sanitaryCategory?: string;
+  isControlled?: boolean;
+  controlledSubstanceType?: string | null;
+  pharmacyName?: string;
 }
 
 interface CartItem {
@@ -127,11 +127,11 @@ interface DoctorCommissionSummary {
 }
 
 interface DoctorRecipeLogItem {
-  id_producto: string;
-  nombre: string;
-  cantidad_prescrita?: number;
+  id: string;
+  name: string;
+  prescribedQuantity?: number;
   remaining_quantity?: number;
-  pharmacy_name?: string;
+  pharmacyName?: string;
 }
 
 interface DoctorRecipeLogRecord {
@@ -157,7 +157,7 @@ interface ConsentResultPayload {
   patientName?: string;
   result?: {
     vinculacion?: {
-      id_paciente?: string | number | null;
+      patientId?: string | number | null;
     } | null;
   } | null;
 }
@@ -222,18 +222,18 @@ export const formatPhoneNumber = (value: string) => {
  * @returns {MedicalProduct} Producto adaptado para la UI.
  */
 const mapCatalogItemToProduct = (item: PrescriptionCatalogApiItem): MedicalProduct => ({
-  id: item.id_producto,
-  name: item.nombre,
-  category: item.principio_activo || item.laboratorio || 'Medicamento',
-  price: Number(item.precio_con_beneficio ?? item.precio_base ?? 0),
+  id: item.id,
+  name: item.name,
+  category: item.activeIngredient || item.laboratory || 'Medicamento',
+  price: Number(item.precio_con_beneficio ?? item.basePrice ?? 0),
   stock: Number(item.stock ?? 0),
-  description: [item.presentacion, item.laboratorio].filter(Boolean).join(' | '),
+  description: [item.presentation, item.laboratory].filter(Boolean).join(' | '),
   source: 'farmacia',
-  benefitPct: Number(item.beneficio_pct ?? 0),
-  sanitaryCategory: item.sanitary_category || 'regular',
-  isControlled: Boolean(item.is_controlled),
-  controlledSubstanceType: item.controlled_substance_type || null,
-  pharmacyName: item.pharmacy_name,
+  benefitPct: Number(item.benefitPct ?? 0),
+  sanitaryCategory: item.sanitaryCategory || 'regular',
+  isControlled: Boolean(item.isControlled),
+  controlledSubstanceType: item.controlledSubstanceType || null,
+  pharmacyName: item.pharmacyName,
 });
 
 /**
@@ -442,7 +442,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       setWaitingConsent(false);
 
       if (data.success) {
-        const linkedPatientId = data.result?.vinculacion?.id_paciente?.toString()?.toLowerCase();
+        const linkedPatientId = data.result?.vinculacion?.patientId?.toString()?.toLowerCase();
 
         let targetPatient: LinkedPatient | undefined | null = patients.find((p) => p.systemId === linkedPatientId);
 
@@ -2088,7 +2088,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               </div>
                               <div className="flex flex-wrap gap-1 pt-0.5">
                                 {rec.items.map((item, idx) => (
-                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
+                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.name} ({item.remaining_quantity ?? 0}/{item.prescribedQuantity ?? 0}) • {item.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
                                 ))}
                               </div>
                               <p className="text-[10px] text-surface-500 flex items-center gap-1 flex-wrap">
