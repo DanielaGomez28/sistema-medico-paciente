@@ -416,6 +416,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [prescriptionPatientDraft, setPrescriptionPatientDraft] = useState<LinkedPatient | null>(null);
   const [, setPatientsLoading] = useState(false);
   const [, setPatientsError] = useState('');
+  const [unlinkingPatientId, setUnlinkingPatientId] = useState<string | null>(null);
 
   const [scannerErrorMsg, setScannerErrorMsg] = useState('');
   const scannerVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -998,6 +999,36 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     setIsEditingPatientRecord(false);
     setPatientSaveMsg('');
     setProfileErrorMsg('');
+  }
+
+  /**
+   * Elimina la vinculacion activa entre el medico de la sesion y un paciente.
+   * No elimina el expediente ni las recetas; solo quita el vinculo.
+   * @param {LinkedPatient} patient - Paciente a desvincular.
+   */
+  async function unlinkPatient(patient: LinkedPatient) {
+    const patientIdentifier = patient.systemId || patient.patientId;
+    if (!DOCTOR_ID || !patientIdentifier) return;
+
+    const confirmed = window.confirm(`Eliminar la vinculacion con ${patient.name}? El expediente no se borrara.`);
+    if (!confirmed) return;
+
+    try {
+      setUnlinkingPatientId(patientIdentifier);
+      await apiClient.delete(`/consentimiento/medico/${encodeURIComponent(DOCTOR_ID)}/paciente/${encodeURIComponent(patientIdentifier)}`);
+      setPatients((prev) => prev.filter((item) => (item.systemId || item.patientId) !== patientIdentifier));
+      if ((linkedPatient?.systemId || linkedPatient?.patientId) === patientIdentifier) {
+        setLinkedPatient(null);
+      }
+      if ((patientForm.systemId || patientForm.patientId) === patientIdentifier) {
+        closePatientForm();
+      }
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      alert(apiError.response?.data?.error || apiError.response?.data?.details || 'No se pudo eliminar la vinculacion con el paciente.');
+    } finally {
+      setUnlinkingPatientId(null);
+    }
   }
 
   /**
@@ -1859,15 +1890,27 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                     <td className="px-6 py-4.5 text-xs text-surface-400 !font-bold text-center whitespace-nowrap">
                                       {patient.lastVisit}
                                     </td>
-                                    <td className="px-6 py-4.5 text-center">
-                                      <button
-                                        type="button"
-                                        onClick={() => openPatientForm(patient)}
-                                        className="zenith-on-dark inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#179150] hover:bg-[#146b42] shadow-sm transition-colors cursor-pointer"
-                                        style={{ color: '#ffffff' }}
-                                      >
-                                        Ver expediente
-                                      </button>
+                                    <td className="px-6 py-4.5 text-right">
+                                      <div className="inline-flex items-center justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => openPatientForm(patient)}
+                                          className="zenith-on-dark inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#179150] hover:bg-[#146b42] shadow-sm transition-colors cursor-pointer"
+                                          style={{ color: '#ffffff' }}
+                                        >
+                                          Ver expediente
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { void unlinkPatient(patient); }}
+                                          disabled={unlinkingPatientId === (patient.systemId || patient.patientId)}
+                                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-500 hover:border-red-500/40 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                          title="Eliminar vinculacion"
+                                          aria-label={`Eliminar vinculacion con ${patient.name}`}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}
