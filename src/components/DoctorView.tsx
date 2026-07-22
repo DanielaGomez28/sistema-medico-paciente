@@ -2358,6 +2358,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     <div className="portal-dashboard-card space-y-4">
                       <div>
                         <h3 className="zenith-section-title">Historial de Récipes Firmados</h3>
+                        {(linkedPatient?.name || patientForm.name) ? (
+                          <p className="text-xs text-surface-500 mt-1">Paciente: {linkedPatient?.name || patientForm.name}</p>
+                        ) : null}
                       </div>
 
                       {recipeLogError ? (
@@ -2380,7 +2383,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                           <div key={rec.recipeId} className="doctor-recipe-log-item flex items-start justify-between gap-3">
                             <div className="space-y-1.5 min-w-0 flex-1">
                               <div className="flex items-baseline justify-between gap-2">
-                                <p className="doctor-recipe-log-item__name text-sm truncate">Paciente: {rec.patientName || rec.patientId}</p>
+                                <p className="doctor-recipe-log-item__name text-sm truncate">{rec.patientName || rec.patientId}</p>
                                 <span className="text-[9px] font-mono text-surface-500 shrink-0">Recipe: {rec.recipeId}</span>
                               </div>
 
