@@ -1948,7 +1948,8 @@ table th {
 }
 
 
-/* Tabla de recipes del paciente: evita que la seccion de especialistas\n   desborde el viewport en desktop al compactar columnas largas. */
+/* Tabla de recipes del paciente: evita que la seccion de especialistas
+   desborde el viewport en desktop al compactar columnas largas. */
 [data-portal="patient"] .zenith-table-wrap {
   max-width: 100%;
 }
