@@ -325,13 +325,20 @@ interface TreatmentAlert {
  * Interfaz para representar un récipe/prescripción médica emitido a favor del paciente.
  * @interface Recipe
  */
+/** Un medicamento dentro de un recipe (un recipe puede tener varios). */
+interface RecipeMedicationLine {
+  id: string;
+  medication: string;
+  dosage: string;
+  instructions: string;
+}
+
+/** Un recipe emitido: una tarjeta por recipe, con todos sus medicamentos adentro. */
 interface Recipe {
   id: string;
   date: string;
   expiryDate: string;
-  medication: string;
-  dosage: string;
-  instructions: string;
+  medications: RecipeMedicationLine[];
   doctor: string;
   specialty: string;
   doctorLicense: string;
@@ -399,19 +406,26 @@ const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Rec
   const expirySource = prescription.recipeExpiresAt || addMonths(createdAt, 6).toISOString();
   const expiryDate = formatRecipeDate(expirySource);
   const status = prescription.clinicalStatus === 'expired' ? 'Expirado' : 'Activo';
+  const items = Array.isArray(prescription.items) ? prescription.items : [];
 
-  return (Array.isArray(prescription.items) ? prescription.items : []).map((item, index) => ({
-    id: `${prescription.recipeId}${index > 0 ? `-${index + 1}` : ''}`,
+  // Un recipe es UNA tarjeta, aunque tenga varios medicamentos adentro
+  // (antes se generaba una tarjeta por medicamento, fragmentando un solo
+  // recipe en varias "recetas" falsas).
+  return [{
+    id: prescription.recipeId,
     date: formatRecipeDate(createdAt),
     expiryDate,
-    medication: item.nombre,
-    dosage: `${item.cantidad} unidad(es)`,
-    instructions: item.dosis || 'Seguir indicaciones médicas.',
+    medications: items.map((item, index) => ({
+      id: `${prescription.recipeId}-${index + 1}`,
+      medication: item.nombre,
+      dosage: `${item.cantidad} unidad(es)`,
+      instructions: item.dosis || 'Seguir indicaciones médicas.',
+    })),
     doctor: prescription.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName,
     specialty: prescription.doctorSpecialty || PATIENT_PORTAL_COPY.fallbackSpecialty,
     doctorLicense: prescription.doctorLicense || PATIENT_PORTAL_COPY.doctorLicenseLabel,
     status,
-  }));
+  }];
 };
 
 const buildTreatmentId = (recipeId: string, productId: string) => `${recipeId}::${productId}`;
@@ -1677,8 +1691,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       <td className="py-4 text-xs text-surface-400">{rec.date}</td>
                       <td className="py-4 zenith-table__wrap">
                         <div className="flex flex-col gap-0.5 min-w-0">
-                          <span className="font-semibold text-surface-200 break-words">{rec.medication}</span>
-                          <span className="text-[10px] text-surface-500">{rec.dosage}</span>
+                          <span className="font-semibold text-surface-200 break-words">
+                            {rec.medications[0]?.medication || 'Sin medicamentos'}
+                            {rec.medications.length > 1 ? (
+                              <span className="ml-1.5 text-[10px] font-bold text-primary-400">+{rec.medications.length - 1} más</span>
+                            ) : null}
+                          </span>
+                          <span className="text-[10px] text-surface-500">{rec.medications[0]?.dosage}</span>
                         </div>
                       </td>
                       <td className="py-4 zenith-table__wrap">
@@ -1712,11 +1731,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               {recipes.map((rec) => (
                 <ListCard
                   key={rec.id}
-                  title={rec.medication}
+                  title={
+                    rec.medications.length > 1
+                      ? `${rec.medications[0]?.medication || 'Sin medicamentos'} +${rec.medications.length - 1} más`
+                      : rec.medications[0]?.medication || 'Sin medicamentos'
+                  }
                   subtitle={rec.id}
                   fields={[
                     { label: 'Emisión', value: rec.date },
-                    { label: 'Dosis', value: rec.dosage },
+                    { label: 'Dosis', value: rec.medications[0]?.dosage || '-' },
                     { label: 'Especialista', value: rec.doctor },
                     { label: 'Especialidad', value: rec.specialty },
                   ]}
@@ -2850,23 +2873,30 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <div className="space-y-4">
                 <h3 className="text-xs font-bold text-primary-900 uppercase tracking-widest border-b border-surface-200 pb-1.5">
                   Rx Prescripción Médica
+                  {selectedRecipe.medications.length > 1 ? (
+                    <span className="ml-2 normal-case tracking-normal font-semibold text-surface-500">
+                      ({selectedRecipe.medications.length} medicamentos)
+                    </span>
+                  ) : null}
                 </h3>
 
-                <div className="p-4 bg-surface-50/20 border border-dashed border-surface-300 rounded-xl space-y-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="text-base font-extrabold text-surface-900">{selectedRecipe.medication}</h4>
-                      <p className="text-xs font-semibold text-surface-600 mt-1">{selectedRecipe.dosage}</p>
+                {selectedRecipe.medications.map((med) => (
+                  <div key={med.id} className="p-4 bg-surface-50/20 border border-dashed border-surface-300 rounded-xl space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="text-base font-extrabold text-surface-900">{med.medication}</h4>
+                        <p className="text-xs font-semibold text-surface-600 mt-1">{med.dosage}</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1 pt-1">
+                      <p className="text-[10px] font-bold text-primary-950 uppercase">Instrucciones de Dosificación:</p>
+                      <p className="text-sm font-medium text-surface-700 leading-relaxed italic">
+                        &ldquo;{med.instructions}&rdquo;
+                      </p>
                     </div>
                   </div>
-
-                  <div className="space-y-1 pt-1">
-                    <p className="text-[10px] font-bold text-primary-950 uppercase">Instrucciones de Dosificación:</p>
-                    <p className="text-sm font-medium text-surface-700 leading-relaxed italic">
-                      &ldquo;{selectedRecipe.instructions}&rdquo;
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
 
               <div className="pt-6 border-t border-surface-200 flex justify-between items-end gap-6">
