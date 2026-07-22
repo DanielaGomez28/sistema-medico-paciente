@@ -203,6 +203,9 @@ interface ApiErrorPayload {
 // del backend. No mezclar los dos.
 interface BackendPrescriptionItem {
   id: string;
+  /** Identificador del producto en el catálogo (el que espera el backend al comprar). */
+  id_producto: string;
+  lineId?: string;
   nombre: string;
   dosis: string;
   cantidad: number;
@@ -354,7 +357,10 @@ interface Recipe {
  * @interface ProposalItem
  */
 interface ProposalItem {
+  /** Clave sintética para render y selección en la UI. */
   id: string;
+  /** Identificador real del producto en el catálogo, el que espera el backend. */
+  productId: string;
   medication: string;
   quantity: number;
   unitPrice: number;
@@ -650,6 +656,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     return (Array.isArray(activeCheckoutPrescription.items) ? activeCheckoutPrescription.items : []).map((item, index) => ({
       id: `${activeCheckoutPrescription.recipeId}-${index + 1}`,
+      productId: item.id_producto,
       medication: item.nombre,
       quantity: Number(item.cantidad || 0),
       unitPrice: Number(item.precio_unitario_base || item.precio_unitario_final || 0),
@@ -1447,9 +1454,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       setPaymentStatusMessage('');
       setSimulatedPaymentReference('');
 
+      // OJO: `id` es una clave sintética de la UI (recipeId-1, recipeId-2...).
+      // Enviarla como producto hacía que el backend rechazara la compra con
+      // "el item no pertenece al recipe indicado".
       const selectedItemsToBuy = proposalItems
         .filter(i => !unselectedItemIds.has(i.id))
-        .map(i => ({ productId: i.id, quantity: i.quantity }));
+        .map(i => ({ id_producto: i.productId, cantidad: i.quantity }));
 
       const response = await apiClient.post('/pagos/redireccion', {
         recipeId: activeCheckoutPrescription.recipeId,
