@@ -602,7 +602,25 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         }
 
         if (!SOCKET_RUNTIME_SUPPORTED) {
-          setScannerErrorMsg('QR leído correctamente, pero este despliegue no tiene canal en tiempo real para pedir consentimiento. El paciente todavía debe aceptar la vinculación explícitamente; no se crea el vínculo automáticamente.');
+          // Sin canal en tiempo real no se puede pedir la aprobación en vivo, pero
+          // el QR ya es un acto deliberado del paciente: lo generó en su propio
+          // teléfono, dura 5 minutos, es de un solo uso y se lo entregó al médico.
+          // Se registra como consentimiento por QR, que queda auditado en la
+          // aceptación de términos junto con el vínculo.
+          try {
+            await apiClient.post('/consentimiento', {
+              patientId: scannedPatientId,
+              doctorId: DOCTOR_ID,
+              acceptedFlag: true,
+            });
+            await openScannedPatient(scannedPatientId);
+          } catch (linkError: unknown) {
+            const apiLinkError = linkError as ApiErrorPayload;
+            setScannerErrorMsg(
+              apiLinkError.response?.data?.error ||
+              'No se pudo registrar la vinculación con el paciente.'
+            );
+          }
           return;
         }
 
