@@ -1606,9 +1606,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                       {patients.map((patient) => (
                         <div key={patient.patientId} className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 first:pt-0 last:pb-0">
                           <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-white">{patient.name}</p>
-                              <span className="text-[9px] font-mono text-surface-500 bg-surface-950 px-1.5 py-0.5 rounded border border-surface-850">
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              <p className="doctor-prescription-patient-name text-sm font-semibold">{patient.name}</p>
+                              <span className="doctor-prescription-patient-id inline-block font-mono break-all">
                                 ID: {patient.patientId}
                               </span>
                             </div>
