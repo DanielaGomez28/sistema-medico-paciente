@@ -3141,7 +3141,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                               setProfileDraft((prev) => ({ ...prev, deliveryState: value }));
                               if (profileError?.field === 'deliveryState') setProfileError(null);
                             }}
-                            className={patientProfileFieldEditing}
+                            className={`${patientProfileFieldEditing} !bg-[#50e9f8]/15 !text-[#0a1220] dark:!text-white`}
                           />
                         </div>
                       ) : (
