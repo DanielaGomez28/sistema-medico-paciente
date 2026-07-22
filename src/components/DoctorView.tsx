@@ -468,14 +468,14 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         if (!targetPatient) {
           targetPatient = {
             systemId: linkedPatientId || '',
-            patientId: 'N/A',
+            patientId: 'Sin asignar',
             name: data.patientName || 'Paciente Nuevo',
             age: 0,
-            gender: 'No especificado',
-            bloodType: 'N/A',
-            phone: 'N/A',
-            condition: 'N/A',
-            allergies: 'Ninguna',
+            gender: 'Sin especificar',
+            bloodType: 'Sin especificar',
+            phone: 'Sin registrar',
+            condition: 'Sin condiciones registradas',
+            allergies: 'Ninguna conocida',
             lastVisit: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
             medications: [],
           } as LinkedPatient;
@@ -858,7 +858,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       return;
     }
 
-    if (patientForm.phone !== 'N/A' && !matchesSafePattern(patientForm.phone, /^[+\d\s()-]{7,20}$/)) {
+    if (patientForm.phone !== 'Sin registrar' && !matchesSafePattern(patientForm.phone, /^[+\d\s()-]{7,20}$/)) {
       alert('El teléfono del paciente no cumple el formato esperado.');
       return;
     }
@@ -868,14 +868,14 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       return;
     }
 
-    if (patientForm.condition && patientForm.condition !== 'N/A' && patientForm.condition.trim() !== '') {
+    if (patientForm.condition && patientForm.condition !== 'Sin condiciones registradas' && patientForm.condition.trim() !== '') {
       if (!matchesSafePattern(patientForm.condition, /^[\p{L}\p{N}\s.,()'\/-]{2,160}$/u)) {
         alert('La condición del paciente contiene caracteres inválidos.');
         return;
       }
     }
 
-    if (patientForm.allergies && patientForm.allergies !== 'N/A' && patientForm.allergies.trim() !== '') {
+    if (patientForm.allergies && patientForm.allergies !== 'Ninguna conocida' && patientForm.allergies.trim() !== '') {
       if (!matchesSafePattern(patientForm.allergies, /^[\p{L}\p{N}\s.,()'\/-]{2,160}$/u)) {
         alert('Las alergias del paciente contienen caracteres inválidos.');
         return;
