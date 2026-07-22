@@ -208,6 +208,22 @@ interface ApiErrorPayload {
 const normalizePatientLookup = (value: string) => value.toUpperCase().replace(/[^A-Z0-9-]/g, '').trim();
 
 /**
+ * Normaliza un identificador de paciente para comparar historiales.
+ * @param {string} value - Id canónico, id interno o nombre del paciente.
+ * @returns {string} Clave comparable, sin separadores ni mayúsculas.
+ */
+const normalizePatientIdentifier = (value: string) =>
+  String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
+
+/**
+ * Milisegundos entre lecturas del QR.
+ * Analizar cada frame consume demasiada CPU en un teléfono y el navegador
+ * termina descartando la pestaña. ~7 lecturas por segundo se siguen sintiendo
+ * instantáneas al apuntar la cámara.
+ */
+const QR_SCAN_INTERVAL_MS = 140;
+
+/**
  * Detecta patrones sospechosos en cadenas antes de enviarlas al backend.
  * @param {string} value - Valor a inspeccionar.
  * @returns {boolean} `true` si el valor parece malicioso.
@@ -566,10 +582,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
     let cancelled = false;
     let frameId = 0;
+    let retryId = 0;
 
     const stopNativeScanner = () => {
       if (frameId) window.cancelAnimationFrame(frameId);
+      if (retryId) window.clearTimeout(retryId);
       frameId = 0;
+      retryId = 0;
       scannerStreamRef.current?.getTracks().forEach((track) => track.stop());
       scannerStreamRef.current = null;
       if (scannerVideoRef.current) {
@@ -675,7 +694,15 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           } catch {
             // Un frame puede fallar mientras enfoca; seguimos intentando.
           }
-          frameId = window.requestAnimationFrame(scanFrame);
+
+          // OJO: analizar cada frame satura la CPU del teléfono. La detección es
+          // costosa y a 60 lecturas por segundo el navegador termina matando la
+          // pestaña ("This page couldn't load"). Con este espaciado el lector
+          // sigue siendo instantáneo para una persona y el equipo respira.
+          retryId = window.setTimeout(() => {
+            if (cancelled) return;
+            frameId = window.requestAnimationFrame(scanFrame);
+          }, QR_SCAN_INTERVAL_MS);
         };
 
         frameId = window.requestAnimationFrame(scanFrame);
@@ -1446,19 +1473,32 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   }, [catalogResults, catalogSortOrder, catalogPharmacyFilter]);
 
   const patientScopedDoctorRecipeLog = useMemo(() => {
-    const activePatientKey = normalizePatientIdentifier(
-      linkedPatient?.systemId || linkedPatient?.patientId || patientForm.systemId || patientForm.patientId || ''
+    // OJO: la receta identifica al paciente por su id interno y su nombre, pero
+    // la ficha abierta maneja el id canónico. Comparar una sola variante no
+    // coincide nunca y el historial se ve vacío, así que se juntan todas.
+    const clavesDelPaciente = new Set(
+      [
+        linkedPatient?.systemId,
+        linkedPatient?.patientId,
+        linkedPatient?.name,
+        patientForm.systemId,
+        patientForm.patientId,
+        patientForm.name,
+      ]
+        .map((valor) => normalizePatientIdentifier(valor || ''))
+        .filter(Boolean)
     );
 
-    if (!activePatientKey) {
+    if (!clavesDelPaciente.size) {
       return doctorRecipeLog;
     }
 
-    return doctorRecipeLog.filter((recipe) => {
-      const recipePatientKey = normalizePatientIdentifier(recipe.patientId || recipe.patientName || '');
-      return recipePatientKey === activePatientKey;
-    });
-  }, [doctorRecipeLog, linkedPatient, patientForm.systemId, patientForm.patientId]);
+    return doctorRecipeLog.filter((recipe) =>
+      [recipe.patientId, recipe.patientName]
+        .map((valor) => normalizePatientIdentifier(valor || ''))
+        .some((clave) => clave && clavesDelPaciente.has(clave))
+    );
+  }, [doctorRecipeLog, linkedPatient, patientForm.systemId, patientForm.patientId, patientForm.name]);
 
   const sortedDoctorRecipeLog = useMemo(
     () =>
