@@ -557,6 +557,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
+  const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
+  const [recipePdfError, setRecipePdfError] = useState('');
 
   // Treatment tracking states
   const [trackingProfiles, setTrackingProfiles] = useState<BackendTrackingProfile[]>([]);
@@ -1443,6 +1445,44 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     else if (id === 'proposals') setActiveSubTab('proposals');
     else if (id === 'help') setActiveSubTab('help');
     else setActiveSubTab('profile');
+  };
+
+  /**
+   * Descarga el PDF real del recipe seleccionado (GET /prescripciones/:recipeId/pdf)
+   * y dispara la descarga del archivo en el navegador.
+   * @returns {Promise<void>}
+   */
+  const handleDownloadRecipePdf = async () => {
+    if (!selectedRecipe) return;
+
+    try {
+      setDownloadingRecipePdf(true);
+      setRecipePdfError('');
+
+      const response = await apiClient.get(
+        `/prescripciones/${encodeURIComponent(selectedRecipe.id)}/pdf`,
+        { responseType: 'blob' }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `recipe-${selectedRecipe.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      setRecipePdfError(
+        apiError.response?.data?.error ||
+        apiError.response?.data?.details ||
+        'No se pudo descargar el PDF del recipe.'
+      );
+    } finally {
+      setDownloadingRecipePdf(false);
+    }
   };
 
   return (
@@ -2814,9 +2854,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               </span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.print()}
-                  className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
-                  title="Descargar"
+                  onClick={handleDownloadRecipePdf}
+                  disabled={downloadingRecipePdf}
+                  className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                  title="Descargar PDF"
                 >
                   <Download className="h-4.5 w-4.5" />
                 </button>
@@ -2835,6 +2876,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 </button>
               </div>
             </div>
+
+            {recipePdfError ? (
+              <div className="mx-6 mt-3 p-3 bg-danger-500/10 border border-danger-500/25 rounded-xl text-danger-400 text-xs print:hidden">
+                {recipePdfError}
+              </div>
+            ) : null}
 
             <div className="p-8 space-y-8 flex-1 overflow-y-auto print:overflow-visible bg-white print:p-0">
 
