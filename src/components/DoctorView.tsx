@@ -2121,7 +2121,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="space-y-1 min-w-0">
                               <p className="doctor-recipe-log-item__name text-sm">{rec.patientName || rec.patientId}</p>
                               <div className="flex flex-wrap gap-1 pt-0.5">
-                                {rec.items.map((item, idx) => (
+                                {(rec.items || []).map((item, idx) => (
                                   <span key={idx} className="doctor-recipe-log-item__med text-[9px] px-1.5 py-0.5 rounded">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
                                 ))}
                               </div>
