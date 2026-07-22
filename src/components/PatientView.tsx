@@ -6,7 +6,7 @@
  */
 
 import Image from 'next/image';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   FileText,
   Calendar,
@@ -646,6 +646,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [activeCheckoutRecipeId, setActiveCheckoutRecipeId] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [expandedMedicationRecipeId, setExpandedMedicationRecipeId] = useState<string | null>(null);
+  const expandedMedicationPopoverRef = useRef<HTMLDivElement | null>(null);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
   const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
@@ -657,6 +658,27 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   // de cerrarlo. Se ajusta durante el render, que es el patrón recomendado para
   // resetear estado ante un cambio: con un efecto se renderiza una vez de más
   // con el modal todavía abierto sobre la pestaña nueva.
+
+
+  useEffect(() => {
+    if (!expandedMedicationRecipeId) return;
+
+    const handleOutsidePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (expandedMedicationPopoverRef.current?.contains(target)) return;
+      setExpandedMedicationRecipeId(null);
+    };
+
+    document.addEventListener('mousedown', handleOutsidePointerDown);
+    document.addEventListener('touchstart', handleOutsidePointerDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsidePointerDown);
+      document.removeEventListener('touchstart', handleOutsidePointerDown);
+    };
+  }, [expandedMedicationRecipeId]);
+
   const [subTabAlAbrirRecipe, setSubTabAlAbrirRecipe] = useState(activeSubTab);
   if (subTabAlAbrirRecipe !== activeSubTab) {
     setSubTabAlAbrirRecipe(activeSubTab);
@@ -1876,13 +1898,16 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       </td>
                       <td className="py-4 text-xs text-surface-400">{rec.date}</td>
                       <td className="py-4 zenith-table__wrap">
-                        <div className="relative flex flex-col gap-0.5 min-w-0">
+                        <div ref={expandedMedicationRecipeId === rec.id ? expandedMedicationPopoverRef : null} className="relative flex flex-col gap-0.5 min-w-0">
                           <span className="font-semibold text-surface-200 break-words">
                             {rec.medications[0]?.medication || 'Sin medicamentos'}
                             {rec.medications.length > 1 ? (
                               <button
                                 type="button"
-                                onClick={() => setExpandedMedicationRecipeId((current) => current === rec.id ? null : rec.id)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setExpandedMedicationRecipeId((current) => current === rec.id ? null : rec.id);
+                                }}
                                 className="ml-1.5 text-[10px] font-bold text-primary-400 underline-offset-2 hover:underline cursor-pointer"
                               >
                                 +{rec.medications.length - 1} más
