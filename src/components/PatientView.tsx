@@ -168,6 +168,8 @@ interface ValidationError {
 }
 
 function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationError | null {
+  const allowedGenders = new Set(['Femenino', 'Masculino', 'Otro', 'Prefiere no decir']);
+  const hasClinicalContent = /[\p{L}\p{N}]/u;
   const normalized = {
     name: draft.name.trim(),
     phone: draft.phone.trim(),
@@ -199,23 +201,23 @@ function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationErro
     return { field: 'age', message: 'No se pudo modificar los datos del usuario. Edad inválida. Formato esperado: número entre 0 y 130.' };
   }
 
-  if (normalized.gender && !/^[\p{L}\s.'-]{2,40}$/u.test(normalized.gender)) {
-    return { field: 'gender', message: 'No se pudo modificar los datos del usuario. Género inválido. Formato esperado: texto corto sin símbolos especiales.' };
+  if (normalized.gender && !allowedGenders.has(normalized.gender)) {
+    return { field: 'gender', message: 'No se pudo modificar los datos del usuario. Género inválido. Seleccioná una opción válida.' };
   }
 
   if (normalized.bloodType && !/^(A|B|AB|O)[+-]$/i.test(normalized.bloodType)) {
     return { field: 'bloodType', message: 'No se pudo modificar los datos del usuario. Grupo sanguíneo inválido. Formato esperado: A+, A-, B+, B-, AB+, AB-, O+ u O-.' };
   }
 
-  if (normalized.condition && !/^[\p{L}\p{N}\s.,()/'-]{2,200}$/u.test(normalized.condition)) {
+  if (normalized.condition && (!/^[\p{L}\p{N}\s.,()/'-]{2,200}$/u.test(normalized.condition) || !hasClinicalContent.test(normalized.condition))) {
     return { field: 'condition', message: 'No se pudo modificar los datos del usuario. Condición inválida. Formato esperado: texto clínico breve.' };
   }
 
-  if (normalized.allergies && !/^[\p{L}\p{N}\s.,()/'-]{2,200}$/u.test(normalized.allergies)) {
+  if (normalized.allergies && (!/^[\p{L}\p{N}\s.,()/'-]{2,200}$/u.test(normalized.allergies) || !hasClinicalContent.test(normalized.allergies))) {
     return { field: 'allergies', message: 'No se pudo modificar los datos del usuario. Alergias inválidas. Formato esperado: lista breve separada por comas.' };
   }
 
-  if (normalized.medications && !/^[\p{L}\p{N}\s.,()/%+-]{2,300}$/u.test(normalized.medications)) {
+  if (normalized.medications && (!/^[\p{L}\p{N}\s.,()/%+-]{2,300}$/u.test(normalized.medications) || !hasClinicalContent.test(normalized.medications))) {
     return { field: 'medications', message: 'No se pudo modificar los datos del usuario. Tratamientos inválidos. Formato esperado: lista breve separada por comas.' };
   }
 
