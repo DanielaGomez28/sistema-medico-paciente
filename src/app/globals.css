@@ -2539,6 +2539,21 @@ table th {
   border-color: color-mix(in srgb, #ef4444 45%, transparent);
 }
 
+/* Reserva vencida, liberada, anulada o sin vigencia clínica: el récipe no
+   avanza por sí solo, hay que rehacer la compra. */
+.recipe-status-badge--expired {
+  background: color-mix(in srgb, #64748b 20%, transparent);
+  color: #475569;
+  border-color: color-mix(in srgb, #64748b 45%, transparent);
+}
+
+/* Pago confirmado o récipe ya agotado: el circuito se completó. */
+.recipe-status-badge--paid {
+  background: color-mix(in srgb, #14b8a6 18%, transparent);
+  color: #0f766e;
+  border-color: color-mix(in srgb, #14b8a6 45%, transparent);
+}
+
 .recipe-status-badge--neutral {
   background: color-mix(in srgb, var(--zenith-surface-600) 30%, transparent);
   color: var(--zenith-surface-400);
@@ -2563,6 +2578,14 @@ table th {
 
 [data-theme="dark"] .recipe-status-badge--not-fulfilled {
   color: #fca5a5;
+}
+
+[data-theme="dark"] .recipe-status-badge--expired {
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .recipe-status-badge--paid {
+  color: #5eead4;
 }
 
 .dispatch-badge__dot {
