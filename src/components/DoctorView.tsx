@@ -231,7 +231,10 @@ const mapCatalogItemToProduct = (item: PrescriptionCatalogApiItem): MedicalProdu
   category: item.activeIngredient || item.laboratory || 'Medicamento',
   price: Number(item.precio_con_beneficio ?? item.basePrice ?? 0),
   stock: Number(item.stock ?? 0),
-  description: [item.presentation, item.laboratory].filter(Boolean).join(' | '),
+  description: [
+    item.presentation ? `Presentación: ${item.presentation}` : null,
+    item.laboratory ? `Laboratorio: ${item.laboratory}` : null,
+  ].filter(Boolean).join(' | '),
   source: 'farmacia',
   benefitPct: Number(item.benefitPct ?? 0),
   sanitaryCategory: item.sanitaryCategory || 'regular',
@@ -913,6 +916,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       setMedicationsInput(patientFormSnapshot.medications.join(', '));
     }
     setIsEditingPatientRecord(false);
+    setPatientViewMode('list');
     setPatientSaveMsg('');
   };
 
@@ -1132,6 +1136,12 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
    * @param {MedicalProduct} product - El medicamento a añadir.
    */
   const addToCart = (product: MedicalProduct) => {
+    // Validar medicamentos psicotrópicos
+    if (product.isControlled || product.controlledSubstanceType?.toLowerCase().includes('psico')) {
+      alert('No se permite recetar medicamentos controlados o psicotrópicos a través de este sistema.');
+      return;
+    }
+
     // Check if already in cart
     if (cart.some(item => item.product.id === product.id)) {
       return;
@@ -1226,18 +1236,18 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
   const availablePharmacies = useMemo(() => {
     const pharmacies = new Set<string>();
-    inventoryPreview.forEach(prod => {
-      pharmacies.add(process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia');
+    catalogResults.forEach(prod => {
+      pharmacies.add(prod.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia');
     });
     return Array.from(pharmacies);
-  }, [inventoryPreview]);
+  }, [catalogResults]);
 
   const filteredCatalog = useMemo(() => {
     let result = [...catalogResults];
-    
+
     if (catalogPharmacyFilter !== 'all') {
       result = result.filter(prod => {
-        const pName = process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia';
+        const pName = prod.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia';
         return pName === catalogPharmacyFilter;
       });
     }
@@ -1436,7 +1446,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             </span>
                           </div>
                           <span className="w-fit max-w-full shrink-0 truncate whitespace-nowrap text-[9px] text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
-                            {process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}
+                            {prod.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}
                           </span>
                         </div>
                         <div className="text-[10px] text-surface-400 break-words line-clamp-3">{prod.description}</div>
@@ -1669,8 +1679,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                           <div className="space-y-1.5"><label className="zenith-field-label">Nombre completo</label><input type="text" value={patientForm.name} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">ID interno</label><input type="text" value={patientForm.patientId} readOnly placeholder="Ej: patient_sofia_peralta" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none uppercase ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Género</label>{isEditingPatientRecord ? (<select value={patientForm.gender} onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${doctorProfileFieldEditing}`}><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></select>) : (<input type="text" value={patientForm.gender} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} />)}</div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Grupo sanguíneo</label>{isEditingPatientRecord ? (<select value={patientForm.bloodType} onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${doctorProfileFieldEditing}`}><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option><option value="Sin especificar">Sin especificar</option></select>) : (<input type="text" value={patientForm.bloodType} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} />)}</div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Género</label><input type="text" value={patientForm.gender} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Grupo sanguíneo</label><input type="text" value={patientForm.bloodType} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} onChange={(e) => setPatientForm({ ...patientForm, phone: formatPhoneNumber(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Condición / diagnóstico de control</label><input type="text" value={patientForm.condition} onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Alergias</label><input type="text" value={patientForm.allergies} onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
@@ -1699,6 +1709,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     onClick={() => {
                       setLinkedPatient(null);
                       setCart([]);
+                      setActiveTab('reception');
                     }}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-surface-400 hover:text-white transition-colors cursor-pointer"
                   >
