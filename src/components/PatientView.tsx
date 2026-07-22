@@ -2337,7 +2337,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 </div>
                 {backendPrescriptions.length > 1 && (
                   <div className="flex flex-col gap-1.5 w-full lg:w-auto lg:min-w-[min(100%,320px)] lg:max-w-[420px] shrink-0">
-                    <span className="text-xs text-surface-400 font-medium">Seleccionar récipe</span>
+                    <span className="text-xs text-surface-400 font-bold">Seleccionar récipe</span>
                     <select
                       value={activeCheckoutRecipeId || activeCheckoutPrescription?.recipeId || ''}
                       onChange={(e) => {
