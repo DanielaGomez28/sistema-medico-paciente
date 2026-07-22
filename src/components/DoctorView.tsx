@@ -402,6 +402,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [, setPatientsError] = useState('');
 
   const [scannerErrorMsg, setScannerErrorMsg] = useState('');
+  const scannerVideoRef = useRef<HTMLVideoElement | null>(null);
+  const scannerStreamRef = useRef<MediaStream | null>(null);
   const isMobileDevice = () => {
     if (typeof window === 'undefined') return false;
     const userAgent = window.navigator.userAgent || '';
@@ -555,7 +557,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
 
   // =========================================================
-  // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
+  // LOGICA 2: ESCANER NATIVO Y VALIDACION PERIMETRAL (Modulo 1)
   // =========================================================
   useEffect(() => {
     if (!isScanning) {
@@ -563,15 +565,15 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     }
 
     let cancelled = false;
-    let scanner: { stop: () => Promise<unknown>; clear: () => void } | null = null;
+    let frameId = 0;
 
-    const cleanupScanner = async () => {
-      if (!scanner) return;
-      await scanner.stop().catch(() => undefined);
-      try {
-        scanner.clear();
-      } catch {
-        // Limpiar el contenedor es best-effort: si ya se desmontó, no hay nada que hacer.
+    const stopNativeScanner = () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      frameId = 0;
+      scannerStreamRef.current?.getTracks().forEach((track) => track.stop());
+      scannerStreamRef.current = null;
+      if (scannerVideoRef.current) {
+        scannerVideoRef.current.srcObject = null;
       }
     };
 
@@ -584,7 +586,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     const handleDecodedToken = async (decodedToken: string) => {
       if (cancelled) return;
       cancelled = true;
-      await cleanupScanner();
+      stopNativeScanner();
       setIsScanning(false);
 
       try {
@@ -595,7 +597,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
         const scannedPatientId = response.data?.patientId;
         if (!scannedPatientId) {
-          setScannerErrorMsg('No se pudo leer el código QR. Pedile al paciente que genere uno nuevo.');
+          setScannerErrorMsg('No se pudo leer el codigo QR. Pedile al paciente que genere uno nuevo.');
           return;
         }
 
@@ -618,7 +620,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             const apiLinkError = linkError as ApiErrorPayload;
             setScannerErrorMsg(
               apiLinkError.response?.data?.error ||
-              'No se pudo registrar la vinculación con el paciente.'
+              'No se pudo registrar la vinculacion con el paciente.'
             );
           }
           return;
@@ -640,47 +642,60 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       }
     };
 
-    const startScanner = async () => {
+    const startNativeScanner = async () => {
       try {
         await new Promise((resolve) => window.requestAnimationFrame(resolve));
-
         if (cancelled) return;
-        const readerElement = document.getElementById('qr-reader');
-        if (!readerElement) {
-          throw new Error('No se pudo preparar el lector QR. Cerrá y abrí nuevamente el escáner.');
+
+        const video = scannerVideoRef.current;
+        const BarcodeDetectorCtor = (window as unknown as { BarcodeDetector?: new (options: { formats: string[] }) => { detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>> } }).BarcodeDetector;
+
+        if (!video || !BarcodeDetectorCtor) {
+          throw new Error('Este navegador no soporta lector QR nativo. Usa el ID interno del sistema del paciente.');
         }
 
-        const { Html5Qrcode } = await import('html5-qrcode');
-        if (cancelled) return;
+        const stream = await window.navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+        scannerStreamRef.current = stream;
+        video.srcObject = stream;
+        await video.play();
 
-        const html5Scanner = new Html5Qrcode(readerElement.id);
-        scanner = html5Scanner;
-        const cameras = await Html5Qrcode.getCameras().catch(() => []);
-        const preferredCamera = cameras.find((camera) => /back|rear|environment|trasera/i.test(camera.label || '')) || cameras[0];
-        const cameraConfig = preferredCamera?.id ? preferredCamera.id : { facingMode: 'environment' };
+        const detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
+        const scanFrame = async () => {
+          if (cancelled) return;
+          try {
+            const codes = await detector.detect(video);
+            const decoded = codes.find((code) => code.rawValue)?.rawValue;
+            if (decoded) {
+              void handleDecodedToken(decoded);
+              return;
+            }
+          } catch {
+            // Un frame puede fallar mientras enfoca; seguimos intentando.
+          }
+          frameId = window.requestAnimationFrame(scanFrame);
+        };
 
-        await html5Scanner.start(
-          cameraConfig,
-          { fps: 8, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
-          (decodedText: string) => { void handleDecodedToken(decodedText); },
-          () => undefined
-        );
+        frameId = window.requestAnimationFrame(scanFrame);
       } catch (error: unknown) {
         if (cancelled) return;
         const scannerError = error as { message?: string };
+        stopNativeScanner();
         setIsScanning(false);
         setScannerErrorMsg(
           scannerError?.message ||
-          'No se pudo abrir la cámara. Revisá permisos del navegador y que estés usando HTTPS.'
+          'No se pudo abrir la camara. Revisa permisos del navegador y que estes usando HTTPS.'
         );
       }
     };
 
-    void startScanner();
+    void startNativeScanner();
 
     return () => {
       cancelled = true;
-      void cleanupScanner();
+      stopNativeScanner();
     };
   }, [DOCTOR_ID, DOCTOR_NAME, isScanning]);
 
@@ -2581,7 +2596,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
               <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
                 {isScanning ? (
                   <>
-                    <div id="qr-reader" className="absolute inset-0 z-0 overflow-hidden" />
+                    <video ref={scannerVideoRef} muted playsInline className="absolute inset-0 z-0 h-full w-full object-cover" />
                     <div className="absolute left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_8px_rgba(23,145,80,0.8)] laser-line" />
                     <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-secondary-500" />
                     <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-secondary-500" />
