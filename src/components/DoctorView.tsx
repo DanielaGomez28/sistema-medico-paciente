@@ -1304,6 +1304,20 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         }
       `}</style>
 
+      {/* Aviso global de éxito. Va fuera de los bloques por activeTab porque al
+          emitir un récipe se navega a la agenda: si viviera dentro de la pestaña
+          de prescripción, el mensaje se montaba y desaparecía sin llegar a verse. */}
+      {successMsg && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-[130] w-[min(92vw,34rem)] px-4 py-3 rounded-2xl bg-secondary-500/15 border border-secondary-500/40 backdrop-blur-md shadow-xl flex items-start gap-3 text-secondary-300 text-xs leading-relaxed animate-in fade-in slide-in-from-top-2 duration-300"
+        >
+          <CheckCircle2 className="h-5 w-5 shrink-0 mt-px" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
       <AppShell
         portal="doctor"
         layout="horizontal"
@@ -1781,13 +1795,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     </button>
                   )}
                 </div>
-
-                {successMsg && (
-                  <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs animate-in fade-in slide-in-from-top-2 duration-300 leading-relaxed">
-                    <CheckCircle2 className="h-5 w-5 shrink-0" />
-                    <span>{successMsg}</span>
-                  </div>
-                )}
 
                 {linkedPatient ? (
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
