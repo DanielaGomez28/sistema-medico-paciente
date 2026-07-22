@@ -3094,7 +3094,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 >
                   Rechazar
                 </button>
-                <Button variant="patient" onClick={() => setIsTermsModalOpen(false)}>
+                <Button variant="patient" onClick={() => setIsTermsModalOpen(false)} disabled={!termsAccepted}>
                   Aceptar y Continuar
                 </Button>
               </div>
