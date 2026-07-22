@@ -402,6 +402,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [, setPatientsError] = useState('');
 
   const [scannerErrorMsg, setScannerErrorMsg] = useState('');
+  const isMobileDevice = () => {
+    if (typeof window === 'undefined') return false;
+    const userAgent = window.navigator.userAgent || '';
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent) || (window.navigator.maxTouchPoints || 0) > 1;
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -650,9 +655,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
         const html5Scanner = new Html5Qrcode(readerElement.id);
         scanner = html5Scanner;
+        const cameras = await Html5Qrcode.getCameras().catch(() => []);
+        const preferredCamera = cameras.find((camera) => /back|rear|environment|trasera/i.test(camera.label || '')) || cameras[0];
+        const cameraConfig = preferredCamera?.id ? preferredCamera.id : { facingMode: 'environment' };
+
         await html5Scanner.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          cameraConfig,
+          { fps: 8, qrbox: { width: 220, height: 220 }, aspectRatio: 1 },
           (decodedText: string) => { void handleDecodedToken(decodedText); },
           () => undefined
         );
@@ -1229,13 +1238,24 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   /**
    * Simula el inicio del escaneo mediante cámara.
    */
-  const triggerCameraScan = () => {
-    // Fallback operativo: en móvil la cámara/Html5Qrcode sigue siendo inestable
-    // y puede tumbar la vista completa. Por ahora se evita arrancar el lector y
-    // se usa el ID interno del paciente, que valida por HTTP y no depende de cámara.
-    setIsScanning(false);
+  const triggerPatientLink = () => {
+    setScannerErrorMsg('');
     setLinkedPatient(null);
-    setScannerErrorMsg('El escáner por cámara está deshabilitado temporalmente. Usá el ID del sistema del paciente para vincularlo sin tumbar la página.');
+
+    if (!isMobileDevice()) {
+      setIsScanning(false);
+      setScannerErrorMsg('En PC vinculá al paciente con su ID interno del sistema. La cámara se activa solo en móvil.');
+      return;
+    }
+
+    if (typeof window === 'undefined' || !window.navigator.mediaDevices?.getUserMedia) {
+      setIsScanning(false);
+      setScannerErrorMsg('Este navegador móvil no permite acceder a la cámara. Usá el ID interno del sistema del paciente.');
+      return;
+    }
+
+    setIsScanning(true);
+    setScanProgress(15);
   };
 
   useEffect(() => {
@@ -1625,7 +1645,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                       onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}
                       className="doctor-qr-scan-link w-full text-center text-xs font-semibold pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
                     >
-                      <span>Escanear código qr</span>
+                      <span>Vincular con paciente</span>
                       <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -1669,7 +1689,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     <div className="flex flex-wrap justify-end gap-2">
                       <Button variant="doctor" onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}>
                         <QrCode className="h-4 w-4" />
-                          Escanear código qr
+                          Vincular con paciente
                       </Button>
                     </div>
 
@@ -2526,7 +2546,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           setIsScanning(false);
           setScanProgress(0);
         }}
-        title="Escanear código qr"
+        title="Vincular con paciente"
         size="md"
       >
         <ModalBody className="space-y-5">
@@ -2577,13 +2597,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 ) : (
                   <div className="space-y-4 text-center z-10">
                     <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
-                    <p className="text-sm text-surface-400 font-medium">Vinculación por ID del sistema disponible</p>
+                    <p className="text-sm text-surface-400 font-medium">Vincular por cámara móvil o ID del sistema</p>
                     <button
                       type="button"
-                      onClick={triggerCameraScan}
+                      onClick={triggerPatientLink}
                       className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
                     >
-                      Usar ID del sistema
+                      Vincular con paciente
                     </button>
                   </div>
                 )}
