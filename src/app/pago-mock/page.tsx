@@ -64,33 +64,21 @@ function PagoMockContent() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => { void handleDecision('pay'); }}
-          disabled={loading !== ''}
-          className="rounded-2xl bg-secondary-600 hover:bg-secondary-500 disabled:opacity-60 px-4 py-3 font-bold"
-        >
-          {loading === 'pay' ? 'Procesando pago...' : 'Realizar pago'}
-        </button>
-        <button
-          type="button"
           onClick={() => { void handleDecision('cancel'); }}
           disabled={loading !== ''}
           className="rounded-2xl border border-surface-700 bg-surface-950 hover:bg-surface-900 disabled:opacity-60 px-4 py-3 font-bold text-surface-200"
         >
           {loading === 'cancel' ? 'Cancelando...' : 'No pagar ahora'}
         </button>
+        <button
+          type="button"
+          onClick={() => { void handleDecision('pay'); }}
+          disabled={loading !== ''}
+          className="rounded-2xl bg-secondary-600 hover:bg-secondary-500 disabled:opacity-60 px-4 py-3 font-bold"
+        >
+          {loading === 'pay' ? 'Procesando pago...' : 'Realizar pago'}
+        </button>
       </div>
-
-      {/* Salida siempre disponible: sin esto la pasarela es una pantalla sin
-          retorno (no tiene header ni sidebar), y si la decisión falla el
-          usuario queda atrapado sin forma de volver al portal. */}
-      <button
-        type="button"
-        onClick={() => { router.push('/'); }}
-        disabled={loading !== ''}
-        className="w-full rounded-2xl border border-surface-800 bg-transparent hover:bg-surface-900 disabled:opacity-60 px-4 py-2.5 text-sm font-semibold text-surface-400 hover:text-surface-200 transition-colors"
-      >
-        Volver al portal
-      </button>
     </div>
   );
 }
