@@ -563,10 +563,14 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   // El modal de "ver recipe" vive fuera de los bloques por activeSubTab (para
   // poder mostrarse desde cualquier pestaña), así que hay que cerrarlo a mano
   // al navegar -- si no, queda flotando encima de la pestaña nueva sin forma
-  // de cerrarlo.
-  useEffect(() => {
+  // de cerrarlo. Se ajusta durante el render, que es el patrón recomendado para
+  // resetear estado ante un cambio: con un efecto se renderiza una vez de más
+  // con el modal todavía abierto sobre la pestaña nueva.
+  const [subTabAlAbrirRecipe, setSubTabAlAbrirRecipe] = useState(activeSubTab);
+  if (subTabAlAbrirRecipe !== activeSubTab) {
+    setSubTabAlAbrirRecipe(activeSubTab);
     setSelectedRecipe(null);
-  }, [activeSubTab]);
+  }
 
   // Treatment tracking states
   const [trackingProfiles, setTrackingProfiles] = useState<BackendTrackingProfile[]>([]);
