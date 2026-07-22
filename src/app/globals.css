@@ -1985,6 +1985,23 @@ table th {
   background-color: #095c67;
 }
 
+[data-portal="patient"] .patient-recipe-list-toggle {
+  color: #000000;
+  font-weight: 700 !important;
+}
+
+[data-portal="patient"] .patient-recipe-list-toggle:hover {
+  color: #1a1a1a;
+}
+
+[data-theme="dark"] [data-portal="patient"] .patient-recipe-list-toggle {
+  color: #ffffff;
+}
+
+[data-theme="dark"] [data-portal="patient"] .patient-recipe-list-toggle:hover {
+  color: #e2e8f0;
+}
+
 
 /* Tabla de recipes del paciente: evita que la seccion de especialistas
    desborde el viewport en desktop al compactar columnas largas. */

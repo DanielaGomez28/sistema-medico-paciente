@@ -1631,13 +1631,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
               <div className="space-y-6 animate-in fade-in duration-300">
                 {patientViewMode === 'list' ? (
                   <>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button variant="doctor" onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}>
-                        <QrCode className="h-4 w-4" />
-                          Escanear código qr
-                      </Button>
-                    </div>
-
                     {patientSaveMsg && (
                       <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
                         <CheckCircle2 className="h-5 w-5 shrink-0" />
@@ -1659,27 +1652,35 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div className="portal-dashboard-card flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
+                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-stretch">
+                      <div className="portal-dashboard-card flex items-center gap-4 min-w-0">
+                        <div className="h-10 w-10 rounded-xl bg-secondary-500/10 text-secondary-400 flex items-center justify-center shrink-0">
                           <Users className="h-5 w-5" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <span className="zenith-field-label">Pacientes registrados</span>
                           <p className="text-lg font-semibold text-white mt-0.5">{patients.length}</p>
                         </div>
                       </div>
-                      <div className="portal-dashboard-card flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center">
+                      <div className="portal-dashboard-card flex items-center gap-4 min-w-0">
+                        <div className="h-10 w-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center shrink-0">
                           <ShieldAlert className="h-5 w-5" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <span className="zenith-field-label">Con alergias registradas</span>
                           <p className="text-lg font-semibold text-white mt-0.5">
                             {patients.filter((p) => p.allergies && !p.allergies.toLowerCase().includes('ningun') && p.allergies.trim() !== '').length}
                           </p>
                         </div>
                       </div>
+                      <Button
+                        variant="doctor"
+                        onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}
+                        className="w-full lg:w-auto lg:min-w-[12.5rem] lg:self-stretch shrink-0"
+                      >
+                        <QrCode className="h-4 w-4" />
+                        Escanear código qr
+                      </Button>
                     </div>
 
                     <div className="space-y-0.5">

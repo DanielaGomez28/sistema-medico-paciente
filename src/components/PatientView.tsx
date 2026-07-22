@@ -392,6 +392,7 @@ interface RecipeMedicationLine {
 interface Recipe {
   id: string;
   date: string;
+  createdAt: string;
   expiryDate: string;
   medications: RecipeMedicationLine[];
   doctor: string;
@@ -439,6 +440,9 @@ const addMonths = (dateIso: string, months: number) => {
 const formatRecipeDate = (dateIso: string) =>
   new Date(dateIso).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
 
+const PATIENT_RECIPE_LIST_INITIAL_COUNT = 5;
+const PATIENT_RECIPE_LIST_LOAD_MORE_COUNT = 5;
+
 /**
  * Construye la firma corta visible del médico emisor para el comprobante imprimible.
  * @param {string} doctorName - Nombre visible del médico.
@@ -474,6 +478,7 @@ const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Rec
   return [{
     id: prescription.recipeId,
     date: formatRecipeDate(createdAt),
+    createdAt,
     expiryDate,
     medications: items.map((item, index) => ({
       id: `${prescription.recipeId}-${index + 1}`,
@@ -671,6 +676,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const expandedMedicationPopoverRef = useRef<HTMLDivElement | null>(null);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
+  const [recipesVisibleCount, setRecipesVisibleCount] = useState(PATIENT_RECIPE_LIST_INITIAL_COUNT);
   const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
   const [recipePdfError, setRecipePdfError] = useState('');
 
@@ -809,6 +815,19 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     () => deriveOrderDeliveryStatus(checkoutSession, activeCheckoutPrescription),
     [activeCheckoutPrescription, checkoutSession]
   );
+  const sortedRecipes = useMemo(
+    () =>
+      [...recipes].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [recipes]
+  );
+  const visibleRecipes = useMemo(
+    () => sortedRecipes.slice(0, recipesVisibleCount),
+    [sortedRecipes, recipesVisibleCount]
+  );
+  const hasMoreRecipes = sortedRecipes.length > recipesVisibleCount;
+  const canShowLessRecipes = recipesVisibleCount > PATIENT_RECIPE_LIST_INITIAL_COUNT;
   const hasActiveCartReserve = Boolean(
     checkoutSession?.order?.status === 'checkout_pending' && paymentTimeLeft > 0
   );
@@ -906,6 +925,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       cancelled = true;
     };
   }, [socketPatientIdentity]);
+
+  useEffect(() => {
+    setRecipesVisibleCount(PATIENT_RECIPE_LIST_INITIAL_COUNT);
+  }, [recipes]);
 
   useEffect(() => {
     if (activeSubTab !== 'recipes') {
@@ -1598,33 +1621,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     }
   };
 
-  /**
-   * Refresca manualmente el estado del checkout consultando al backend.
-   * @returns {Promise<void>}
-   */
-  const handleRefreshPaymentStatus = async () => {
-    if (!checkoutSession?.order?.recipeId) {
-      return;
-    }
-
-    try {
-      setCheckoutLoading(true);
-      setCheckoutError('');
-      const session = await fetchCheckoutSession(checkoutSession.order.recipeId);
-      applyCheckoutSession(session, session.order.status === 'payment_confirmed');
-      setPaymentStatusMessage('Estado del pedido actualizado.');
-    } catch (error: unknown) {
-      const apiError = error as ApiErrorPayload;
-      setCheckoutError(
-        apiError.response?.data?.error ||
-        apiError.response?.data?.details ||
-        'No se pudo consultar el estado del checkout.'
-      );
-    } finally {
-      setCheckoutLoading(false);
-    }
-  };
-
   const activeNavId =
     activeSubTab === 'recipes' || activeSubTab === 'voucher'
       ? 'recipes'
@@ -1799,19 +1795,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               </div>
 
               <div className="border-t border-surface-800/80 pt-4 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[10px] text-surface-500 font-bold uppercase tracking-wider">
-                    Progreso de Entrega
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => { void handleRefreshPaymentStatus(); }}
-                    className="p-2 bg-surface-800 hover:bg-surface-700 text-surface-400 hover:text-white rounded-lg border border-surface-700 transition-colors cursor-pointer shrink-0"
-                    title="Simular actualización del estado de entrega"
-                  >
-                    <PackageCheck className="h-4 w-4" />
-                  </button>
-                </div>
+                <span className="block text-[10px] text-surface-500 font-bold uppercase tracking-wider">
+                  Progreso de Entrega
+                </span>
 
                 <ol className="grid grid-cols-3 gap-2 sm:gap-4">
                   {orderDeliverySteps.map((step, index) => {
@@ -1911,14 +1897,14 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   </tr>
                 </thead>
                 <tbody>
-                  {recipes.length === 0 && !recipesLoading && (
+                  {sortedRecipes.length === 0 && !recipesLoading && (
                     <tr>
                       <td colSpan={7} className="py-6 text-center text-xs text-surface-500">
                         {recipesError || 'No hay recipes emitidos todavía para este paciente.'}
                       </td>
                     </tr>
                   )}
-                  {recipes.map((rec) => (
+                  {visibleRecipes.map((rec) => (
                     <tr key={rec.id} className="hover:bg-surface-850/25 transition-colors group">
                       <td className="py-4 pr-4 font-mono font-bold text-[11px] text-white zenith-table__code align-top">
                         {rec.id}
@@ -1989,12 +1975,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               </table>
             </div>
             <div className="lg:hidden space-y-3">
-              {recipes.length === 0 && !recipesLoading && (
+              {sortedRecipes.length === 0 && !recipesLoading && (
                 <div className="py-6 text-center text-xs text-surface-500">
                   {recipesError || 'No hay recipes emitidos todavía para este paciente.'}
                 </div>
               )}
-              {recipes.map((rec) => (
+              {visibleRecipes.map((rec) => (
                 <ListCard
                   key={rec.id}
                   title={
@@ -2022,6 +2008,36 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 />
               ))}
             </div>
+            {!recipesLoading && sortedRecipes.length > 0 && (hasMoreRecipes || canShowLessRecipes) ? (
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-surface-850">
+                {canShowLessRecipes ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setRecipesVisibleCount((current) =>
+                        Math.max(PATIENT_RECIPE_LIST_INITIAL_COUNT, current - PATIENT_RECIPE_LIST_LOAD_MORE_COUNT)
+                      )
+                    }
+                    className="patient-recipe-list-toggle text-xs cursor-pointer"
+                  >
+                    Leer menos
+                  </button>
+                ) : (
+                  <span aria-hidden="true" />
+                )}
+                {hasMoreRecipes ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setRecipesVisibleCount((current) => current + PATIENT_RECIPE_LIST_LOAD_MORE_COUNT)
+                    }
+                    className="patient-recipe-list-toggle text-xs cursor-pointer ml-auto"
+                  >
+                    Leer más
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </div>
       )}
