@@ -11,24 +11,6 @@ import { INITIAL_PRODUCTS } from '../data/mockData';
  */
 export const PRODUCTS_DATA_VERSION = 2;
 
-/**
- * Lista consolidada de categorías de farmacia disponibles.
- * Incluye las categorías de los productos iniciales y 'Farmacia General'.
- * @constant {readonly string[]}
- */
-export const PHARMACY_CATEGORIES = [
-  ...new Set([
-    ...INITIAL_PRODUCTS.map((product) => product.category),
-    'Farmacia General',
-  ]),
-] as const;
-
-/**
- * Categoría de farmacia predeterminada a utilizar cuando no se especifica una.
- * @constant {string}
- */
-export const DEFAULT_PHARMACY_CATEGORY = PHARMACY_CATEGORIES[0];
-
 const LEGACY_CATEGORIES = new Set([
   'Tecnología',
   'Audio',

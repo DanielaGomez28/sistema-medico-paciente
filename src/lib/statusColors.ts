@@ -96,18 +96,6 @@ export function getDispatchTransitionClassName(status: OrderStatus): string {
 }
 
 /**
- * Mapeo estático de estados a clases de colores semáforo.
- * @constant {Record<OrderStatus, string>}
- */
-export const orderStatusColors: Record<OrderStatus, string> = {
-  Pendiente: 'dispatch-semaphore--red',
-  'En Preparación': 'dispatch-semaphore--yellow',
-  Enviado: 'dispatch-semaphore--green',
-  Entregado: 'dispatch-semaphore--green',
-  Cancelado: 'dispatch-semaphore--neutral',
-};
-
-/**
  * Traduce estados de back-end (inglés) a español para la UI.
  * @param {string} status - Estado a traducir.
  * @returns {string} Estado traducido.
