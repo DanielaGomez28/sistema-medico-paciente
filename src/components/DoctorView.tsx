@@ -2112,7 +2112,16 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                   {entry.medications || `Recipe ${entry.recipeId}`}
                                 </span>
                                 <span className="text-[10px] text-surface-500 truncate block">
-                                  {entry.pharmacy_name || `Orden ${entry.orderId}`} • Liquidada {new Date(entry.settledAt).toLocaleDateString('es-ES')}
+                                  {entry.pharmacy_name || `Orden ${entry.orderId}`} • Liquidada {new Date(entry.settledAt).toLocaleString('es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                                <span className="text-[10px] text-surface-500 truncate block">
+                                  Prescrito por {DOCTOR_NAME}
                                 </span>
                               </div>
                               <div className="text-right shrink-0 pl-3">

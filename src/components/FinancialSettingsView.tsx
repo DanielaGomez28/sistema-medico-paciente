@@ -25,6 +25,8 @@ interface AuditLogEntry {
   id_log?: number;
   actorUserId?: string;
   id_superusuario?: number;
+  actorName?: string | null;
+  actorEmail?: string | null;
   action: string;
   createdAt?: string;
   fecha_hora_exacta?: string;
@@ -118,8 +120,17 @@ export default function FinancialSettingsView() {
     const dateVal = entry.createdAt || entry.fecha_hora_exacta;
     return {
       id: String(entry.id || entry.id_log || 'N/A'),
-      actor: String(entry.actorUserId || entry.id_superusuario || 'N/A'),
-      timestamp: dateVal ? new Date(dateVal).toLocaleString('es-ES') : 'N/A',
+      // El id numérico no identifica a nadie al auditar: se prefiere el nombre.
+      actor: entry.actorName || entry.actorEmail || `Usuario ${entry.actorUserId || entry.id_superusuario || 'N/A'}`,
+      timestamp: dateVal
+        ? new Date(dateVal).toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : 'N/A',
       action: 'Actualización de comisión base',
       previousValue: commissionChange?.previous ?? 'N/A',
       newValue: commissionChange?.next ?? 'N/A',
@@ -205,7 +216,7 @@ export default function FinancialSettingsView() {
                 key={entry.id}
                 title={entry.action}
                 subtitle={entry.id}
-                badge={<span className="inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[9px] font-semibold bg-surface-800 text-surface-200 border border-surface-700">Actor {entry.actor}</span>}
+                badge={<span className="inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[9px] font-semibold bg-surface-800 text-surface-200 border border-surface-700">{entry.actor}</span>}
                 fields={[
                   { label: 'Fecha', value: entry.timestamp },
                   { label: 'Valor anterior', value: String(entry.previousValue) },
@@ -221,7 +232,7 @@ export default function FinancialSettingsView() {
                 <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
                   <th className="pb-2.5">ID</th>
                   <th>Fecha/Hora</th>
-                  <th>Actor</th>
+                  <th>Autor</th>
                   <th>Acción</th>
                   <th>Anterior</th>
                   <th>Nuevo</th>
