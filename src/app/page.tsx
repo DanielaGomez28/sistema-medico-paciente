@@ -87,6 +87,7 @@ function getInitialAdminState(): InitialAdminState {
     return { orders, products, customers };
   } catch (error) {
     console.error('Error cargando datos de LocalStorage en desarrollo:', error);
+    sessionStorage.removeItem('zenith_user');
     localStorage.removeItem('zenith_user');
     return {
       orders: INITIAL_ORDERS,
@@ -163,7 +164,7 @@ export default function Home() {
     if (typeof window === 'undefined') return null;
 
     try {
-      const localUser = localStorage.getItem('zenith_user');
+      const localUser = sessionStorage.getItem('zenith_user') || localStorage.getItem('zenith_user');
       if (!localUser || localUser === 'undefined' || localUser === 'null') {
         return null;
       }
@@ -222,11 +223,13 @@ export default function Home() {
 
   const handleLoginSuccess = (user: AuthenticatedUser) => {
     setCurrentUser(user);
+    sessionStorage.setItem('zenith_user', JSON.stringify(user));
     localStorage.setItem('zenith_user', JSON.stringify(user));
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
+    sessionStorage.removeItem('zenith_user');
     localStorage.removeItem('zenith_user');
     setPlatformTerms(null);
     setShowPlatformTermsModal(false);

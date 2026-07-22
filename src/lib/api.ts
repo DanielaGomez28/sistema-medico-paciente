@@ -26,7 +26,7 @@ const apiClient = axios.create({
  */
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const rawSession = window.localStorage.getItem('zenith_user');
+    const rawSession = window.sessionStorage.getItem('zenith_user') || window.localStorage.getItem('zenith_user');
 
     if (rawSession) {
       try {
@@ -35,6 +35,7 @@ apiClient.interceptors.request.use((config) => {
           config.headers.Authorization = `Bearer ${parsed.token}`;
         }
       } catch {
+        window.sessionStorage.removeItem('zenith_user');
         window.localStorage.removeItem('zenith_user');
       }
     }
