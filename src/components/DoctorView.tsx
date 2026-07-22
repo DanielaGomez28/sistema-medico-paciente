@@ -43,7 +43,6 @@ import apiClient from '../lib/api';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
-  DOCTOR_PROFILE_DEFAULTS,
   type DoctorLinkedPatientSeed as LinkedPatient,
 } from '../data/mockData';
 
@@ -60,7 +59,6 @@ interface DoctorViewProps {
     specialty?: string | null;
     medicalCollege?: string | null;
     specialSanitaryRegistration?: string | null;
-    digitalSignatureHash?: string | null;
     officeLocation?: string | null;
     status?: string | null;
   } | null;
@@ -295,22 +293,21 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
   // M.4 Profile & Banking state
   const [bankHolder, setBankHolder] = useState(doctorName || doctorEmail);
-  const [bankHolderId, setBankHolderId] = useState(DOCTOR_PROFILE_DEFAULTS.bankHolderId);
-  const [bankEntity, setBankEntity] = useState(DOCTOR_PROFILE_DEFAULTS.bankEntity);
-  const [bankAccountType, setBankAccountType] = useState<'Corriente' | 'Ahorro'>(DOCTOR_PROFILE_DEFAULTS.bankAccountType);
-  const [bankAccountNumber, setBankAccountNumber] = useState(DOCTOR_PROFILE_DEFAULTS.bankAccountNumber);
-  const [bankMobilePhone, setBankMobilePhone] = useState(DOCTOR_PROFILE_DEFAULTS.bankMobilePhone);
-  const [profilePhone, setProfilePhone] = useState(DOCTOR_PROFILE_DEFAULTS.profilePhone);
-  const [profileRegistryId] = useState(DOCTOR_PROFILE_DEFAULTS.profileRegistryId);
-  const [consultorioAddress, setConsultorioAddress] = useState(doctorProfile?.officeLocation || DOCTOR_PROFILE_DEFAULTS.consultorioAddress);
-  const [consultorioState, setConsultorioState] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioState);
-  const [consultorioMunicipio, setConsultorioMunicipio] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioMunicipio);
+  const [bankHolderId, setBankHolderId] = useState('');
+  const [bankEntity, setBankEntity] = useState('');
+  const [bankAccountType, setBankAccountType] = useState<'Corriente' | 'Ahorro'>('Corriente');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankMobilePhone, setBankMobilePhone] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [profileRegistryId] = useState(doctorProfile?.mpps || '');
+  const [consultorioAddress, setConsultorioAddress] = useState(doctorProfile?.officeLocation || '');
+  const [consultorioState, setConsultorioState] = useState('');
+  const [consultorioMunicipio, setConsultorioMunicipio] = useState('');
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
   const doctorMpps = doctorProfile?.mpps || 'MPPS no disponible';
   const doctorSpecialty = doctorProfile?.specialty || 'Especialidad no disponible';
   const doctorMedicalCollege = doctorProfile?.medicalCollege || 'Colegio no disponible';
   const doctorSpecialSanitaryRegistration = doctorProfile?.specialSanitaryRegistration || null;
-  const doctorDigitalSignatureHash = doctorProfile?.digitalSignatureHash || null;
 
   // QR credential removed for doctor portal per requested change
 
@@ -711,6 +708,39 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       cancelled = true;
     };
   }, [DOCTOR_ID, activeTab]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBankProfile = async () => {
+      if (!DOCTOR_ID) return;
+
+      try {
+        const response = await apiClient.get(`/medicos/${encodeURIComponent(DOCTOR_ID)}/perfil`);
+        const profile = response.data?.profile;
+        if (cancelled || !profile) return;
+
+        if (profile.bankHolderName) setBankHolder(profile.bankHolderName);
+        if (profile.bankHolderId) setBankHolderId(profile.bankHolderId);
+        if (profile.bank) setBankEntity(profile.bank);
+        if (profile.bankAccountType) setBankAccountType(profile.bankAccountType as 'Corriente' | 'Ahorro');
+        if (profile.bankAccountNumber) setBankAccountNumber(profile.bankAccountNumber);
+        if (profile.phoneAccountNumber) setBankMobilePhone(profile.phoneAccountNumber);
+        if (profile.phone) setProfilePhone(profile.phone);
+        if (profile.officeAddress) setConsultorioAddress(profile.officeAddress);
+        if (profile.officeState) setConsultorioState(profile.officeState);
+        if (profile.officeMunicipality) setConsultorioMunicipio(profile.officeMunicipality);
+      } catch {
+        // Sin perfil bancario guardado todavía: se dejan los campos vacíos para que el médico los complete.
+      }
+    };
+
+    loadBankProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [DOCTOR_ID]);
 
   useEffect(() => {
     let cancelled = false;

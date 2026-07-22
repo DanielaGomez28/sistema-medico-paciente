@@ -110,7 +110,6 @@ type AuthenticatedUser = {
     specialty?: string | null;
     medicalCollege?: string | null;
     specialSanitaryRegistration?: string | null;
-    digitalSignatureHash?: string | null;
     officeLocation?: string | null;
     status?: string | null;
   } | null;
@@ -185,7 +184,6 @@ export default function Home() {
             specialty: parsed.doctorProfile.specialty || null,
             medicalCollege: parsed.doctorProfile.medicalCollege || null,
             specialSanitaryRegistration: parsed.doctorProfile.specialSanitaryRegistration || null,
-            digitalSignatureHash: parsed.doctorProfile.digitalSignatureHash || null,
             officeLocation: parsed.doctorProfile.officeLocation || null,
             status: parsed.doctorProfile.status || null,
           }
