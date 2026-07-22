@@ -204,3 +204,20 @@ export function getRecipeStatusBadgeClassName(status: string): string {
 
   return map[normalized] ?? 'recipe-status-badge--neutral';
 }
+
+/**
+ * Clase CSS del badge de estado de médico (activo / suspendido).
+ */
+export function getDoctorStatusBadgeClassName(status: string): string {
+  const normalized = status?.toLowerCase().trim();
+
+  if (normalized === 'activo') {
+    return 'doctor-status-badge doctor-status-badge--active';
+  }
+
+  if (normalized === 'suspendido') {
+    return 'doctor-status-badge doctor-status-badge--suspended';
+  }
+
+  return 'doctor-status-badge doctor-status-badge--neutral';
+}

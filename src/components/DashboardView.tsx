@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, ChevronRight, DollarSign, Heart, RefreshCw, Stethoscope, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '../lib/currency';
 import apiClient from '../lib/api';
-import { translateStatus, getRecipeStatusBadgeClassName } from '../lib/statusColors';
+import { translateStatus, getRecipeStatusBadgeClassName, getDoctorStatusBadgeClassName } from '../lib/statusColors';
 import { Button, PageHeader, StatCard } from './ui';
 
 interface ApiErrorPayload {
@@ -407,7 +407,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
               <div key={doctor.id} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3">
                 <p className="text-xs font-semibold text-white">{doctor.name}</p>
                 <p className="text-[10px] text-surface-500">{doctor.specialty || 'Sin especialidad'} &bull; {doctor.mpps || 'Sin MPPS'}</p>
-                <span className={`mt-2 inline-flex px-2 py-0.5 rounded text-[10px] font-bold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>
+                <span className={`mt-2 ${getDoctorStatusBadgeClassName(doctor.status)}`}>
                   {doctor.status}
                 </span>
               </div>
