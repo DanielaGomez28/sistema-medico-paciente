@@ -823,20 +823,26 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   useEffect(() => {
     let cancelled = false;
 
+    const shouldShowCommissionStatus = ['commissions', 'profile'].includes(activeTab);
+
     /**
      * Carga desde backend el resumen real de comisiones del medico autenticado.
+     * La tasa se refresca al montar la vista medica aunque el usuario caiga en
+     * Agenda: el porcentaje del perfil no puede depender de una pestaña abierta.
      * @returns {Promise<void>}
      */
     const loadCommissionSummary = async (options?: { silent?: boolean }) => {
-      if (!['commissions', 'profile'].includes(activeTab) || !DOCTOR_ID) {
+      if (!DOCTOR_ID) {
         return;
       }
 
       try {
-        if (!options?.silent) {
+        if (!options?.silent && shouldShowCommissionStatus) {
           setCommissionLoading(true);
         }
-        setCommissionError('');
+        if (shouldShowCommissionStatus) {
+          setCommissionError('');
+        }
         const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
@@ -847,7 +853,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           }
         }
       } catch (error: unknown) {
-        if (!cancelled) {
+        if (!cancelled && shouldShowCommissionStatus) {
           const apiError = error as ApiErrorPayload;
           setCommissionError(
             apiError.response?.data?.error ||
@@ -856,14 +862,14 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           );
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && shouldShowCommissionStatus) {
           setCommissionLoading(false);
         }
       }
     };
 
-    void loadCommissionSummary();
-    const intervalId = ['commissions', 'profile'].includes(activeTab)
+    void loadCommissionSummary({ silent: !shouldShowCommissionStatus });
+    const intervalId = shouldShowCommissionStatus
       ? window.setInterval(() => { void loadCommissionSummary({ silent: true }); }, 30000)
       : null;
 
