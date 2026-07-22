@@ -895,7 +895,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
   useEffect(() => {
     setRecipeLogVisibleCount(RECIPE_LOG_INITIAL_COUNT);
-  }, [doctorRecipeLog]);
+  }, [doctorRecipeLog, linkedPatient, patientForm.systemId, patientForm.patientId]);
 
   /**
    * Marca un paciente como selección pendiente antes de confirmar el récipe.
@@ -1408,12 +1408,27 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     return result;
   }, [catalogResults, catalogSortOrder, catalogPharmacyFilter]);
 
+  const patientScopedDoctorRecipeLog = useMemo(() => {
+    const activePatientKey = normalizePatientIdentifier(
+      linkedPatient?.systemId || linkedPatient?.patientId || patientForm.systemId || patientForm.patientId || ''
+    );
+
+    if (!activePatientKey) {
+      return doctorRecipeLog;
+    }
+
+    return doctorRecipeLog.filter((recipe) => {
+      const recipePatientKey = normalizePatientIdentifier(recipe.patientId || recipe.patientName || '');
+      return recipePatientKey === activePatientKey;
+    });
+  }, [doctorRecipeLog, linkedPatient, patientForm.systemId, patientForm.patientId]);
+
   const sortedDoctorRecipeLog = useMemo(
     () =>
-      [...doctorRecipeLog].sort(
+      [...patientScopedDoctorRecipeLog].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ),
-    [doctorRecipeLog]
+    [patientScopedDoctorRecipeLog]
   );
 
   const visibleDoctorRecipeLog = useMemo(
@@ -2359,7 +2374,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                       <div className="space-y-2">
                         {!recipeLogLoading && sortedDoctorRecipeLog.length === 0 ? (
-                          <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos por este médico.</div>
+                          <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos para este paciente.</div>
                         ) : null}
                         {visibleDoctorRecipeLog.map((rec) => (
                           <div key={rec.recipeId} className="doctor-recipe-log-item flex items-start justify-between gap-3">
