@@ -44,6 +44,7 @@ export interface AppSidebarProfile {
  * @interface AppSidebarProps
  * @property {AppSidebarBrand} brand - Logo y título.
  * @property {NavItemConfig[]} items - Elementos de navegación principales.
+ * @property {NavItemConfig[]} [bottomItems] - Elementos anclados al final del sidebar.
  * @property {string} activeId - ID del elemento de navegación actualmente activo.
  * @property {(id: string) => void} onNavigate - Callback ejecutado al seleccionar un ítem de menú.
  * @property {AccentVariant} [accent='primary'] - Acento de color primario a usar en los íconos e ítems activos.
@@ -59,6 +60,7 @@ export interface AppSidebarProfile {
 export interface AppSidebarProps {
   brand: AppSidebarBrand;
   items: NavItemConfig[];
+  bottomItems?: NavItemConfig[];
   activeId: string;
   onNavigate: (id: string) => void;
   accent?: AccentVariant;
@@ -92,6 +94,7 @@ const brandGradient: Record<AccentVariant, string> = {
 export default function AppSidebar({
   brand,
   items,
+  bottomItems,
   activeId,
   onNavigate,
   accent = 'primary',
@@ -142,23 +145,40 @@ export default function AppSidebar({
 
       {sidebarExtra}
 
-      <nav className={cn('flex-1 px-4 py-6 space-y-1 overflow-y-auto', navClassName)}>
-        {sectionLabel && (
-          <div className="zc-collapse-text zenith-field-label px-4 py-2 text-[10px] uppercase tracking-wider">
-            {sectionLabel}
+      <nav className={cn('flex-1 flex flex-col px-4 py-6 overflow-y-auto', navClassName)}>
+        <div className="space-y-1 flex-1">
+          {sectionLabel && (
+            <div className="zc-collapse-text zenith-field-label px-4 py-2 text-[10px] uppercase tracking-wider">
+              {sectionLabel}
+            </div>
+          )}
+          {items.map((item) => (
+            <NavItem
+              key={item.id}
+              item={item}
+              isActive={activeId === item.id}
+              accent={accent}
+              onClick={() => handleNavigate(item.id)}
+              navTextWhite={navTextWhite}
+              navTextDarkCyan={navTextDarkCyan}
+            />
+          ))}
+        </div>
+        {bottomItems && bottomItems.length > 0 ? (
+          <div className="space-y-1 pt-4 mt-auto border-t border-surface-850/80">
+            {bottomItems.map((item) => (
+              <NavItem
+                key={item.id}
+                item={item}
+                isActive={activeId === item.id}
+                accent={accent}
+                onClick={() => handleNavigate(item.id)}
+                navTextWhite={navTextWhite}
+                navTextDarkCyan={navTextDarkCyan}
+              />
+            ))}
           </div>
-        )}
-        {items.map((item) => (
-          <NavItem
-            key={item.id}
-            item={item}
-            isActive={activeId === item.id}
-            accent={accent}
-            onClick={() => handleNavigate(item.id)}
-            navTextWhite={navTextWhite}
-            navTextDarkCyan={navTextDarkCyan}
-          />
-        ))}
+        ) : null}
       </nav>
 
       {(profile || onLogout || preProfile) && (

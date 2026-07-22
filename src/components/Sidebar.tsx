@@ -67,7 +67,9 @@ export default function Sidebar({
         { id: 'doctors', name: 'Gestión Médicos', icon: Stethoscope },
         { id: 'recipes', name: 'Gestión Recipes', icon: FileText },
         { id: 'financials', name: 'Gestión Comisiones', icon: DollarSign },
-        { id: 'cms', name: 'Configuración Global', icon: Settings },
+      ]}
+      bottomItems={[
+        { id: 'cms', name: 'Configuración', icon: Settings },
       ]}
       activeId={activeTab}
       onNavigate={setActiveTab}
