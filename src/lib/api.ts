@@ -23,16 +23,14 @@ const apiClient = axios.create({
 
 /**
  * Interceptor de request que adjunta el token Bearer de la sesión almacenada
- * en la sesión local de +Salud a cada petición saliente. Si el dato
- * almacenado está corrupto, lo limpia junto con la clave heredada.
+ * en la sesión de pestaña de +Salud a cada petición saliente. Si el dato
+ * almacenado está corrupto, lo limpia junto con la clave heredada de pestaña.
  */
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const rawSession =
       window.sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY) ||
-      window.localStorage.getItem(CURRENT_SESSION_STORAGE_KEY) ||
-      window.sessionStorage.getItem(LEGACY_SESSION_STORAGE_KEY) ||
-      window.localStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
+      window.sessionStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
 
     if (rawSession) {
       try {
@@ -42,9 +40,7 @@ apiClient.interceptors.request.use((config) => {
         }
       } catch {
         window.sessionStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
-        window.localStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
         window.sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
-        window.localStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
       }
     }
   }

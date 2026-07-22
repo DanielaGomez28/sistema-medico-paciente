@@ -52,20 +52,11 @@ function readStoredSession(): string | null {
   const currentSession = sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
   if (currentSession) return currentSession;
 
-  const currentLocal = localStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
-  if (currentLocal) return currentLocal;
-
   const legacySession = sessionStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
   if (legacySession) {
     sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, legacySession);
+    sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
     return legacySession;
-  }
-
-  const legacyLocal = localStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
-  if (legacyLocal) {
-    sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, legacyLocal);
-    localStorage.setItem(CURRENT_SESSION_STORAGE_KEY, legacyLocal);
-    return legacyLocal;
   }
 
   return null;
@@ -73,16 +64,12 @@ function readStoredSession(): string | null {
 
 function clearStoredSession() {
   sessionStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
-  localStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
   sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
-  localStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
 }
 
 function writeStoredSession(user: AuthenticatedUser) {
-  const serialized = JSON.stringify(user);
-  sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, serialized);
-  localStorage.setItem(CURRENT_SESSION_STORAGE_KEY, serialized);
-  localStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+  sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(user));
+  sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
 }
 
 /**
