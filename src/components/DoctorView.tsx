@@ -1232,6 +1232,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         portal="doctor"
         layout="horizontal"
         contentClassName="max-w-7xl"
+        scrollKey={activeTab}
         sidebar={
           <AppSidebar
             accent="primary"
@@ -1377,7 +1378,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                     <button
                       onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}
-                      className="w-full text-center text-xs text-secondary-400 font-semibold hover:text-secondary-300 transition-colors pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
+                      className="doctor-qr-scan-link w-full text-center text-xs font-semibold pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
                     >
                       <span>Escanear código qr</span>
                       <ChevronRight className="h-3.5 w-3.5" />
@@ -1628,20 +1629,20 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                           </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-1.5"><label className="zenith-field-label">Nombre completo</label><input type="text" value={patientForm.name} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" /></div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">ID interno</label><input type="text" value={patientForm.patientId} readOnly placeholder="Ej: patient_sofia_peralta" className="w-full border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none uppercase bg-surface-950/40 text-surface-250" /></div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Género</label>{isEditingPatientRecord ? (<select value={patientForm.gender} onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></select>) : (<input type="text" value={patientForm.gender} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Grupo sanguíneo</label>{isEditingPatientRecord ? (<select value={patientForm.bloodType} onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option><option value="Sin especificar">Sin especificar</option></select>) : (<input type="text" value={patientForm.bloodType} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} onChange={(e) => setPatientForm({ ...patientForm, phone: formatPhoneNumber(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
-                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Condición / diagnóstico de control</label><input type="text" value={patientForm.condition} onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
-                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Alergias</label><input type="text" value={patientForm.allergies} onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
-                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Tratamientos activos (separados por coma)</label><input type="text" value={medicationsInput} onChange={(e) => setMedicationsInput(e.target.value)} readOnly={!isEditingPatientRecord} placeholder="Ej: Ramipril 5mg, Aspirina 100mg" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Nombre completo</label><input type="text" value={patientForm.name} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">ID interno</label><input type="text" value={patientForm.patientId} readOnly placeholder="Ej: patient_sofia_peralta" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none uppercase ${doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Género</label>{isEditingPatientRecord ? (<select value={patientForm.gender} onChange={(e) => setPatientForm({ ...patientForm, gender: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${doctorProfileFieldEditing}`}><option value="Masculino">Masculino</option><option value="Femenino">Femenino</option><option value="Otro">Otro</option></select>) : (<input type="text" value={patientForm.gender} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} />)}</div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Grupo sanguíneo</label>{isEditingPatientRecord ? (<select value={patientForm.bloodType} onChange={(e) => setPatientForm({ ...patientForm, bloodType: e.target.value })} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${doctorProfileFieldEditing}`}><option value="A+">A+</option><option value="A-">A-</option><option value="B+">B+</option><option value="B-">B-</option><option value="AB+">AB+</option><option value="AB-">AB-</option><option value="O+">O+</option><option value="O-">O-</option><option value="Sin especificar">Sin especificar</option></select>) : (<input type="text" value={patientForm.bloodType} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} />)}</div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} onChange={(e) => setPatientForm({ ...patientForm, phone: formatPhoneNumber(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Condición / diagnóstico de control</label><input type="text" value={patientForm.condition} onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Alergias</label><input type="text" value={patientForm.allergies} onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Tratamientos activos (separados por coma)</label><input type="text" value={medicationsInput} onChange={(e) => setMedicationsInput(e.target.value)} readOnly={!isEditingPatientRecord} placeholder="Ej: Ramipril 5mg, Aspirina 100mg" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4 border-t border-surface-850">
                           <button type="button" onClick={handleBackToPatientList} className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer">Volver</button>
                           <div className="flex flex-col sm:flex-row gap-3">
-                            {linkedPatient && (<button type="button" onClick={() => setActiveTab('prescription')} className="px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border border-surface-700">Generar Récipe</button>)}
+                            {linkedPatient && (<button type="button" onClick={() => setActiveTab('prescription')} className="doctor-generate-recipe-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border">Generar Récipe</button>)}
                           </div>
                         </div>
                       </form>
@@ -1946,7 +1947,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             {/* Main action submit */}
                             <button
                               type="submit"
-                              className="w-full mt-2 py-3 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-black shadow-lg shadow-secondary-550/10 hover:shadow-secondary-550/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="w-full mt-2 py-3 bg-secondary-600 hover:bg-secondary-700 text-white rounded-xl text-xs font-black shadow-lg shadow-secondary-550/10 hover:shadow-secondary-550/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                               <Send className="h-4 w-4" />
                               <span>Registrar e Iniciar Envío de Récipe</span>
@@ -2075,23 +2076,20 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         </div>
                       ) : null}
 
-                      <div className="divide-y divide-surface-850">
+                      <div className="space-y-2">
                         {!recipeLogLoading && doctorRecipeLog.length === 0 ? (
                           <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos por este médico.</div>
                         ) : null}
                         {doctorRecipeLog.map((rec) => (
-                          <div key={rec.recipeId} className="py-3.5 first:pt-0 last:pb-0 flex items-start justify-between gap-3">
+                          <div key={rec.recipeId} className="doctor-recipe-log-item flex items-start justify-between gap-3">
                             <div className="space-y-1 min-w-0">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="font-bold text-xs text-white">{rec.patientName || rec.patientId}</span>
-                                <span className="text-[9px] font-mono text-surface-500 bg-surface-950 border border-surface-850 px-1.5 py-0.2 rounded">#R-{rec.recipeId.split('-')[0].toUpperCase()}</span>
-                              </div>
+                              <p className="doctor-recipe-log-item__name text-sm">{rec.patientName || rec.patientId}</p>
                               <div className="flex flex-wrap gap-1 pt-0.5">
                                 {rec.items.map((item, idx) => (
-                                  <span key={idx} className="text-[9px] bg-surface-800 text-surface-350 px-1.5 py-0.5 rounded font-medium">{item.name} ({item.remaining_quantity ?? 0}/{item.prescribedQuantity ?? 0}) • {item.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
+                                  <span key={idx} className="doctor-recipe-log-item__med text-[9px] px-1.5 py-0.5 rounded">{item.name} ({item.remaining_quantity ?? 0}/{item.prescribedQuantity ?? 0}) • {item.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
                                 ))}
                               </div>
-                              <p className="text-[10px] text-surface-500 flex items-center gap-1 flex-wrap">
+                              <p className="text-[10px] text-black dark:text-surface-300 flex items-center gap-1 flex-wrap">
                                 <span>Emitido {new Date(rec.createdAt).toLocaleDateString('es-ES')}</span>
                                 <span>•</span>
                                 <span>Caduca {new Date(rec.recipeExpiresAt).toLocaleDateString('es-ES')}</span>

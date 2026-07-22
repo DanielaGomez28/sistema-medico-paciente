@@ -22,7 +22,8 @@ interface ApiErrorPayload {
 
 interface CmsSettings {
   logoUrl: string;
-  bannerUrl: string;
+  loginBannerTitle: string;
+  loginBannerSubtitle: string;
   consentTerms: string;
   termsAndConditions: string;
   usagePolicy: string;
@@ -37,7 +38,9 @@ const sectionTabs: { id: CmsSection; label: string; icon: React.ElementType }[] 
 
 const DEFAULT_SETTINGS: CmsSettings = {
   logoUrl: '/images/default-logo.png',
-  bannerUrl: '/images/default-banner.jpg',
+  loginBannerTitle: '¡Bienvenido a +Salud!',
+  loginBannerSubtitle:
+    '¿Eres médico? Genera y envía recetas electrónicas a tus pacientes de manera sencilla y centralizada.\n¿Eres paciente? Accede a tus prescripciones médicas y compra tus medicamentos en un solo clic.',
   consentTerms: 'Términos clínicos no cargados.',
   termsAndConditions: 'Términos generales no cargados.',
   usagePolicy: 'Política de uso no cargada.',
@@ -50,12 +53,16 @@ export default function CmsView() {
   const [backendError, setBackendError] = useState('');
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [logoFileName, setLogoFileName] = useState('logo_zenith_vector.png');
-  const [bannerFileName, setBannerFileName] = useState('banner_promocional.jpg');
   const [isEditingLegal, setIsEditingLegal] = useState(false);
   const [legalDraft, setLegalDraft] = useState({
     consentTerms: '',
     termsAndConditions: '',
     usagePolicy: ''
+  });
+  const [isEditingBanner, setIsEditingBanner] = useState(false);
+  const [bannerDraft, setBannerDraft] = useState({
+    loginBannerTitle: '',
+    loginBannerSubtitle: '',
   });
 
   useEffect(() => {
@@ -68,7 +75,6 @@ export default function CmsView() {
         setSettings((prev) => ({
           ...prev,
           logoUrl: parsed.logoUrl ?? prev.logoUrl,
-          bannerUrl: parsed.bannerUrl ?? prev.bannerUrl,
         }));
       }
 
@@ -84,6 +90,8 @@ export default function CmsView() {
             consentTerms: config.consentTermsText ?? prev.consentTerms,
             termsAndConditions: config.termsAndConditionsText ?? prev.termsAndConditions,
             usagePolicy: config.usagePolicyText ?? prev.usagePolicy,
+            loginBannerTitle: config.loginBannerTitle ?? prev.loginBannerTitle,
+            loginBannerSubtitle: config.loginBannerSubtitle ?? prev.loginBannerSubtitle,
           }));
         }
       } catch (error: unknown) {
@@ -108,7 +116,7 @@ export default function CmsView() {
     };
   }, []);
 
-  const handleImageUpload = (file: File, field: 'logoUrl' | 'bannerUrl', setFileName: (name: string) => void) => {
+  const handleImageUpload = (file: File, field: 'logoUrl', setFileName: (name: string) => void) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       if (e.target?.result) {
@@ -117,6 +125,49 @@ export default function CmsView() {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleStartBannerEdit = () => {
+    setBannerDraft({
+      loginBannerTitle: settings.loginBannerTitle,
+      loginBannerSubtitle: settings.loginBannerSubtitle,
+    });
+    setIsEditingBanner(true);
+  };
+
+  const handleCancelBannerEdit = () => {
+    setIsEditingBanner(false);
+  };
+
+  const handleConfirmBannerEdit = async () => {
+    try {
+      setLoadingConfig(true);
+      setBackendError('');
+      await apiClient.put('/admin/cms/config', {
+        config: {
+          loginBannerTitle: bannerDraft.loginBannerTitle,
+          loginBannerSubtitle: bannerDraft.loginBannerSubtitle,
+        },
+      });
+
+      setSettings((prev) => ({
+        ...prev,
+        loginBannerTitle: bannerDraft.loginBannerTitle,
+        loginBannerSubtitle: bannerDraft.loginBannerSubtitle,
+      }));
+      setIsEditingBanner(false);
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error: unknown) {
+      setBackendError(
+        (error as ApiErrorPayload).response?.data?.error ||
+          (error as ApiErrorPayload).response?.data?.details ||
+          'No se pudo guardar el banner de bienvenida.'
+      );
+    } finally {
+      setLoadingConfig(false);
+    }
   };
 
   const handleStartLegalEdit = () => {
@@ -154,7 +205,7 @@ export default function CmsView() {
 
       localStorage.setItem(
         'zenith_cms_settings',
-        JSON.stringify({ logoUrl: settings.logoUrl, bannerUrl: settings.bannerUrl })
+        JSON.stringify({ logoUrl: settings.logoUrl })
       );
       window.dispatchEvent(new Event('zenith_cms_update'));
 
@@ -185,7 +236,7 @@ export default function CmsView() {
 
       localStorage.setItem(
         'zenith_cms_settings',
-        JSON.stringify({ logoUrl: settings.logoUrl, bannerUrl: settings.bannerUrl })
+        JSON.stringify({ logoUrl: settings.logoUrl })
       );
       window.dispatchEvent(new Event('zenith_cms_update'));
       setSaveSuccess(true);
@@ -248,37 +299,75 @@ export default function CmsView() {
       {activeSection === 'appearance' ? (
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
           <div className="xl:col-span-3 space-y-5">
-            {([
-              { key: 'logoUrl', label: 'Logotipo', fileName: logoFileName, setter: setLogoFileName },
-              { key: 'bannerUrl', label: 'Banner principal', fileName: bannerFileName, setter: setBannerFileName },
-            ] as const).map((item) => (
-              <section key={item.key} className="admin-surface-card zenith-panel space-y-4">
+            <section className="admin-surface-card zenith-panel space-y-4">
+              <div>
+                <h3 className="zenith-section-title">Logotipo</h3>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="h-16 w-16 rounded-xl bg-surface-950 border border-surface-800 flex items-center justify-center shrink-0 overflow-hidden">
+                  <ImageIcon className="h-7 w-7 text-surface-500" />
+                </div>
+                <div className="flex-1 space-y-2 min-w-0">
+                  <p className="text-xs text-surface-400 truncate">{logoFileName}</p>
+                  <label className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface-950 border border-surface-800 rounded-xl text-xs font-semibold text-foreground hover:bg-surface-850 transition-colors cursor-pointer">
+                    <Upload className="h-4 w-4" />
+                    Subir recurso
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/svg+xml"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleImageUpload(file, 'logoUrl', setLogoFileName);
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <section className="admin-surface-card zenith-panel space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4">
                 <div>
-                  <h3 className="zenith-section-title">{item.label}</h3>
+                  <h3 className="zenith-section-title">Banner principal</h3>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="h-16 w-16 rounded-xl bg-surface-950 border border-surface-800 flex items-center justify-center shrink-0 overflow-hidden">
-                    <ImageIcon className="h-7 w-7 text-surface-500" />
-                  </div>
-                  <div className="flex-1 space-y-2 min-w-0">
-                    <p className="text-xs text-surface-400 truncate">{item.fileName}</p>
-                    <label className="inline-flex items-center gap-2 px-3.5 py-2 bg-surface-950 border border-surface-800 rounded-xl text-xs font-semibold text-foreground hover:bg-surface-850 transition-colors cursor-pointer">
-                      <Upload className="h-4 w-4" />
-                      Subir recurso
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/svg+xml"
-                        className="hidden"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleImageUpload(file, item.key, item.setter);
-                        }}
-                      />
-                    </label>
-                  </div>
+                <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
+                  {isEditingBanner ? (
+                    <>
+                      <button type="button" onClick={handleConfirmBannerEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-[var(--portal-btn-bg)] hover:bg-[var(--portal-btn-hover)] text-[var(--portal-btn-fg)] rounded-xl text-xs font-extrabold shadow-md transition-colors">Confirmar cambios</button>
+                      <button type="button" onClick={handleCancelBannerEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all">Cancelar</button>
+                    </>
+                  ) : (
+                    <button type="button" onClick={handleStartBannerEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-[var(--portal-btn-bg)] hover:bg-[var(--portal-btn-hover)] text-[var(--portal-btn-fg)] rounded-xl text-xs font-extrabold shadow-md transition-colors">Editar textos</button>
+                  )}
                 </div>
-              </section>
-            ))}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="zenith-field-label" htmlFor="cms-banner-title">Título</label>
+                <input
+                  id="cms-banner-title"
+                  type="text"
+                  maxLength={120}
+                  value={isEditingBanner ? bannerDraft.loginBannerTitle : settings.loginBannerTitle}
+                  readOnly={!isEditingBanner}
+                  onChange={(e) => setBannerDraft((prev) => ({ ...prev, loginBannerTitle: e.target.value }))}
+                  className={`w-full px-3.5 py-2.5 text-sm font-bold rounded-xl border focus:outline-none ${isEditingBanner ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="zenith-field-label" htmlFor="cms-banner-subtitle">Subtítulo</label>
+                <textarea
+                  id="cms-banner-subtitle"
+                  rows={4}
+                  value={isEditingBanner ? bannerDraft.loginBannerSubtitle : settings.loginBannerSubtitle}
+                  readOnly={!isEditingBanner}
+                  onChange={(e) => setBannerDraft((prev) => ({ ...prev, loginBannerSubtitle: e.target.value }))}
+                  className={`w-full px-3.5 py-2.5 text-xs leading-relaxed resize-y min-h-[100px] rounded-xl border focus:outline-none ${isEditingBanner ? 'bg-surface-950 text-white border-surface-850 focus:border-secondary-500' : 'bg-surface-950/40 text-surface-250 border-surface-850'}`}
+                />
+              </div>
+            </section>
           </div>
 
           <aside className="xl:col-span-2">
@@ -299,7 +388,7 @@ export default function CmsView() {
               <div className="flex flex-col items-stretch sm:items-end gap-2 sm:min-w-[220px]">
                 {isEditingLegal ? (
                   <>
-                    <button type="button" onClick={handleConfirmLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-gradient-to-r from-secondary to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white rounded-xl text-xs font-extrabold shadow-md shadow-secondary-650/10 transition-all">Confirmar cambios</button>
+                    <button type="button" onClick={handleConfirmLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-[var(--portal-btn-bg)] hover:bg-[var(--portal-btn-hover)] text-[var(--portal-btn-fg)] rounded-xl text-xs font-extrabold shadow-md transition-colors">Confirmar cambios</button>
                     <button type="button" onClick={handleCancelLegalEdit} disabled={loadingConfig} className="w-full sm:min-w-[220px] px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all">Cancelar</button>
                   </>
                 ) : (

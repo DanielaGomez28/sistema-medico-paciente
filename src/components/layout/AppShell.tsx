@@ -5,7 +5,7 @@
  * @description Resuelve la estructura visual reutilizable del portal y su navegación principal.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { ShellProvider } from './ShellContext';
 
@@ -40,6 +40,9 @@ export interface AppShellProps {
   className?: string;
   contentClassName?: string;
   layout?: 'vertical' | 'horizontal' | 'vertical-collapsible';
+  /** Identificador de la pantalla/pestaña activa (ej. el `activeTab`). Cada vez
+   * que cambia, el área de contenido vuelve a hacer scroll hasta arriba. */
+  scrollKey?: string | number;
 }
 
 /**
@@ -57,8 +60,14 @@ export default function AppShell({
   className,
   contentClassName,
   layout = 'vertical',
+  scrollKey,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [scrollKey]);
 
   useEffect(() => {
     if (!sidebarOpen) return;
@@ -98,7 +107,11 @@ export default function AppShell({
             layout === 'horizontal'
               ? 'w-64 lg:hidden transition-transform duration-200'
               : layout === 'vertical-collapsible'
-                ? 'sidebar-collapsible w-64 lg:w-[4.5rem] lg:hover:w-64 lg:will-change-[width] transition-[width,transform] duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0'
+                /* Siempre 'fixed' (nunca 'static'): al desplegar con el hover,
+                   la barra queda flotando ENCIMA del contenido (lo tapa un
+                   poco) en vez de empujarlo/redimensionarlo. Por eso el resto
+                   de la pantalla (header, contenido) nunca se mueve. */
+                ? 'sidebar-collapsible w-64 lg:w-[5rem] lg:hover:w-64 lg:hover:shadow-2xl lg:will-change-[width] transition-[width,transform,box-shadow] duration-300 ease-in-out lg:translate-x-0'
                 : 'w-64 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
@@ -107,9 +120,14 @@ export default function AppShell({
             {sidebar}
           </div>
         </div>
-        <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+        <div
+          className={cn(
+            'flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden',
+            layout === 'vertical-collapsible' && 'lg:ml-[5rem]'
+          )}
+        >
           {headerContent}
-          <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8 bg-surface-950 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
+          <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8 bg-surface-950 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
             <div className={cn('w-full max-w-[96rem] mx-auto', contentClassName)}>{children}</div>
           </main>
         </div>
