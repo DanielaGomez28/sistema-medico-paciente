@@ -556,7 +556,6 @@ export default function Home() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           pendingOrdersCount={pendingCount}
-          onLogout={handleLogout}
           adminName={currentUser?.name || APP_USER_DEFAULTS.adminName}
           enableOperationalTabs={enableOperationalTabs}
         />
@@ -584,6 +583,7 @@ export default function Home() {
             profileInitials={adminInitials}
             showProfileName={false}
             showProfileAvatar={false}
+            onLogout={handleLogout}
             actions={enableOperationalTabs ? (
               <AppHeaderAction variant="admin" onClick={() => setIsNewOrderOpen(true)}>
                 Nuevo Pedido

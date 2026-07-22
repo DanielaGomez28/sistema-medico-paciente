@@ -25,7 +25,6 @@ interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   pendingOrdersCount: number;
-  onLogout: () => void;
   adminName: string;
   enableOperationalTabs?: boolean;
 }
@@ -40,7 +39,6 @@ export default function Sidebar({
   activeTab,
   setActiveTab,
   pendingOrdersCount,
-  onLogout,
   enableOperationalTabs = true,
 }: SidebarProps) {
   return (
@@ -73,11 +71,6 @@ export default function Sidebar({
       ]}
       activeId={activeTab}
       onNavigate={setActiveTab}
-      onLogout={onLogout}
-      logoutVariant="full"
-      logoutLabel="Salida"
-      footerClassName="admin-sidebar-footer-cyan"
-      logoutClassName="admin-logout-btn"
     />
   );
 }
