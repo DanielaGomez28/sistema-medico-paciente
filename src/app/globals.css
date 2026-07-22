@@ -1396,6 +1396,10 @@ table th {
   color: #000000;
 }
 
+[data-portal="doctor"] .doctor-recipe-log-item__name::before {
+  content: "Paciente: ";
+}
+
 [data-portal="doctor"] .doctor-recipe-log-item__med {
   background: #ffffff;
   border: 1px solid color-mix(in srgb, #179150 22%, #cbd5e1);
