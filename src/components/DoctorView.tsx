@@ -372,6 +372,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [scanProgress, setScanProgress] = useState(0);
   const [manualPatientIdInput, setManualPatientIdInput] = useState('');
   const [linkedPatient, setLinkedPatient] = useState<LinkedPatient | null>(null);
+  const [prescriptionPatientDraft, setPrescriptionPatientDraft] = useState<LinkedPatient | null>(null);
   const [, setPatientsLoading] = useState(false);
   const [, setPatientsError] = useState('');
 
@@ -810,6 +811,43 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       cancelled = true;
     };
   }, [DOCTOR_ID, activeTab]);
+
+  /**
+   * Marca un paciente como selección pendiente antes de confirmar el récipe.
+   * @param {LinkedPatient} patient - Paciente preseleccionado.
+   */
+  function stagePrescriptionPatient(patient: LinkedPatient) {
+    setPrescriptionPatientDraft(patient);
+  }
+
+  /**
+   * Confirma la selección pendiente y abre la prescripción.
+   */
+  function confirmPrescriptionPatient() {
+    if (!prescriptionPatientDraft) return;
+    selectPatientForPrescription(prescriptionPatientDraft);
+    setPrescriptionPatientDraft(null);
+  }
+
+  /**
+   * Cancela la preselección del paciente en el flujo de récipe.
+   */
+  function clearPrescriptionPatientDraft() {
+    setPrescriptionPatientDraft(null);
+  }
+
+  /**
+   * Vincula un paciente al flujo de prescripción sin abrir su expediente.
+   * @param {LinkedPatient} patient - Paciente seleccionado para el récipe.
+   */
+  function selectPatientForPrescription(patient: LinkedPatient) {
+    setLinkedPatient(patient);
+    setCart([]);
+    setPatientViewMode('list');
+    setIsEditingPatientRecord(false);
+    setPatientSaveMsg('');
+    setProfileErrorMsg('');
+  }
 
   /**
    * Abre el formulario de detalle de un paciente existente.
@@ -1334,6 +1372,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
               if (id === 'reception') {
                 setPatientViewMode('list');
               }
+              if (id !== 'prescription') {
+                setPrescriptionPatientDraft(null);
+              }
               setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile' | 'help');
             }}
             profile={{
@@ -1376,6 +1417,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             onNavigate={(id) => {
               if (id === 'reception') {
                 setPatientViewMode('list');
+              }
+              if (id !== 'prescription') {
+                setPrescriptionPatientDraft(null);
               }
               setActiveTab(id as 'agenda' | 'reception' | 'prescription' | 'commissions' | 'profile' | 'help');
             }}
@@ -1475,22 +1519,22 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {inventoryPreview.slice(0, 4).map((prod) => (
-                      <div key={prod.id} className="overflow-hidden bg-surface-950/50 border border-secondary-500/50 rounded-2xl p-4 space-y-3">
+                      <div key={prod.id} className="doctor-pharmacy-product-card overflow-hidden bg-surface-950/50 border border-secondary-500/50 rounded-2xl p-4 space-y-3">
                         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                           <div className="min-w-0 flex-1 space-y-1">
-                            <span className="block min-w-0 flex-1 max-w-full text-xs text-surface-200 leading-snug break-words line-clamp-3 font-normal">
+                            <span className="doctor-pharmacy-product-body block min-w-0 flex-1 max-w-full text-surface-200 leading-snug break-words line-clamp-3 font-normal">
                               <span className="font-normal text-surface-200">Principio activo: {prod.category ? prod.category.charAt(0).toUpperCase() + prod.category.slice(1).toLowerCase() : ''}</span><br />
                               <span className="!font-bold text-surface-200">{prod.name}</span>
                             </span>
                           </div>
-                          <span className="w-fit max-w-full shrink-0 truncate whitespace-nowrap text-[9px] text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
+                          <span className="doctor-pharmacy-product-badge w-fit max-w-full shrink-0 truncate whitespace-nowrap text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
                             {prod.pharmacyName || 'Farmacia'}
                           </span>
                         </div>
-                        <div className="text-[10px] text-surface-400 break-words line-clamp-3">{prod.description}</div>
-                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] text-surface-300">
-                          <span className="whitespace-nowrap">Stock: {prod.stock} u.</span>
-                          <span className="text-sm !font-bold text-secondary-400 whitespace-nowrap">{formatCurrency(prod.price)}</span>
+                        <div className="doctor-pharmacy-product-desc text-surface-400 break-words line-clamp-3">{prod.description}</div>
+                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-surface-300">
+                          <span className="doctor-pharmacy-product-stock whitespace-nowrap">Stock: {prod.stock} u.</span>
+                          <span className="doctor-pharmacy-product-price !font-bold text-secondary-400 whitespace-nowrap">{formatCurrency(prod.price)}</span>
                         </div>
                       </div>
                     ))}
@@ -1746,6 +1790,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     type="button"
                     onClick={() => {
                       setLinkedPatient(null);
+                      setPrescriptionPatientDraft(null);
                       setCart([]);
                       setActiveTab('reception');
                     }}
@@ -1757,36 +1802,30 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 )}
 
                 {/* Linked Patient Header Bar */}
-                <div className="bg-surface-900/65 border border-surface-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md">
+                <div className="doctor-prescription-selected-bar bg-surface-900/65 border border-surface-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-md">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-secondary-650 flex items-center justify-center text-white font-extrabold text-sm shadow-md">
                       {linkedPatient ? linkedPatient.name.charAt(0) : '?'}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-surface-450 uppercase font-bold tracking-wider">Paciente seleccionado</span>
+                        <span className="doctor-prescription-selected-label text-surface-450 uppercase font-bold tracking-wider">Paciente seleccionado</span>
                         {linkedPatient && (
                           <span className="text-[9px] bg-secondary-500/10 text-secondary-400 border border-secondary-500/25 px-1.5 py-0.2 rounded font-mono font-bold">
                             VINCULADO
                           </span>
                         )}
                       </div>
-                      <h3 className="zenith-section-title mt-0.5">
+                      <h3 className="doctor-prescription-selected-value zenith-section-title mt-0.5">
                         {linkedPatient ? `${linkedPatient.name} (${linkedPatient.age} años)` : 'Ninguno seleccionado'}
                       </h3>
                     </div>
                   </div>
 
                   {!linkedPatient && (
-                    <button
-                      onClick={() => {
-                        setPatientViewMode('list');
-                        setActiveTab('reception');
-                      }}
-                      className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-xl text-xs font-bold transition-all cursor-pointer"
-                    >
-                      Seleccionar paciente
-                    </button>
+                    <p className="text-xs text-surface-500">
+                      Elija un paciente en la lista inferior para iniciar la prescripción.
+                    </p>
                   )}
                 </div>
 
@@ -1842,7 +1881,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                           return (
                             <div 
                               key={prod.id} 
-                              className={`overflow-hidden p-3 border rounded-xl flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-2.5 transition-all ${
+                              className={`doctor-pharmacy-product-card overflow-hidden p-3 border rounded-xl flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-2.5 transition-all ${
                                 isAlreadySelected
                                   ? 'bg-surface-950/60 border-surface-800 opacity-60'
                                   : 'bg-surface-950/40 border-surface-850 hover:border-surface-800'
@@ -1850,21 +1889,21 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             >
                               <div className="space-y-1 text-left min-w-0 flex-1">
                                 <div className="flex w-full min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-1.5">
-                                  <span className="block min-w-0 flex-1 max-w-full text-xs text-surface-200 leading-snug break-words line-clamp-3 font-normal">
+                                  <span className="doctor-pharmacy-product-body block min-w-0 flex-1 max-w-full text-surface-200 leading-snug break-words line-clamp-3 font-normal">
                                     <span className="font-normal text-surface-200">Principio activo: {prod.category ? prod.category.charAt(0).toUpperCase() + prod.category.slice(1).toLowerCase() : ''}</span><br />
                                     <span className="font-normal text-surface-200">{prod.name}</span>
                                     {prod.pharmacyName && (
-                                      <span className="block text-[10px] text-surface-400 mt-0.5">Farmacia: {prod.pharmacyName}</span>
+                                      <span className="doctor-pharmacy-product-farmacia-label block text-surface-400 mt-0.5">Farmacia: {prod.pharmacyName}</span>
                                     )}
                                   </span>
                                 </div>
-                                <p className="text-[10px] text-surface-500 break-words line-clamp-2">{prod.description}</p>
+                                <p className="doctor-pharmacy-product-desc text-surface-500 break-words line-clamp-2">{prod.description}</p>
                               </div>
 
                               <div className="flex flex-col items-end justify-between gap-2 shrink-0">
                                 <div className="text-right">
                                   <span className="block text-xs font-bold text-white">{formatCurrency(prod.price)}</span>
-                                  <span className={`block text-[10px] ${prod.stock < 20 ? 'text-primary-500 font-medium' : 'text-surface-400'}`}>Stock: {prod.stock} u.</span>
+                                  <span className={`doctor-pharmacy-product-stock block ${prod.stock < 20 ? 'text-primary-500 font-medium' : 'text-surface-400'}`}>Stock: {prod.stock} u.</span>
                                 </div>
                                 {(() => {
                                   const cartItem = cart.find(i => i.product.id === prod.id);
@@ -2047,12 +2086,66 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                   </div>
                 ) : (
-                  <div className="h-64 portal-dashboard-card flex flex-col items-center justify-center text-center space-y-3">
-                    <AlertCircle className="h-10 w-10 text-surface-650" />
-                    <h4 className="zenith-section-title">Sin Paciente Seleccionado</h4>
-                    <p className="text-xs text-surface-450 max-w-sm leading-relaxed">
-                      Registre o seleccione un paciente en Gestión de Pacientes para generar un récipe clínico.
-                    </p>
+                  <div className="portal-dashboard-card space-y-4 doctor-prescription-patient-picker">
+                    <div>
+                      <h4 className="zenith-section-title">Seleccionar paciente</h4>
+                      <p className="doctor-prescription-patient-picker-hint text-surface-400 mt-1">
+                        Seleccione un paciente y confirme para iniciar la prescripción.
+                      </p>
+                    </div>
+
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-surface-500" />
+                      <input
+                        type="text"
+                        placeholder="Buscar por nombre o ID interno"
+                        value={patientListSearch}
+                        onChange={(e) => setPatientListSearch(e.target.value)}
+                        className="zenith-input pl-10 pr-4 py-2.5"
+                      />
+                    </div>
+
+                    {filteredPatients.length > 0 ? (
+                      <div className="portal-dashboard-card portal-dashboard-card--flush divide-y divide-surface-850">
+                        {filteredPatients.map((patient) => {
+                          const isDraftSelected = prescriptionPatientDraft?.patientId === patient.patientId;
+                          return (
+                          <button
+                            key={patient.patientId}
+                            type="button"
+                            onClick={() => stagePrescriptionPatient(patient)}
+                            className={`w-full flex items-center gap-3 px-4 py-3.5 sm:px-6 sm:py-4 text-left transition-colors cursor-pointer ${
+                              isDraftSelected
+                                ? 'bg-secondary-500/10 border-l-2 border-secondary-500'
+                                : 'hover:bg-surface-850/40'
+                            }`}
+                          >
+                            <div className="h-8 w-8 rounded-full bg-secondary-650 flex items-center justify-center font-bold text-white text-xs shrink-0">
+                              {patient.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0">
+                              <h5 className="doctor-prescription-patient-name break-words">{patient.name}</h5>
+                              <span className="doctor-prescription-patient-id inline-block font-mono mt-0.5 break-all">
+                                ID: {patient.patientId}
+                              </span>
+                            </div>
+                          </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 text-surface-500 flex flex-col items-center justify-center">
+                        <Users className="h-8 w-8 text-surface-600 mb-2" />
+                        <p className="font-semibold text-surface-400">
+                          {patients.length === 0 ? 'No hay pacientes registrados' : 'No se encontraron pacientes'}
+                        </p>
+                        <p className="text-xs text-surface-500 mt-1">
+                          {patients.length === 0
+                            ? 'Registre pacientes en la sección Pacientes.'
+                            : 'Modifique los términos de búsqueda.'}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -2392,6 +2485,63 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           )}
         </ModalBody>
       </Modal>
+
+      {prescriptionPatientDraft ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div
+            className="absolute inset-0 bg-surface-950/75 backdrop-blur-sm"
+            onClick={clearPrescriptionPatientDraft}
+          />
+
+          <div className="doctor-prescription-confirm-modal relative bg-surface-900 border border-surface-800 text-surface-100 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 bg-surface-950/40">
+              <h3 className="zenith-section-title">Confirmar paciente</h3>
+              <button
+                type="button"
+                onClick={clearPrescriptionPatientDraft}
+                className="p-1 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 overflow-y-auto text-surface-400 leading-relaxed text-left">
+              <p>
+                ¿Desea vincular a este paciente para generar el récipe clínico? Verifique que los datos sean correctos antes de continuar.
+              </p>
+
+              <div className="portal-dashboard-stat text-left">
+                <div className="min-w-0 text-left">
+                  <p className="doctor-prescription-patient-name">{prescriptionPatientDraft.name}</p>
+                  <p className="doctor-prescription-patient-id font-mono mt-0.5 break-all">
+                    ID: {prescriptionPatientDraft.patientId}
+                  </p>
+                  <p className="doctor-prescription-confirm-modal-meta mt-1">
+                    {prescriptionPatientDraft.age} años · {prescriptionPatientDraft.gender}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-surface-950/60 border-t border-surface-850 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={clearPrescriptionPatientDraft}
+                className="px-4 py-2 bg-[#e11d48] hover:bg-[#c91840] !text-[#ffffff] rounded-lg font-semibold border border-[#c91840] transition-all cursor-pointer"
+              >
+                Volver
+              </button>
+              <button
+                type="button"
+                onClick={confirmPrescriptionPatient}
+                className="doctor-generate-recipe-btn px-4 py-2 rounded-lg font-semibold transition-all cursor-pointer border"
+              >
+                Confirmar y continuar
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       </AppShell>
     </>
