@@ -194,6 +194,7 @@ function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationErro
     return { field: 'phone', message: 'No se pudo modificar los datos del usuario. Teléfono inválido. Formato esperado: Ej. +58 412 1234567 (entre 7 y 20 caracteres).' };
   }
 
+
   if (normalized.age && (!/^\d{1,3}$/.test(normalized.age) || Number(normalized.age) > 130)) {
     return { field: 'age', message: 'No se pudo modificar los datos del usuario. Edad inválida. Formato esperado: número entre 0 y 130.' };
   }
@@ -691,11 +692,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   } = useCredentialQr(qrSeedLeft, qrSeedRight);
 
   const activeCheckoutPrescription = useMemo(() => {
-    if (!backendPrescriptions.length) return null;
+    // El checkout arranca sin récipe elegido: el paciente decide cuál comprar.
+    // Con el fallback al último, elegir "Seleccionar" no limpiaba la pantalla.
+    if (!backendPrescriptions.length || !activeCheckoutRecipeId) return null;
     return (
-      backendPrescriptions.find((prescription) => prescription.recipeId === activeCheckoutRecipeId) ||
-      backendPrescriptions[backendPrescriptions.length - 1] ||
-      null
+      backendPrescriptions.find((prescription) => prescription.recipeId === activeCheckoutRecipeId) || null
     );
   }, [activeCheckoutRecipeId, backendPrescriptions]);
 
@@ -828,7 +829,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         const response = await apiClient.get(`/prescripciones/paciente/${encodeURIComponent(socketPatientIdentity)}`);
         const backendItems = Array.isArray(response.data?.items) ? response.data.items : [];
         const mappedRecipes = backendItems.flatMap(mapBackendPrescriptionToRecipes);
-        const latestRecipeId = backendItems.length ? backendItems[backendItems.length - 1]?.recipeId || '' : '';
 
         if (!cancelled) {
           setBackendPrescriptions(backendItems);
@@ -836,7 +836,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           setActiveCheckoutRecipeId((current) =>
             current && backendItems.some((prescription: BackendPrescription) => prescription.recipeId === current)
               ? current
-              : latestRecipeId
+              : ''
           );
         }
       } catch (error: unknown) {
@@ -2389,11 +2389,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <p className="text-xs text-surface-500 mt-1">Sin receta asociada al checkout.</p>
                   )}
                 </div>
-                {backendPrescriptions.length > 1 && (
+                {backendPrescriptions.length > 0 && (
                   <div className="flex flex-col gap-1.5 w-full lg:w-auto lg:min-w-[min(100%,320px)] lg:max-w-[420px] shrink-0">
                     <span className="text-xs text-surface-400 font-bold">Seleccionar récipe</span>
                     <select
-                      value={activeCheckoutRecipeId || activeCheckoutPrescription?.recipeId || ''}
+                      value={activeCheckoutRecipeId}
                       onChange={(e) => {
                         setActiveCheckoutRecipeId(e.target.value);
                         setUnselectedItemIds(new Set());
@@ -2405,6 +2405,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       }}
                       className="patient-checkout-recipe-select w-full bg-surface-950 border border-surface-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"
                     >
+                      <option value="">Seleccionar</option>
                       {backendPrescriptions.map(presc => (
                         <option key={presc.recipeId} value={presc.recipeId} title={presc.recipeId}>
                           {formatRecipeDate(presc.createdAt)} · {presc.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName}
@@ -2472,6 +2473,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 })}
               </div>
 
+              {/* Aceptar términos solo aplica si hay un récipe elegido con productos:
+                  sin nada que comprar, el bloque confundía porque daba a entender
+                  que quedaba un paso pendiente. */}
+              {proposalItems.length > 0 ? (
               <div className="pt-4 border-t border-surface-850 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   {termsAccepted ? (
@@ -2500,6 +2505,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   {termsAccepted ? 'Ver Términos' : 'Aceptar Términos'}
                 </Button>
               </div>
+              ) : null}
             </div>
 
             {/* Facturación Invoice Box */}
