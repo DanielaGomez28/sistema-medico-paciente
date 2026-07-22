@@ -201,11 +201,20 @@ interface ApiErrorPayload {
 }
 
 /**
- * Normaliza un identificador de paciente para comparaciones seguras en UI.
+ * Limpia el identificador de paciente escrito a mano antes de consultarlo.
+ *
+ * OJO: la versión anterior pasaba a mayúsculas y descartaba todo lo que no fuera
+ * A-Z, dígito o guion, con lo que se comía los guiones bajos del id canónico:
+ * 'paciente_karim_sahili' viajaba como 'PACIENTEKARIMSAHILI' y el backend
+ * respondía 404, así que vincular escribiendo el ID nunca funcionaba.
+ * Se conserva el juego de caracteres que el backend acepta y se respeta lo
+ * tecleado; la búsqueda no distingue mayúsculas.
+ *
  * @param {string} value - Valor ingresado por el usuario.
- * @returns {string} Identificador normalizado.
+ * @returns {string} Identificador limpio, listo para consultar.
  */
-const normalizePatientLookup = (value: string) => value.toUpperCase().replace(/[^A-Z0-9-]/g, '').trim();
+const normalizePatientLookup = (value: string) =>
+  String(value || '').trim().replace(/[^A-Za-z0-9_.@-]/g, '');
 
 /**
  * Normaliza un identificador de paciente para comparar historiales.
@@ -1021,7 +1030,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         setLinkedPatient(null);
       }
       if ((patientForm.systemId || patientForm.patientId) === patientIdentifier) {
-        closePatientForm();
+        handleBackToPatientList();
       }
     } catch (error: unknown) {
       const apiError = error as ApiErrorPayload;
