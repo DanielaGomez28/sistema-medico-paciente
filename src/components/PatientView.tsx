@@ -666,6 +666,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [expandedMedicationRecipeId, setExpandedMedicationRecipeId] = useState<string | null>(
     () => leerIntencionDeNavegacion().recipeId || null
   );
+  const expandedMedicationPopoverRef = useRef<HTMLDivElement | null>(null);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
   const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
