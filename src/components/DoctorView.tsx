@@ -146,6 +146,7 @@ interface DoctorRecipeLogRecord {
   clinicalStatus: string;
   commercialStatus: string;
   fulfillmentStatus: string;
+  fulfilledAt?: string | null;
   recipeExpiresAt: string;
   createdAt: string;
   pharmacyDispatch?: {
@@ -2195,14 +2196,32 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 })}
                               </div>
 
-                              <p className="text-[10px] text-surface-500">
-                                Emitido {new Date(rec.createdAt).toLocaleString('es-ES', {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })}
+                              <p className="text-[10px] text-surface-500 flex items-center gap-1 flex-wrap">
+                                <span>
+                                  Emitido {new Date(rec.createdAt).toLocaleString('es-ES', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                                {rec.fulfillmentStatus === 'fully_fulfilled' ? (
+                                  <>
+                                    <span>•</span>
+                                    <span>
+                                      Agotado{rec.fulfilledAt
+                                        ? ` el ${new Date(rec.fulfilledAt).toLocaleString('es-ES', {
+                                            day: '2-digit',
+                                            month: '2-digit',
+                                            year: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          })}`
+                                        : ''}
+                                    </span>
+                                  </>
+                                ) : null}
                               </p>
                             </div>
 
