@@ -206,6 +206,8 @@ export default function Home() {
   const [isNewOrderOpen, setIsNewOrderOpen] = useState(false);
   const [platformTerms, setPlatformTerms] = useState<PlatformTermsState | null>(null);
   const [showPlatformTermsModal, setShowPlatformTermsModal] = useState(false);
+  const [hasReadTermsAndConditions, setHasReadTermsAndConditions] = useState(false);
+  const [hasReadUsagePolicy, setHasReadUsagePolicy] = useState(false);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -406,7 +408,12 @@ export default function Home() {
         const acceptedVersion = Number(
           localStorage.getItem(getPlatformTermsAcceptanceStorageKey(currentUser)) || '0'
         );
-        setShowPlatformTermsModal(acceptedVersion !== nextTerms.platformTermsVersion);
+        const mustAccept = acceptedVersion !== nextTerms.platformTermsVersion;
+        setShowPlatformTermsModal(mustAccept);
+        if (mustAccept) {
+          setHasReadTermsAndConditions(false);
+          setHasReadUsagePolicy(false);
+        }
       } catch {
         if (!cancelled) {
           setShowPlatformTermsModal(false);
@@ -422,7 +429,7 @@ export default function Home() {
   }, [apiBaseUrl, currentUser, isHydrated]);
 
   const handleAcceptPlatformTerms = () => {
-    if (!currentUser || !platformTerms) {
+    if (!currentUser || !platformTerms || !hasReadTermsAndConditions || !hasReadUsagePolicy) {
       return;
     }
 
@@ -431,6 +438,8 @@ export default function Home() {
       String(platformTerms.platformTermsVersion)
     );
     setShowPlatformTermsModal(false);
+    setHasReadTermsAndConditions(false);
+    setHasReadUsagePolicy(false);
   };
 
   const withPlatformTermsGate = (content: React.ReactNode) => (
@@ -467,21 +476,45 @@ export default function Home() {
               </section>
             </div>
 
-            <div className="flex flex-wrap justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-xl border border-surface-700 bg-surface-950 px-4 py-2.5 text-sm font-bold text-surface-300"
-              >
-                Cerrar sesión
-              </button>
-              <button
-                type="button"
-                onClick={handleAcceptPlatformTerms}
-                className="rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-bold text-surface-950"
-              >
-                Aceptar y continuar
-              </button>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-2 text-xs font-semibold text-surface-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasReadTermsAndConditions}
+                    onChange={(e) => setHasReadTermsAndConditions(e.target.checked)}
+                    className="h-4 w-4 rounded border-surface-600 bg-surface-950 text-primary-500 focus:ring-primary-500 cursor-pointer"
+                  />
+                  He leído y acepto los Términos y condiciones
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-surface-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={hasReadUsagePolicy}
+                    onChange={(e) => setHasReadUsagePolicy(e.target.checked)}
+                    className="h-4 w-4 rounded border-surface-600 bg-surface-950 text-primary-500 focus:ring-primary-500 cursor-pointer"
+                  />
+                  He leído y acepto la Política de uso
+                </label>
+              </div>
+
+              <div className="flex flex-wrap justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="rounded-xl border border-surface-700 bg-surface-950 px-4 py-2.5 text-sm font-bold text-surface-300"
+                >
+                  No aceptar y cerrar
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAcceptPlatformTerms}
+                  disabled={!hasReadTermsAndConditions || !hasReadUsagePolicy}
+                  className="rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-bold text-surface-950 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Aceptar y continuar
+                </button>
+              </div>
             </div>
           </div>
         </div>
