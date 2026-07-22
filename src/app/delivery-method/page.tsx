@@ -34,10 +34,10 @@ function DeliveryMethodContent() {
       setLoading(false);
       setSuccess(true);
       setTimeout(() => {
-        // Se vuelve a la sección de récipes con el récipe recién gestionado
-        // destacado, en vez de dejar al paciente en el inicio sin contexto.
+        // Se vuelve a la sección de entrega/confirmación del pedido
+        // con el récipe recién gestionado destacado.
         router.push(
-          recipeId ? `/?seccion=recipes&recipeId=${encodeURIComponent(recipeId)}` : '/'
+          recipeId ? `/?seccion=delivery&recipeId=${encodeURIComponent(recipeId)}` : '/?seccion=delivery'
         );
       }, 1500);
     }, 1000);
@@ -48,7 +48,7 @@ function DeliveryMethodContent() {
       <div className="w-full max-w-lg rounded-3xl border border-secondary-500/30 bg-secondary-500/10 p-10 text-center space-y-4">
         <h2 className="text-xl font-bold text-secondary-300">¡Preferencia guardada!</h2>
         <p className="text-sm text-secondary-200">
-          Te llevamos a tus récipes médicos...
+          Te llevamos a la confirmación del pedido...
         </p>
       </div>
     );

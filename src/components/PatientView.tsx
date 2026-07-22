@@ -267,6 +267,9 @@ interface BackendPrescriptionItem {
   subtotal_base?: number;
   subtotal_final?: number;
   beneficio_pct: number;
+  cantidad_prescrita?: number;
+  cantidad_dispensada?: number;
+  remaining_quantity?: number;
 }
 
 interface BackendPrescription {
@@ -318,7 +321,9 @@ interface CheckoutSessionState {
 
 interface BackendTrackingItem {
   id: string;
+  id_producto?: string;
   nombre: string;
+  dosis?: string;
   totalPrescribedDoses: number;
   totalDispensedDoses: number;
   availableDoses: number;
@@ -515,14 +520,15 @@ const buildTreatmentsFromTracking = (
   profiles.flatMap((profile) => {
     const recipe = prescriptions.find((entry) => entry.recipeId === profile.recipeId);
     return (profile.items || []).map((item) => {
-      const prescriptionItem = recipe?.items?.find((candidate) => candidate.id === item.id);
+      const productId = item.id_producto || item.id;
+      const prescriptionItem = recipe?.items?.find((candidate) => String(candidate.id_producto || candidate.id) === String(productId));
       const totalDoses = Number(item.totalDispensedDoses || item.totalPrescribedDoses || 0);
       const takenDoses = Number(item.consumedDoses || 0);
       return {
-        id: buildTreatmentId(profile.recipeId, item.id),
-        productId: item.id,
+        id: buildTreatmentId(profile.recipeId, productId),
+        productId,
         name: item.nombre,
-        dosage: prescriptionItem?.dosis || 'Seguir indicaciones médicas',
+        dosage: prescriptionItem?.dosis || item.dosis || 'Seguir indicaciones médicas',
         frequency: item.averageDailyConsumption > 0 ? `${item.averageDailyConsumption.toFixed(2)} dosis/día` : 'Seguimiento activo',
         scheduleTimes: buildScheduleTimes(Number(prescriptionItem?.daily_doses || 1)),
         startDate: formatRecipeDate(recipe?.createdAt || new Date().toISOString()),
@@ -533,7 +539,7 @@ const buildTreatmentsFromTracking = (
         totalDoses,
         takenDoses,
         status: item.availableDoses <= 0 ? 'Completado' : 'En curso',
-        instructions: prescriptionItem?.dosis || 'Seguir indicaciones médicas.',
+        instructions: prescriptionItem?.dosis || item.dosis || 'Seguir indicaciones médicas.',
       };
     });
   });
@@ -544,8 +550,8 @@ const buildDoseLogsFromTracking = (profiles: BackendTrackingProfile[]): DoseLog[
       (item.intakeLogs || []).map((log) => ({
         id: log.logId,
         recipeId: profile.recipeId,
-        productId: item.id,
-        medicationId: buildTreatmentId(profile.recipeId, item.id),
+        productId: item.id_producto || item.id,
+        medicationId: buildTreatmentId(profile.recipeId, item.id_producto || item.id),
         medicationName: item.nombre,
         scheduledTime: new Date(log.takenAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
         takenAt: new Date(log.takenAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
@@ -663,7 +669,10 @@ const isRecentlyRetiredPrescription = (prescription: BackendPrescription, now: n
 export default function PatientView({ patientName, patientEmail, patientId, socketIdentity, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile'
   const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile' | 'help'>(
-    () => (leerIntencionDeNavegacion().seccion === 'recipes' ? 'recipes' : 'treatment')
+    () => {
+      const seccion = leerIntencionDeNavegacion().seccion;
+      return seccion === 'recipes' || seccion === 'delivery' ? seccion : 'treatment';
+    }
   );
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -757,7 +766,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       id: `${activeCheckoutPrescription.recipeId}-${index + 1}`,
       productId: item.id_producto,
       medication: item.nombre,
-      quantity: Number(item.cantidad || 0),
+      quantity: Number(item.remaining_quantity ?? item.cantidad ?? 0),
       unitPrice: Number(item.precio_unitario_base || item.precio_unitario_final || 0),
       discountPercent: Number(item.beneficio_pct || 0),
     }));
@@ -1579,8 +1588,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       // Enviarla como producto hacía que el backend rechazara la compra con
       // "el item no pertenece al recipe indicado".
       const selectedItemsToBuy = proposalItems
-        .filter(i => !unselectedItemIds.has(i.id))
+        .filter(i => !unselectedItemIds.has(i.id) && i.productId && Number(i.quantity) > 0)
         .map(i => ({ id_producto: i.productId, cantidad: i.quantity }));
+
+      if (!selectedItemsToBuy.length) {
+        setCheckoutError('No hay medicamentos disponibles para enviar al carrito.');
+        return;
+      }
 
       const response = await apiClient.post('/pagos/redireccion', {
         recipeId: activeCheckoutPrescription.recipeId,

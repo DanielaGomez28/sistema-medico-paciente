@@ -3302,3 +3302,19 @@ body .rounded-full {
     min-width: 40rem;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Zoom automático en móvil
+   Safari en iOS hace zoom al enfocar un control cuya fuente mide menos de 16px,
+   y no lo deshace al salir: el encabezado queda fuera de pantalla y no se puede
+   volver a los botones de sesión. La app usa text-xs (12px) en los formularios,
+   así que se fuerza 16px solo en pantallas táctiles chicas. No se toca
+   maximum-scale para no impedir el zoom manual de accesibilidad.
+   --------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
