@@ -21,6 +21,7 @@ import {
 import apiClient from '../lib/api';
 import PrintablePrescription from './PrintablePrescription';
 import ListCard from './ui/ListCard';
+import { Button, PageHeader } from './ui';
 
 interface ApiErrorPayload {
   response?: {
@@ -172,22 +173,17 @@ export default function AdminRecipesView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h2 className="zenith-section-title text-lg">Récipes Emitidos por Especialistas</h2>
-          <p className="text-xs text-surface-400 mt-1">Monitor administrativo de todas las prescripciones médicas del sistema.</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => { void loadRecipes(); }}
-          disabled={loading}
-          className="px-4 py-2.5 bg-surface-900 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-2 self-start"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-          Actualizar
-        </button>
-      </div>
+      <PageHeader
+        className="portal-page-header"
+        title="Gestión de recipes"
+        description="Monitor administrativo de todas las prescripciones médicas del sistema."
+        actions={
+          <Button variant="outline" size="sm" onClick={() => { void loadRecipes(); }} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Actualizar
+          </Button>
+        }
+      />
 
       {/* Search */}
       <div className="relative">

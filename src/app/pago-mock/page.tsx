@@ -8,6 +8,7 @@
 import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import apiClient from '../../lib/api';
+import { PageHeader } from '../../components/ui';
 
 /**
  * Contenido interactivo de la pasarela temporal.
@@ -99,18 +100,26 @@ function PagoMockContent() {
  */
 export default function PagoMockPage() {
   return (
-    <main className="portal-flow-page min-h-screen bg-surface-950 text-foreground flex items-center justify-center px-4 py-10">
-      <Suspense
-        fallback={
-          <div className="w-full max-w-lg rounded-3xl border border-surface-800 bg-surface-900/80 p-8 space-y-4 text-center">
-            <p className="text-xs uppercase tracking-[0.16em] text-surface-500 font-semibold">Pasarela temporal</p>
-            <h1 className="text-2xl font-bold text-foreground">Confirmar pago</h1>
-            <p className="text-sm text-surface-400 font-normal">Cargando información de la receta...</p>
-          </div>
-        }
-      >
-        <PagoMockContent />
-      </Suspense>
+    <main className="portal-flow-page min-h-screen bg-surface-950 text-foreground px-4 py-10">
+      <div className="w-full max-w-6xl mx-auto space-y-8">
+        <PageHeader
+          title="Pasarela de pago"
+          description="Confirmación temporal del pago asociado a tu receta."
+        />
+        <div className="flex items-center justify-center">
+          <Suspense
+            fallback={
+              <div className="w-full max-w-lg rounded-3xl border border-surface-800 bg-surface-900/80 p-8 space-y-4 text-center">
+                <p className="text-xs uppercase tracking-[0.16em] text-surface-500 font-semibold">Pasarela temporal</p>
+                <h1 className="text-2xl font-bold text-foreground">Confirmar pago</h1>
+                <p className="text-sm text-surface-400 font-normal">Cargando información de la receta...</p>
+              </div>
+            }
+          >
+            <PagoMockContent />
+          </Suspense>
+        </div>
+      </div>
     </main>
   );
 }

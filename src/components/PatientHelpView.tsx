@@ -24,7 +24,7 @@ export default function PatientHelpView() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-4 animate-in fade-in duration-300">
+    <div className="space-y-4">
       <div className="portal-dashboard-card py-3 px-4 sm:px-5">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary-500/10 border border-primary-500/25 flex items-center justify-center shrink-0">

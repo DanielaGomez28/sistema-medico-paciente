@@ -261,6 +261,9 @@ export default function CmsView() {
   return (
     <div className="space-y-6 portal-profile-view">
       <PageHeader
+        className="portal-page-header"
+        title="Configuración del portal"
+        description="Contenido, textos legales y banner del sistema."
         actions={
           <Button size="sm" variant="patient" onClick={handlePublish} disabled={loadingConfig}>
             <Save className="h-4 w-4" />
@@ -384,7 +387,7 @@ export default function CmsView() {
           </aside>
         </div>
       ) : (
-        <div className="max-w-4xl space-y-5">
+        <div className="space-y-5">
           <section className="admin-surface-card zenith-panel space-y-5">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-surface-850 pb-4">
               <div>

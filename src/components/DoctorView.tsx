@@ -38,9 +38,11 @@ import DoctorHelpView from './DoctorHelpView';
 // QR credential removed for doctor portal
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
-import { Button, Modal, ModalBody, ListCard } from './ui';
+import { Button, Modal, ModalBody, ListCard, PageHeader } from './ui';
+import { getDoctorPageDescription, getDoctorPageLayoutClass, getDoctorPageTitle } from '../lib/viewTitles';
 import apiClient from '../lib/api';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
+import { cn } from '../lib/utils';
 import { Html5Qrcode } from 'html5-qrcode';
 import {
   type DoctorLinkedPatientSeed as LinkedPatient,
@@ -1564,6 +1566,18 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           />
         )}
       >
+        <div
+          className={cn(
+            getDoctorPageLayoutClass(activeTab),
+            'space-y-4 animate-in fade-in duration-300'
+          )}
+        >
+        <PageHeader
+          className="portal-page-header"
+          title={getDoctorPageTitle(activeTab, doctorName)}
+          description={getDoctorPageDescription(activeTab)}
+        />
+
             {/* VIEW TAB 1: DAILY AGENDA & METRICS */}
             {activeTab === 'agenda' && (
               <div className="space-y-6">
@@ -2514,7 +2528,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
             {activeTab === 'profile' && (
               <>
-              <div className="space-y-6 animate-in fade-in duration-300 max-w-2xl mx-auto portal-profile-view">
+              <div className="space-y-6 portal-profile-view">
                 {profileSaveMsg && (<div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-lg flex items-center gap-2.5 text-secondary-400 text-xs animate-in fade-in slide-in-from-top-2 duration-300"><CheckCircle2 className="h-4.5 w-4.5 shrink-0" /><span>{profileSaveMsg}</span></div>)}
                 {profileErrorMsg && (<div className="p-4 bg-danger-500/10 border border-red-500 rounded-lg flex items-center gap-2.5 text-danger-500 text-xs font-semibold animate-in fade-in slide-in-from-top-2 duration-300"><AlertCircle className="h-4.5 w-4.5 shrink-0" /><span>{profileErrorMsg}</span></div>)}
                 <div className="portal-dashboard-card space-y-4">
@@ -2555,6 +2569,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 </div>
               </>
             )}
+
+        </div>
 
       {/* Credencial QR del médico eliminada */}
 

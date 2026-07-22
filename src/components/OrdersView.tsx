@@ -82,6 +82,9 @@ export default function OrdersView({ orders, onSelectOrder, onOpenNewOrder }: Or
   return (
     <div className="space-y-6">
       <PageHeader
+        className="portal-page-header"
+        title="Despacho de pedidos"
+        description="Gestión y seguimiento de pedidos en preparación y entrega."
         actions={
           <Button onClick={onOpenNewOrder}>
             <Plus className="h-4 w-4" />

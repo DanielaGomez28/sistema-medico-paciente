@@ -206,6 +206,9 @@ export default function FinancialSettingsView() {
   return (
     <div className="space-y-6">
       <PageHeader
+        className="portal-page-header"
+        title="Gestión de comisiones"
+        description="Políticas financieras, tasas y liquidaciones por médico."
         actions={
           <Button variant="outline" onClick={() => setIsAuditLogOpen(true)}>
             <History className="h-4 w-4" />

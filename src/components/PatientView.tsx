@@ -46,7 +46,9 @@ import {
 } from './CredentialQr';
 import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
-import { Button, ListCard, Modal, ModalBody } from './ui';
+import { Button, ListCard, Modal, ModalBody, PageHeader } from './ui';
+import { getPatientPageDescription, getPatientPageLayoutClass, getPatientPageTitle, type PatientSubTab } from '../lib/viewTitles';
+import { cn } from '../lib/utils';
 import apiClient from '../lib/api';
 import { getRecipeStatusBadgeClassName, translateStatus } from '../lib/statusColors';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
@@ -1798,6 +1800,20 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           </div>
         </ModalBody>
       </Modal>
+
+      <div
+        className={cn(
+          getPatientPageLayoutClass(activeSubTab as PatientSubTab),
+          'space-y-4 animate-in fade-in duration-300',
+          (activeSubTab === 'delivery' || activeSubTab === 'voucher') && 'py-8'
+        )}
+      >
+      <PageHeader
+        className="portal-page-header"
+        title={getPatientPageTitle(activeSubTab as PatientSubTab, profileName)}
+        description={getPatientPageDescription(activeSubTab as PatientSubTab)}
+      />
+
       {activeSubTab === 'recipes' && (
         <div className="space-y-4">
           {/* Progress Stepper grouped by recipe status */}
@@ -1859,21 +1875,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         <span className="text-[10px] font-semibold leading-tight text-foreground">
                           {step.label}
                         </span>
-                        <div className="min-h-[1.5rem] w-full space-y-1">
-                          {deliveryRecipeIdsByStatus[step.id].length ? (
-                            deliveryRecipeIdsByStatus[step.id].map((recipeId) => (
-                              <span
-                                key={`${step.id}-${recipeId}`}
-                                className="mx-auto block max-w-full truncate rounded-md border border-surface-800 bg-surface-950/50 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-surface-400"
-                                title={recipeId}
-                              >
-                                {recipeId}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="block text-[9px] font-medium text-surface-700">Sin recipes</span>
-                          )}
-                        </div>
                       </li>
                     );
                   })}
@@ -2759,7 +2760,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
       {/* P.4: DELIVERY / PERSONAL PICKUP SELECTION */}
       {activeSubTab === 'delivery' && (
-        <div className="max-w-3xl mx-auto py-8 animate-in fade-in zoom-in-95 duration-200">
+        <div className="animate-in fade-in zoom-in-95 duration-200">
           <div className="portal-dashboard-card space-y-4">
             <div className="flex items-start gap-4">
               <div className="h-12 w-12 rounded-2xl bg-secondary-500/15 border border-secondary-500/30 text-secondary-300 flex items-center justify-center shrink-0">
@@ -2818,7 +2819,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       {/* OJO: mismo criterio que el modal de receta imprimible -- fondo blanco
           fijo, colores fijos (slate), no usar surface-*. */}
       {activeSubTab === 'voucher' && (
-        <div className="max-w-2xl mx-auto py-8 animate-in fade-in zoom-in-95 duration-200">
+        <div className="animate-in fade-in zoom-in-95 duration-200">
           <div className="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
 
             <div className="bg-slate-950 text-white p-6 flex items-center justify-between">
@@ -2935,7 +2936,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       {/* P.5: PROFILE CONFIGURATION VIEW */}
       {activeSubTab === 'profile' && (
         <>
-        <div className="max-w-2xl mx-auto space-y-4 animate-in fade-in duration-300 portal-profile-view">
+        <div className="space-y-4 portal-profile-view">
           {profileSaveMsg && (
             <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-lg flex items-center gap-2.5 text-secondary-400 text-xs">
               <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
@@ -3223,6 +3224,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         </div>
         </>
       )}
+
+      </div>
 
       {/* Printable Clinical Prescription Modal */}
       {/* OJO: este documento SIEMPRE tiene fondo blanco (es para imprimir), así

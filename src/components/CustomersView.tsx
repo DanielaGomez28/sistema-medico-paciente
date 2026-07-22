@@ -79,6 +79,9 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
   return (
     <div className="space-y-6">
       <PageHeader
+        className="portal-page-header"
+        title="Gestión de clientes"
+        description="Directorio de clientes registrados en la plataforma."
         actions={
           <Button onClick={() => setIsAddModalOpen(true)}>
             <Plus className="h-4 w-4" />

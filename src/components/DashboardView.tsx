@@ -273,6 +273,9 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
   return (
     <div className="space-y-6">
       <PageHeader
+        className="portal-page-header"
+        title="Panel administrativo"
+        description="Resumen general del sistema y actividad reciente."
         actions={
           <Button variant="outline" size="sm" onClick={() => { void loadAdminData(); }} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -282,7 +285,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
       />
 
       {error ? (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
+        <div className="rounded-lg border border-danger-500/30 bg-danger-500/10 px-4 py-3 text-xs text-danger-500">
           {error}
         </div>
       ) : null}

@@ -10,6 +10,7 @@
 import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Truck, Store } from 'lucide-react';
+import { PageHeader } from '../../components/ui';
 
 /**
  * Contenido interactivo de selección de método de entrega (delivery o retiro
@@ -134,16 +135,24 @@ function DeliveryMethodContent() {
  */
 export default function DeliveryMethodPage() {
   return (
-    <main className="portal-flow-page min-h-screen bg-surface-950 text-foreground flex items-center justify-center px-4 py-10">
-      <Suspense
-        fallback={
-          <div className="w-full max-w-lg rounded-3xl border border-surface-800 bg-surface-900/80 p-8 text-center text-surface-400">
-            Cargando opciones...
-          </div>
-        }
-      >
-        <DeliveryMethodContent />
-      </Suspense>
+    <main className="portal-flow-page min-h-screen bg-surface-950 text-foreground px-4 py-10">
+      <div className="w-full max-w-6xl mx-auto space-y-8">
+        <PageHeader
+          title="Método de entrega"
+          description="Elige cómo deseas recibir tus medicamentos."
+        />
+        <div className="flex items-center justify-center">
+          <Suspense
+            fallback={
+              <div className="w-full max-w-lg rounded-3xl border border-surface-800 bg-surface-900/80 p-8 text-center text-surface-400">
+                Cargando opciones...
+              </div>
+            }
+          >
+            <DeliveryMethodContent />
+          </Suspense>
+        </div>
+      </div>
     </main>
   );
 }
