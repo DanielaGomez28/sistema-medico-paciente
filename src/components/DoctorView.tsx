@@ -715,13 +715,15 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
      * Carga desde backend el resumen real de comisiones del medico autenticado.
      * @returns {Promise<void>}
      */
-    const loadCommissionSummary = async () => {
+    const loadCommissionSummary = async (options?: { silent?: boolean }) => {
       if (activeTab !== 'commissions' || !DOCTOR_ID) {
         return;
       }
 
       try {
-        setCommissionLoading(true);
+        if (!options?.silent) {
+          setCommissionLoading(true);
+        }
         setCommissionError('');
         const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
@@ -748,10 +750,16 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       }
     };
 
-    loadCommissionSummary();
+    void loadCommissionSummary();
+    const intervalId = activeTab === 'commissions'
+      ? window.setInterval(() => { void loadCommissionSummary({ silent: true }); }, 30000)
+      : null;
 
     return () => {
       cancelled = true;
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+      }
     };
   }, [DOCTOR_ID, activeTab]);
 
