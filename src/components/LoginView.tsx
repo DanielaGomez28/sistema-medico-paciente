@@ -5,7 +5,7 @@
  * @description Implementa una vista o flujo de interfaz ligado a la experiencia operativa del sistema.
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import {
   AlertCircle,
@@ -44,6 +44,10 @@ interface LoginViewProps {
   onLoginSuccess: (user: LoginSuccessPayload) => void;
 }
 
+const DEFAULT_LOGIN_BANNER_TITLE = '¡Bienvenido a +Salud!';
+const DEFAULT_LOGIN_BANNER_SUBTITLE =
+  '¿Eres médico? Genera y envía recetas electrónicas a tus pacientes de manera sencilla y centralizada.\n¿Eres paciente? Accede a tus prescripciones médicas y compra tus medicamentos en un solo clic.';
+
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
 
@@ -77,7 +81,36 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [passwordError, setPasswordError] = useState('');
   const [generalError, setGeneralError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [bannerTitle, setBannerTitle] = useState(DEFAULT_LOGIN_BANNER_TITLE);
+  const [bannerSubtitle, setBannerSubtitle] = useState(DEFAULT_LOGIN_BANNER_SUBTITLE);
   const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api', []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBanner = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/platform/login-banner`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled) return;
+        if (typeof data.loginBannerTitle === 'string' && data.loginBannerTitle.trim()) {
+          setBannerTitle(data.loginBannerTitle);
+        }
+        if (typeof data.loginBannerSubtitle === 'string' && data.loginBannerSubtitle.trim()) {
+          setBannerSubtitle(data.loginBannerSubtitle);
+        }
+      } catch {
+        // Sin conexión al backend: se mantiene el texto por defecto.
+      }
+    };
+
+    void loadBanner();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiUrl]);
 
   const validateEmail = (input: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input);
 
@@ -314,11 +347,12 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
       <div className="hidden md:flex md:w-[42%] lg:w-[38%] relative overflow-hidden select-none shrink-0 flex-col justify-center px-12" style={{ background: 'linear-gradient(160deg, #179150 0%, #50e9f8 100%)' }}>
         <div className="space-y-6 max-w-sm">
           <h2 className="login-banner-text" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', fontSize: '37px', fontWeight: '700', lineHeight: '1.2' }}>
-            ¡Bienvenido a +Salud!
+            {bannerTitle}
           </h2>
           <div className="login-banner-text" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif', fontSize: '18px', fontWeight: '400', lineHeight: '1.65' }}>
-            <p className="mb-4">¿Eres médico? Genera y envía recetas electrónicas a tus pacientes de manera sencilla y centralizada.</p>
-            <p>¿Eres paciente? Accede a tus prescripciones médicas y compra tus medicamentos en un solo clic.</p>
+            {bannerSubtitle.split('\n').filter((line) => line.trim()).map((line, index) => (
+              <p key={index} className="mb-4 last:mb-0">{line}</p>
+            ))}
           </div>
         </div>
       </div>
