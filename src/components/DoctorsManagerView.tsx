@@ -208,7 +208,7 @@ export default function DoctorsManagerView() {
 
       if (editingDoctorId) {
         await apiClient.put(`/admin/doctors/${editingDoctorId}`, payload);
-        setSuccessMsg(`Perfil médico ${editingDoctorId} actualizado correctamente.`);
+        setSuccessMsg(`Médico: ${form.name || 'Sin nombre'} actualizado correctamente.`);
       } else {
         await apiClient.post('/admin/doctors', payload);
         setSuccessMsg('Médico registrado correctamente.');
