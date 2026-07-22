@@ -622,7 +622,7 @@ export default function Home() {
         />
       }
       // ðŸ“„ Dentro de tu src/app/page.tsx (SecciÃ³n del Header del Administrador)
-      header={({ onMenuClick }) => {
+      header={({ onMenuClick, desktopSidebarExpanded, toggleDesktopSidebar }) => {
         // ðŸš€ 1. Calculamos las iniciales en tiempo real basÃ¡ndonos en el backend
         const getInitials = (nameString: string) => {
           const parts = nameString.trim().split(/\s+/);
@@ -636,6 +636,9 @@ export default function Home() {
         return (
           <AppHeader
             onMenuClick={onMenuClick}
+            showDesktopSidebarToggle
+            desktopSidebarExpanded={desktopSidebarExpanded}
+            onToggleDesktopSidebar={toggleDesktopSidebar}
             statusLabel=""
             showNotifications={false}
             className="admin-header-white"

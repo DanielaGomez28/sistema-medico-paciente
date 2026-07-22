@@ -159,6 +159,28 @@ interface DoctorRecipeLogRecord {
 
 const RECIPE_LOG_INITIAL_COUNT = 3;
 const RECIPE_LOG_LOAD_MORE_COUNT = 3;
+const COMMISSION_LEDGER_INITIAL_COUNT = 5;
+const COMMISSION_LEDGER_LOAD_MORE_COUNT = 5;
+
+const DOCTOR_DISCOUNT_LEVELS = [0, 10, 15, 20, 30] as const;
+
+function getDoctorDiscountButtonClass(discount: number, isSelected: boolean) {
+  const base = 'doctor-discount-btn py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer';
+
+  if (!isSelected) {
+    return `${base} doctor-discount-btn--idle bg-surface-950/60 border-surface-800 text-surface-400 hover:text-white`;
+  }
+
+  const levelClass: Record<number, string> = {
+    0: 'doctor-discount-btn--level-0',
+    10: 'doctor-discount-btn--level-10',
+    15: 'doctor-discount-btn--level-15',
+    20: 'doctor-discount-btn--level-20',
+    30: 'doctor-discount-btn--level-30',
+  };
+
+  return `${base} doctor-discount-btn--selected ${levelClass[discount] ?? 'doctor-discount-btn--level-0'}`;
+}
 
 function formatRecipeLogDateTime(dateStr: string) {
   const date = new Date(dateStr);
@@ -374,6 +396,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [recipeLogLoading, setRecipeLogLoading] = useState(false);
   const [recipeLogError, setRecipeLogError] = useState('');
   const [recipeLogVisibleCount, setRecipeLogVisibleCount] = useState(RECIPE_LOG_INITIAL_COUNT);
+  const [commissionLedgerVisibleCount, setCommissionLedgerVisibleCount] = useState(COMMISSION_LEDGER_INITIAL_COUNT);
   
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [patientViewMode, setPatientViewMode] = useState<'list' | 'detail'>('list');
@@ -971,6 +994,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   useEffect(() => {
     setRecipeLogVisibleCount(RECIPE_LOG_INITIAL_COUNT);
   }, [doctorRecipeLog, linkedPatient, patientForm.systemId, patientForm.patientId]);
+
+  useEffect(() => {
+    setCommissionLedgerVisibleCount(COMMISSION_LEDGER_INITIAL_COUNT);
+  }, [commissionSummary?.transactions]);
 
   /**
    * Marca un paciente como selección pendiente antes de confirmar el récipe.
@@ -1787,13 +1814,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
               <div className="space-y-6 animate-in fade-in duration-300">
                 {patientViewMode === 'list' ? (
                   <>
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Button variant="doctor" onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}>
-                        <QrCode className="h-4 w-4" />
-                          Vincular con paciente
-                      </Button>
-                    </div>
-
                     {patientSaveMsg && (
                       <div className="p-4 bg-secondary-500/15 border border-secondary-500/30 rounded-2xl flex items-center gap-3 text-secondary-400 text-xs">
                         <CheckCircle2 className="h-5 w-5 shrink-0" />
@@ -1815,27 +1835,35 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <div className="portal-dashboard-card flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
+                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-4 items-stretch">
+                      <div className="portal-dashboard-card flex items-center gap-4 min-w-0">
+                        <div className="h-10 w-10 rounded-xl bg-secondary-500/10 text-secondary-400 flex items-center justify-center shrink-0">
                           <Users className="h-5 w-5" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <span className="zenith-field-label">Pacientes registrados</span>
                           <p className="text-lg font-semibold text-white mt-0.5">{patients.length}</p>
                         </div>
                       </div>
-                      <div className="portal-dashboard-card flex items-center gap-4">
-                        <div className="h-10 w-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center">
+                      <div className="portal-dashboard-card flex items-center gap-4 min-w-0">
+                        <div className="h-10 w-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center shrink-0">
                           <ShieldAlert className="h-5 w-5" />
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <span className="zenith-field-label">Con alergias registradas</span>
                           <p className="text-lg font-semibold text-white mt-0.5">
                             {patients.filter((p) => p.allergies && !p.allergies.toLowerCase().includes('ningun') && p.allergies.trim() !== '').length}
                           </p>
                         </div>
                       </div>
+                      <Button
+                        variant="doctor"
+                        onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}
+                        className="w-full lg:w-auto lg:min-w-[12.5rem] lg:self-stretch shrink-0"
+                      >
+                        <QrCode className="h-4 w-4" />
+                        Escanear código qr
+                      </Button>
                     </div>
 
                     <div className="space-y-0.5">
@@ -2256,16 +2284,12 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               </span>
                               
                               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                                {[0, 10, 15, 20, 30].map((disc) => (
+                                {DOCTOR_DISCOUNT_LEVELS.map((disc) => (
                                   <button
                                     key={disc}
                                     type="button"
                                     onClick={() => setGlobalDiscount(disc)}
-                                    className={`py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-                                      globalDiscount === disc
-                                        ? 'bg-secondary-500 border-secondary-550 text-white'
-                                        : 'bg-surface-950/60 border-surface-800 text-surface-400 hover:text-white'
-                                    }`}
+                                    className={getDoctorDiscountButtonClass(disc, globalDiscount === disc)}
                                   >
                                     {disc}%
                                   </button>
@@ -2316,7 +2340,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             {/* Main action submit */}
                             <button
                               type="submit"
-                              className="w-full mt-2 py-3 bg-secondary-600 hover:bg-secondary-700 text-white rounded-xl text-xs font-black shadow-lg shadow-secondary-550/10 hover:shadow-secondary-550/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="doctor-generate-recipe-btn doctor-recipe-submit-btn w-full mt-2 py-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer border"
                             >
                               <Send className="h-4 w-4" />
                               <span>Registrar e Iniciar Envío de Récipe</span>
@@ -2406,6 +2430,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             {/* VIEW TAB 4: COMMISSIONS & CLINICAL HISTORY (Pantalla M.3) */}
             {activeTab === 'commissions' && (() => {
               const ledgerEntries = commissionSummary?.transactions || [];
+              const visibleLedgerEntries = ledgerEntries.slice(0, commissionLedgerVisibleCount);
+              const hasMoreCommissionLedger = ledgerEntries.length > commissionLedgerVisibleCount;
+              const canShowLessCommissionLedger = commissionLedgerVisibleCount > COMMISSION_LEDGER_INITIAL_COUNT;
               const totalAccredited = Number(commissionSummary?.availableBalance || 0);
               const totalPending = 0;
 
@@ -2442,7 +2469,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             Todavía no hay pagos confirmados que hayan generado comisión para este médico.
                           </div>
                         ) : null}
-                        {ledgerEntries.map((entry, index) => (
+                        {visibleLedgerEntries.map((entry, index) => (
                           <div key={`${entry.recipeId}-${index}`} className="space-y-1.5">
                             <div className="flex justify-between items-start text-xs">
                               <div className="min-w-0">
@@ -2463,7 +2490,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 </span>
                               </div>
                               <div className="text-right shrink-0 pl-3">
-                                <span className="font-bold text-sm text-black">
+                                <span className="doctor-commission-amount text-sm">
                                   +{formatCurrency(entry.commissionAmount)}
                                 </span>
                                 <span className="text-[9px] font-bold block text-secondary-500/70">
@@ -2480,12 +2507,44 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             </div>
                           </div>
                         ))}
+                        {!commissionLoading && ledgerEntries.length > 0 && (hasMoreCommissionLedger || canShowLessCommissionLedger) ? (
+                          <div className="flex items-center justify-between gap-3 pt-2 border-t border-surface-850 mt-2">
+                            {canShowLessCommissionLedger ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCommissionLedgerVisibleCount((current) =>
+                                    Math.max(COMMISSION_LEDGER_INITIAL_COUNT, current - COMMISSION_LEDGER_LOAD_MORE_COUNT)
+                                  )
+                                }
+                                className="doctor-recipe-log-toggle text-xs font-semibold transition-colors cursor-pointer"
+                              >
+                                Leer menos
+                              </button>
+                            ) : (
+                              <span aria-hidden="true" />
+                            )}
+                            {hasMoreCommissionLedger ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCommissionLedgerVisibleCount((current) => current + COMMISSION_LEDGER_LOAD_MORE_COUNT)
+                                }
+                                className="doctor-recipe-log-toggle text-xs font-semibold transition-colors cursor-pointer ml-auto"
+                              >
+                                Leer más
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
 
                       {/* Totals row */}
-                      <div className="border-t border-surface-850 pt-4 flex justify-between items-center text-xs">
-                        <span className="text-surface-500 font-semibold">Total Período Actual ({commissionSummary?.currentPeriod || new Date().toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '').replace(/^\w/, c => c.toUpperCase())})</span>
-                        <span className="font-bold text-black text-sm">{formatCurrency(totalAccredited + totalPending)}</span>
+                      <div className="border-t border-surface-850 pt-4 flex justify-between items-center gap-3">
+                        <span className="doctor-commission-total-label">
+                          Total Período Actual ({commissionSummary?.currentPeriod || new Date().toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '').replace(/^\w/, c => c.toUpperCase())})
+                        </span>
+                        <span className="doctor-commission-total-amount">{formatCurrency(totalAccredited + totalPending)}</span>
                       </div>
                     </div>
 
@@ -2519,7 +2578,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="space-y-1.5 min-w-0 flex-1">
                               <div className="flex items-baseline justify-between gap-2">
                                 <p className="doctor-recipe-log-item__name text-sm truncate">
-                                  {rec.patientName || rec.patientId || 'Sin paciente'}
+                                  Paciente: {rec.patientName || rec.patientId || 'Sin paciente'}
                                 </p>
                                 <span className="text-[9px] font-mono text-surface-500 shrink-0">Recipe: {rec.recipeId}</span>
                               </div>

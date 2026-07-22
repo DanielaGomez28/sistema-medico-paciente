@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { Bell, Menu, Plus, LogOut } from 'lucide-react';
+import { Bell, Menu, SidebarClose, SidebarOpen, Plus, LogOut } from 'lucide-react';
 import Button from '../ui/Button';
 import { ThemeToggle } from '../theme';
 import { AppSidebarBrand } from './AppSidebar';
@@ -25,6 +25,9 @@ import { cn } from '../../lib/utils';
  * @property {React.ReactNode} [trailing] - Contenido personalizado para reemplazar la sección del perfil.
  * @property {boolean} [showNotifications=true] - Controla la visibilidad del ícono de notificaciones.
  * @property {() => void} [onMenuClick] - Callback para abrir el sidebar en dispositivos móviles.
+ * @property {boolean} [showDesktopSidebarToggle] - Muestra el botón para fijar el sidebar en escritorio.
+ * @property {boolean} [desktopSidebarExpanded] - Indica si el sidebar de escritorio está desplegado manualmente.
+ * @property {() => void} [onToggleDesktopSidebar] - Alterna el sidebar de escritorio entre desplegado y contraído.
  * @property {AppSidebarBrand} [brand] - Marca para mostrar al inicio de la barra superior.
  * @property {NavItemConfig[]} [items] - Elementos de navegación para menú horizontal.
  * @property {string} [activeId] - ID de navegación activo.
@@ -41,6 +44,9 @@ export interface AppHeaderProps {
   trailing?: React.ReactNode;
   showNotifications?: boolean;
   onMenuClick?: () => void;
+  showDesktopSidebarToggle?: boolean;
+  desktopSidebarExpanded?: boolean;
+  onToggleDesktopSidebar?: () => void;
   brand?: AppSidebarBrand;
   items?: NavItemConfig[];
   activeId?: string;
@@ -75,6 +81,9 @@ export default function AppHeader({
   trailing,
   showNotifications = true,
   onMenuClick,
+  showDesktopSidebarToggle = false,
+  desktopSidebarExpanded = false,
+  onToggleDesktopSidebar,
   brand,
   items,
   activeId,
@@ -87,12 +96,40 @@ export default function AppHeader({
   showProfileName = true,
   showProfileAvatar = true,
 }: AppHeaderProps) {
+  const sidebarToggleLabel = desktopSidebarExpanded ? 'Contraer menú lateral' : 'Alternar menú lateral';
+
   return (
-    <header className={cn('sticky top-0 z-20 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md shrink-0 px-4 py-2 sm:px-4 sm:py-0 sm:h-16 sm:min-h-16 md:px-6 lg:px-8', navTextWhite && 'zenith-nav-on-dark', className)}>
+    <header
+      className={cn(
+        'sticky top-0 z-20 border-b border-surface-850 bg-surface-900/95 backdrop-blur-md shrink-0 py-2 sm:py-0 sm:h-16 sm:min-h-16',
+        showDesktopSidebarToggle ? 'pl-2 pr-4 sm:pr-4 md:pr-6 lg:pl-2 lg:pr-8' : 'px-4 sm:px-4 md:px-6 lg:px-8',
+        navTextWhite && 'zenith-nav-on-dark',
+        className
+      )}
+    >
       <div className="flex min-w-0 items-center gap-2 sm:h-16">
+        {showDesktopSidebarToggle && onToggleDesktopSidebar && (
+          <button
+            type="button"
+            onClick={onToggleDesktopSidebar}
+            className="admin-sidebar-toggle-btn hidden lg:flex"
+            aria-label={sidebarToggleLabel}
+          >
+            <span className="admin-sidebar-toggle-icon" aria-hidden>
+              {desktopSidebarExpanded ? (
+                <SidebarClose className="h-4 w-4 shrink-0" strokeWidth={2} />
+              ) : (
+                <SidebarOpen className="h-4 w-4 shrink-0" strokeWidth={2} />
+              )}
+            </span>
+            <span className="admin-sidebar-toggle-tooltip" role="tooltip">
+              {sidebarToggleLabel}
+            </span>
+          </button>
+        )}
 
         {/* LEFT: Hamburger + Brand */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-3 shrink-0 min-w-0">
           {onMenuClick && (
             <button
               type="button"

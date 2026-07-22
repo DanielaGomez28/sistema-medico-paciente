@@ -13,7 +13,11 @@ import { ShellProvider } from './ShellContext';
  * Función de renderizado para inyectar métodos del AppShell (como abrir el menú) en la cabecera.
  * @type {AppShellHeaderRender}
  */
-export type AppShellHeaderRender = (props: { onMenuClick: () => void }) => React.ReactNode;
+export type AppShellHeaderRender = (props: {
+  onMenuClick: () => void;
+  desktopSidebarExpanded: boolean;
+  toggleDesktopSidebar: () => void;
+}) => React.ReactNode;
 
 /**
  * Roles soportados para los portales de la aplicación.
@@ -63,7 +67,22 @@ export default function AppShell({
   scrollKey,
 }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [desktopSidebarExpanded, setDesktopSidebarExpanded] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
+  const supportsDesktopSidebarToggle = layout === 'vertical-collapsible' && portal === 'admin';
+
+  useEffect(() => {
+    if (!supportsDesktopSidebarToggle) return;
+    const stored = window.localStorage.getItem('admin-sidebar-expanded');
+    if (stored === 'true') {
+      setDesktopSidebarExpanded(true);
+    }
+  }, [supportsDesktopSidebarToggle]);
+
+  useEffect(() => {
+    if (!supportsDesktopSidebarToggle) return;
+    window.localStorage.setItem('admin-sidebar-expanded', String(desktopSidebarExpanded));
+  }, [desktopSidebarExpanded, supportsDesktopSidebarToggle]);
 
   useEffect(() => {
     mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
@@ -82,10 +101,18 @@ export default function AppShell({
     sidebarOpen,
     openSidebar: () => setSidebarOpen(true),
     closeSidebar: () => setSidebarOpen(false),
+    desktopSidebarExpanded,
+    toggleDesktopSidebar: () => setDesktopSidebarExpanded((current) => !current),
   };
 
   const headerContent =
-    typeof header === 'function' ? header({ onMenuClick: shellValue.openSidebar }) : header;
+    typeof header === 'function'
+      ? header({
+          onMenuClick: shellValue.openSidebar,
+          desktopSidebarExpanded,
+          toggleDesktopSidebar: shellValue.toggleDesktopSidebar,
+        })
+      : header;
 
   return (
     <ShellProvider value={shellValue}>
@@ -107,11 +134,12 @@ export default function AppShell({
             layout === 'horizontal'
               ? 'w-64 lg:hidden transition-transform duration-200'
               : layout === 'vertical-collapsible'
-                /* Siempre 'fixed' (nunca 'static'): al desplegar con el hover,
-                   la barra queda flotando ENCIMA del contenido (lo tapa un
-                   poco) en vez de empujarlo/redimensionarlo. Por eso el resto
-                   de la pantalla (header, contenido) nunca se mueve. */
-                ? 'sidebar-collapsible w-64 lg:w-[5rem] lg:hover:w-64 lg:hover:shadow-2xl lg:will-change-[width] transition-[width,transform,box-shadow] duration-300 ease-in-out lg:translate-x-0'
+                ? cn(
+                    'sidebar-collapsible w-64 lg:translate-x-0 transition-[width,transform,box-shadow,margin] duration-300 ease-in-out',
+                    desktopSidebarExpanded
+                      ? 'lg:w-64 sidebar-collapsible--expanded lg:shadow-2xl'
+                      : 'lg:w-[5rem]'
+                  )
                 : 'w-64 transition-transform duration-200 lg:static lg:z-auto lg:translate-x-0',
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
           )}
@@ -122,8 +150,8 @@ export default function AppShell({
         </div>
         <div
           className={cn(
-            'flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden',
-            layout === 'vertical-collapsible' && 'lg:ml-[5rem]'
+            'flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden transition-[margin] duration-300 ease-in-out',
+            layout === 'vertical-collapsible' && (desktopSidebarExpanded ? 'lg:ml-64' : 'lg:ml-[5rem]')
           )}
         >
           {headerContent}

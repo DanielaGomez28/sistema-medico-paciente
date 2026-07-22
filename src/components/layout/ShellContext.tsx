@@ -18,6 +18,8 @@ export interface ShellContextValue {
   sidebarOpen: boolean;
   openSidebar: () => void;
   closeSidebar: () => void;
+  desktopSidebarExpanded: boolean;
+  toggleDesktopSidebar: () => void;
 }
 
 const ShellContext = createContext<ShellContextValue | null>(null);

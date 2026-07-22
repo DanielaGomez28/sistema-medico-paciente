@@ -19,6 +19,7 @@ import {
 import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
 import { DOCTOR_SPECIALTY_OPTIONS } from '../data/mockData';
 import apiClient from '../lib/api';
+import { getDoctorStatusBadgeClassName } from '../lib/statusColors';
 
 interface ApiErrorPayload {
   response?: {
@@ -378,7 +379,7 @@ export default function DoctorsManagerView() {
                       <p className="text-[10px] font-mono text-surface-500">{doctor.medicalBoard || 'Sin colegio'}</p>
                     </td>
                     <td>
-                      <span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>
+                      <span className={getDoctorStatusBadgeClassName(doctor.status)}>
                         {doctor.status}
                       </span>
                     </td>
@@ -405,7 +406,7 @@ export default function DoctorsManagerView() {
                 key={doctor.id}
                 title={doctor.name}
                 subtitle={doctor.email}
-                badge={<span className={`inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[10px] font-semibold ${doctor.status === 'activo' ? 'bg-secondary-500/10 text-secondary-400' : 'bg-amber-500/10 text-amber-300'}`}>{doctor.status}</span>}
+                badge={<span className={getDoctorStatusBadgeClassName(doctor.status)}>{doctor.status}</span>}
                 fields={[
                   { label: 'Especialidad', value: doctor.specialty || 'Sin especialidad' },
                   { label: 'MPPS', value: doctor.mpps || 'Sin MPPS' },
