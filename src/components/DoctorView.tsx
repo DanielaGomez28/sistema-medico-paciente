@@ -160,6 +160,8 @@ interface DoctorRecipeLogRecord {
 
 const RECIPE_LOG_INITIAL_COUNT = 3;
 const RECIPE_LOG_LOAD_MORE_COUNT = 3;
+const COMMISSION_LEDGER_INITIAL_COUNT = 5;
+const COMMISSION_LEDGER_LOAD_MORE_COUNT = 5;
 
 function formatRecipeLogDateTime(dateStr: string) {
   const date = new Date(dateStr);
@@ -350,6 +352,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [recipeLogLoading, setRecipeLogLoading] = useState(false);
   const [recipeLogError, setRecipeLogError] = useState('');
   const [recipeLogVisibleCount, setRecipeLogVisibleCount] = useState(RECIPE_LOG_INITIAL_COUNT);
+  const [commissionLedgerVisibleCount, setCommissionLedgerVisibleCount] = useState(COMMISSION_LEDGER_INITIAL_COUNT);
   
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [patientViewMode, setPatientViewMode] = useState<'list' | 'detail'>('list');
@@ -896,6 +899,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   useEffect(() => {
     setRecipeLogVisibleCount(RECIPE_LOG_INITIAL_COUNT);
   }, [doctorRecipeLog]);
+
+  useEffect(() => {
+    setCommissionLedgerVisibleCount(COMMISSION_LEDGER_INITIAL_COUNT);
+  }, [commissionSummary?.transactions]);
 
   /**
    * Marca un paciente como selección pendiente antes de confirmar el récipe.
@@ -2257,6 +2264,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             {/* VIEW TAB 4: COMMISSIONS & CLINICAL HISTORY (Pantalla M.3) */}
             {activeTab === 'commissions' && (() => {
               const ledgerEntries = commissionSummary?.transactions || [];
+              const visibleLedgerEntries = ledgerEntries.slice(0, commissionLedgerVisibleCount);
+              const hasMoreCommissionLedger = ledgerEntries.length > commissionLedgerVisibleCount;
+              const canShowLessCommissionLedger = commissionLedgerVisibleCount > COMMISSION_LEDGER_INITIAL_COUNT;
               const totalAccredited = Number(commissionSummary?.availableBalance || 0);
               const totalPending = 0;
 
@@ -2293,7 +2303,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             Todavía no hay pagos confirmados que hayan generado comisión para este médico.
                           </div>
                         ) : null}
-                        {ledgerEntries.map((entry, index) => (
+                        {visibleLedgerEntries.map((entry, index) => (
                           <div key={`${entry.recipeId}-${index}`} className="space-y-1.5">
                             <div className="flex justify-between items-start text-xs">
                               <div className="min-w-0">
@@ -2314,7 +2324,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 </span>
                               </div>
                               <div className="text-right shrink-0 pl-3">
-                                <span className="font-bold text-sm text-black">
+                                <span className="doctor-commission-amount text-sm">
                                   +{formatCurrency(entry.commissionAmount)}
                                 </span>
                                 <span className="text-[9px] font-bold block text-secondary-500/70">
@@ -2331,12 +2341,44 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             </div>
                           </div>
                         ))}
+                        {!commissionLoading && ledgerEntries.length > 0 && (hasMoreCommissionLedger || canShowLessCommissionLedger) ? (
+                          <div className="flex items-center justify-between gap-3 pt-2 border-t border-surface-850 mt-2">
+                            {canShowLessCommissionLedger ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCommissionLedgerVisibleCount((current) =>
+                                    Math.max(COMMISSION_LEDGER_INITIAL_COUNT, current - COMMISSION_LEDGER_LOAD_MORE_COUNT)
+                                  )
+                                }
+                                className="doctor-recipe-log-toggle text-xs font-semibold transition-colors cursor-pointer"
+                              >
+                                Leer menos
+                              </button>
+                            ) : (
+                              <span aria-hidden="true" />
+                            )}
+                            {hasMoreCommissionLedger ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setCommissionLedgerVisibleCount((current) => current + COMMISSION_LEDGER_LOAD_MORE_COUNT)
+                                }
+                                className="doctor-recipe-log-toggle text-xs font-semibold transition-colors cursor-pointer ml-auto"
+                              >
+                                Leer más
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
 
                       {/* Totals row */}
-                      <div className="border-t border-surface-850 pt-4 flex justify-between items-center text-xs">
-                        <span className="text-surface-500 font-semibold">Total Período Actual ({commissionSummary?.currentPeriod || new Date().toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '').replace(/^\w/, c => c.toUpperCase())})</span>
-                        <span className="font-bold text-black text-sm">{formatCurrency(totalAccredited + totalPending)}</span>
+                      <div className="border-t border-surface-850 pt-4 flex justify-between items-center gap-3">
+                        <span className="doctor-commission-total-label">
+                          Total Período Actual ({commissionSummary?.currentPeriod || new Date().toLocaleString('es-ES', { month: 'short', year: 'numeric' }).replace('.', '').replace(/^\w/, c => c.toUpperCase())})
+                        </span>
+                        <span className="doctor-commission-total-amount">{formatCurrency(totalAccredited + totalPending)}</span>
                       </div>
                     </div>
 

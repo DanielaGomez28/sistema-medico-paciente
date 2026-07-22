@@ -1446,6 +1446,35 @@ table th {
   color: #e2e8f0;
 }
 
+[data-portal="doctor"] .doctor-commission-amount {
+  display: block;
+  font-weight: 700;
+  color: #000000;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-commission-amount {
+  color: #ffffff;
+}
+
+[data-portal="doctor"] .doctor-commission-total-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #0a1220;
+}
+
+[data-portal="doctor"] .doctor-commission-total-amount {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #000000;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-commission-total-label,
+[data-theme="dark"] [data-portal="doctor"] .doctor-commission-total-amount {
+  color: #ffffff;
+}
+
 [data-theme="dark"] [data-portal="doctor"] .doctor-qr-scan-link {
   color: #3dba72;
 }
