@@ -664,7 +664,10 @@ const isRecentlyRetiredPrescription = (prescription: BackendPrescription, now: n
 export default function PatientView({ patientName, patientEmail, patientId, socketIdentity, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile'
   const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile' | 'help'>(
-    () => (leerIntencionDeNavegacion().seccion === 'recipes' ? 'recipes' : 'treatment')
+    () => {
+      const seccion = leerIntencionDeNavegacion().seccion;
+      return seccion === 'recipes' || seccion === 'delivery' ? seccion : 'treatment';
+    }
   );
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
