@@ -43,7 +43,6 @@ import { getDoctorPageDescription, getDoctorPageLayoutClass, getDoctorPageTitle 
 import apiClient from '../lib/api';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
 import { cn } from '../lib/utils';
-import { Html5Qrcode } from 'html5-qrcode';
 import {
   type DoctorLinkedPatientSeed as LinkedPatient,
 } from '../data/mockData';
@@ -226,11 +225,36 @@ interface ApiErrorPayload {
 }
 
 /**
- * Normaliza un identificador de paciente para comparaciones seguras en UI.
+ * Limpia el identificador de paciente escrito a mano antes de consultarlo.
+ *
+ * OJO: la versión anterior pasaba a mayúsculas y descartaba todo lo que no fuera
+ * A-Z, dígito o guion, con lo que se comía los guiones bajos del id canónico:
+ * 'paciente_karim_sahili' viajaba como 'PACIENTEKARIMSAHILI' y el backend
+ * respondía 404, así que vincular escribiendo el ID nunca funcionaba.
+ * Se conserva el juego de caracteres que el backend acepta y se respeta lo
+ * tecleado; la búsqueda no distingue mayúsculas.
+ *
  * @param {string} value - Valor ingresado por el usuario.
- * @returns {string} Identificador normalizado.
+ * @returns {string} Identificador limpio, listo para consultar.
  */
-const normalizePatientLookup = (value: string) => value.toUpperCase().replace(/[^A-Z0-9-]/g, '').trim();
+const normalizePatientLookup = (value: string) =>
+  String(value || '').trim().replace(/[^A-Za-z0-9_.@-]/g, '');
+
+/**
+ * Normaliza un identificador de paciente para comparar historiales.
+ * @param {string} value - Id canónico, id interno o nombre del paciente.
+ * @returns {string} Clave comparable, sin separadores ni mayúsculas.
+ */
+const normalizePatientIdentifier = (value: string) =>
+  String(value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').trim();
+
+/**
+ * Milisegundos entre lecturas del QR.
+ * Analizar cada frame consume demasiada CPU en un teléfono y el navegador
+ * termina descartando la pestaña. ~7 lecturas por segundo se siguen sintiendo
+ * instantáneas al apuntar la cámara.
+ */
+const QR_SCAN_INTERVAL_MS = 140;
 
 /**
  * Detecta patrones sospechosos en cadenas antes de enviarlas al backend.
@@ -426,12 +450,16 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [prescriptionPatientDraft, setPrescriptionPatientDraft] = useState<LinkedPatient | null>(null);
   const [, setPatientsLoading] = useState(false);
   const [, setPatientsError] = useState('');
+  const [unlinkingPatientId, setUnlinkingPatientId] = useState<string | null>(null);
 
   const [scannerErrorMsg, setScannerErrorMsg] = useState('');
-  const [hasCameraAccessApi] = useState(() => {
+  const scannerVideoRef = useRef<HTMLVideoElement | null>(null);
+  const scannerStreamRef = useRef<MediaStream | null>(null);
+  const isMobileDevice = () => {
     if (typeof window === 'undefined') return false;
-    return Boolean(window.navigator.mediaDevices?.getUserMedia);
-  });
+    const userAgent = window.navigator.userAgent || '';
+    return /Android|iPhone|iPad|iPod|Mobile/i.test(userAgent) || (window.navigator.maxTouchPoints || 0) > 1;
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -580,7 +608,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
 
   // =========================================================
-  // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
+  // LOGICA 2: ESCANER NATIVO Y VALIDACION PERIMETRAL (Modulo 1)
   // =========================================================
   useEffect(() => {
     if (!isScanning) {
@@ -588,7 +616,20 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     }
 
     let cancelled = false;
-    const scanner = new Html5Qrcode('qr-reader');
+    let frameId = 0;
+    let retryId = 0;
+
+    const stopNativeScanner = () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      if (retryId) window.clearTimeout(retryId);
+      frameId = 0;
+      retryId = 0;
+      scannerStreamRef.current?.getTracks().forEach((track) => track.stop());
+      scannerStreamRef.current = null;
+      if (scannerVideoRef.current) {
+        scannerVideoRef.current.srcObject = null;
+      }
+    };
 
     const openScannedPatient = async (scannedPatientId: string) => {
       const detail = await apiClient.get(`/pacientes/${encodeURIComponent(scannedPatientId)}`);
@@ -599,12 +640,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     const handleDecodedToken = async (decodedToken: string) => {
       if (cancelled) return;
       cancelled = true;
-      await scanner.stop().catch(() => undefined);
-      try {
-        scanner.clear();
-      } catch {
-        // Limpiar el contenedor es best-effort: si ya se desmontó, no hay nada que hacer.
-      }
+      stopNativeScanner();
       setIsScanning(false);
 
       try {
@@ -615,7 +651,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
         const scannedPatientId = response.data?.patientId;
         if (!scannedPatientId) {
-          setScannerErrorMsg('No se pudo leer el código QR. Pedile al paciente que genere uno nuevo.');
+          setScannerErrorMsg('No se pudo leer el codigo QR. Pedile al paciente que genere uno nuevo.');
           return;
         }
 
@@ -627,11 +663,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         }
 
         if (!SOCKET_RUNTIME_SUPPORTED) {
-          // Sin canal en tiempo real no se puede pedir la aprobación en vivo, pero
-          // el QR ya es un acto deliberado del paciente: lo generó en su propio
-          // teléfono, dura 5 minutos, es de un solo uso y se lo entregó al médico.
-          // Se registra como consentimiento por QR, que queda auditado en la
-          // aceptación de términos junto con el vínculo.
           try {
             await apiClient.post('/consentimiento', {
               patientId: scannedPatientId,
@@ -643,7 +674,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
             const apiLinkError = linkError as ApiErrorPayload;
             setScannerErrorMsg(
               apiLinkError.response?.data?.error ||
-              'No se pudo registrar la vinculación con el paciente.'
+              'No se pudo registrar la vinculacion con el paciente.'
             );
           }
           return;
@@ -665,30 +696,68 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       }
     };
 
-    scanner
-      .start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => { void handleDecodedToken(decodedText); },
-        () => undefined
-      )
-      .catch((error) => {
+    const startNativeScanner = async () => {
+      try {
+        await new Promise((resolve) => window.requestAnimationFrame(resolve));
         if (cancelled) return;
+
+        const video = scannerVideoRef.current;
+        const BarcodeDetectorCtor = (window as unknown as { BarcodeDetector?: new (options: { formats: string[] }) => { detect: (source: HTMLVideoElement) => Promise<Array<{ rawValue?: string }>> } }).BarcodeDetector;
+
+        if (!video || !BarcodeDetectorCtor) {
+          throw new Error('Este navegador no soporta lector QR nativo. Usa el ID interno del sistema del paciente.');
+        }
+
+        const stream = await window.navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+        scannerStreamRef.current = stream;
+        video.srcObject = stream;
+        await video.play();
+
+        const detector = new BarcodeDetectorCtor({ formats: ['qr_code'] });
+        const scanFrame = async () => {
+          if (cancelled) return;
+          try {
+            const codes = await detector.detect(video);
+            const decoded = codes.find((code) => code.rawValue)?.rawValue;
+            if (decoded) {
+              void handleDecodedToken(decoded);
+              return;
+            }
+          } catch {
+            // Un frame puede fallar mientras enfoca; seguimos intentando.
+          }
+
+          // OJO: analizar cada frame satura la CPU del teléfono. La detección es
+          // costosa y a 60 lecturas por segundo el navegador termina matando la
+          // pestaña ("This page couldn't load"). Con este espaciado el lector
+          // sigue siendo instantáneo para una persona y el equipo respira.
+          retryId = window.setTimeout(() => {
+            if (cancelled) return;
+            frameId = window.requestAnimationFrame(scanFrame);
+          }, QR_SCAN_INTERVAL_MS);
+        };
+
+        frameId = window.requestAnimationFrame(scanFrame);
+      } catch (error: unknown) {
+        if (cancelled) return;
+        const scannerError = error as { message?: string };
+        stopNativeScanner();
         setIsScanning(false);
         setScannerErrorMsg(
-          error?.message ||
-          'No se pudo abrir la cámara. Revisá permisos del navegador y que estés usando HTTPS.'
+          scannerError?.message ||
+          'No se pudo abrir la camara. Revisa permisos del navegador y que estes usando HTTPS.'
         );
-      });
+      }
+    };
+
+    void startNativeScanner();
 
     return () => {
       cancelled = true;
-      scanner.stop().catch(() => undefined);
-      try {
-        scanner.clear();
-      } catch {
-        // Ídem: el componente puede haberse desmontado antes de limpiar.
-      }
+      stopNativeScanner();
     };
   }, [DOCTOR_ID, DOCTOR_NAME, isScanning]);
 
@@ -789,20 +858,26 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   useEffect(() => {
     let cancelled = false;
 
+    const shouldShowCommissionStatus = ['commissions', 'profile'].includes(activeTab);
+
     /**
      * Carga desde backend el resumen real de comisiones del medico autenticado.
+     * La tasa se refresca al montar la vista medica aunque el usuario caiga en
+     * Agenda: el porcentaje del perfil no puede depender de una pestaña abierta.
      * @returns {Promise<void>}
      */
     const loadCommissionSummary = async (options?: { silent?: boolean }) => {
-      if (!['commissions', 'profile'].includes(activeTab) || !DOCTOR_ID) {
+      if (!DOCTOR_ID) {
         return;
       }
 
       try {
-        if (!options?.silent) {
+        if (!options?.silent && shouldShowCommissionStatus) {
           setCommissionLoading(true);
         }
-        setCommissionError('');
+        if (shouldShowCommissionStatus) {
+          setCommissionError('');
+        }
         const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
         if (!cancelled) {
@@ -813,7 +888,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           }
         }
       } catch (error: unknown) {
-        if (!cancelled) {
+        if (!cancelled && shouldShowCommissionStatus) {
           const apiError = error as ApiErrorPayload;
           setCommissionError(
             apiError.response?.data?.error ||
@@ -822,14 +897,14 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           );
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled && shouldShowCommissionStatus) {
           setCommissionLoading(false);
         }
       }
     };
 
-    void loadCommissionSummary();
-    const intervalId = ['commissions', 'profile'].includes(activeTab)
+    void loadCommissionSummary({ silent: !shouldShowCommissionStatus });
+    const intervalId = shouldShowCommissionStatus
       ? window.setInterval(() => { void loadCommissionSummary({ silent: true }); }, 30000)
       : null;
 
@@ -920,7 +995,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
   useEffect(() => {
     setRecipeLogVisibleCount(RECIPE_LOG_INITIAL_COUNT);
-  }, [doctorRecipeLog]);
+  }, [doctorRecipeLog, linkedPatient, patientForm.systemId, patientForm.patientId]);
 
   useEffect(() => {
     setCommissionLedgerVisibleCount(COMMISSION_LEDGER_INITIAL_COUNT);
@@ -941,6 +1016,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     if (!prescriptionPatientDraft) return;
     selectPatientForPrescription(prescriptionPatientDraft);
     setPrescriptionPatientDraft(null);
+    setActiveTab('prescription');
   }
 
   /**
@@ -961,6 +1037,36 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     setIsEditingPatientRecord(false);
     setPatientSaveMsg('');
     setProfileErrorMsg('');
+  }
+
+  /**
+   * Elimina la vinculacion activa entre el medico de la sesion y un paciente.
+   * No elimina el expediente ni las recetas; solo quita el vinculo.
+   * @param {LinkedPatient} patient - Paciente a desvincular.
+   */
+  async function unlinkPatient(patient: LinkedPatient) {
+    const patientIdentifier = patient.systemId || patient.patientId;
+    if (!DOCTOR_ID || !patientIdentifier) return;
+
+    const confirmed = window.confirm(`Eliminar la vinculacion con ${patient.name}? El expediente no se borrara.`);
+    if (!confirmed) return;
+
+    try {
+      setUnlinkingPatientId(patientIdentifier);
+      await apiClient.delete(`/consentimiento/medico/${encodeURIComponent(DOCTOR_ID)}/paciente/${encodeURIComponent(patientIdentifier)}`);
+      setPatients((prev) => prev.filter((item) => (item.systemId || item.patientId) !== patientIdentifier));
+      if ((linkedPatient?.systemId || linkedPatient?.patientId) === patientIdentifier) {
+        setLinkedPatient(null);
+      }
+      if ((patientForm.systemId || patientForm.patientId) === patientIdentifier) {
+        handleBackToPatientList();
+      }
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      alert(apiError.response?.data?.error || apiError.response?.data?.details || 'No se pudo eliminar la vinculacion con el paciente.');
+    } finally {
+      setUnlinkingPatientId(null);
+    }
   }
 
   /**
@@ -1004,10 +1110,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       return;
     }
 
-    if (patientForm.phone !== 'Sin registrar' && !matchesSafePattern(patientForm.phone, /^[+\d\s()-]{7,20}$/)) {
-      alert('El teléfono del paciente no cumple el formato esperado.');
-      return;
-    }
 
     if (!patientForm.patientId.trim()) {
       alert('El ID interno del paciente es obligatorio.');
@@ -1034,8 +1136,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       .filter(Boolean);
 
     try {
+      const editablePatientPayload: Partial<LinkedPatient> = { ...patientForm };
+      delete editablePatientPayload.age;
+      delete editablePatientPayload.phone;
       const response = await apiClient.put(`/pacientes/${encodeURIComponent(patientForm.systemId || patientForm.patientId)}`, {
-        ...patientForm,
+        ...editablePatientPayload,
         medications,
       });
       const updatedPatient = response.data?.patient as LinkedPatient;
@@ -1248,21 +1353,26 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   };
 
   /**
-   * Simula el inicio del escaneo mediante cámara.
+   * Inicia la vinculacion: camara solo en movil; en computadora muestra mensaje y exige ID interno.
    */
-  const triggerCameraScan = () => {
-    // El escaneo y la validación del QR son HTTP puro, así que no dependen del
-    // canal en tiempo real: la cámara debe abrir siempre que haya una disponible.
-    if (!hasCameraAccessApi) {
-      setScannerErrorMsg('El navegador no habilitó la cámara para esta página. En teléfono, abrí +Salud con HTTPS; los navegadores bloquean la cámara en http://IP-LAN. Si ya estás en HTTPS, revisá permisos de cámara del navegador.');
+  const triggerPatientLink = () => {
+    setScannerErrorMsg('');
+    setLinkedPatient(null);
+
+    if (!isMobileDevice()) {
       setIsScanning(false);
+      setScannerErrorMsg('No se permite usar la camara en computadora. Para vincular al paciente desde PC, usa su ID interno del sistema.');
       return;
     }
 
-    setScannerErrorMsg('');
+    if (typeof window === 'undefined' || !window.navigator.mediaDevices?.getUserMedia) {
+      setIsScanning(false);
+      setScannerErrorMsg('Este navegador movil no permite acceder a la camara. Usa el ID interno del sistema del paciente.');
+      return;
+    }
+
     setIsScanning(true);
     setScanProgress(15);
-    setLinkedPatient(null);
   };
 
   useEffect(() => {
@@ -1437,12 +1547,40 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     return result;
   }, [catalogResults, catalogSortOrder, catalogPharmacyFilter]);
 
+  const patientScopedDoctorRecipeLog = useMemo(() => {
+    // OJO: la receta identifica al paciente por su id interno y su nombre, pero
+    // la ficha abierta maneja el id canónico. Comparar una sola variante no
+    // coincide nunca y el historial se ve vacío, así que se juntan todas.
+    const clavesDelPaciente = new Set(
+      [
+        linkedPatient?.systemId,
+        linkedPatient?.patientId,
+        linkedPatient?.name,
+        patientForm.systemId,
+        patientForm.patientId,
+        patientForm.name,
+      ]
+        .map((valor) => normalizePatientIdentifier(valor || ''))
+        .filter(Boolean)
+    );
+
+    if (!clavesDelPaciente.size) {
+      return doctorRecipeLog;
+    }
+
+    return doctorRecipeLog.filter((recipe) =>
+      [recipe.patientId, recipe.patientName]
+        .map((valor) => normalizePatientIdentifier(valor || ''))
+        .some((clave) => clave && clavesDelPaciente.has(clave))
+    );
+  }, [doctorRecipeLog, linkedPatient, patientForm.systemId, patientForm.patientId, patientForm.name]);
+
   const sortedDoctorRecipeLog = useMemo(
     () =>
-      [...doctorRecipeLog].sort(
+      [...patientScopedDoctorRecipeLog].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ),
-    [doctorRecipeLog]
+    [patientScopedDoctorRecipeLog]
   );
 
   const visibleDoctorRecipeLog = useMemo(
@@ -1595,9 +1733,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                       {patients.map((patient) => (
                         <div key={patient.patientId} className="py-3.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 first:pt-0 last:pb-0">
                           <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-white">{patient.name}</p>
-                              <span className="text-[9px] font-mono text-surface-500 bg-surface-950 px-1.5 py-0.5 rounded border border-surface-850">
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              <p className="doctor-prescription-patient-name text-sm font-semibold">{patient.name}</p>
+                              <span className="doctor-registered-patient-id font-mono break-all">
                                 ID: {patient.patientId}
                               </span>
                             </div>
@@ -1649,7 +1787,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                       onClick={() => { setScannerErrorMsg(''); setIsScannerModalOpen(true); }}
                       className="doctor-qr-scan-link w-full text-center text-xs font-semibold pt-2 border-t border-surface-850 mt-4 flex items-center justify-center gap-0.5 cursor-pointer"
                     >
-                      <span>Escanear código qr</span>
+                      <span>Vincular con paciente</span>
                       <ChevronRight className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -1803,15 +1941,27 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                     <td className="px-6 py-4.5 text-xs text-surface-400 !font-bold text-center whitespace-nowrap">
                                       {patient.lastVisit}
                                     </td>
-                                    <td className="px-6 py-4.5 text-center">
-                                      <button
-                                        type="button"
-                                        onClick={() => openPatientForm(patient)}
-                                        className="zenith-on-dark inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#179150] hover:bg-[#146b42] shadow-sm transition-colors cursor-pointer"
-                                        style={{ color: '#ffffff' }}
-                                      >
-                                        Ver expediente
-                                      </button>
+                                    <td className="px-6 py-4.5 text-right">
+                                      <div className="inline-flex items-center justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => openPatientForm(patient)}
+                                          className="zenith-on-dark inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#179150] hover:bg-[#146b42] shadow-sm transition-colors cursor-pointer"
+                                          style={{ color: '#ffffff' }}
+                                        >
+                                          Ver expediente
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { void unlinkPatient(patient); }}
+                                          disabled={unlinkingPatientId === (patient.systemId || patient.patientId)}
+                                          className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/10 text-red-500 hover:border-red-500/40 hover:bg-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                          title="Eliminar vinculacion"
+                                          aria-label={`Eliminar vinculacion con ${patient.name}`}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 ))}
@@ -1903,10 +2053,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-1.5"><label className="zenith-field-label">Nombre completo</label><input type="text" value={patientForm.name} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">ID interno</label><input type="text" value={patientForm.patientId} readOnly placeholder="Ej: patient_sofia_peralta" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none uppercase ${doctorProfileFieldReadonly}`} /></div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} onChange={(e) => setPatientForm({ ...patientForm, age: Number(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Edad</label><input type="number" min={0} value={patientForm.age || ''} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">Género</label><input type="text" value={patientForm.gender} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5"><label className="zenith-field-label">Grupo sanguíneo</label><input type="text" value={patientForm.bloodType} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
-                          <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} onChange={(e) => setPatientForm({ ...patientForm, phone: formatPhoneNumber(e.target.value) })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
+                          <div className="space-y-1.5"><label className="zenith-field-label">Teléfono móvil</label><input type="tel" value={patientForm.phone} readOnly className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Condición / diagnóstico de control</label><input type="text" value={patientForm.condition} onChange={(e) => setPatientForm({ ...patientForm, condition: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Alergias</label><input type="text" value={patientForm.allergies} onChange={(e) => setPatientForm({ ...patientForm, allergies: e.target.value })} readOnly={!isEditingPatientRecord} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
                           <div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Tratamientos activos (separados por coma)</label><input type="text" value={medicationsInput} onChange={(e) => setMedicationsInput(e.target.value)} readOnly={!isEditingPatientRecord} placeholder="Ej: Ramipril 5mg, Aspirina 100mg" className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingPatientRecord ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div>
@@ -1914,7 +2064,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4 border-t border-surface-850">
                           <button type="button" onClick={handleBackToPatientList} className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer">Volver</button>
                           <div className="flex flex-col sm:flex-row gap-3">
-                            {linkedPatient && (<button type="button" onClick={() => setActiveTab('prescription')} className="doctor-generate-recipe-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border">Generar Récipe</button>)}
+                            {linkedPatient && (<button type="button" onClick={() => stagePrescriptionPatient(patientForm)} className="doctor-generate-recipe-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border">Generar Récipe</button>)}
                           </div>
                         </div>
                       </form>
@@ -2416,6 +2566,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     <div className="portal-dashboard-card space-y-4">
                       <div>
                         <h3 className="zenith-section-title">Historial de Récipes Firmados</h3>
+                        {(linkedPatient?.name || patientForm.name || sortedDoctorRecipeLog[0]?.patientName || sortedDoctorRecipeLog[0]?.patientId) ? (
+                          <p className="text-xs text-surface-500 mt-1">Paciente: {linkedPatient?.name || patientForm.name || sortedDoctorRecipeLog[0]?.patientName || sortedDoctorRecipeLog[0]?.patientId}</p>
+                        ) : null}
                       </div>
 
                       {recipeLogError ? (
@@ -2432,13 +2585,15 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                       <div className="space-y-2">
                         {!recipeLogLoading && sortedDoctorRecipeLog.length === 0 ? (
-                          <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos por este médico.</div>
+                          <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos para este paciente.</div>
                         ) : null}
                         {visibleDoctorRecipeLog.map((rec) => (
                           <div key={rec.recipeId} className="doctor-recipe-log-item flex items-start justify-between gap-3">
                             <div className="space-y-1.5 min-w-0 flex-1">
                               <div className="flex items-baseline justify-between gap-2">
-                                <p className="doctor-recipe-log-item__name text-sm truncate">Paciente: {rec.patientName || rec.patientId}</p>
+                                <p className="doctor-recipe-log-item__name text-sm truncate">
+                                  Paciente: {rec.patientName || rec.patientId || 'Sin paciente'}
+                                </p>
                                 <span className="text-[9px] font-mono text-surface-500 shrink-0">Recipe: {rec.recipeId}</span>
                               </div>
 
@@ -2581,7 +2736,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           setIsScanning(false);
           setScanProgress(0);
         }}
-        title="Escanear código qr"
+        title="Vincular con paciente"
         size="md"
       >
         <ModalBody className="space-y-5">
@@ -2610,13 +2765,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           ) : (
             <>
               <p className="text-xs text-surface-400">
-                Active la cámara desde este dispositivo o use la vinculación manual para cargar el expediente del paciente.
+                La camara solo esta permitida desde telefono movil. En computadora, vincula al paciente usando su ID interno del sistema.
               </p>
 
               <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
                 {isScanning ? (
                   <>
-                    <div id="qr-reader" className="absolute inset-0 z-0 overflow-hidden" />
+                    <video ref={scannerVideoRef} muted playsInline className="absolute inset-0 z-0 h-full w-full object-cover" />
                     <div className="absolute left-0 w-full h-0.5 bg-secondary-500 shadow-[0_0_8px_rgba(23,145,80,0.8)] laser-line" />
                     <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-secondary-500" />
                     <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-secondary-500" />
@@ -2632,13 +2787,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 ) : (
                   <div className="space-y-4 text-center z-10">
                     <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
-                    <p className="text-sm text-surface-400 font-medium">{hasCameraAccessApi ? 'Cámara de escáner inactiva' : 'Cámara bloqueada por el navegador'}</p>
+                    <p className="text-sm text-surface-400 font-medium">Vincular por camara movil o ID interno del sistema</p>
                     <button
                       type="button"
-                      onClick={triggerCameraScan}
+                      onClick={triggerPatientLink}
                       className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
                     >
-                      Activar escáner
+                      Vincular con paciente
                     </button>
                   </div>
                 )}
