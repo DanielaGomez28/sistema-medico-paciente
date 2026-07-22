@@ -912,6 +912,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     if (!prescriptionPatientDraft) return;
     selectPatientForPrescription(prescriptionPatientDraft);
     setPrescriptionPatientDraft(null);
+    setActiveTab('prescription');
   }
 
   /**
@@ -1871,7 +1872,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         <div className="flex flex-col sm:flex-row gap-3 justify-between pt-4 border-t border-surface-850">
                           <button type="button" onClick={handleBackToPatientList} className="px-4 py-2.5 bg-surface-950 border border-surface-800 rounded-xl text-surface-400 hover:text-white text-xs font-bold transition-all cursor-pointer">Volver</button>
                           <div className="flex flex-col sm:flex-row gap-3">
-                            {linkedPatient && (<button type="button" onClick={() => setActiveTab('prescription')} className="doctor-generate-recipe-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border">Generar Récipe</button>)}
+                            {linkedPatient && (<button type="button" onClick={() => stagePrescriptionPatient(patientForm)} className="doctor-generate-recipe-btn px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border">Generar Récipe</button>)}
                           </div>
                         </div>
                       </form>
