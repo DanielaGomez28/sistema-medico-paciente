@@ -2680,7 +2680,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       {/* P.5: PROFILE CONFIGURATION VIEW */}
       {activeSubTab === 'profile' && (
         <>
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
+        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300 portal-profile-view">
           {profileSaveMsg && (
             <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-lg flex items-center gap-2.5 text-secondary-400 text-xs">
               <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
@@ -2693,7 +2693,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <span>{profileError.message}</span>
             </div>
           )}
-          <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-8 backdrop-blur-md space-y-6">
+          <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-5 sm:p-8 backdrop-blur-md space-y-6">
             <div className="border-b border-surface-850 pb-4">
               <div>
                 <h3 className="zenith-section-title text-xs">Perfil del paciente</h3>
@@ -2885,7 +2885,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
           </div>
         </div>
-        <div className="fixed z-30 flex flex-col items-end gap-2 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] pointer-events-none">
+        <div className="portal-floating-actions fixed z-30 flex flex-col items-end gap-2 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] pointer-events-none">
           <div className="pointer-events-auto flex flex-col items-end gap-2">
             {isEditingProfile ? (
               <>

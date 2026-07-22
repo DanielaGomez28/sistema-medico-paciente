@@ -2830,3 +2830,73 @@ h6.font-mono {
   border-color: var(--zenith-surface-700) !important;
   box-shadow: none !important;
 }
+
+/*
+ * Móvil — zoom accesible y layout adaptable
+ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html,
+body {
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+.portal-main {
+  -webkit-overflow-scrolling: touch;
+}
+
+.portal-profile-view {
+  padding-bottom: 1.5rem;
+}
+
+.portal-floating-actions {
+  left: auto;
+}
+
+@media (max-width: 639px) {
+  .portal-profile-view {
+    padding-bottom: 10rem;
+  }
+
+  .portal-profile-view .rounded-xl.p-8 {
+    padding: 1.25rem;
+  }
+
+  .portal-floating-actions {
+    left: max(0.75rem, env(safe-area-inset-left));
+    right: max(0.75rem, env(safe-area-inset-right));
+    align-items: stretch;
+  }
+
+  .portal-floating-actions > div {
+    width: 100%;
+  }
+
+  .portal-floating-actions button {
+    min-width: 0 !important;
+    width: 100%;
+  }
+
+  [data-portal] .zenith-page-title {
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  [data-portal] .grid.grid-cols-3.gap-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1023px) {
+  .zenith-table-wrap {
+    margin-inline: -0.25rem;
+    padding-inline: 0.25rem;
+  }
+
+  .zenith-table {
+    min-width: 40rem;
+  }
+}

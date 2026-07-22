@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../lib/api';
 import PrintablePrescription from './PrintablePrescription';
+import ListCard from './ui/ListCard';
 
 interface ApiErrorPayload {
   response?: {
@@ -176,8 +177,8 @@ export default function AdminRecipesView() {
 
       {/* Table */}
       <div className="bg-surface-900/60 border border-surface-800 rounded-xl backdrop-blur-md overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
+        <div className="hidden lg:block overflow-x-auto">
+          <table className="w-full min-w-[56rem] text-xs">
             <thead>
               <tr className="border-b border-surface-800 text-surface-400 font-bold uppercase tracking-wider">
                 <th className="text-left px-6 py-4">Código</th>
@@ -231,6 +232,36 @@ export default function AdminRecipesView() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="lg:hidden space-y-3 p-4">
+          {filteredRecipes.map((recipe) => (
+            <ListCard
+              key={recipe.recipeId}
+              title={<span className="font-mono text-[10px] break-all">{recipe.recipeId}</span>}
+              subtitle={recipe.patientName || 'Sin paciente'}
+              badge={
+                <span className={`recipe-status-badge ${getStatusColor(recipe.clinicalStatus)}`}>
+                  {translateStatus(recipe.clinicalStatus)}
+                </span>
+              }
+              fields={[
+                { label: 'Emisión', value: formatDate(recipe.createdAt) },
+                { label: 'Medicamento', value: getMedicationSummary(recipe) },
+                { label: 'Especialista', value: recipe.doctorName || 'Sin médico' },
+              ]}
+              actions={
+                <button
+                  type="button"
+                  onClick={() => setSelectedRecipe(recipe)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary-500/10 border border-secondary-500/25 text-secondary-400 rounded-lg text-[10px] font-bold hover:bg-secondary-500/20 transition-colors cursor-pointer"
+                >
+                  <Eye className="h-3 w-3" />
+                  Visualizar / PDF
+                </button>
+              }
+            />
+          ))}
         </div>
 
         {filteredRecipes.length === 0 && (

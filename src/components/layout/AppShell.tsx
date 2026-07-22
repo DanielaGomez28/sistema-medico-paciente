@@ -127,7 +127,10 @@ export default function AppShell({
           )}
         >
           {headerContent}
-          <main ref={mainRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-y-contain touch-pan-y p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8 bg-surface-950 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]">
+          <main
+            ref={mainRef}
+            className="portal-main flex-1 min-h-0 overflow-y-auto overflow-x-auto overscroll-y-contain touch-auto p-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6 lg:p-8 bg-surface-950 [scrollbar-gutter:stable] [-webkit-overflow-scrolling:touch]"
+          >
             <div className={cn('w-full max-w-[96rem] mx-auto', contentClassName)}>{children}</div>
           </main>
         </div>

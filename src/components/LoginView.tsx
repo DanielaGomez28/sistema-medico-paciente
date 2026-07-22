@@ -213,10 +213,10 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row bg-[#ffffff] dark:bg-[#041a1d] transition-colors duration-300" style={{ fontFamily: 'var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif' }}>
+    <div className="min-h-[100dvh] w-full flex flex-col md:flex-row bg-[#ffffff] dark:bg-[#041a1d] transition-colors duration-300 overflow-y-auto" style={{ fontFamily: 'var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif' }}>
 
       {/* Left Panel - Login Card */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 sm:p-12 md:p-16 relative bg-[#ffffff] dark:bg-[#041a1d]">
+      <div className="flex-1 flex flex-col justify-center items-center p-4 sm:p-12 md:p-16 relative bg-[#ffffff] dark:bg-[#041a1d] min-h-[100dvh]">
 
         {/* Theme wrap inside the form panel */}
         <div className="absolute top-6 right-6 z-20">
