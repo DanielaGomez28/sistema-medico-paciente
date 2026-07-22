@@ -395,7 +395,6 @@ export default function FinancialSettingsView() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
           <div>
             <h3 className="zenith-section-title">Historial de modificaciones</h3>
-            <p className="text-xs text-surface-400 mt-0.5">Bitácora administrativa.</p>
           </div>
           <button type="button" onClick={() => setIsAuditLogOpen(false)} className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors cursor-pointer" aria-label="Cerrar">
             <X className="h-4 w-4" />
