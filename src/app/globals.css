@@ -1483,10 +1483,31 @@ table th {
   --portal-card-fg: #0a1220;
 }
 
+/* Modo oscuro únicamente: mismo fondo que usa la pantalla de login
+   (dark:bg-[#041a1d] en LoginView.tsx), igual para los tres portales. */
+[data-theme="dark"] [data-portal="patient"],
+[data-theme="dark"] [data-portal="doctor"],
+[data-theme="dark"] [data-portal="admin"] {
+  --portal-canvas: #041a1d;
+}
+
 [data-portal="patient"] {
   --patient-canvas: var(--portal-canvas);
   --patient-card-bg: var(--portal-card-bg);
   --patient-card-fg: var(--portal-card-fg);
+}
+
+/*
+ * Fondo del canvas con un tinte MUY suave del color de marca de cada
+ * portal (verde #179150 médico, teal #0A6B75 paciente) — apenas
+ * perceptible, no un fondo de color sólido.
+ */
+[data-theme="light"] [data-portal="doctor"] {
+  --portal-canvas: color-mix(in srgb, #179150 12%, #ffffff);
+}
+
+[data-theme="light"] [data-portal="patient"] {
+  --portal-canvas: color-mix(in srgb, #0a6b75 12%, #ffffff);
 }
 
 /* Tipografía compartida — paciente, médico y admin */
@@ -2764,15 +2785,13 @@ h6.font-mono {
   --foreground: #f8fafc;
 }
 
-[data-theme="light"] [data-portal="admin"] header.admin-header-white button:not([class*="--portal-btn"]):hover {
-  background-color: transparent !important;
-  box-shadow: 0 2px 10px rgb(10 18 32 / 0.12);
-}
-
-[data-theme="dark"] [data-portal="admin"] header.admin-header-white button:not([class*="--portal-btn"]):hover {
-  background-color: transparent !important;
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
-}
+/*
+ * Se quitó la regla que forzaba `box-shadow` + fondo transparente en hover
+ * para los botones del header de Admin (toggle de tema, "Salir"): hacía que
+ * su animación de hover se viera distinta a la de médico/paciente, que usan
+ * el mismo componente sin esa sombra. Ahora los tres portales comparten
+ * exactamente el mismo hover.
+ */
 
 /*
  * La barra de navegación de Admin usa la MISMA animación que médico y

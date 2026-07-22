@@ -112,7 +112,7 @@ export default function AppHeader({
                 <img src="/logo.png" alt="Logo" width={24} height={24} style={{ display: 'block', width: '24px', height: '24px', objectFit: 'contain' }} />
               </div>
               <div className="min-w-0 flex flex-col justify-center leading-none">
-                <span className={cn('tracking-tight text-[22px] font-bold leading-none', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')}>+Salud</span>
+                <span className={cn('tracking-tight text-[22px] !font-bold leading-none', navTextWhite ? 'text-white' : navTextDarkCyan ? 'text-[#055058]' : 'text-foreground')}>+Salud</span>
               </div>
             </div>
           )}
@@ -208,16 +208,11 @@ export default function AppHeader({
                 <button
                   type="button"
                   onClick={onLogout}
-                  className={cn(
-                    'transition-colors cursor-pointer shrink-0',
-                    navTextWhite || navTextDarkCyan
-                      ? 'h-[30px] w-[30px] rounded-lg border border-surface-800 flex items-center justify-center text-foreground bg-surface-900 hover:bg-surface-850 shadow-sm'
-                      : 'p-1.5 rounded-lg text-surface-400 hover:text-red-500 hover:bg-surface-900'
-                  )}
+                  className="h-[30px] w-[30px] rounded-lg border border-surface-800 flex items-center justify-center text-foreground bg-surface-900 hover:bg-surface-850 shadow-sm transition-colors cursor-pointer shrink-0"
                   title="Cerrar Sesión"
                   aria-label="Cerrar Sesión"
                 >
-                  <LogOut className={cn(navTextWhite || navTextDarkCyan ? 'h-3.5 w-3.5' : 'h-4 w-4')} />
+                  <LogOut className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
