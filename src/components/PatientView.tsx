@@ -1432,7 +1432,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       setCheckoutError('');
       const session = await fetchCheckoutSession(checkoutSession.order.recipeId);
       applyCheckoutSession(session, session.order.status === 'payment_confirmed');
-      setPaymentStatusMessage('Estado del checkout actualizado desde el backend.');
+      setPaymentStatusMessage('Estado del pedido actualizado.');
     } catch (error: unknown) {
       const apiError = error as ApiErrorPayload;
       setCheckoutError(
@@ -2650,7 +2650,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
                 <div className="flex items-center gap-1.5 text-secondary-605 font-bold">
                   <ShieldCheck className="h-4.5 w-4.5" />
-                  <span>{checkoutSession?.order?.status === 'payment_confirmed' ? 'Reserva Confirmada en Almacén' : 'Esperando confirmación del backend'}</span>
+                  <span>{checkoutSession?.order?.status === 'payment_confirmed' ? 'Reserva Confirmada en Almacén' : 'Esperando confirmación del pago'}</span>
                 </div>
               </div>
 

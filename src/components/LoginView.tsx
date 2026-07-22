@@ -206,7 +206,7 @@ export default function LoginView({ onLoginSuccess }: LoginViewProps) {
         setGeneralError(data.error || 'No fue posible iniciar sesion.');
       }
     } catch {
-      setGeneralError('No se pudo conectar con el servidor. Verifica que el backend este encendido.');
+      setGeneralError('No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.');
     } finally {
       setSubmitting(false);
     }

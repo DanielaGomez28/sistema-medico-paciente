@@ -547,25 +547,49 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         setIsScanning(false);
 
         try {
-          // 1. Validamos la encriptación AES y la regla de 5 min en el backend
-          const response = await apiClient.post('/qr/validate', { token: decodedToken });
-          
-          if (response.data && response.data.patientId) {
-            // 2. Si el backend aprueba, bloqueamos la pantalla del médico (Esperando...)
-            setScanProgress(100);
-            setWaitingConsent(true);
+          // 1. Se valida el cifrado y la vigencia de 5 minutos del QR.
+          const response = await apiClient.post('/qr/validate', {
+            token: decodedToken,
+            doctorId: DOCTOR_ID,
+          });
 
-            // 3. Emitimos la alerta de WebSocket a la pantalla del paciente
-            socket.emit('requestConsent', {
-              doctorId: DOCTOR_ID,
-              doctorName: DOCTOR_NAME,
-              patientId: response.data.patientId // El backend desencript? el patientId interno desde el QR
-            });
+          const scannedPatientId = response.data?.patientId;
+          if (!scannedPatientId) {
+            setScannerErrorMsg('No se pudo leer el código QR. Pedile al paciente que genere uno nuevo.');
+            return;
           }
+
+          setScanProgress(100);
+
+          // 2. Si el paciente ya tiene vinculación activa con este médico no hace
+          // falta pedir consentimiento otra vez: se abre su ficha directamente.
+          if (response.data?.linked) {
+            try {
+              const detail = await apiClient.get(`/pacientes/${encodeURIComponent(scannedPatientId)}`);
+              openPatientForm(detail.data as LinkedPatient);
+              return;
+            } catch {
+              setScannerErrorMsg('No se pudo abrir la ficha del paciente. Intentá de nuevo.');
+              return;
+            }
+          }
+
+          // 3. Requiere consentimiento: se solicita por el canal en tiempo real.
+          if (!SOCKET_RUNTIME_SUPPORTED) {
+            setScannerErrorMsg('El paciente debe autorizar la consulta desde su dispositivo y esa autorización no está disponible en este momento.');
+            return;
+          }
+
+          setWaitingConsent(true);
+          socket.emit('requestConsent', {
+            doctorId: DOCTOR_ID,
+            doctorName: DOCTOR_NAME,
+            patientId: scannedPatientId,
+          });
         } catch (error: unknown) {
-          // Fallo por QR Caducado o Nonce duplicado
+          // QR caducado, ya usado o alterado.
           const apiError = error as ApiErrorPayload;
-          setScannerErrorMsg(apiError.response?.data?.error || 'Error de seguridad: QR caducado o invalido.');
+          setScannerErrorMsg(apiError.response?.data?.error || 'El código QR caducó o no es válido. Pedile al paciente que genere uno nuevo.');
         }
       }, () => {
         // Errores silenciosos mientras busca el QR frame por frame (se ignoran)
@@ -701,7 +725,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           setCommissionError(
             apiError.response?.data?.error ||
             apiError.response?.data?.details ||
-            'No se pudo cargar el libro de comisiones del backend.'
+            'No se pudo cargar el libro de comisiones.'
           );
         }
       } finally {
@@ -776,7 +800,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           setRecipeLogError(
             apiError.response?.data?.error ||
             apiError.response?.data?.details ||
-            'No se pudo cargar la bitácora real de recipes del backend.'
+            'No se pudo cargar la bitácora de récipes.'
           );
         }
       } finally {
@@ -1016,36 +1040,44 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
    * @returns {Promise<void>}
    */
   const linkPatientMock = async (patientQuery: string) => {
-    if (!SOCKET_RUNTIME_SUPPORTED) {
-      setScannerErrorMsg('La vinculación en tiempo real requiere backend local persistente. En Vercel se debe operar con recarga de agenda y flujos HTTP.');
-      return;
-    }
     const normalized = patientQuery.toLowerCase().replace(/[\s\.-]/g, '');
-    let targetPatient = patients.find((patient) =>
+    // Los pacientes de la agenda ya tienen vinculación activa con este médico,
+    // así que abrir su ficha no requiere pedir consentimiento de nuevo.
+    const alreadyLinked = patients.find((patient) =>
       patient.patientId.toLowerCase().replace(/[\s\.-]/g, '').includes(normalized)
     );
 
-    if (!targetPatient) {
-      try {
-        const response = await apiClient.get(`/pacientes/${encodeURIComponent(patientQuery)}`);
-        targetPatient = response.data as LinkedPatient;
-        setPatients((prev) => {
-          const exists = prev.some((patient) => patient.systemId === targetPatient?.systemId);
-          return exists || !targetPatient ? prev : [...prev, targetPatient];
-        });
-      } catch {
-        setScannerErrorMsg('No se encontró el paciente en la base de datos.');
-        return;
-      }
+    if (alreadyLinked) {
+      setScannerErrorMsg('');
+      openPatientForm(alreadyLinked);
+      return;
     }
 
+    let targetPatient: LinkedPatient;
+    try {
+      const response = await apiClient.get(`/pacientes/${encodeURIComponent(patientQuery)}`);
+      targetPatient = response.data as LinkedPatient;
+    } catch {
+      setScannerErrorMsg('No se encontró ningún paciente con ese identificador.');
+      return;
+    }
+
+    // Paciente nuevo para este médico: necesita autorización explícita.
+    if (!SOCKET_RUNTIME_SUPPORTED) {
+      setScannerErrorMsg('El paciente debe autorizar la consulta desde su dispositivo y esa autorización no está disponible en este momento.');
+      return;
+    }
+
+    setPatients((prev) =>
+      prev.some((patient) => patient.systemId === targetPatient.systemId) ? prev : [...prev, targetPatient]
+    );
     setIsWaitingConsent(true);
-    setPendingConsentPatient(targetPatient || null);
+    setPendingConsentPatient(targetPatient);
 
     socket.emit('requestConsent', {
       doctorId: DOCTOR_ID,
       doctorName: DOCTOR_NAME,
-      patientId: targetPatient?.systemId || targetPatient?.patientId || patientQuery,
+      patientId: targetPatient.systemId || targetPatient.patientId || patientQuery,
     });
   };
 
@@ -1073,12 +1105,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
    * Simula el inicio del escaneo mediante cámara.
    */
   const triggerCameraScan = () => {
-    if (!SOCKET_RUNTIME_SUPPORTED) {
-      setScannerErrorMsg('El escáner realtime solo queda habilitado en entorno local con Socket.IO persistente.');
-      return;
-    }
+    // El escaneo y la validación del QR son HTTP puro, así que no dependen del
+    // canal en tiempo real: la cámara debe abrir siempre que haya una disponible.
     if (!isMobileScannerCapable) {
-      setScannerErrorMsg('El escaner en tiempo real solo esta habilitado en dispositivos moviles con camara.');
+      setScannerErrorMsg('Este dispositivo no tiene una cámara disponible para escanear. Abrí el portal desde tu teléfono.');
       setIsScanning(false);
       return;
     }

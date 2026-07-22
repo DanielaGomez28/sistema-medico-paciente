@@ -105,7 +105,7 @@ export default function CmsView() {
           setBackendError(
             (error as ApiErrorPayload).response?.data?.error ||
               (error as ApiErrorPayload).response?.data?.details ||
-              'No se pudo cargar el CMS del backend.'
+              'No se pudo cargar la configuración.'
           );
         }
       } finally {
@@ -279,7 +279,7 @@ export default function CmsView() {
       {saveSuccess ? (
         <div className="p-3.5 bg-secondary-500/10 border border-secondary-500/25 rounded-xl flex items-center gap-2 text-secondary-450 text-xs">
           <CheckCircle className="h-4 w-4 shrink-0" />
-          <span><strong className="font-bold">Cambios guardados.</strong> El CMS ya está sincronizado con el backend.</span>
+          <span><strong className="font-bold">Cambios guardados.</strong></span>
         </div>
       ) : null}
 

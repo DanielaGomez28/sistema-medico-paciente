@@ -147,7 +147,7 @@ export default function FinancialSettingsView() {
       {saveSuccess ? (
         <div className="p-4 bg-surface-800 border border-surface-700 rounded-2xl flex items-center gap-2.5 text-surface-200 text-xs">
           <CheckCircle className="h-4.5 w-4.5 shrink-0" />
-          <span>Política financiera sincronizada con el backend.</span>
+          <span>Política financiera actualizada.</span>
         </div>
       ) : null}
 
@@ -192,7 +192,7 @@ export default function FinancialSettingsView() {
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
           <div>
             <h3 className="zenith-section-title">Historial de comisiones</h3>
-            <p className="text-xs text-surface-400 mt-0.5">Bitácora administrativa leída desde el backend.</p>
+            <p className="text-xs text-surface-400 mt-0.5">Bitácora administrativa.</p>
           </div>
           <button type="button" onClick={() => setIsAuditLogOpen(false)} className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors cursor-pointer" aria-label="Cerrar">
             <X className="h-4 w-4" />
