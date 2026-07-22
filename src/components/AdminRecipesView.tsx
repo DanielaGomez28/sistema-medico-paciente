@@ -6,7 +6,7 @@
  * pero adaptada para el administrador sin la sección de retiro.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { translateStatus, getRecipeStatusBadgeClassName } from '../lib/statusColors';
 import {
   FileText,
@@ -19,6 +19,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import apiClient from '../lib/api';
+import PrintablePrescription from './PrintablePrescription';
 
 interface ApiErrorPayload {
   response?: {
@@ -36,9 +37,17 @@ interface ApiErrorPayload {
 // mezclar los dos (ver el mismo comentario en DoctorView.tsx/PatientView.tsx).
 interface RecipeItem {
   id: string;
+  lineId?: string;
   nombre: string;
+  dosis?: string;
+  presentacion?: string;
+  laboratorio?: string;
+  principio_activo?: string;
   cantidad_prescrita?: number;
+  cantidad_dispensada?: number;
   remaining_quantity?: number;
+  treatment_days?: number | null;
+  daily_doses?: number | null;
 }
 
 interface AdminRecipe {
@@ -50,6 +59,7 @@ interface AdminRecipe {
   fulfillmentStatus?: string;
   createdAt: string;
   recipeExpiresAt: string;
+  observaciones?: string;
   items?: RecipeItem[];
 }
 
@@ -65,33 +75,42 @@ export default function AdminRecipesView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<AdminRecipe | null>(null);
 
+  /**
+   * Recarga el listado de récipes desde el servidor.
+   * @param {{ cancelled?: () => boolean }} [options] - Permite descartar el
+   *   resultado si el componente se desmontó durante la petición.
+   * @returns {Promise<void>}
+   */
+  const loadRecipes = useCallback(async (options?: { cancelled?: () => boolean }) => {
+    const isCancelled = () => Boolean(options?.cancelled?.());
+
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/prescripciones');
+      if (!isCancelled()) {
+        setRecipes(Array.isArray(response.data?.items) ? response.data.items : []);
+      }
+    } catch {
+      if (!isCancelled()) {
+        setRecipes([]);
+      }
+    } finally {
+      if (!isCancelled()) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-
-    const loadRecipes = async () => {
-      try {
-        setLoading(true);
-        const response = await apiClient.get('/prescripciones');
-        if (!cancelled) {
-          setRecipes(Array.isArray(response.data?.items) ? response.data.items : []);
-        }
-      } catch {
-        if (!cancelled) {
-          setRecipes([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    void loadRecipes();
+    // Ver nota equivalente en DashboardView: carga inicial del listado.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadRecipes({ cancelled: () => cancelled });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadRecipes]);
 
   const filteredRecipes = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -134,7 +153,7 @@ export default function AdminRecipesView() {
         </div>
         <button
           type="button"
-          onClick={() => window.location.reload()}
+          onClick={() => { void loadRecipes(); }}
           disabled={loading}
           className="px-4 py-2.5 bg-surface-900 border border-surface-800 rounded-xl text-surface-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-2 self-start"
         >
@@ -258,62 +277,35 @@ export default function AdminRecipesView() {
               </div>
             </div>
 
-            <div className="overflow-y-auto p-8 print:p-0 print:overflow-visible space-y-6">
-              {/* Header */}
-              <div className="border-b border-gray-200 pb-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-bold text-gray-900">RÉCIPE MÉDICO</h2>
-                    <p className="text-xs text-gray-500 font-mono">{selectedRecipe.recipeId}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500">Fecha de emisión</p>
-                    <p className="text-sm font-semibold text-gray-800">{formatDate(selectedRecipe.createdAt)}</p>
-                  </div>
-                </div>
-              </div>
+            <PrintablePrescription
+              recipeId={selectedRecipe.recipeId}
+              issuedAt={formatDate(selectedRecipe.createdAt)}
+              expiresAt={formatDate(selectedRecipe.recipeExpiresAt)}
+              patientName={selectedRecipe.patientName || 'Sin paciente asignado'}
+              doctorName={selectedRecipe.doctorName || 'Sin médico asignado'}
+              notes={selectedRecipe.observaciones}
+              facilityName="+SALUD"
+              facilitySubtitle="Sistema Médico-Paciente"
+              documentLabel="Récipe clínico"
+              signatureFooter="Validado por el sistema"
+              verificationLabel="Verificable en el portal +Salud"
+              items={(selectedRecipe.items || []).map((item, idx) => ({
+                id: item.lineId || `${selectedRecipe.recipeId}-${idx}`,
+                name: item.nombre,
+                instructions: item.dosis,
+                presentation: item.presentacion,
+                laboratory: item.laboratorio,
+                activeIngredient: item.principio_activo,
+                prescribedQuantity: item.cantidad_prescrita,
+                dispensedQuantity: item.cantidad_dispensada,
+                treatmentDays: item.treatment_days,
+                dailyDoses: item.daily_doses,
+              }))}
+            />
 
-              {/* Doctor / Patient info */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Especialista</p>
-                  <p className="text-sm font-semibold text-gray-800">{selectedRecipe.doctorName || 'Sin médico asignado'}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Paciente</p>
-                  <p className="text-sm font-semibold text-gray-800">{selectedRecipe.patientName || 'Sin paciente asignado'}</p>
-                </div>
-              </div>
-
-              {/* Medications table */}
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-3">Medicamentos prescritos</p>
-                <table className="w-full text-xs border border-gray-200 rounded-lg overflow-hidden">
-                  <thead>
-                    <tr className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-wider">
-                      <th className="text-left px-4 py-2.5">Medicamento</th>
-                      <th className="text-center px-4 py-2.5">Cantidad</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {selectedRecipe.items && selectedRecipe.items.length > 0 ? (
-                      selectedRecipe.items.map((item, idx) => (
-                        <tr key={idx}>
-                          <td className="px-4 py-3 font-semibold text-gray-800">{item.nombre}</td>
-                          <td className="px-4 py-3 text-center text-gray-600">{item.cantidad_prescrita || '-'}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={2} className="px-4 py-4 text-center text-gray-400">Sin medicamentos registrados</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Status */}
-              <div className="flex gap-4 pt-2 border-t border-gray-200">
+            {/* Estado administrativo: no forma parte del recetario que ve el paciente. */}
+            <div className="px-8 pb-8 print:hidden">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Estado clínico</p>
                   <p className="text-sm font-semibold text-gray-700">{translateStatus(selectedRecipe.clinicalStatus)}</p>

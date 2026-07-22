@@ -563,10 +563,14 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   // El modal de "ver recipe" vive fuera de los bloques por activeSubTab (para
   // poder mostrarse desde cualquier pestaña), así que hay que cerrarlo a mano
   // al navegar -- si no, queda flotando encima de la pestaña nueva sin forma
-  // de cerrarlo.
-  useEffect(() => {
+  // de cerrarlo. Se ajusta durante el render, que es el patrón recomendado para
+  // resetear estado ante un cambio: con un efecto se renderiza una vez de más
+  // con el modal todavía abierto sobre la pestaña nueva.
+  const [subTabAlAbrirRecipe, setSubTabAlAbrirRecipe] = useState(activeSubTab);
+  if (subTabAlAbrirRecipe !== activeSubTab) {
+    setSubTabAlAbrirRecipe(activeSubTab);
     setSelectedRecipe(null);
-  }, [activeSubTab]);
+  }
 
   // Treatment tracking states
   const [trackingProfiles, setTrackingProfiles] = useState<BackendTrackingProfile[]>([]);
@@ -2751,12 +2755,69 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="zenith-field-label">Referencia del Perfil</label>
+                    <label className="zenith-field-label">Edad</label>
                     <input
                       type="text"
-                      value={patientProfile?.patientId ? patientProfile.patientId : qrPatientIdentity}
+                      value={patientProfile?.age ? `${patientProfile.age} años` : 'Sin especificar'}
                       readOnly
-                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 font-mono focus:outline-none"
+                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Datos clínicos: los mismos que ve el médico en la ficha, en solo
+                  lectura. Los mantiene y actualiza el especialista durante la
+                  consulta, no el paciente desde su portal. */}
+              <div className="space-y-4">
+                <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
+                  Datos Clínicos
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="zenith-field-label">Género</label>
+                    <input
+                      type="text"
+                      value={patientProfile?.gender || 'Sin especificar'}
+                      readOnly
+                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="zenith-field-label">Grupo sanguíneo</label>
+                    <input
+                      type="text"
+                      value={patientProfile?.bloodType || 'Sin especificar'}
+                      readOnly
+                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="zenith-field-label">Condición / diagnóstico de control</label>
+                    <input
+                      type="text"
+                      value={patientProfile?.condition || 'Sin condiciones registradas'}
+                      readOnly
+                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="zenith-field-label">Alergias</label>
+                    <input
+                      type="text"
+                      value={patientProfile?.allergies || 'Ninguna conocida'}
+                      readOnly
+                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <label className="zenith-field-label">Tratamientos activos</label>
+                    <input
+                      type="text"
+                      value={patientProfile?.medications?.length ? patientProfile.medications.join(', ') : 'Sin tratamientos activos'}
+                      readOnly
+                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none"
                     />
                   </div>
                 </div>

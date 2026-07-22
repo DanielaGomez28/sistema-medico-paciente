@@ -5,7 +5,7 @@
  * @description Implementa una vista administrativa conectada al backend real del panel.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Activity, ChevronRight, DollarSign, Heart, RefreshCw, Stethoscope, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '../lib/currency';
 import apiClient from '../lib/api';
@@ -71,17 +71,36 @@ interface CatalogRecord {
   activeIngredient?: string;
 }
 
+/**
+ * Calcula la geometría del gráfico de tendencia.
+ * Se reserva un margen interno porque la línea se dibujaba de borde a borde y,
+ * con el grosor del trazo, la mitad quedaba recortada fuera del viewBox.
+ * @param {Array<{label: string, value: number}>} values - Serie a graficar.
+ * @returns {object} Dimensiones, coordenadas, ruta del área y máximo de la serie.
+ */
 const buildPolyline = (values: Array<{ label: string; value: number }>) => {
   const width = 320;
   const height = 140;
+  const padX = 6;
+  const padTop = 12;
+  const padBottom = 10;
   const max = Math.max(...values.map((item) => item.value), 1);
-  const points = values.map((item, index) => {
-    const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
-    const y = height - (item.value / max) * (height - 20);
-    return `${x},${y}`;
+  const usableW = width - padX * 2;
+  const usableH = height - padTop - padBottom;
+
+  const coords = values.map((item, index) => {
+    const x = values.length === 1 ? width / 2 : padX + (index / (values.length - 1)) * usableW;
+    const y = padTop + (1 - item.value / max) * usableH;
+    return { x, y, ...item };
   });
 
-  return { width, height, points: points.join(' ') };
+  const points = coords.map((c) => `${c.x},${c.y}`).join(' ');
+  const baseline = height - padBottom;
+  const areaPath = coords.length
+    ? `M ${coords[0].x},${baseline} ${coords.map((c) => `L ${c.x},${c.y}`).join(' ')} L ${coords[coords.length - 1].x},${baseline} Z`
+    : '';
+
+  return { width, height, points, coords, areaPath, max, baseline, padTop };
 };
 
 /**
@@ -100,10 +119,15 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
   const [error, setError] = useState('');
   const [activeMetricTab, setActiveMetricTab] = useState<'sales' | 'recipes'>('sales');
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadAdminData = async () => {
+  /**
+   * Carga los datos del panel administrativo.
+   * @param {{ cancelled?: () => boolean }} [options] - Permite descartar el
+   *   resultado si el componente se desmontó durante la petición.
+   * @returns {Promise<void>}
+   */
+  const loadAdminData = useCallback(async (options?: { cancelled?: () => boolean }) => {
+    const cancelled = () => Boolean(options?.cancelled?.());
+    {
       try {
         setLoading(true);
         setError('');
@@ -114,14 +138,14 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           apiClient.get('/prescripciones/catalogo'),
         ]);
 
-        if (!cancelled) {
+        if (!cancelled()) {
           setStats(statsResponse.data || null);
           setDoctors(Array.isArray(doctorsResponse.data?.items) ? doctorsResponse.data.items : []);
           setRecipes(Array.isArray(recipesResponse.data?.items) ? recipesResponse.data.items : []);
           setCatalog(Array.isArray(catalogResponse.data?.items) ? catalogResponse.data.items : []);
         }
       } catch (requestError: unknown) {
-        if (!cancelled) {
+        if (!cancelled()) {
           // Si el backend no está disponible, caemos en un estado vacío (como si la BD estuviese vacía)
           setStats({
             generatedAt: new Date().toISOString(),
@@ -142,21 +166,31 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           setDoctors([]);
           setRecipes([]);
           setCatalog([]);
-          // setError(apiError.response?.data?.error || apiError.response?.data?.details || 'No se pudo cargar el dashboard administrativo.');
+          // Sin este aviso, un fallo del panel se veía igual que "todavía no hay
+          // datos": el usuario no tenía forma de saber que no se actualizaba.
+          const apiError = requestError as ApiErrorPayload;
+          setError(apiError.response?.data?.error || 'No se pudieron cargar los datos del panel.');
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled()) {
           setLoading(false);
         }
       }
-    };
+    }
+  }, []);
 
-    void loadAdminData();
+  useEffect(() => {
+    let cancelled = false;
+    // Carga inicial de datos. La regla apunta a setState sincrónico en efectos,
+    // pero acá el estado que se toca es el del propio fetch (loading/datos), que
+    // es justamente lo que hay que sincronizar al montar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadAdminData({ cancelled: () => cancelled });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadAdminData]);
 
   const lowStockProducts = useMemo(
     () => catalog.filter((product) => Number(product.stock || 0) <= 20).slice(0, 4),
@@ -184,12 +218,15 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
 
   const chartValues = chartSource.length ? chartSource : [{ label: 'Sin datos', value: 0 }];
   const chart = buildPolyline(chartValues);
+  // Con la serie vacía o toda en cero el trazo quedaba pegado al borde inferior,
+  // pareciendo un gráfico roto en vez de "sin datos".
+  const hasChartData = chartSource.length > 0 && chartSource.some((item) => item.value > 0);
 
   return (
     <div className="space-y-6">
       <PageHeader
         actions={
-          <Button variant="outline" size="sm" onClick={() => window.location.reload()} disabled={loading}>
+          <Button variant="outline" size="sm" onClick={() => { void loadAdminData(); }} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Recargar panel
           </Button>
@@ -242,15 +279,72 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
             </div>
           </div>
 
-          <svg viewBox={`0 0 ${chart.width} ${chart.height}`} className="w-full h-44 overflow-visible">
-            <polyline fill="none" stroke="var(--color-primary)" strokeWidth="3" points={chart.points} />
-          </svg>
+          {hasChartData ? (
+            <>
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="text-2xs text-surface-500 uppercase tracking-wider font-bold">
+                  Máximo del período
+                </span>
+                <span className="text-sm font-bold text-foreground font-mono">
+                  {activeMetricTab === 'sales' ? formatCurrency(chart.max) : chart.max}
+                </span>
+              </div>
 
-          <div className="flex justify-between gap-2 text-[10px] text-surface-500 font-mono">
-            {chartValues.map((item) => (
-              <span key={`${activeMetricTab}-${item.label}`}>{item.label}</span>
-            ))}
-          </div>
+              <svg
+                viewBox={`0 0 ${chart.width} ${chart.height}`}
+                className="w-full h-44"
+                preserveAspectRatio="none"
+                role="img"
+                aria-label={`Tendencia de ${activeMetricTab === 'sales' ? 'ventas' : 'récipes'}`}
+              >
+                {/* Guías horizontales para dar referencia de altura al trazo. */}
+                {[0, 0.5, 1].map((ratio) => {
+                  const y = chart.padTop + ratio * (chart.baseline - chart.padTop);
+                  return (
+                    <line
+                      key={ratio}
+                      x1="0"
+                      y1={y}
+                      x2={chart.width}
+                      y2={y}
+                      stroke="currentColor"
+                      strokeWidth="0.5"
+                      className="text-surface-700/40"
+                    />
+                  );
+                })}
+
+                <path d={chart.areaPath} fill="var(--color-primary)" opacity="0.12" />
+
+                <polyline
+                  fill="none"
+                  stroke="var(--color-primary)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  points={chart.points}
+                />
+
+                {/* Un solo dato no dibuja línea: el punto lo deja visible igual. */}
+                {chart.coords.map((c) => (
+                  <circle key={`${c.label}-${c.x}`} cx={c.x} cy={c.y} r="2.5" fill="var(--color-primary)" />
+                ))}
+              </svg>
+
+              <div className="flex justify-between gap-2 text-[10px] text-surface-500 font-mono">
+                {chartValues.map((item) => (
+                  <span key={`${activeMetricTab}-${item.label}`} className="truncate">{item.label}</span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="h-44 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-surface-800 text-center">
+              <TrendingUp className="h-5 w-5 text-surface-600" />
+              <p className="text-xs text-surface-500">
+                Todavía no hay {activeMetricTab === 'sales' ? 'ventas' : 'récipes'} registrados en el período.
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4 cursor-pointer hover:border-surface-700 transition-colors" onClick={() => onNavigate('doctors')}>

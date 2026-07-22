@@ -6,9 +6,31 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { CheckCircle, History, Percent, Save, ShieldAlert, X } from 'lucide-react';
+import { CheckCircle, ChevronDown, History, Percent, Save, ShieldAlert, Users, X } from 'lucide-react';
 import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
 import apiClient from '../lib/api';
+import { formatCurrency } from '../lib/currency';
+
+/** Médico con su comisión y saldo, para el detalle por médico. */
+interface DoctorCommissionRow {
+  id: number;
+  name: string;
+  specialty?: string | null;
+  status?: string;
+  assignedCommission?: number | null;
+  commissionRatePct?: number;
+  commissionRateSource?: 'doctor' | 'global';
+  availableBalance?: number;
+  currency?: string;
+  transactions?: Array<{
+    recipeId: string;
+    orderId: string;
+    amount: number;
+    commissionAmount: number;
+    settledAt: string;
+    medications?: string;
+  }>;
+}
 
 interface ApiErrorPayload {
   response?: {
@@ -25,9 +47,12 @@ interface AuditLogEntry {
   id_log?: number;
   actorUserId?: string;
   id_superusuario?: number;
+  actorName?: string | null;
+  actorEmail?: string | null;
   action: string;
   createdAt?: string;
   fecha_hora_exacta?: string;
+  timestamp?: string;
   details?: Record<string, { previous?: unknown; next?: unknown }>;
 }
 
@@ -44,15 +69,33 @@ export default function FinancialSettingsView() {
   const [isAuditLogOpen, setIsAuditLogOpen] = useState(false);
   const [loadingConfig, setLoadingConfig] = useState(false);
   const [backendError, setBackendError] = useState('');
+  const [doctorRows, setDoctorRows] = useState<DoctorCommissionRow[]>([]);
+  const [expandedDoctorId, setExpandedDoctorId] = useState<number | null>(null);
 
   const loadFinancialData = async () => {
-    const [configResponse, auditResponse] = await Promise.all([
+    const [configResponse, auditResponse, doctorsResponse] = await Promise.all([
       apiClient.get('/admin/cms/config'),
       apiClient.get('/admin/audit-log?action=system_config_updated'),
+      apiClient.get('/admin/doctors'),
     ]);
 
     setCommissionValue(Number(configResponse.data?.config?.doctorCommissionPct || 0));
     setAuditLog(Array.isArray(auditResponse.data?.items) ? auditResponse.data.items : []);
+
+    // Cada médico puede tener su propia comisión asignada, que prevalece sobre la
+    // global. Se consulta su resumen para mostrar la tasa vigente y el saldo real.
+    const doctors = Array.isArray(doctorsResponse.data?.items) ? doctorsResponse.data.items : [];
+    const rows = await Promise.all(
+      doctors.map(async (doctor: DoctorCommissionRow) => {
+        try {
+          const summary = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(String(doctor.id))}`);
+          return { ...doctor, ...summary.data };
+        } catch {
+          return doctor;
+        }
+      })
+    );
+    setDoctorRows(rows);
   };
 
   useEffect(() => {
@@ -115,11 +158,22 @@ export default function FinancialSettingsView() {
 
   const auditRows = useMemo(() => auditLog.map((entry) => {
     const commissionChange = entry.details?.doctorCommissionPct;
-    const dateVal = entry.createdAt || entry.fecha_hora_exacta;
+    // La API expone la fecha como `timestamp`; sin contemplarla la bitácora
+    // mostraba siempre "N/A" en la columna Fecha/Hora.
+    const dateVal = entry.timestamp || entry.createdAt || entry.fecha_hora_exacta;
     return {
       id: String(entry.id || entry.id_log || 'N/A'),
-      actor: String(entry.actorUserId || entry.id_superusuario || 'N/A'),
-      timestamp: dateVal ? new Date(dateVal).toLocaleString('es-ES') : 'N/A',
+      // El id numérico no identifica a nadie al auditar: se prefiere el nombre.
+      actor: entry.actorName || entry.actorEmail || `Usuario ${entry.actorUserId || entry.id_superusuario || 'N/A'}`,
+      timestamp: dateVal
+        ? new Date(dateVal).toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          })
+        : 'N/A',
       action: 'Actualización de comisión base',
       previousValue: commissionChange?.previous ?? 'N/A',
       newValue: commissionChange?.next ?? 'N/A',
@@ -132,7 +186,7 @@ export default function FinancialSettingsView() {
         actions={
           <Button variant="outline" onClick={() => setIsAuditLogOpen(true)}>
             <History className="h-4 w-4" />
-            Historial de comisiones
+            Historial de modificaciones
           </Button>
         }
       />
@@ -154,7 +208,7 @@ export default function FinancialSettingsView() {
       <form onSubmit={handleUpdate} className="admin-surface-card w-full border rounded-3xl p-6 space-y-5">
         <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
           <Percent className="h-4.5 w-4.5 text-surface-400" />
-          <h3 className="zenith-section-title">Comisión base real del sistema</h3>
+          <h3 className="zenith-section-title">% Comisión del sistema</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -188,10 +242,100 @@ export default function FinancialSettingsView() {
         </div>
       </form>
 
+      {/* Comisiones por médico: la global es el valor por defecto, pero cada
+          médico puede tener una asignada que prevalece. Se muestra cuál rige
+          para que el porcentaje no se lea como si fuera el mismo para todos. */}
+      <div className="admin-surface-card w-full border rounded-3xl p-6 space-y-5">
+        <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
+          <Users className="h-4.5 w-4.5 text-surface-400" />
+          <div>
+            <h3 className="zenith-section-title">Comisiones por médico</h3>
+            <p className="text-xs text-surface-400 mt-0.5">
+              Tocá un médico para ver su historial de comisiones liquidadas.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {doctorRows.map((doctor) => {
+            const abierto = expandedDoctorId === doctor.id;
+            const tasa = doctor.commissionRatePct ?? doctor.assignedCommission ?? commissionValue;
+            const propia = doctor.commissionRateSource === 'doctor';
+
+            return (
+              <div key={doctor.id} className="rounded-2xl border border-surface-850 bg-surface-950/40 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setExpandedDoctorId(abierto ? null : doctor.id)}
+                  className="w-full flex items-center justify-between gap-3 p-4 text-left hover:bg-surface-900/40 transition-colors cursor-pointer"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{doctor.name}</p>
+                    <p className="text-[10px] text-surface-500 truncate">
+                      {doctor.specialty || 'Sin especialidad'}
+                      {doctor.status ? ` • ${doctor.status}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4 shrink-0">
+                    <div className="text-right">
+                      <p className="text-sm font-bold font-mono text-foreground">{tasa}%</p>
+                      <p className="text-[9px] uppercase tracking-wider text-surface-500">
+                        {propia ? 'Asignada' : 'Global'}
+                      </p>
+                    </div>
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm font-bold font-mono text-foreground">
+                        {formatCurrency(Number(doctor.availableBalance || 0))}
+                      </p>
+                      <p className="text-[9px] uppercase tracking-wider text-surface-500">Acumulado</p>
+                    </div>
+                    <ChevronDown className={`h-4 w-4 text-surface-500 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+
+                {abierto ? (
+                  <div className="border-t border-surface-850 px-4 py-3 space-y-2">
+                    {doctor.transactions?.length ? (
+                      doctor.transactions.map((t, idx) => (
+                        <div key={`${t.recipeId}-${idx}`} className="flex items-start justify-between gap-3 text-xs py-1.5">
+                          <div className="min-w-0">
+                            <p className="text-surface-200 truncate">{t.medications || `Receta ${t.recipeId}`}</p>
+                            <p className="text-[10px] text-surface-500">
+                              {new Date(t.settledAt).toLocaleString('es-ES', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </p>
+                          </div>
+                          <span className="font-mono font-semibold text-foreground shrink-0">
+                            +{formatCurrency(Number(t.commissionAmount || 0))}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-surface-500 py-1.5">
+                        Este médico todavía no tiene comisiones liquidadas.
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+
+          {!doctorRows.length ? (
+            <p className="text-xs text-surface-500">No hay médicos registrados.</p>
+          ) : null}
+        </div>
+      </div>
+
       <Modal open={isAuditLogOpen} onClose={() => setIsAuditLogOpen(false)} size="xl" className="max-w-5xl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-surface-850 shrink-0">
           <div>
-            <h3 className="zenith-section-title">Historial de comisiones</h3>
+            <h3 className="zenith-section-title">Historial de modificaciones</h3>
             <p className="text-xs text-surface-400 mt-0.5">Bitácora administrativa.</p>
           </div>
           <button type="button" onClick={() => setIsAuditLogOpen(false)} className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors cursor-pointer" aria-label="Cerrar">
@@ -205,7 +349,7 @@ export default function FinancialSettingsView() {
                 key={entry.id}
                 title={entry.action}
                 subtitle={entry.id}
-                badge={<span className="inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[9px] font-semibold bg-surface-800 text-surface-200 border border-surface-700">Actor {entry.actor}</span>}
+                badge={<span className="inline-flex whitespace-nowrap px-2 py-0.5 rounded text-[9px] font-semibold bg-surface-800 text-surface-200 border border-surface-700">{entry.actor}</span>}
                 fields={[
                   { label: 'Fecha', value: entry.timestamp },
                   { label: 'Valor anterior', value: String(entry.previousValue) },
@@ -221,7 +365,7 @@ export default function FinancialSettingsView() {
                 <tr className="border-b border-surface-850 text-surface-500 font-bold uppercase tracking-wider">
                   <th className="pb-2.5">ID</th>
                   <th>Fecha/Hora</th>
-                  <th>Actor</th>
+                  <th>Autor</th>
                   <th>Acción</th>
                   <th>Anterior</th>
                   <th>Nuevo</th>
