@@ -34,7 +34,6 @@ type LoginSuccessPayload = {
     specialty?: string | null;
     medicalCollege?: string | null;
     specialSanitaryRegistration?: string | null;
-    digitalSignatureHash?: string | null;
     officeLocation?: string | null;
     status?: string | null;
   } | null;

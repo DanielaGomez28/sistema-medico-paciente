@@ -689,7 +689,7 @@ export const PATIENT_PROFILE_DEFAULTS: PatientProfileDefaultsSeed = {
   deliveryAddress: 'Av. Francisco de Miranda, Urb. Campo Alegre, Edif. Parque Cristal, Piso 4B',
   deliveryState: 'Distrito Capital',
   deliveryMunicipio: 'Chacao',
-  selectedBranch: 'Clinica Humana',
+  selectedBranch: 'Farmahumana - Puerto Ordaz (Calle 07)',
 };
 
 /**
@@ -775,18 +775,20 @@ export interface PatientPortalCopySeed {
  * Valores por defecto del usuario autenticado.
  */
 export const APP_USER_DEFAULTS: AppUserDefaultsSeed = {
-  adminName: 'Administrador Sistema',
-  doctorName: 'Dr. Roberto Gómez',
-  patientName: 'Ana Martínez',
+  adminName: 'Samy Sahili',
+  doctorName: 'Cesar Mendoza',
+  patientName: 'Karim Sahili',
 };
 
 /**
- * Cuentas demo centralizadas del login.
+ * Cuentas demo centralizadas del login. Deben coincidir exactamente con los
+ * usuarios sembrados por sql/seed/01_seed_demo_data.sql (misma contraseña
+ * real: Demo1234!, hash bcrypt generado con la misma librería del backend).
  */
 export const LOGIN_TEST_USERS: LoginTestUserSeed[] = [
-  { email: 'admin@sistema.local', password: 'admin123', role: 'admin', name: APP_USER_DEFAULTS.adminName },
-  { email: 'roberto.gomez@clinica.local', password: 'medico123', role: 'medico', name: APP_USER_DEFAULTS.doctorName },
-  { email: 'ana.martinez@email.com', password: 'paciente123', role: 'paciente', name: APP_USER_DEFAULTS.patientName },
+  { email: 'samy.sahili@massalud.com', password: 'Demo1234!', role: 'admin', name: APP_USER_DEFAULTS.adminName },
+  { email: 'cesar.mendoza@massalud.com', password: 'Demo1234!', role: 'medico', name: APP_USER_DEFAULTS.doctorName },
+  { email: 'karim.sahili@gmail.com', password: 'Demo1234!', role: 'paciente', name: APP_USER_DEFAULTS.patientName },
 ];
 
 /**
@@ -841,16 +843,16 @@ export const PATIENT_PORTAL_COPY: PatientPortalCopySeed = {
   fallbackPatientName: APP_USER_DEFAULTS.patientName,
   fallbackSpecialty: 'Prescripción clínica',
   doctorLicenseLabel: 'Validación digital de farmacia',
-  printableFacilityName: 'Clínica Zenith',
-  printableFacilitySubtitle: 'Servicios de Cardiología y Diagnóstico Especializado',
+  printableFacilityName: '+Salud',
+  printableFacilitySubtitle: 'Plataforma de Prescripción Médica Digital • Red de Farmacias Aliadas',
   printableFacilityAddress: 'Av. Francisco de Miranda, Caracas • Tel: +58 212 345 6789',
   printableDocumentLabel: 'Documento digital firmado',
   printableSignatureLabel: 'Médico autorizado',
   printableSignatureFooter: 'Firma digital verificada',
-  verificationPortalLabel: 'Verificar autenticidad en portal.zenithclinica.com',
-  pharmacyBrandName: 'FarmaHumana',
-  pharmacyLegalName: 'FarmaHumana C.A.',
-  pharmacyLegalReference: 'RIF: J-30123456-7 • Av. Francisco de Miranda, Caracas',
+  verificationPortalLabel: 'Verificar autenticidad en portal.massalud.com',
+  pharmacyBrandName: 'Farmahumana',
+  pharmacyLegalName: 'Farmahumana C.A.',
+  pharmacyLegalReference: 'Farmacia aliada de +Salud • RIF: J-30123456-7 • Av. Francisco de Miranda, Caracas',
   selectedBranchOptions: [
     'Farmahumana - Puerto Ordaz (Calle 07)'
   ],

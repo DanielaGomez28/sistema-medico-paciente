@@ -195,8 +195,8 @@ interface ApiErrorPayload {
 }
 
 interface BackendPrescriptionItem {
-  id_producto: string;
-  nombre: string;
+  id: string;
+  name: string;
   dosis: string;
   cantidad: number;
   daily_doses?: number;
@@ -205,7 +205,7 @@ interface BackendPrescriptionItem {
   precio_unitario_final: number;
   subtotal_base?: number;
   subtotal_final?: number;
-  beneficio_pct: number;
+  benefitPct: number;
 }
 
 interface BackendPrescription {
@@ -255,8 +255,8 @@ interface CheckoutSessionState {
 }
 
 interface BackendTrackingItem {
-  id_producto: string;
-  nombre: string;
+  id: string;
+  name: string;
   totalPrescribedDoses: number;
   totalDispensedDoses: number;
   availableDoses: number;
@@ -397,7 +397,7 @@ const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Rec
     id: `${prescription.recipeId}${index > 0 ? `-${index + 1}` : ''}`,
     date: formatRecipeDate(createdAt),
     expiryDate,
-    medication: item.nombre,
+    medication: item.name,
     dosage: `${item.cantidad} unidad(es)`,
     instructions: item.dosis || 'Seguir indicaciones médicas.',
     doctor: prescription.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName,
@@ -427,13 +427,13 @@ const buildTreatmentsFromTracking = (
   profiles.flatMap((profile) => {
     const recipe = prescriptions.find((entry) => entry.recipeId === profile.recipeId);
     return (profile.items || []).map((item) => {
-      const prescriptionItem = recipe?.items?.find((candidate) => candidate.id_producto === item.id_producto);
+      const prescriptionItem = recipe?.items?.find((candidate) => candidate.id === item.id);
       const totalDoses = Number(item.totalDispensedDoses || item.totalPrescribedDoses || 0);
       const takenDoses = Number(item.consumedDoses || 0);
       return {
-        id: buildTreatmentId(profile.recipeId, item.id_producto),
-        productId: item.id_producto,
-        name: item.nombre,
+        id: buildTreatmentId(profile.recipeId, item.id),
+        productId: item.id,
+        name: item.name,
         dosage: prescriptionItem?.dosis || 'Seguir indicaciones médicas',
         frequency: item.averageDailyConsumption > 0 ? `${item.averageDailyConsumption.toFixed(2)} dosis/día` : 'Seguimiento activo',
         scheduleTimes: buildScheduleTimes(Number(prescriptionItem?.daily_doses || 1)),
@@ -456,9 +456,9 @@ const buildDoseLogsFromTracking = (profiles: BackendTrackingProfile[]): DoseLog[
       (item.intakeLogs || []).map((log) => ({
         id: log.logId,
         recipeId: profile.recipeId,
-        productId: item.id_producto,
-        medicationId: buildTreatmentId(profile.recipeId, item.id_producto),
-        medicationName: item.nombre,
+        productId: item.id,
+        medicationId: buildTreatmentId(profile.recipeId, item.id),
+        medicationName: item.name,
         scheduledTime: new Date(log.takenAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
         takenAt: new Date(log.takenAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
         status: 'Tomada' as const,
@@ -472,9 +472,9 @@ const buildTreatmentAlertsFromTracking = (profiles: BackendTrackingProfile[], pr
     (profile.items || [])
       .filter((item) => item.refillAlertActive)
       .map((item) => ({
-        id: `refill-${profile.recipeId}-${item.id_producto}`,
+        id: `refill-${profile.recipeId}-${item.id}`,
         type: 'recordatorio' as const,
-        title: `Reposición sugerida para ${item.nombre}`,
+        title: `Reposición sugerida para ${item.name}`,
         message: item.estimatedDaysRemaining !== null
           ? `Quedan aproximadamente ${item.estimatedDaysRemaining} días de tratamiento disponibles.`
           : 'El tratamiento est? activo y requiere seguimiento de reposición.',
@@ -579,10 +579,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     return (Array.isArray(activeCheckoutPrescription.items) ? activeCheckoutPrescription.items : []).map((item, index) => ({
       id: `${activeCheckoutPrescription.recipeId}-${index + 1}`,
-      medication: item.nombre,
+      medication: item.name,
       quantity: Number(item.cantidad || 0),
       unitPrice: Number(item.precio_unitario_base || item.precio_unitario_final || 0),
-      discountPercent: Number(item.beneficio_pct || 0),
+      discountPercent: Number(item.benefitPct || 0),
     }));
   }, [activeCheckoutPrescription]);
   const [selectedBranch, setSelectedBranch] = useState(PATIENT_PORTAL_COPY.selectedBranchOptions[0]);
@@ -2656,7 +2656,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <label className="zenith-field-label">ID Interno del Sistema</label>
                     <input
                       type="text"
-                      value={`ID: ${qrPatientIdentity}`}
+                      value={qrPatientIdentity}
                       readOnly
                       className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 font-mono focus:outline-none"
                     />
@@ -2665,7 +2665,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <label className="zenith-field-label">Referencia del Perfil</label>
                     <input
                       type="text"
-                      value={patientProfile?.patientId ? `ID: ${patientProfile.patientId}` : `ID: ${qrPatientIdentity}`}
+                      value={patientProfile?.patientId ? patientProfile.patientId : qrPatientIdentity}
                       readOnly
                       className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 font-mono focus:outline-none"
                     />

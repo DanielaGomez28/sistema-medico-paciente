@@ -43,7 +43,6 @@ import apiClient from '../lib/api';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
-  DOCTOR_PROFILE_DEFAULTS,
   type DoctorLinkedPatientSeed as LinkedPatient,
 } from '../data/mockData';
 
@@ -60,7 +59,6 @@ interface DoctorViewProps {
     specialty?: string | null;
     medicalCollege?: string | null;
     specialSanitaryRegistration?: string | null;
-    digitalSignatureHash?: string | null;
     officeLocation?: string | null;
     status?: string | null;
   } | null;
@@ -83,19 +81,19 @@ interface MedicalProduct {
 }
 
 interface PrescriptionCatalogApiItem {
-  id_producto: string;
-  nombre: string;
-  principio_activo: string;
-  presentacion: string;
-  laboratorio: string;
+  id: string;
+  name: string;
+  activeIngredient: string;
+  presentation: string;
+  laboratory: string;
   stock: number;
-  precio_base: number;
-  beneficio_pct: number;
+  basePrice: number;
+  benefitPct: number;
   precio_con_beneficio: number;
-  sanitary_category?: string;
-  is_controlled?: boolean;
-  controlled_substance_type?: string | null;
-  pharmacy_name?: string;
+  sanitaryCategory?: string;
+  isControlled?: boolean;
+  controlledSubstanceType?: string | null;
+  pharmacyName?: string;
 }
 
 interface CartItem {
@@ -127,11 +125,11 @@ interface DoctorCommissionSummary {
 }
 
 interface DoctorRecipeLogItem {
-  id_producto: string;
-  nombre: string;
-  cantidad_prescrita?: number;
+  id: string;
+  name: string;
+  prescribedQuantity?: number;
   remaining_quantity?: number;
-  pharmacy_name?: string;
+  pharmacyName?: string;
 }
 
 interface DoctorRecipeLogRecord {
@@ -157,7 +155,7 @@ interface ConsentResultPayload {
   patientName?: string;
   result?: {
     vinculacion?: {
-      id_paciente?: string | number | null;
+      patientId?: string | number | null;
     } | null;
   } | null;
 }
@@ -222,18 +220,18 @@ export const formatPhoneNumber = (value: string) => {
  * @returns {MedicalProduct} Producto adaptado para la UI.
  */
 const mapCatalogItemToProduct = (item: PrescriptionCatalogApiItem): MedicalProduct => ({
-  id: item.id_producto,
-  name: item.nombre,
-  category: item.principio_activo || item.laboratorio || 'Medicamento',
-  price: Number(item.precio_con_beneficio ?? item.precio_base ?? 0),
+  id: item.id,
+  name: item.name,
+  category: item.activeIngredient || item.laboratory || 'Medicamento',
+  price: Number(item.precio_con_beneficio ?? item.basePrice ?? 0),
   stock: Number(item.stock ?? 0),
-  description: [item.presentacion, item.laboratorio].filter(Boolean).join(' | '),
+  description: [item.presentation, item.laboratory].filter(Boolean).join(' | '),
   source: 'farmacia',
-  benefitPct: Number(item.beneficio_pct ?? 0),
-  sanitaryCategory: item.sanitary_category || 'regular',
-  isControlled: Boolean(item.is_controlled),
-  controlledSubstanceType: item.controlled_substance_type || null,
-  pharmacyName: item.pharmacy_name,
+  benefitPct: Number(item.benefitPct ?? 0),
+  sanitaryCategory: item.sanitaryCategory || 'regular',
+  isControlled: Boolean(item.isControlled),
+  controlledSubstanceType: item.controlledSubstanceType || null,
+  pharmacyName: item.pharmacyName,
 });
 
 /**
@@ -295,22 +293,21 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
   // M.4 Profile & Banking state
   const [bankHolder, setBankHolder] = useState(doctorName || doctorEmail);
-  const [bankHolderId, setBankHolderId] = useState(DOCTOR_PROFILE_DEFAULTS.bankHolderId);
-  const [bankEntity, setBankEntity] = useState(DOCTOR_PROFILE_DEFAULTS.bankEntity);
-  const [bankAccountType, setBankAccountType] = useState<'Corriente' | 'Ahorro'>(DOCTOR_PROFILE_DEFAULTS.bankAccountType);
-  const [bankAccountNumber, setBankAccountNumber] = useState(DOCTOR_PROFILE_DEFAULTS.bankAccountNumber);
-  const [bankMobilePhone, setBankMobilePhone] = useState(DOCTOR_PROFILE_DEFAULTS.bankMobilePhone);
-  const [profilePhone, setProfilePhone] = useState(DOCTOR_PROFILE_DEFAULTS.profilePhone);
-  const [profileRegistryId] = useState(DOCTOR_PROFILE_DEFAULTS.profileRegistryId);
-  const [consultorioAddress, setConsultorioAddress] = useState(doctorProfile?.officeLocation || DOCTOR_PROFILE_DEFAULTS.consultorioAddress);
-  const [consultorioState, setConsultorioState] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioState);
-  const [consultorioMunicipio, setConsultorioMunicipio] = useState(DOCTOR_PROFILE_DEFAULTS.consultorioMunicipio);
+  const [bankHolderId, setBankHolderId] = useState('');
+  const [bankEntity, setBankEntity] = useState('');
+  const [bankAccountType, setBankAccountType] = useState<'Corriente' | 'Ahorro'>('Corriente');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankMobilePhone, setBankMobilePhone] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [profileRegistryId] = useState(doctorProfile?.mpps || '');
+  const [consultorioAddress, setConsultorioAddress] = useState(doctorProfile?.officeLocation || '');
+  const [consultorioState, setConsultorioState] = useState('');
+  const [consultorioMunicipio, setConsultorioMunicipio] = useState('');
   const [profileSaveMsg, setProfileSaveMsg] = useState('');
   const doctorMpps = doctorProfile?.mpps || 'MPPS no disponible';
   const doctorSpecialty = doctorProfile?.specialty || 'Especialidad no disponible';
   const doctorMedicalCollege = doctorProfile?.medicalCollege || 'Colegio no disponible';
   const doctorSpecialSanitaryRegistration = doctorProfile?.specialSanitaryRegistration || null;
-  const doctorDigitalSignatureHash = doctorProfile?.digitalSignatureHash || null;
 
   // QR credential removed for doctor portal per requested change
 
@@ -442,7 +439,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       setWaitingConsent(false);
 
       if (data.success) {
-        const linkedPatientId = data.result?.vinculacion?.id_paciente?.toString()?.toLowerCase();
+        const linkedPatientId = data.result?.vinculacion?.patientId?.toString()?.toLowerCase();
 
         let targetPatient: LinkedPatient | undefined | null = patients.find((p) => p.systemId === linkedPatientId);
 
@@ -711,6 +708,39 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       cancelled = true;
     };
   }, [DOCTOR_ID, activeTab]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBankProfile = async () => {
+      if (!DOCTOR_ID) return;
+
+      try {
+        const response = await apiClient.get(`/medicos/${encodeURIComponent(DOCTOR_ID)}/perfil`);
+        const profile = response.data?.profile;
+        if (cancelled || !profile) return;
+
+        if (profile.bankHolderName) setBankHolder(profile.bankHolderName);
+        if (profile.bankHolderId) setBankHolderId(profile.bankHolderId);
+        if (profile.bank) setBankEntity(profile.bank);
+        if (profile.bankAccountType) setBankAccountType(profile.bankAccountType as 'Corriente' | 'Ahorro');
+        if (profile.bankAccountNumber) setBankAccountNumber(profile.bankAccountNumber);
+        if (profile.phoneAccountNumber) setBankMobilePhone(profile.phoneAccountNumber);
+        if (profile.phone) setProfilePhone(profile.phone);
+        if (profile.officeAddress) setConsultorioAddress(profile.officeAddress);
+        if (profile.officeState) setConsultorioState(profile.officeState);
+        if (profile.officeMunicipality) setConsultorioMunicipio(profile.officeMunicipality);
+      } catch {
+        // Sin perfil bancario guardado todavía: se dejan los campos vacíos para que el médico los complete.
+      }
+    };
+
+    loadBankProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [DOCTOR_ID]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2086,7 +2116,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               <p className="doctor-recipe-log-item__name text-sm">{rec.patientName || rec.patientId}</p>
                               <div className="flex flex-wrap gap-1 pt-0.5">
                                 {rec.items.map((item, idx) => (
-                                  <span key={idx} className="doctor-recipe-log-item__med text-[9px] px-1.5 py-0.5 rounded">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
+                                  <span key={idx} className="doctor-recipe-log-item__med text-[9px] px-1.5 py-0.5 rounded">{item.name} ({item.remaining_quantity ?? 0}/{item.prescribedQuantity ?? 0}) • {item.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
                                 ))}
                               </div>
                               <p className="text-[10px] text-black dark:text-surface-300 flex items-center gap-1 flex-wrap">
