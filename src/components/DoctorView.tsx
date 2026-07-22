@@ -176,11 +176,6 @@ interface ApiErrorPayload {
 }
 
 /**
- * Detecta si el navegador actual pertenece a un dispositivo movil apto para escaneo.
- */
-const MOBILE_SCANNER_REGEX = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-
-/**
  * Normaliza un identificador de paciente para comparaciones seguras en UI.
  * @param {string} value - Valor ingresado por el usuario.
  * @returns {string} Identificador normalizado.
@@ -380,11 +375,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [, setPatientsError] = useState('');
 
   const [scannerErrorMsg, setScannerErrorMsg] = useState('');
-  const [isMobileScannerCapable] = useState(() => {
+  const [hasCameraAccessApi] = useState(() => {
     if (typeof window === 'undefined') return false;
-    const hasCameraApi = Boolean(window.navigator.mediaDevices?.getUserMedia);
-    const isMobileDevice = MOBILE_SCANNER_REGEX.test(window.navigator.userAgent || '');
-    return hasCameraApi && isMobileDevice;
+    return Boolean(window.navigator.mediaDevices?.getUserMedia);
   });
 
   useEffect(() => {
@@ -537,7 +530,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
   // =========================================================
   useEffect(() => {
-    if (isScanning && isMobileScannerCapable) {
+    if (isScanning) {
       // Configuramos la cámara (Librería html5-qrcode)
       const scanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
       
@@ -599,7 +592,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         scanner.clear().catch(e => console.error(e));
       };
     }
-  }, [DOCTOR_ID, DOCTOR_NAME, isScanning, isMobileScannerCapable]);
+  }, [DOCTOR_ID, DOCTOR_NAME, isScanning]);
 
   const filteredPatients = useMemo(() => {
     const query = patientListSearch.toLowerCase().trim();
@@ -1107,8 +1100,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const triggerCameraScan = () => {
     // El escaneo y la validación del QR son HTTP puro, así que no dependen del
     // canal en tiempo real: la cámara debe abrir siempre que haya una disponible.
-    if (!isMobileScannerCapable) {
-      setScannerErrorMsg('Este dispositivo no tiene una cámara disponible para escanear. Abrí el portal desde tu teléfono.');
+    if (!hasCameraAccessApi) {
+      setScannerErrorMsg('El navegador no habilitó la cámara para esta página. En teléfono, abrí +Salud con HTTPS; los navegadores bloquean la cámara en http://IP-LAN. Si ya estás en HTTPS, revisá permisos de cámara del navegador.');
       setIsScanning(false);
       return;
     }
@@ -2308,7 +2301,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           ) : (
             <>
               <p className="text-xs text-surface-400">
-                Active la camara desde un movil o use la vinculacion manual para cargar el expediente del paciente.
+                Active la cámara desde este dispositivo o use la vinculación manual para cargar el expediente del paciente.
               </p>
 
               <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
@@ -2330,14 +2323,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 ) : (
                   <div className="space-y-4 text-center z-10">
                     <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
-                    <p className="text-sm text-surface-400 font-medium">{isMobileScannerCapable ? 'Camara de escaner inactiva' : 'Escaner no disponible en PC'}</p>
+                    <p className="text-sm text-surface-400 font-medium">{hasCameraAccessApi ? 'Cámara de escáner inactiva' : 'Cámara bloqueada por el navegador'}</p>
                     <button
                       type="button"
                       onClick={triggerCameraScan}
-                      disabled={!isMobileScannerCapable}
-                      className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+                      className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
                     >
-                      {isMobileScannerCapable ? 'Activar escaner' : 'Solo disponible en movil'}
+                      Activar escáner
                     </button>
                   </div>
                 )}
