@@ -41,7 +41,7 @@ import { formatCurrency } from '../lib/currency';
 import { Button, Modal, ModalBody, ListCard } from './ui';
 import apiClient from '../lib/api';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import {
   type DoctorLinkedPatientSeed as LinkedPatient,
 } from '../data/mockData';
@@ -119,6 +119,7 @@ interface DoctorCommissionSummary {
   doctorId: string;
   currency: string;
   commissionRatePct: number;
+  commissionRateSource?: 'doctor' | 'global';
   availableBalance: number;
   currentPeriod?: string;
   transactions: DoctorCommissionTransaction[];
@@ -532,68 +533,95 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
   // =========================================================
   useEffect(() => {
-    if (isScanning) {
-      // Configuramos la cámara (Librería html5-qrcode)
-      const scanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-      
-      scanner.render(async (decodedToken) => {
-        // ¡QR Detectado! Apagamos la cámara de inmediato
+    if (!isScanning) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const scanner = new Html5Qrcode('qr-reader');
+
+    const openScannedPatient = async (scannedPatientId: string) => {
+      const detail = await apiClient.get(`/pacientes/${encodeURIComponent(scannedPatientId)}`);
+      openPatientForm(detail.data as LinkedPatient);
+      setIsScannerModalOpen(false);
+    };
+
+    const handleDecodedToken = async (decodedToken: string) => {
+      if (cancelled) return;
+      cancelled = true;
+      await scanner.stop().catch(() => undefined);
+      try {
         scanner.clear();
-        setIsScanning(false);
+      } catch {
+        // Limpiar el contenedor es best-effort: si ya se desmontó, no hay nada que hacer.
+      }
+      setIsScanning(false);
 
-        try {
-          // 1. Se valida el cifrado y la vigencia de 5 minutos del QR.
-          const response = await apiClient.post('/qr/validate', {
-            token: decodedToken,
-            doctorId: DOCTOR_ID,
-          });
+      try {
+        const response = await apiClient.post('/qr/validate', {
+          token: decodedToken,
+          doctorId: DOCTOR_ID,
+        });
 
-          const scannedPatientId = response.data?.patientId;
-          if (!scannedPatientId) {
-            setScannerErrorMsg('No se pudo leer el código QR. Pedile al paciente que genere uno nuevo.');
-            return;
-          }
-
-          setScanProgress(100);
-
-          // 2. Si el paciente ya tiene vinculación activa con este médico no hace
-          // falta pedir consentimiento otra vez: se abre su ficha directamente.
-          if (response.data?.linked) {
-            try {
-              const detail = await apiClient.get(`/pacientes/${encodeURIComponent(scannedPatientId)}`);
-              openPatientForm(detail.data as LinkedPatient);
-              return;
-            } catch {
-              setScannerErrorMsg('No se pudo abrir la ficha del paciente. Intentá de nuevo.');
-              return;
-            }
-          }
-
-          // 3. Requiere consentimiento: se solicita por el canal en tiempo real.
-          if (!SOCKET_RUNTIME_SUPPORTED) {
-            setScannerErrorMsg('El paciente debe autorizar la consulta desde su dispositivo y esa autorización no está disponible en este momento.');
-            return;
-          }
-
-          setWaitingConsent(true);
-          socket.emit('requestConsent', {
-            doctorId: DOCTOR_ID,
-            doctorName: DOCTOR_NAME,
-            patientId: scannedPatientId,
-          });
-        } catch (error: unknown) {
-          // QR caducado, ya usado o alterado.
-          const apiError = error as ApiErrorPayload;
-          setScannerErrorMsg(apiError.response?.data?.error || 'El código QR caducó o no es válido. Pedile al paciente que genere uno nuevo.');
+        const scannedPatientId = response.data?.patientId;
+        if (!scannedPatientId) {
+          setScannerErrorMsg('No se pudo leer el código QR. Pedile al paciente que genere uno nuevo.');
+          return;
         }
-      }, () => {
-        // Errores silenciosos mientras busca el QR frame por frame (se ignoran)
+
+        setScanProgress(100);
+
+        if (response.data?.linked) {
+          await openScannedPatient(scannedPatientId);
+          return;
+        }
+
+        if (!SOCKET_RUNTIME_SUPPORTED) {
+          setScannerErrorMsg('QR leído correctamente, pero este despliegue no tiene canal en tiempo real para pedir consentimiento. El paciente todavía debe aceptar la vinculación explícitamente; no se crea el vínculo automáticamente.');
+          return;
+        }
+
+        setWaitingConsent(true);
+        socket.emit('requestConsent', {
+          doctorId: DOCTOR_ID,
+          doctorName: DOCTOR_NAME,
+          patientId: scannedPatientId,
+        });
+      } catch (error: unknown) {
+        const apiError = error as ApiErrorPayload;
+        setScannerErrorMsg(
+          apiError.response?.data?.error ||
+          apiError.response?.data?.details ||
+          'No se pudo validar el QR. Pedile al paciente que genere uno nuevo.'
+        );
+      }
+    };
+
+    scanner
+      .start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => { void handleDecodedToken(decodedText); },
+        () => undefined
+      )
+      .catch((error) => {
+        if (cancelled) return;
+        setIsScanning(false);
+        setScannerErrorMsg(
+          error?.message ||
+          'No se pudo abrir la cámara. Revisá permisos del navegador y que estés usando HTTPS.'
+        );
       });
 
-      return () => {
-        scanner.clear().catch(e => console.error(e));
-      };
-    }
+    return () => {
+      cancelled = true;
+      scanner.stop().catch(() => undefined);
+      try {
+        scanner.clear();
+      } catch {
+        // Ídem: el componente puede haberse desmontado antes de limpiar.
+      }
+    };
   }, [DOCTOR_ID, DOCTOR_NAME, isScanning]);
 
   const filteredPatients = useMemo(() => {
@@ -697,13 +725,15 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
      * Carga desde backend el resumen real de comisiones del medico autenticado.
      * @returns {Promise<void>}
      */
-    const loadCommissionSummary = async () => {
-      if (activeTab !== 'commissions' || !DOCTOR_ID) {
+    const loadCommissionSummary = async (options?: { silent?: boolean }) => {
+      if (!['commissions', 'profile'].includes(activeTab) || !DOCTOR_ID) {
         return;
       }
 
       try {
-        setCommissionLoading(true);
+        if (!options?.silent) {
+          setCommissionLoading(true);
+        }
         setCommissionError('');
         const response = await apiClient.get(`/pagos/comisiones/medico/${encodeURIComponent(DOCTOR_ID)}`);
 
@@ -730,10 +760,16 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       }
     };
 
-    loadCommissionSummary();
+    void loadCommissionSummary();
+    const intervalId = ['commissions', 'profile'].includes(activeTab)
+      ? window.setInterval(() => { void loadCommissionSummary({ silent: true }); }, 30000)
+      : null;
 
     return () => {
       cancelled = true;
+      if (intervalId !== null) {
+        window.clearInterval(intervalId);
+      }
     };
   }, [DOCTOR_ID, activeTab]);
 
@@ -2196,7 +2232,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="flex justify-between items-start text-xs">
                               <div className="min-w-0">
                                 <span className="font-semibold text-surface-200 block truncate">
-                                  {entry.medications || `Recipe ${entry.recipeId}`}
+                                  {entry.medications || `Recipe: ${entry.recipeId}`}
                                 </span>
                                 <span className="text-[10px] text-surface-500 truncate block">
                                   {entry.pharmacy_name || `Orden ${entry.orderId}`} • Liquidada {new Date(entry.settledAt).toLocaleString('es-ES', {
@@ -2265,7 +2301,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="space-y-1.5 min-w-0 flex-1">
                               <div className="flex items-baseline justify-between gap-2">
                                 <p className="doctor-recipe-log-item__name text-sm truncate">{rec.patientName || rec.patientId}</p>
-                                <span className="text-[9px] font-mono text-surface-500 shrink-0">{rec.recipeId}</span>
+                                <span className="text-[9px] font-mono text-surface-500 shrink-0">Recipe: {rec.recipeId}</span>
                               </div>
 
                               {/* Un récipe no vence por fecha: se agota cuando se
@@ -2350,6 +2386,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                   </div>
                   <div className="portal-dashboard-card space-y-4"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Consultorio / Dirección Profesional</h3><div className="grid grid-cols-1 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Dirección (Av., Urb., Centro Médico, Consultorio)</label><input type="text" value={consultorioAddress} onChange={e => setConsultorioAddress(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Estado</label>{isEditingDoctorProfile ? (<VenezuelanStateSelect value={consultorioState} onChange={setConsultorioState} accent="secondary" className={doctorProfileFieldEditing} />) : (<input type="text" value={consultorioState} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5"><label className="zenith-field-label">Municipio</label><input type="text" value={consultorioMunicipio} onChange={e => setConsultorioMunicipio(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div></div></div></div>
                   <div className="portal-dashboard-card space-y-4"><h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">Datos Bancarios para Recepción de Comisiones</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-4"><div className="space-y-1.5"><label className="zenith-field-label">Titular de la Cuenta</label><input type="text" value={bankHolder} onChange={e => setBankHolder(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingDoctorProfile ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">ID del titular</label><div className="flex gap-2">{isEditingDoctorProfile ? (<select value={bankHolderId.split('-')[0] || 'V'} onChange={e => { const parts = bankHolderId.split('-'); const num = parts.length > 1 ? parts[1] : bankHolderId; setBankHolderId(`${e.target.value}-${num}`); }} className={`w-20 border rounded-xl px-3 py-2.5 text-xs focus:outline-none cursor-pointer ${doctorProfileFieldEditing}`}><option value="V">V</option><option value="E">E</option><option value="J">J</option><option value="P">P</option><option value="G">G</option></select>) : (<input type="text" value={bankHolderId.split('-')[0] || 'V'} readOnly className={`w-20 border rounded-xl px-3 py-2.5 text-xs font-mono text-center focus:outline-none ${doctorProfileFieldReadonly}`} />)}<input type="text" value={bankHolderId.includes('-') ? bankHolderId.substring(bankHolderId.indexOf('-') + 1) : bankHolderId} onChange={e => { const prefix = bankHolderId.includes('-') ? bankHolderId.split('-')[0] : 'V'; setBankHolderId(`${prefix}-${e.target.value}`); }} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div></div><div className="space-y-1.5"><label className="zenith-field-label">Entidad Bancaria</label>{isEditingDoctorProfile ? (<select value={bankEntity} onChange={e => setBankEntity(e.target.value)} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${doctorProfileFieldEditing}`}><option value="">Seleccione un banco...</option>{VENEZUELAN_BANKS.map(banco => (<option key={banco} value={banco}>{banco}</option>))}</select>) : (<input type="text" value={bankEntity} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5"><label className="zenith-field-label">Tipo de Cuenta</label>{isEditingDoctorProfile ? (<select value={bankAccountType} onChange={e => setBankAccountType(e.target.value as 'Corriente' | 'Ahorro')} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${doctorProfileFieldEditing}`}><option value="Corriente">Corriente</option><option value="Ahorro">Ahorro</option></select>) : (<input type="text" value={bankAccountType} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />)}</div><div className="space-y-1.5 md:col-span-2"><label className="zenith-field-label">Número de Cuenta Bancaria</label><input type="text" value={bankAccountNumber} onChange={e => setBankAccountNumber(e.target.value)} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div><div className="space-y-1.5"><label className="zenith-field-label">Teléfono Pago Móvil</label><input type="text" value={bankMobilePhone} onChange={e => setBankMobilePhone(formatPhoneNumber(e.target.value))} readOnly={!isEditingDoctorProfile} className={`w-full border rounded-xl px-3.5 py-2.5 text-xs font-mono focus:outline-none ${isEditingDoctorProfile ? doctorProfileFieldEditing : doctorProfileFieldReadonly}`} /></div><div className="space-y-1.5">
+              <label className="zenith-field-label">Comisión vigente</label>
+              <input type="text" value={`${commissionSummary?.commissionRatePct ?? commissionRate}% ${commissionSummary?.commissionRateSource === 'doctor' ? '(asignada)' : '(global)'}`} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />
+            </div><div className="space-y-1.5">
               <label className="zenith-field-label">Frecuencia de Acreditación</label>
               <input type="text" value={"Mensual (último día hábil)"} readOnly className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 focus:outline-none" />
             </div>

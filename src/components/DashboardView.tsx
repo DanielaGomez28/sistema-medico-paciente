@@ -435,7 +435,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold text-white">{recipe.patientName || 'Paciente'}</p>
-                    <p className="text-[10px] text-surface-500 font-mono">{recipe.recipeId} &bull; {recipe.doctorName || 'Sin médico visible'}</p>
+                    <p className="text-[10px] text-surface-500 font-mono">Recipe: {recipe.recipeId} &bull; {recipe.doctorName || 'Sin médico visible'}</p>
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
                     <span className={`recipe-status-badge ${getRecipeStatusBadgeClassName(recipe.clinicalStatus)}`}>
@@ -449,7 +449,10 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
                     </span>
                   </div>
                 </div>
-                <p className="text-[10px] text-surface-500">Emitido {new Date(recipe.createdAt).toLocaleDateString('es-ES')} &bull; Caduca {new Date(recipe.recipeExpiresAt).toLocaleDateString('es-ES')}</p>
+                <p className="text-[10px] text-surface-500">
+                  Emitido {new Date(recipe.createdAt).toLocaleDateString('es-ES')}
+                  {recipe.fulfillmentStatus === 'fully_fulfilled' ? ' • Agotado' : ''}
+                </p>
               </div>
             ))}
             {!recipes.length ? <div className="text-xs text-surface-500">No hay recipes emitidos todavía.</div> : null}
@@ -464,7 +467,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           <div className="space-y-3">
             {recentRecipes.map((recipe) => (
               <div key={`recent-${recipe.recipeId}`} className="rounded-xl border border-surface-800 bg-surface-950/40 p-3 space-y-1">
-                <p className="text-xs font-semibold text-white">{recipe.recipeId}</p>
+                <p className="text-xs font-semibold text-white">Recipe: {recipe.recipeId}</p>
                 <p className="text-[10px] text-surface-500">Paciente: {recipe.patientName || 'Paciente'} &bull; Médico: {recipe.doctorName || 'Sin médico visible'}</p>
                 <p className="text-[10px] text-surface-400">{Array.isArray(recipe.items) ? recipe.items.map((item) => item.name).slice(0, 2).join(', ') : 'Sin items visibles'}</p>
               </div>

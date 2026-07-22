@@ -48,6 +48,7 @@ import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, ListCard, Modal, ModalBody } from './ui';
 import apiClient from '../lib/api';
+import { getRecipeStatusBadgeClassName, translateStatus } from '../lib/statusColors';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
 import {
   PATIENT_PORTAL_COPY,
@@ -202,6 +203,9 @@ interface ApiErrorPayload {
 // del backend. No mezclar los dos.
 interface BackendPrescriptionItem {
   id: string;
+  /** Identificador del producto en el catálogo (el que espera el backend al comprar). */
+  id_producto: string;
+  lineId?: string;
   nombre: string;
   dosis: string;
   cantidad: number;
@@ -217,6 +221,7 @@ interface BackendPrescriptionItem {
 interface BackendPrescription {
   recipeId: string;
   createdAt: string;
+  fulfilledAt?: string | null;
   recipeExpiresAt?: string;
   doctorName?: string | null;
   doctorSpecialty?: string | null;
@@ -342,6 +347,8 @@ interface Recipe {
   specialty: string;
   doctorLicense: string;
   status: 'Activo' | 'Expirado';
+  commercialStatus: string;
+  fulfillmentStatus: string;
 }
 
 
@@ -350,7 +357,10 @@ interface Recipe {
  * @interface ProposalItem
  */
 interface ProposalItem {
+  /** Clave sintética para render y selección en la UI. */
   id: string;
+  /** Identificador real del producto en el catálogo, el que espera el backend. */
+  productId: string;
   medication: string;
   quantity: number;
   unitPrice: number;
@@ -424,6 +434,8 @@ const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Rec
     specialty: prescription.doctorSpecialty || PATIENT_PORTAL_COPY.fallbackSpecialty,
     doctorLicense: prescription.doctorLicense || PATIENT_PORTAL_COPY.doctorLicenseLabel,
     status,
+    commercialStatus: prescription.commercialStatus || 'awaiting_payment',
+    fulfillmentStatus: prescription.fulfillmentStatus || 'not_fulfilled',
   }];
 };
 
@@ -520,11 +532,27 @@ const buildTreatmentAlertsFromTracking = (profiles: BackendTrackingProfile[], pr
   return [...refillAlerts, ...renewalAlerts].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
 };
 
+type OrderDeliveryStatus = 'Pendiente por retirar' | 'Listo para retirar' | 'Retirado';
+
+const RECENT_RETIRED_RECIPE_VISIBILITY_MS = 30 * 60 * 1000;
+
+const derivePrescriptionDeliveryStatus = (prescription: BackendPrescription | null): OrderDeliveryStatus => {
+  if (prescription?.fulfillmentStatus === 'fully_fulfilled') {
+    return 'Retirado';
+  }
+
+  if (prescription?.commercialStatus === 'paid') {
+    return 'Listo para retirar';
+  }
+
+  return 'Pendiente por retirar';
+};
+
 const deriveOrderDeliveryStatus = (
   checkoutSession: CheckoutSessionState | null,
   activePrescription: BackendPrescription | null
-): 'Pendiente por retirar' | 'Listo para retirar' | 'Retirado' => {
-  if (activePrescription?.fulfillmentStatus === 'fully_fulfilled') {
+): OrderDeliveryStatus => {
+  if (derivePrescriptionDeliveryStatus(activePrescription) === 'Retirado') {
     return 'Retirado';
   }
 
@@ -533,6 +561,20 @@ const deriveOrderDeliveryStatus = (
   }
 
   return 'Pendiente por retirar';
+};
+
+const isRecentlyRetiredPrescription = (prescription: BackendPrescription, now: number) => {
+  if (prescription.fulfillmentStatus !== 'fully_fulfilled' || !prescription.fulfilledAt) {
+    return false;
+  }
+
+  const fulfilledTime = new Date(prescription.fulfilledAt).getTime();
+  if (!Number.isFinite(fulfilledTime)) {
+    return false;
+  }
+
+  const elapsed = now - fulfilledTime;
+  return elapsed >= 0 && elapsed <= RECENT_RETIRED_RECIPE_VISIBILITY_MS;
 };
 
 /**
@@ -554,6 +596,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [backendPrescriptions, setBackendPrescriptions] = useState<BackendPrescription[]>([]);
   const [activeCheckoutRecipeId, setActiveCheckoutRecipeId] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [expandedMedicationRecipeId, setExpandedMedicationRecipeId] = useState<string | null>(null);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
   const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
@@ -613,6 +656,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     return (Array.isArray(activeCheckoutPrescription.items) ? activeCheckoutPrescription.items : []).map((item, index) => ({
       id: `${activeCheckoutPrescription.recipeId}-${index + 1}`,
+      productId: item.id_producto,
       medication: item.nombre,
       quantity: Number(item.cantidad || 0),
       unitPrice: Number(item.precio_unitario_base || item.precio_unitario_final || 0),
@@ -627,6 +671,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(PATIENT_PORTAL_COPY.paymentHoldSeconds); // 15 minutes in seconds
   const [simulatedPaymentReference, setSimulatedPaymentReference] = useState('');
   const [checkoutSession, setCheckoutSession] = useState<CheckoutSessionState | null>(null);
+  const [deliveryNow, setDeliveryNow] = useState(() => Date.now());
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
@@ -769,6 +814,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       cancelled = true;
     };
   }, [socketPatientIdentity]);
+
+  useEffect(() => {
+    if (activeSubTab !== 'recipes') {
+      return undefined;
+    }
+
+    const intervalId = setInterval(() => setDeliveryNow(Date.now()), 60000);
+    return () => clearInterval(intervalId);
+  }, [activeSubTab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1358,6 +1412,26 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   ] as const;
 
   const activeOrderStepIndex = orderDeliverySteps.findIndex((step) => step.id === lastOrderStatus);
+  const deliveryRecipeIdsByStatus = useMemo<Record<OrderDeliveryStatus, string[]>>(() => {
+    const grouped: Record<OrderDeliveryStatus, string[]> = {
+      'Pendiente por retirar': [],
+      'Listo para retirar': [],
+      Retirado: [],
+    };
+
+    backendPrescriptions.forEach((prescription) => {
+      if (!prescription.recipeId) return;
+
+      const status = derivePrescriptionDeliveryStatus(prescription);
+      if (status === 'Retirado' && !isRecentlyRetiredPrescription(prescription, deliveryNow)) {
+        return;
+      }
+
+      grouped[status].push(prescription.recipeId);
+    });
+
+    return grouped;
+  }, [backendPrescriptions, deliveryNow]);
 
   /**
    * Crea el checkout real en backend para la receta actualmente seleccionada.
@@ -1380,9 +1454,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       setPaymentStatusMessage('');
       setSimulatedPaymentReference('');
 
+      // OJO: `id` es una clave sintética de la UI (recipeId-1, recipeId-2...).
+      // Enviarla como producto hacía que el backend rechazara la compra con
+      // "el item no pertenece al recipe indicado".
       const selectedItemsToBuy = proposalItems
         .filter(i => !unselectedItemIds.has(i.id))
-        .map(i => ({ productId: i.id, quantity: i.quantity }));
+        .map(i => ({ id_producto: i.productId, cantidad: i.quantity }));
 
       const response = await apiClient.post('/pagos/redireccion', {
         recipeId: activeCheckoutPrescription.recipeId,
@@ -1409,11 +1486,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         apiError.response?.data?.error ||
         '';
       const inventoryUnavailable = /insuficiente|agotad|sin stock|sin inventario|reserva/i.test(backendMessage);
+      // Se prioriza `details`, que trae el motivo concreto (receta vencida,
+      // cantidad no permitida). `error` es el encabezado genérico y por sí solo
+      // no le dice al paciente qué pasó ni qué hacer.
       setCheckoutError(
         inventoryUnavailable
           ? 'Se agotaron las reservas. Se hará restock pronto.'
-          : apiError.response?.data?.error ||
-          apiError.response?.data?.details ||
+          : backendMessage ||
           'No se pudo iniciar la reserva de inventario para la receta seleccionada.'
       );
     } finally {
@@ -1613,30 +1692,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       </Modal>
       {activeSubTab === 'recipes' && (
         <div className="space-y-4">
-          {/* Progress Stepper for last order */}
+          {/* Progress Stepper grouped by recipe status */}
           <div className="portal-dashboard-card portal-dashboard-card--flush relative">
             <div className="p-5 space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] bg-surface-800 text-surface-300 border border-surface-700 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">
-                      Última Orden de Farmacia
-                    </span>
-                    <span className="text-xs font-mono font-semibold text-surface-500">ID: {checkoutSession?.order?.orderId || activeCheckoutPrescription?.recipeId || 'SIN-ORDEN'}</span>
-                  </div>
-                  <h3 className="text-sm !font-bold text-foreground">Retiro de medicamentos en farmacia</h3>
-                </div>
-
-                <span
-                  className={`inline-flex self-start shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border ${lastOrderStatus === 'Retirado'
-                      ? 'bg-secondary-500/10 text-secondary-500 border-secondary-500/25'
-                      : lastOrderStatus === 'Listo para retirar'
-                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/25'
-                        : 'bg-red-500/10 text-red-500 border-red-500/25'
-                    }`}
-                >
-                  {lastOrderStatus}
-                </span>
+              <div className="min-w-0 space-y-1">
+                <h3 className="text-sm !font-bold text-foreground">Retiro de medicamentos en farmacia</h3>
+                <p className="text-xs text-surface-500">Resumen de recipes por estado de retiro.</p>
               </div>
 
               <div className="border-t border-surface-800/80 pt-4 space-y-3">
@@ -1695,6 +1756,21 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         <span className="text-[10px] font-semibold leading-tight text-foreground">
                           {step.label}
                         </span>
+                        <div className="min-h-[1.5rem] w-full space-y-1">
+                          {deliveryRecipeIdsByStatus[step.id].length ? (
+                            deliveryRecipeIdsByStatus[step.id].map((recipeId) => (
+                              <span
+                                key={`${step.id}-${recipeId}`}
+                                className="mx-auto block max-w-full truncate rounded-md border border-surface-800 bg-surface-950/50 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-surface-400"
+                                title={recipeId}
+                              >
+                                {recipeId}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="block text-[9px] font-medium text-surface-700">Sin recipes</span>
+                          )}
+                        </div>
                       </li>
                     );
                   })}
@@ -1712,11 +1788,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             <div className="zenith-table-wrap hidden lg:block">
               <table className="zenith-table zenith-table--divided text-sm">
                 <colgroup>
-                  <col className="w-[26%]" />
-                  <col className="w-[11%]" />
-                  <col className="w-[26%]" />
-                  <col className="w-[21%]" />
-                  <col className="w-[16%]" />
+                  <col className="w-[20%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[22%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[6%]" />
                 </colgroup>
                 <thead>
                   <tr className="border-b border-surface-850 text-xs font-semibold text-surface-500 uppercase tracking-wider">
@@ -1724,13 +1802,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <th className="pb-3">Emisión</th>
                     <th className="pb-3 zenith-table__wrap">Medicamento</th>
                     <th className="pb-3 zenith-table__wrap">Especialista</th>
+                    <th className="pb-3">Reserva</th>
+                    <th className="pb-3">Entrega</th>
                     <th className="pb-3 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recipes.length === 0 && !recipesLoading && (
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-xs text-surface-500">
+                      <td colSpan={7} className="py-6 text-center text-xs text-surface-500">
                         {recipesError || 'No hay recipes emitidos todavía para este paciente.'}
                       </td>
                     </tr>
@@ -1742,21 +1822,49 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       </td>
                       <td className="py-4 text-xs text-surface-400">{rec.date}</td>
                       <td className="py-4 zenith-table__wrap">
-                        <div className="flex flex-col gap-0.5 min-w-0">
+                        <div className="relative flex flex-col gap-0.5 min-w-0">
                           <span className="font-semibold text-surface-200 break-words">
                             {rec.medications[0]?.medication || 'Sin medicamentos'}
                             {rec.medications.length > 1 ? (
-                              <span className="ml-1.5 text-[10px] font-bold text-primary-400">+{rec.medications.length - 1} más</span>
+                              <button
+                                type="button"
+                                onClick={() => setExpandedMedicationRecipeId((current) => current === rec.id ? null : rec.id)}
+                                className="ml-1.5 text-[10px] font-bold text-primary-400 underline-offset-2 hover:underline cursor-pointer"
+                              >
+                                +{rec.medications.length - 1} más
+                              </button>
                             ) : null}
                           </span>
                           <span className="text-[10px] text-surface-500">{rec.medications[0]?.dosage}</span>
+                          {expandedMedicationRecipeId === rec.id && rec.medications.length > 1 ? (
+                            <div className="absolute left-0 bottom-full z-50 mb-2 w-72 max-w-[80vw] rounded-xl border border-surface-800 bg-surface-950 p-3 text-left shadow-2xl">
+                              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Medicamentos del récipe</p>
+                              <ul className="space-y-2">
+                                {rec.medications.map((medication) => (
+                                  <li key={medication.id} className="rounded-lg bg-surface-900/80 px-2 py-1.5">
+                                    <p className="text-xs font-semibold text-surface-200">{medication.medication}</p>
+                                    <p className="text-[10px] text-surface-500">{medication.dosage}</p>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
                         </div>
                       </td>
                       <td className="py-4 zenith-table__wrap">
                         <div className="flex flex-col gap-0.5 min-w-0">
                           <span className="text-xs text-surface-200 font-semibold break-words">{rec.doctor}</span>
-                          <span className="text-[10px] text-surface-500">{rec.specialty}</span>
                         </div>
+                      </td>
+                      <td className="py-4">
+                        <span className={`recipe-status-badge ${getRecipeStatusBadgeClassName(rec.commercialStatus)}`}>
+                          {translateStatus(rec.commercialStatus)}
+                        </span>
+                      </td>
+                      <td className="py-4">
+                        <span className={`recipe-status-badge ${getRecipeStatusBadgeClassName(rec.fulfillmentStatus)}`}>
+                          {translateStatus(rec.fulfillmentStatus)}
+                        </span>
                       </td>
                       <td className="py-4 text-right">
                         <div className="inline-flex gap-2">
@@ -1793,7 +1901,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     { label: 'Emisión', value: rec.date },
                     { label: 'Dosis', value: rec.medications[0]?.dosage || '-' },
                     { label: 'Especialista', value: rec.doctor },
-                    { label: 'Especialidad', value: rec.specialty },
+                    { label: 'Reserva', value: translateStatus(rec.commercialStatus) },
+                    { label: 'Entrega', value: translateStatus(rec.fulfillmentStatus) },
                   ]}
                   actions={
                     <button
@@ -2228,12 +2337,17 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 </div>
                 {backendPrescriptions.length > 1 && (
                   <div className="flex flex-col gap-1.5 w-full lg:w-auto lg:min-w-[min(100%,320px)] lg:max-w-[420px] shrink-0">
-                    <span className="text-xs text-surface-400 font-medium">Seleccionar récipe</span>
+                    <span className="text-xs text-surface-400 font-bold">Seleccionar récipe</span>
                     <select
                       value={activeCheckoutRecipeId || activeCheckoutPrescription?.recipeId || ''}
                       onChange={(e) => {
                         setActiveCheckoutRecipeId(e.target.value);
                         setUnselectedItemIds(new Set());
+                        // El aviso corresponde a la receta anterior: si no se
+                        // limpia, queda pegado sobre la nueva y parece que el
+                        // pedido falla cuando en realidad nunca se intentó.
+                        setCheckoutError('');
+                        setPaymentStatusMessage('');
                       }}
                       className="patient-checkout-recipe-select w-full bg-surface-950 border border-surface-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"
                     >
