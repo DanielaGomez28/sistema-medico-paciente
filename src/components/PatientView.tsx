@@ -48,6 +48,7 @@ import VenezuelanStateSelect from './VenezuelanStateSelect';
 import { formatCurrency } from '../lib/currency';
 import { Button, ListCard, Modal, ModalBody } from './ui';
 import apiClient from '../lib/api';
+import { getRecipeStatusBadgeClassName, translateStatus } from '../lib/statusColors';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
 import {
   PATIENT_PORTAL_COPY,
@@ -343,6 +344,8 @@ interface Recipe {
   specialty: string;
   doctorLicense: string;
   status: 'Activo' | 'Expirado';
+  commercialStatus: string;
+  fulfillmentStatus: string;
 }
 
 
@@ -425,6 +428,8 @@ const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Rec
     specialty: prescription.doctorSpecialty || PATIENT_PORTAL_COPY.fallbackSpecialty,
     doctorLicense: prescription.doctorLicense || PATIENT_PORTAL_COPY.doctorLicenseLabel,
     status,
+    commercialStatus: prescription.commercialStatus || 'awaiting_payment',
+    fulfillmentStatus: prescription.fulfillmentStatus || 'not_fulfilled',
   }];
 };
 
@@ -1470,11 +1475,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         apiError.response?.data?.error ||
         '';
       const inventoryUnavailable = /insuficiente|agotad|sin stock|sin inventario|reserva/i.test(backendMessage);
+      // Se prioriza `details`, que trae el motivo concreto (receta vencida,
+      // cantidad no permitida). `error` es el encabezado genérico y por sí solo
+      // no le dice al paciente qué pasó ni qué hacer.
       setCheckoutError(
         inventoryUnavailable
           ? 'Se agotaron las reservas. Se hará restock pronto.'
-          : apiError.response?.data?.error ||
-          apiError.response?.data?.details ||
+          : backendMessage ||
           'No se pudo iniciar la reserva de inventario para la receta seleccionada.'
       );
     } finally {
@@ -1770,11 +1777,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             <div className="zenith-table-wrap hidden lg:block">
               <table className="zenith-table zenith-table--divided text-sm">
                 <colgroup>
-                  <col className="w-[26%]" />
-                  <col className="w-[11%]" />
-                  <col className="w-[26%]" />
-                  <col className="w-[21%]" />
-                  <col className="w-[16%]" />
+                  <col className="w-[20%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[22%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[6%]" />
                 </colgroup>
                 <thead>
                   <tr className="border-b border-surface-850 text-xs font-semibold text-surface-500 uppercase tracking-wider">
@@ -1782,13 +1791,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <th className="pb-3">Emisión</th>
                     <th className="pb-3 zenith-table__wrap">Medicamento</th>
                     <th className="pb-3 zenith-table__wrap">Especialista</th>
+                    <th className="pb-3">Reserva</th>
+                    <th className="pb-3">Entrega</th>
                     <th className="pb-3 text-right">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recipes.length === 0 && !recipesLoading && (
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-xs text-surface-500">
+                      <td colSpan={7} className="py-6 text-center text-xs text-surface-500">
                         {recipesError || 'No hay recipes emitidos todavía para este paciente.'}
                       </td>
                     </tr>
@@ -1815,6 +1826,16 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           <span className="text-xs text-surface-200 font-semibold break-words">{rec.doctor}</span>
                           <span className="text-[10px] text-surface-500">{rec.specialty}</span>
                         </div>
+                      </td>
+                      <td className="py-4">
+                        <span className={`recipe-status-badge ${getRecipeStatusBadgeClassName(rec.commercialStatus)}`}>
+                          {translateStatus(rec.commercialStatus)}
+                        </span>
+                      </td>
+                      <td className="py-4">
+                        <span className={`recipe-status-badge ${getRecipeStatusBadgeClassName(rec.fulfillmentStatus)}`}>
+                          {translateStatus(rec.fulfillmentStatus)}
+                        </span>
                       </td>
                       <td className="py-4 text-right">
                         <div className="inline-flex gap-2">
@@ -1852,6 +1873,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     { label: 'Dosis', value: rec.medications[0]?.dosage || '-' },
                     { label: 'Especialista', value: rec.doctor },
                     { label: 'Especialidad', value: rec.specialty },
+                    { label: 'Reserva', value: translateStatus(rec.commercialStatus) },
+                    { label: 'Entrega', value: translateStatus(rec.fulfillmentStatus) },
                   ]}
                   actions={
                     <button
@@ -2292,6 +2315,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       onChange={(e) => {
                         setActiveCheckoutRecipeId(e.target.value);
                         setUnselectedItemIds(new Set());
+                        // El aviso corresponde a la receta anterior: si no se
+                        // limpia, queda pegado sobre la nueva y parece que el
+                        // pedido falla cuando en realidad nunca se intentó.
+                        setCheckoutError('');
+                        setPaymentStatusMessage('');
                       }}
                       className="patient-checkout-recipe-select w-full bg-surface-950 border border-surface-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-secondary-500 cursor-pointer"
                     >

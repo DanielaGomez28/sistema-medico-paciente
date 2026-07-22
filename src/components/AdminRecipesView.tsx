@@ -144,6 +144,12 @@ export default function AdminRecipesView() {
     return recipe.items.map((item) => item.nombre).join(', ');
   };
 
+  const renderStatusBadge = (status?: string) => (
+    <span className={`recipe-status-badge ${getStatusColor(status || '')}`}>
+      {translateStatus(status || 'pending')}
+    </span>
+  );
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Header */}
@@ -186,7 +192,9 @@ export default function AdminRecipesView() {
                 <th className="text-left px-6 py-4">Medicamento</th>
                 <th className="text-left px-6 py-4">Paciente</th>
                 <th className="text-left px-6 py-4">Especialista</th>
-                <th className="text-left px-6 py-4">Estado</th>
+                <th className="text-left px-6 py-4">Estado clínico</th>
+                <th className="text-left px-6 py-4">Reserva</th>
+                <th className="text-left px-6 py-4">Entrega</th>
                 <th className="text-right px-6 py-4">Acciones</th>
               </tr>
             </thead>
@@ -214,9 +222,13 @@ export default function AdminRecipesView() {
                     <p className="text-[10px] text-surface-500 mt-0.5">Prescripción clínica</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`recipe-status-badge ${getStatusColor(recipe.clinicalStatus)}`}>
-                      {translateStatus(recipe.clinicalStatus)}
-                    </span>
+                    {renderStatusBadge(recipe.clinicalStatus)}
+                  </td>
+                  <td className="px-6 py-4">
+                    {renderStatusBadge(recipe.commercialStatus)}
+                  </td>
+                  <td className="px-6 py-4">
+                    {renderStatusBadge(recipe.fulfillmentStatus || 'not_fulfilled')}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
@@ -240,15 +252,13 @@ export default function AdminRecipesView() {
               key={recipe.recipeId}
               title={<span className="font-mono text-[10px] break-all">{recipe.recipeId}</span>}
               subtitle={recipe.patientName || 'Sin paciente'}
-              badge={
-                <span className={`recipe-status-badge ${getStatusColor(recipe.clinicalStatus)}`}>
-                  {translateStatus(recipe.clinicalStatus)}
-                </span>
-              }
+              badge={renderStatusBadge(recipe.clinicalStatus)}
               fields={[
                 { label: 'Emisión', value: formatDate(recipe.createdAt) },
                 { label: 'Medicamento', value: getMedicationSummary(recipe) },
                 { label: 'Especialista', value: recipe.doctorName || 'Sin médico' },
+                { label: 'Reserva', value: translateStatus(recipe.commercialStatus) },
+                { label: 'Entrega', value: translateStatus(recipe.fulfillmentStatus || 'not_fulfilled') },
               ]}
               actions={
                 <button
