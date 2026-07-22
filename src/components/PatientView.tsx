@@ -2979,7 +2979,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   <div className="space-y-1.5">
                     <label className="zenith-field-label">Edad</label>
                     <input
-                      type="text"
+                      type={isEditingProfile ? 'number' : 'text'}
+                      min={0}
+                      max={130}
                       value={isEditingProfile ? profileDraft.age : (patientProfile?.age ? `${patientProfile.age} años` : 'Sin especificar')}
                       onChange={(e) => {
                         setProfileDraft((prev) => ({ ...prev, age: e.target.value.replace(/\D/g, '').slice(0, 3) }));
@@ -3001,29 +3003,54 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="zenith-field-label">Género</label>
-                    <input
-                      type="text"
-                      value={isEditingProfile ? profileDraft.gender : (patientProfile?.gender || 'Sin especificar')}
-                      onChange={(e) => {
-                        setProfileDraft((prev) => ({ ...prev, gender: e.target.value }));
-                        if (profileError?.field === 'gender') setProfileError(null);
-                      }}
-                      readOnly={!isEditingProfile}
-                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'gender' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
-                    />
+                    {isEditingProfile ? (
+                      <select
+                        value={profileDraft.gender}
+                        onChange={(e) => {
+                          setProfileDraft((prev) => ({ ...prev, gender: e.target.value }));
+                          if (profileError?.field === 'gender') setProfileError(null);
+                        }}
+                        className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${profileError?.field === 'gender' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing}`}
+                      >
+                        <option value="">Seleccione...</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Otro">Otro</option>
+                        <option value="Prefiere no decir">Prefiere no decir</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={patientProfile?.gender || 'Sin especificar'}
+                        readOnly
+                        className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${patientProfileFieldReadonly}`}
+                      />
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="zenith-field-label">Grupo sanguíneo</label>
-                    <input
-                      type="text"
-                      value={isEditingProfile ? profileDraft.bloodType : (patientProfile?.bloodType || 'Sin especificar')}
-                      onChange={(e) => {
-                        setProfileDraft((prev) => ({ ...prev, bloodType: e.target.value.toUpperCase() }));
-                        if (profileError?.field === 'bloodType') setProfileError(null);
-                      }}
-                      readOnly={!isEditingProfile}
-                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${isEditingProfile ? (profileError?.field === 'bloodType' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing) : patientProfileFieldReadonly}`}
-                    />
+                    {isEditingProfile ? (
+                      <select
+                        value={profileDraft.bloodType}
+                        onChange={(e) => {
+                          setProfileDraft((prev) => ({ ...prev, bloodType: e.target.value }));
+                          if (profileError?.field === 'bloodType') setProfileError(null);
+                        }}
+                        className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${profileError?.field === 'bloodType' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing}`}
+                      >
+                        <option value="">Seleccione...</option>
+                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={patientProfile?.bloodType || 'Sin especificar'}
+                        readOnly
+                        className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${patientProfileFieldReadonly}`}
+                      />
+                    )}
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
                     <label className="zenith-field-label">Condición / diagnóstico de control</label>
