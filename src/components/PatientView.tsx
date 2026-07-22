@@ -42,7 +42,6 @@ import { AppShell, AppSidebar, AppHeader } from './layout';
 import PatientHelpView from './PatientHelpView';
 import {
   useCredentialQr,
-  SidebarCredentialButton,
   CredentialQrModal,
 } from './CredentialQr';
 import VenezuelanStateSelect from './VenezuelanStateSelect';
@@ -1537,14 +1536,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             name: profileName,
             avatarClassName: 'portal-profile-avatar',
           }}
-          preProfile={
-            <SidebarCredentialButton
-              onOpen={() => {
-                void handleGenerarQR();
-                setIsCredentialModalOpen(true);
-              }}
-            />
-          }
           onLogout={onLogout}
           logoutVariant="icon"
           navTextWhite
