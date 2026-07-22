@@ -78,6 +78,47 @@ interface CatalogRecord {
  * @param {Array<{label: string, value: number}>} values - Serie a graficar.
  * @returns {object} Dimensiones, coordenadas, ruta del área y máximo de la serie.
  */
+/**
+ * Convierte el período que devuelve la API en una etiqueta legible.
+ * Venía como `period.slice(5)` -> "07-22": sin año y con el mes en número, así
+ * que no se sabía en qué mes ni año caía cada punto del gráfico.
+ * @param {string} period - Período en formato YYYY-MM-DD o YYYY-MM.
+ * @returns {string} Etiqueta corta, p. ej. "22 jul" o "jul 2026".
+ */
+const formatPeriodLabel = (period: string) => {
+  const [year, month, day] = String(period || '').split('-');
+  if (!year || !month) return period;
+
+  const fecha = new Date(Number(year), Number(month) - 1, Number(day || 1));
+  if (Number.isNaN(fecha.getTime())) return period;
+
+  return day
+    ? fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+    : fecha.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
+};
+
+/**
+ * Describe el rango cubierto por la serie, con mes y año.
+ * @param {Array<{period?: string}>} source - Serie cruda de la API.
+ * @returns {string} Rango legible, p. ej. "Julio 2026".
+ */
+const formatPeriodRange = (source: Array<{ period?: string }>) => {
+  const periodos = source.map((item) => item.period).filter(Boolean) as string[];
+  if (!periodos.length) return '';
+
+  const aEtiqueta = (p: string) => {
+    const [year, month] = p.split('-');
+    const fecha = new Date(Number(year), Number(month) - 1, 1);
+    if (Number.isNaN(fecha.getTime())) return p;
+    const txt = fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    return txt.charAt(0).toUpperCase() + txt.slice(1);
+  };
+
+  const primero = aEtiqueta(periodos[0]);
+  const ultimo = aEtiqueta(periodos[periodos.length - 1]);
+  return primero === ultimo ? primero : `${primero} — ${ultimo}`;
+};
+
 const buildPolyline = (values: Array<{ label: string; value: number }>) => {
   const width = 320;
   const height = 140;
@@ -205,15 +246,22 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
   const chartSource = useMemo(() => {
     if (activeMetricTab === 'sales') {
       return stats?.charts?.revenueByPeriod?.map((item) => ({
-        label: item.period.slice(5),
+        label: formatPeriodLabel(item.period),
         value: Number(item.value || 0),
       })) || [];
     }
 
     return stats?.charts?.prescriptionsByPeriod?.map((item) => ({
-      label: item.period.slice(5),
+      label: formatPeriodLabel(item.period),
       value: Number(item.value || 0),
     })) || [];
+  }, [activeMetricTab, stats]);
+
+  const periodRange = useMemo(() => {
+    const source = activeMetricTab === 'sales'
+      ? stats?.charts?.revenueByPeriod
+      : stats?.charts?.prescriptionsByPeriod;
+    return formatPeriodRange(source || []);
   }, [activeMetricTab, stats]);
 
   const chartValues = chartSource.length ? chartSource : [{ label: 'Sin datos', value: 0 }];
@@ -251,7 +299,9 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="zenith-section-title">Tendencia administrativa</h4>
-              <p className="text-xs text-surface-400">Datos agregados del panel administrativo.</p>
+              <p className="text-xs text-surface-400">
+                {periodRange || 'Datos agregados del panel administrativo.'}
+              </p>
             </div>
             <div className="flex items-center gap-1 text-2xs font-bold rounded-xl p-1 bg-[#f8f9fa] border border-[#e9ecef] dark:bg-surface-855 dark:border-surface-800">
               <button

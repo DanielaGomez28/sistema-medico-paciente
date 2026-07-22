@@ -2175,17 +2175,41 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         ) : null}
                         {doctorRecipeLog.map((rec) => (
                           <div key={rec.recipeId} className="doctor-recipe-log-item flex items-start justify-between gap-3">
-                            <div className="space-y-1 min-w-0">
-                              <p className="doctor-recipe-log-item__name text-sm">{rec.patientName || rec.patientId}</p>
-                              <div className="flex flex-wrap gap-1 pt-0.5">
-                                {(rec.items || []).map((item, idx) => (
-                                  <span key={idx} className="doctor-recipe-log-item__med text-[9px] px-1.5 py-0.5 rounded">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || 'Farmacia'}</span>
-                                ))}
+                            <div className="space-y-1.5 min-w-0 flex-1">
+                              <div className="flex items-baseline justify-between gap-2">
+                                <p className="doctor-recipe-log-item__name text-sm truncate">{rec.patientName || rec.patientId}</p>
+                                <span className="text-[9px] font-mono text-surface-500 shrink-0">{rec.recipeId}</span>
                               </div>
-                              <p className="text-[10px] text-black dark:text-surface-300 flex items-center gap-1 flex-wrap">
-                                <span>Emitido {new Date(rec.createdAt).toLocaleDateString('es-ES')}</span>
-                                <span>•</span>
-                                <span>Caduca {new Date(rec.recipeExpiresAt).toLocaleDateString('es-ES')}</span>
+
+                              {/* Un récipe no vence por fecha: se agota cuando se
+                                  dispensan todas las unidades prescritas. */}
+                              <div className="flex flex-col gap-0.5 pt-0.5">
+                                {(rec.items || []).map((item, idx) => {
+                                  const prescritas = Number(item.cantidad_prescrita ?? 0);
+                                  const restantes = Number(item.remaining_quantity ?? prescritas);
+                                  const agotado = prescritas > 0 && restantes <= 0;
+
+                                  return (
+                                    <div key={idx} className="flex items-center justify-between gap-2 text-[10px]">
+                                      <span className="truncate text-black dark:text-surface-200">
+                                        {item.nombre}
+                                      </span>
+                                      <span className={`shrink-0 font-semibold ${agotado ? 'text-surface-500' : 'text-secondary-500'}`}>
+                                        {agotado ? 'Agotado' : `${restantes} de ${prescritas} disponible(s)`}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              <p className="text-[10px] text-surface-500">
+                                Emitido {new Date(rec.createdAt).toLocaleString('es-ES', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
                               </p>
                             </div>
 
