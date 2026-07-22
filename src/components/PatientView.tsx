@@ -590,6 +590,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [backendPrescriptions, setBackendPrescriptions] = useState<BackendPrescription[]>([]);
   const [activeCheckoutRecipeId, setActiveCheckoutRecipeId] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [expandedMedicationRecipeId, setExpandedMedicationRecipeId] = useState<string | null>(null);
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
   const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
@@ -1811,20 +1812,38 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       </td>
                       <td className="py-4 text-xs text-surface-400">{rec.date}</td>
                       <td className="py-4 zenith-table__wrap">
-                        <div className="flex flex-col gap-0.5 min-w-0">
+                        <div className="relative flex flex-col gap-0.5 min-w-0">
                           <span className="font-semibold text-surface-200 break-words">
                             {rec.medications[0]?.medication || 'Sin medicamentos'}
                             {rec.medications.length > 1 ? (
-                              <span className="ml-1.5 text-[10px] font-bold text-primary-400">+{rec.medications.length - 1} más</span>
+                              <button
+                                type="button"
+                                onClick={() => setExpandedMedicationRecipeId((current) => current === rec.id ? null : rec.id)}
+                                className="ml-1.5 text-[10px] font-bold text-primary-400 underline-offset-2 hover:underline cursor-pointer"
+                              >
+                                +{rec.medications.length - 1} más
+                              </button>
                             ) : null}
                           </span>
                           <span className="text-[10px] text-surface-500">{rec.medications[0]?.dosage}</span>
+                          {expandedMedicationRecipeId === rec.id && rec.medications.length > 1 ? (
+                            <div className="absolute left-0 bottom-full z-50 mb-2 w-72 max-w-[80vw] rounded-xl border border-surface-800 bg-surface-950 p-3 text-left shadow-2xl">
+                              <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-surface-500">Medicamentos del récipe</p>
+                              <ul className="space-y-2">
+                                {rec.medications.map((medication) => (
+                                  <li key={medication.id} className="rounded-lg bg-surface-900/80 px-2 py-1.5">
+                                    <p className="text-xs font-semibold text-surface-200">{medication.medication}</p>
+                                    <p className="text-[10px] text-surface-500">{medication.dosage}</p>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
                         </div>
                       </td>
                       <td className="py-4 zenith-table__wrap">
                         <div className="flex flex-col gap-0.5 min-w-0">
                           <span className="text-xs text-surface-200 font-semibold break-words">{rec.doctor}</span>
-                          <span className="text-[10px] text-surface-500">{rec.specialty}</span>
                         </div>
                       </td>
                       <td className="py-4">
@@ -1872,7 +1891,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     { label: 'Emisión', value: rec.date },
                     { label: 'Dosis', value: rec.medications[0]?.dosage || '-' },
                     { label: 'Especialista', value: rec.doctor },
-                    { label: 'Especialidad', value: rec.specialty },
                     { label: 'Reserva', value: translateStatus(rec.commercialStatus) },
                     { label: 'Entrega', value: translateStatus(rec.fulfillmentStatus) },
                   ]}

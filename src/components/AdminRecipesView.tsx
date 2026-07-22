@@ -219,7 +219,6 @@ export default function AdminRecipesView() {
                   <td className="px-6 py-4 text-surface-300">{recipe.patientName || 'Sin paciente'}</td>
                   <td className="px-6 py-4">
                     <span className="text-surface-200 font-semibold">{recipe.doctorName || 'Sin médico'}</span>
-                    <p className="text-[10px] text-surface-500 mt-0.5">Prescripción clínica</p>
                   </td>
                   <td className="px-6 py-4">
                     {renderStatusBadge(recipe.clinicalStatus)}
