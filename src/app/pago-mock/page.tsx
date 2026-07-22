@@ -49,24 +49,34 @@ function PagoMockContent() {
   return (
     <div className="w-full max-w-lg rounded-3xl border border-surface-800 bg-surface-900/80 p-8 space-y-6">
       <div className="space-y-2 text-center">
-        <p className="text-xs uppercase tracking-[0.2em] text-surface-500 font-bold">Pasarela temporal</p>
-        <h1 className="text-2xl font-bold">Confirmar pago</h1>
-        <p className="text-sm text-surface-400">Receta asociada: <span className="font-mono text-primary-300">{recipeId || 'SIN-RECETA'}</span></p>
+        <p className="text-xs uppercase tracking-[0.16em] text-surface-500 font-semibold">Pasarela temporal</p>
+        <h1 className="text-2xl font-bold text-foreground">Confirmar pago</h1>
+        <p className="text-sm text-surface-400 font-normal">
+          Receta asociada: <span className="font-mono text-primary-400">{recipeId || 'SIN-RECETA'}</span>
+        </p>
       </div>
 
-      <div className="rounded-2xl border border-surface-800 bg-surface-950/70 p-4 text-sm text-surface-300">
+      <div className="rounded-2xl border border-surface-800 bg-surface-950/70 p-4 text-sm text-surface-400 font-normal leading-relaxed">
         Esta pantalla simula una pasarela externa sin acoplar la lógica del SMP a un proveedor definitivo.
       </div>
 
-      {message ? <div className="rounded-xl border border-secondary-500/30 bg-secondary-500/10 px-4 py-3 text-sm text-secondary-300">{message}</div> : null}
-      {error ? <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">{error}</div> : null}
+      {message ? (
+        <div className="rounded-xl border border-secondary-500/30 bg-secondary-500/10 px-4 py-3 text-sm text-secondary-500 font-normal">
+          {message}
+        </div>
+      ) : null}
+      {error ? (
+        <div className="portal-flow-page__error rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-normal">
+          {error}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
           type="button"
           onClick={() => { void handleDecision('cancel'); }}
           disabled={loading !== ''}
-          className="rounded-2xl border border-surface-700 bg-surface-950 hover:bg-surface-900 disabled:opacity-60 px-4 py-3 font-bold text-surface-200"
+          className="rounded-2xl border border-surface-700 bg-surface-950 hover:bg-surface-900 disabled:opacity-60 px-4 py-3 font-semibold text-surface-200"
         >
           {loading === 'cancel' ? 'Cancelando...' : 'No pagar ahora'}
         </button>
@@ -74,7 +84,7 @@ function PagoMockContent() {
           type="button"
           onClick={() => { void handleDecision('pay'); }}
           disabled={loading !== ''}
-          className="rounded-2xl bg-secondary-600 hover:bg-secondary-500 disabled:opacity-60 px-4 py-3 font-bold"
+          className="rounded-2xl bg-secondary-600 hover:bg-secondary-500 disabled:opacity-60 px-4 py-3 font-semibold text-white"
         >
           {loading === 'pay' ? 'Procesando pago...' : 'Realizar pago'}
         </button>
@@ -89,13 +99,13 @@ function PagoMockContent() {
  */
 export default function PagoMockPage() {
   return (
-    <main className="min-h-screen bg-surface-950 text-white flex items-center justify-center px-4 py-10">
+    <main className="portal-flow-page min-h-screen bg-surface-950 text-foreground flex items-center justify-center px-4 py-10">
       <Suspense
         fallback={
           <div className="w-full max-w-lg rounded-3xl border border-surface-800 bg-surface-900/80 p-8 space-y-4 text-center">
-            <p className="text-xs uppercase tracking-[0.2em] text-surface-500 font-bold">Pasarela temporal</p>
-            <h1 className="text-2xl font-bold">Confirmar pago</h1>
-            <p className="text-sm text-surface-400">Cargando información de la receta...</p>
+            <p className="text-xs uppercase tracking-[0.16em] text-surface-500 font-semibold">Pasarela temporal</p>
+            <h1 className="text-2xl font-bold text-foreground">Confirmar pago</h1>
+            <p className="text-sm text-surface-400 font-normal">Cargando información de la receta...</p>
           </div>
         }
       >

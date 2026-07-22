@@ -130,7 +130,7 @@ function DeliveryMethodContent() {
  */
 export default function DeliveryMethodPage() {
   return (
-    <main className="min-h-screen bg-surface-950 text-white flex items-center justify-center px-4 py-10">
+    <main className="portal-flow-page min-h-screen bg-surface-950 text-foreground flex items-center justify-center px-4 py-10">
       <Suspense
         fallback={
           <div className="w-full max-w-lg rounded-3xl border border-surface-800 bg-surface-900/80 p-8 text-center text-surface-400">

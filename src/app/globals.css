@@ -1575,6 +1575,44 @@ table th {
   font-size: 1.625rem;
 }
 
+/* Flujos standalone (pasarela, entrega) — misma tipografía Inter que los portales */
+.portal-flow-page {
+  font-family: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+  font-stretch: normal;
+  letter-spacing: normal;
+}
+
+.portal-flow-page :is(h1, h2, h3, h4, h5, h6, button, input, select, textarea) {
+  font-family: inherit;
+  font-stretch: normal;
+}
+
+.portal-flow-page :is(h1, h2, h3, h4, h5, h6) {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.portal-flow-page button {
+  font-weight: 600;
+}
+
+.portal-flow-page .font-bold {
+  font-weight: 700 !important;
+}
+
+.portal-flow-page .font-semibold {
+  font-weight: 600 !important;
+}
+
+.portal-flow-page__error {
+  color: #92400e;
+}
+
+[data-theme="dark"] .portal-flow-page__error {
+  color: #fcd34d;
+}
+
 [data-portal="patient"] .text-\[7px\],
 [data-portal="doctor"] .text-\[7px\],
 [data-portal="admin"] .text-\[7px\] {
