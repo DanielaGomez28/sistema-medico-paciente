@@ -276,7 +276,7 @@ const mapCatalogItemToProduct = (item: PrescriptionCatalogApiItem): MedicalProdu
   sanitaryCategory: item.sanitaryCategory || 'regular',
   isControlled: Boolean(item.isControlled),
   controlledSubstanceType: item.controlledSubstanceType || null,
-  pharmacyName: item.pharmacyName || 'Farmahumana',
+  pharmacyName: item.pharmacyName,
 });
 
 /**
@@ -1454,7 +1454,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const availablePharmacies = useMemo(() => {
     const pharmacies = new Set<string>();
     catalogResults.forEach(prod => {
-      pharmacies.add(prod.pharmacyName || 'Farmahumana');
+      pharmacies.add(prod.pharmacyName || 'Farmacia');
     });
     return Array.from(pharmacies);
   }, [catalogResults]);
@@ -1464,7 +1464,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
     if (catalogPharmacyFilter !== 'all') {
       result = result.filter(prod => {
-        const pName = prod.pharmacyName || 'Farmahumana';
+        const pName = prod.pharmacyName || 'Farmacia';
         return pName === catalogPharmacyFilter;
       });
     }
@@ -1727,7 +1727,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             </span>
                           </div>
                           <span className="doctor-pharmacy-product-badge w-fit max-w-full shrink-0 truncate whitespace-nowrap text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
-                            {prod.pharmacyName || 'Farmahumana'}
+                            {prod.pharmacyName || 'Farmacia'}
                           </span>
                         </div>
                         <div className="doctor-pharmacy-product-desc text-surface-400 break-words line-clamp-3">{prod.description}</div>
