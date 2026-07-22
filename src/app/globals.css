@@ -261,9 +261,9 @@
   --color-muted: var(--color-surface-400);
   --color-muted-foreground: var(--color-surface-500);
 
-  --radius-control: 0.5rem;
-  --radius-card: 0.75rem;
-  --radius-section: 0.75rem;
+  --radius-control: 0;
+  --radius-card: 0;
+  --radius-section: 0;
   --zenith-logout-red: #dc2626;
   --zenith-logout-red-hover: #b91c1c;
   --text-caption: 0.6875rem;
@@ -955,7 +955,7 @@ table th {
 
 .login-view__card {
   background: var(--login-card);
-  border-radius: 1.5rem;
+  border-radius: 0;
   padding: 2rem 1.75rem 1.75rem;
   box-shadow: var(--login-card-shadow);
   text-align: center;
@@ -971,7 +971,7 @@ table th {
   width: 3rem;
   height: 3rem;
   margin-bottom: 1.25rem;
-  border-radius: 0.875rem;
+  border-radius: 0;
   background: #ffffff;
   color: #334155;
   box-shadow: var(--login-icon-shadow);
@@ -1377,7 +1377,7 @@ table th {
 [data-portal="doctor"] .doctor-recipe-log-item {
   background: color-mix(in srgb, #179150 12%, #ffffff);
   border: 1px solid color-mix(in srgb, #179150 30%, #cbd5e1);
-  border-radius: 0.75rem;
+  border-radius: 0;
   padding: 0.875rem 1rem;
 }
 
@@ -2552,11 +2552,6 @@ h6.font-mono {
 /*
  * Admin — tarjetas: blancas en claro, oscuras consistentes con el canvas en oscuro.
  */
-[data-portal="admin"] .admin-surface-card,
-[data-portal="admin"] main .zenith-panel {
-  border-radius: 0.75rem !important;
-}
-
 [data-theme="light"] [data-portal="admin"] .admin-surface-card,
 [data-theme="light"] [data-portal="admin"] main form.bg-surface-900,
 [data-theme="light"] [data-portal="admin"] main .bg-surface-900.rounded-3xl,
@@ -2852,6 +2847,29 @@ body {
   padding-bottom: 1.5rem;
 }
 
+/*
+ * Tarjetas y superficies — esquinas mínimas en toda la aplicación
+ */
+body :is(.rounded-3xl, .rounded-2xl, .rounded-xl, .rounded-lg):not(.rounded-full) {
+  border-radius: 0 !important;
+}
+
+body :is(.admin-surface-card, .zenith-panel, .zenith-card, .zenith-filter-bar, .doctor-recipe-log-item, .patient-checkout-notice, .login-view__card) {
+  border-radius: 0 !important;
+}
+
+body :is(input, select, textarea):not([type="checkbox"]):not([type="radio"]) {
+  border-radius: 0 !important;
+}
+
+body :is(button, [role="button"]) {
+  border-radius: 0 !important;
+}
+
+body .rounded-full {
+  border-radius: 9999px !important;
+}
+
 .portal-floating-actions {
   left: auto;
 }
@@ -2861,7 +2879,8 @@ body {
     padding-bottom: 10rem;
   }
 
-  .portal-profile-view .rounded-xl.p-8 {
+  .portal-profile-view .rounded-xl.p-8,
+  .portal-profile-view .rounded-xl.p-5 {
     padding: 1.25rem;
   }
 

@@ -259,7 +259,7 @@ export default function CmsView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 portal-profile-view">
       <PageHeader
         actions={
           <Button size="sm" variant="patient" onClick={handlePublish} disabled={loadingConfig}>
