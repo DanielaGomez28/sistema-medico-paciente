@@ -12,7 +12,7 @@ import {
   Search,
   ShieldAlert,
   Stethoscope,
-  Trash2,
+  Ban,
   UserPlus,
   X,
 } from 'lucide-react';
@@ -389,7 +389,7 @@ export default function DoctorsManagerView() {
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <button type="button" onClick={() => handleSuspend(doctor.id)} className="p-1.5 rounded-lg border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/10 text-red-400" disabled={saving || doctor.status === 'suspendido'}>
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Ban className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     </td>
