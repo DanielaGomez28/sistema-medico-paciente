@@ -402,10 +402,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [, setPatientsError] = useState('');
 
   const [scannerErrorMsg, setScannerErrorMsg] = useState('');
-  const [hasCameraAccessApi] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return Boolean(window.navigator.mediaDevices?.getUserMedia);
-  });
 
   useEffect(() => {
     let cancelled = false;
@@ -562,7 +558,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     }
 
     let cancelled = false;
-    let scanner: import('html5-qrcode').Html5Qrcode | null = null;
+    let scanner: { stop: () => Promise<unknown>; clear: () => void } | null = null;
 
     const cleanupScanner = async () => {
       if (!scanner) return;
@@ -652,8 +648,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         const { Html5Qrcode } = await import('html5-qrcode');
         if (cancelled) return;
 
-        scanner = new Html5Qrcode(readerElement.id);
-        await scanner.start(
+        const html5Scanner = new Html5Qrcode(readerElement.id);
+        scanner = html5Scanner;
+        await html5Scanner.start(
           { facingMode: 'environment' },
           { fps: 10, qrbox: { width: 250, height: 250 } },
           (decodedText: string) => { void handleDecodedToken(decodedText); },
@@ -1233,18 +1230,12 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
    * Simula el inicio del escaneo mediante cámara.
    */
   const triggerCameraScan = () => {
-    // El escaneo y la validación del QR son HTTP puro, así que no dependen del
-    // canal en tiempo real: la cámara debe abrir siempre que haya una disponible.
-    if (!hasCameraAccessApi) {
-      setScannerErrorMsg('El navegador no habilitó la cámara para esta página. En teléfono, abrí +Salud con HTTPS; los navegadores bloquean la cámara en http://IP-LAN. Si ya estás en HTTPS, revisá permisos de cámara del navegador.');
-      setIsScanning(false);
-      return;
-    }
-
-    setScannerErrorMsg('');
-    setIsScanning(true);
-    setScanProgress(15);
+    // Fallback operativo: en móvil la cámara/Html5Qrcode sigue siendo inestable
+    // y puede tumbar la vista completa. Por ahora se evita arrancar el lector y
+    // se usa el ID temporal del paciente, que valida por HTTP y no depende de cámara.
+    setIsScanning(false);
     setLinkedPatient(null);
+    setScannerErrorMsg('El escáner por cámara está deshabilitado temporalmente. Usá el ID TMP del paciente para vincularlo sin tumbar la página.');
   };
 
   useEffect(() => {
@@ -2586,13 +2577,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 ) : (
                   <div className="space-y-4 text-center z-10">
                     <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
-                    <p className="text-sm text-surface-400 font-medium">{hasCameraAccessApi ? 'Cámara de escáner inactiva' : 'Cámara bloqueada por el navegador'}</p>
+                    <p className="text-sm text-surface-400 font-medium">Vinculación por ID TMP disponible</p>
                     <button
                       type="button"
                       onClick={triggerCameraScan}
                       className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
                     >
-                      Activar escáner
+                      Usar ID TMP
                     </button>
                   </div>
                 )}
