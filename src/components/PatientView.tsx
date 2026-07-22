@@ -2539,13 +2539,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       )}
 
       {/* P.4: SALES RECEIPT / VOUCHER STATUS */}
+      {/* OJO: mismo criterio que el modal de receta imprimible -- fondo blanco
+          fijo, colores fijos (slate), no usar surface-*. */}
       {activeSubTab === 'voucher' && (
         <div className="max-w-2xl mx-auto py-8 animate-in fade-in zoom-in-95 duration-200">
-          <div className="bg-white text-surface-900 rounded-3xl shadow-2xl overflow-hidden border border-surface-200">
+          <div className="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
 
-            <div className="bg-surface-950 text-white p-6 flex items-center justify-between">
+            <div className="bg-slate-950 text-white p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-secondary-500 text-surface-950 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-secondary-500 text-slate-950 flex items-center justify-center">
                   <Check className="h-6 w-6 stroke-[3]" />
                 </div>
                 <div>
@@ -2556,7 +2558,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
               <button
                 onClick={() => window.print()}
-                className="px-3 py-1.5 bg-surface-850 hover:bg-surface-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-surface-700"
+                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-600"
               >
                 <Printer className="h-3.5 w-3.5" />
                 <span>Imprimir</span>
@@ -2565,68 +2567,68 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
             <div className="p-8 space-y-6 text-xs leading-relaxed">
 
-              <div className="flex justify-between items-start border-b border-surface-200 pb-4">
+              <div className="flex justify-between items-start border-b border-slate-200 pb-4">
                 <div>
-                  <h4 className="text-sm font-bold text-surface-950">{PATIENT_PORTAL_COPY.pharmacyLegalName}</h4>
-                  <p className="text-2xs text-surface-500">{PATIENT_PORTAL_COPY.pharmacyLegalReference}</p>
+                  <h4 className="text-sm font-bold text-slate-950">{PATIENT_PORTAL_COPY.pharmacyLegalName}</h4>
+                  <p className="text-2xs text-slate-500">{PATIENT_PORTAL_COPY.pharmacyLegalReference}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-surface-850">CÓDIGO: {voucherId}</p>
-                  <p className="text-2xs text-surface-400 mt-0.5">Fecha: {new Date().toLocaleDateString()}</p>
+                  <p className="font-bold text-slate-900">CÓDIGO: {voucherId}</p>
+                  <p className="text-2xs text-slate-400 mt-0.5">Fecha: {new Date().toLocaleDateString()}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 bg-surface-50 p-4 rounded-xl border border-surface-200 text-2xs">
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-2xs">
                 <div>
-                  <span className="font-bold text-surface-450 uppercase block">Paciente</span>
-                  <span className="font-bold text-surface-800 text-xs mt-0.5 block">{profileName}</span>
-                  <span className="text-surface-500 mt-0.5 block">{patientEmail}</span>
+                  <span className="font-bold text-slate-500 uppercase block">Paciente</span>
+                  <span className="font-bold text-slate-800 text-xs mt-0.5 block">{profileName}</span>
+                  <span className="text-slate-500 mt-0.5 block">{patientEmail}</span>
                 </div>
                 <div>
-                  <span className="font-bold text-surface-455 uppercase block">Retiro Autorizado en</span>
-                  <span className="font-bold text-surface-800 text-xs mt-0.5 block">{selectedBranch}</span>
-                  <span className="text-surface-500 mt-0.5 block">Presentar credencial QR física</span>
+                  <span className="font-bold text-slate-500 uppercase block">Retiro Autorizado en</span>
+                  <span className="font-bold text-slate-800 text-xs mt-0.5 block">{selectedBranch}</span>
+                  <span className="text-slate-500 mt-0.5 block">Presentar credencial QR física</span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <span className="font-bold text-primary-950 uppercase tracking-widest block text-[9px]">Productos Adquiridos</span>
-                <div className="divide-y divide-surface-150 border-t border-b border-surface-200">
+                <span className="font-bold text-teal-900 uppercase tracking-widest block text-[9px]">Productos Adquiridos</span>
+                <div className="divide-y divide-slate-150 border-t border-b border-slate-200">
                   {proposalItems.map((item) => (
                     <div key={item.id} className="py-2.5 flex justify-between">
                       <div>
-                        <span className="font-bold text-surface-800">{item.medication}</span>
-                        <span className="text-surface-500 block text-2xs">Cant: {item.quantity} • Descuento aplicado</span>
+                        <span className="font-bold text-slate-800">{item.medication}</span>
+                        <span className="text-slate-500 block text-2xs">Cant: {item.quantity} • Descuento aplicado</span>
                       </div>
-                      <span className="font-bold text-surface-900">{formatCurrency(calculateItemSubtotal(item))}</span>
+                      <span className="font-bold text-slate-900">{formatCurrency(calculateItemSubtotal(item))}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="flex justify-end pt-2">
-                <div className="w-56 space-y-2 text-2xs text-surface-500">
+                <div className="w-56 space-y-2 text-2xs text-slate-500">
                   <div className="flex justify-between">
                     <span>Subtotal Neto</span>
-                    <span className="font-semibold text-surface-800">{formatCurrency(totals.netSubtotal)}</span>
+                    <span className="font-semibold text-slate-800">{formatCurrency(totals.netSubtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>IVA (16%)</span>
-                    <span className="font-semibold text-surface-800">{formatCurrency(totals.vat)}</span>
+                    <span className="font-semibold text-slate-800">{formatCurrency(totals.vat)}</span>
                   </div>
-                  <div className="flex justify-between items-baseline font-bold text-surface-950 border-t border-surface-200 pt-2 text-xs">
+                  <div className="flex justify-between items-baseline font-bold text-slate-950 border-t border-slate-200 pt-2 text-xs">
                     <span>Total Pagado</span>
                     <span className="text-sm text-primary-700">{formatCurrency(totals.netTotal)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-surface-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-surface-455 text-[10px]">
+              <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[10px]">
                 <div>
-                  <p className="font-semibold text-surface-600">Recipe / Order ID:</p>
-                  <p className="font-mono text-surface-800 font-bold mt-0.5">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'PENDIENTE'}</p>
-                  <p className="font-semibold text-surface-600 mt-2">Referencia de pago confirmada:</p>
-                  <p className="font-mono text-surface-800 font-bold mt-0.5">{simulatedPaymentReference || 'PENDIENTE DE CALLBACK'}</p>
+                  <p className="font-semibold text-slate-600">Recipe / Order ID:</p>
+                  <p className="font-mono text-slate-800 font-bold mt-0.5">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'PENDIENTE'}</p>
+                  <p className="font-semibold text-slate-600 mt-2">Referencia de pago confirmada:</p>
+                  <p className="font-mono text-slate-800 font-bold mt-0.5">{simulatedPaymentReference || 'PENDIENTE DE CALLBACK'}</p>
                 </div>
 
                 <div className="flex items-center gap-1.5 text-secondary-605 font-bold">
@@ -2637,11 +2639,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
             </div>
 
-            <div className="bg-surface-50 px-8 py-4 border-t border-surface-200 flex justify-between items-center">
-              <p className="text-[10px] text-surface-550">Guarde este recibo en su dispositivo móvil para retirar.</p>
+            <div className="bg-slate-50 px-8 py-4 border-t border-slate-200 flex justify-between items-center">
+              <p className="text-[10px] text-slate-600">Guarde este recibo en su dispositivo móvil para retirar.</p>
               <button
                 onClick={() => setActiveSubTab('recipes')}
-                className="px-4.5 py-2 bg-surface-900 hover:bg-surface-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="px-4.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 Regresar a Récipes
               </button>
@@ -2841,14 +2843,20 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       )}
 
       {/* Printable Clinical Prescription Modal */}
+      {/* OJO: este documento SIEMPRE tiene fondo blanco (es para imprimir), así
+          que usa colores FIJOS (slate, teal) en vez de las clases del sistema
+          de temas (surface, primary) -- esas cambian de valor entre modo
+          claro y oscuro (ej. surface-900 es casi blanco en modo claro) y
+          volvían el texto invisible sobre el fondo blanco fijo de este
+          modal. No usar clases surface acá adentro. */}
       {selectedRecipe && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-surface-950/75 backdrop-blur-sm" onClick={() => setSelectedRecipe(null)}></div>
+          <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm" onClick={() => setSelectedRecipe(null)}></div>
 
-          <div className="relative bg-white text-surface-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] print:max-h-full print:shadow-none print:w-full print:rounded-none">
+          <div className="relative bg-white text-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[95vh] print:max-h-full print:shadow-none print:w-full print:rounded-none">
 
-            <div className="flex items-center justify-between px-6 py-3.5 bg-surface-900 text-white border-b border-surface-800 print:hidden">
-              <span className="text-xs font-bold font-mono text-primary-400 flex items-center gap-1.5">
+            <div className="flex items-center justify-between px-6 py-3.5 bg-slate-900 text-white border-b border-slate-800 print:hidden">
+              <span className="text-xs font-bold font-mono text-teal-400 flex items-center gap-1.5">
                 <FileCheck className="h-4.5 w-4.5" />
                 VISTA PREVIA DEL RECETARIO CLÍNICO
               </span>
@@ -2856,21 +2864,21 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 <button
                   onClick={handleDownloadRecipePdf}
                   disabled={downloadingRecipePdf}
-                  className="p-1.5 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-wait"
                   title="Descargar PDF"
                 >
                   <Download className="h-4.5 w-4.5" />
                 </button>
                 <button
                   onClick={() => window.print()}
-                  className="px-3 py-1.5 text-xs bg-surface-850 hover:bg-surface-800 text-white font-semibold rounded-lg flex items-center gap-1 transition-colors cursor-pointer border border-surface-700"
+                  className="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-white font-semibold rounded-lg flex items-center gap-1 transition-colors cursor-pointer border border-slate-600"
                 >
                   <Printer className="h-3.5 w-3.5" />
                   <span>Imprimir / PDF</span>
                 </button>
                 <button
                   onClick={() => setSelectedRecipe(null)}
-                  className="p-1 rounded-lg text-surface-400 hover:text-white hover:bg-surface-800 transition-colors"
+                  className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -2878,67 +2886,67 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
 
             {recipePdfError ? (
-              <div className="mx-6 mt-3 p-3 bg-danger-500/10 border border-danger-500/25 rounded-xl text-danger-400 text-xs print:hidden">
+              <div className="mx-6 mt-3 p-3 bg-red-50 border border-red-300 rounded-xl text-red-700 text-xs print:hidden">
                 {recipePdfError}
               </div>
             ) : null}
 
             <div className="p-8 space-y-8 flex-1 overflow-y-auto print:overflow-visible bg-white print:p-0">
 
-              <div className="flex justify-between items-start border-b-2 border-surface-900 pb-5">
+              <div className="flex justify-between items-start border-b-2 border-slate-900 pb-5">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-primary-900">
-                    <Activity className="h-7 w-7 text-primary-700" />
+                  <div className="flex items-center gap-2 text-teal-800">
+                    <Activity className="h-7 w-7 text-teal-700" />
                     <h1 className="zenith-page-title uppercase">{PATIENT_PORTAL_COPY.printableFacilityName}</h1>
                   </div>
-                  <p className="text-2xs text-surface-500 font-medium">
+                  <p className="text-2xs text-slate-500 font-medium">
                     {PATIENT_PORTAL_COPY.printableFacilitySubtitle}<br />
                     {PATIENT_PORTAL_COPY.printableFacilityAddress}
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-bold bg-surface-100 border border-surface-300 px-3 py-1 rounded-full text-surface-700 font-mono">
+                  <span className="text-xs font-bold bg-slate-100 border border-slate-300 px-3 py-1 rounded-full text-slate-700 font-mono">
                     {selectedRecipe.id}
                   </span>
-                  <p className="text-2xs text-surface-400 mt-2">{PATIENT_PORTAL_COPY.printableDocumentLabel}</p>
+                  <p className="text-2xs text-slate-400 mt-2">{PATIENT_PORTAL_COPY.printableDocumentLabel}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 bg-surface-50 p-4 rounded-xl border border-surface-200 text-xs">
+              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
                 <div>
-                  <p className="text-surface-500 font-bold uppercase text-[9px]">Paciente</p>
-                  <p className="font-bold text-surface-850 text-sm mt-0.5">{profileName}</p>
-                  <p className="text-surface-500 mt-1">ID: {qrPatientIdentity} • Correo: {patientEmail}</p>
+                  <p className="text-slate-500 font-bold uppercase text-[9px]">Paciente</p>
+                  <p className="font-bold text-slate-900 text-sm mt-0.5">{profileName}</p>
+                  <p className="text-slate-500 mt-1">ID: {qrPatientIdentity} • Correo: {patientEmail}</p>
                 </div>
                 <div>
-                  <p className="text-surface-500 font-bold uppercase text-[9px]">Fecha Prescripción</p>
-                  <p className="font-bold text-surface-800 mt-0.5">{selectedRecipe.date}</p>
-                  <p className="text-surface-555 mt-1">Validez: Hasta el {selectedRecipe.expiryDate}</p>
+                  <p className="text-slate-500 font-bold uppercase text-[9px]">Fecha Prescripción</p>
+                  <p className="font-bold text-slate-800 mt-0.5">{selectedRecipe.date}</p>
+                  <p className="text-slate-600 mt-1">Validez: Hasta el {selectedRecipe.expiryDate}</p>
                 </div>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xs font-bold text-primary-900 uppercase tracking-widest border-b border-surface-200 pb-1.5">
+                <h3 className="text-xs font-bold text-teal-800 uppercase tracking-widest border-b border-slate-200 pb-1.5">
                   Rx Prescripción Médica
                   {selectedRecipe.medications.length > 1 ? (
-                    <span className="ml-2 normal-case tracking-normal font-semibold text-surface-500">
+                    <span className="ml-2 normal-case tracking-normal font-semibold text-slate-500">
                       ({selectedRecipe.medications.length} medicamentos)
                     </span>
                   ) : null}
                 </h3>
 
                 {selectedRecipe.medications.map((med) => (
-                  <div key={med.id} className="p-4 bg-surface-50/20 border border-dashed border-surface-300 rounded-xl space-y-4">
+                  <div key={med.id} className="p-4 bg-slate-50 border border-dashed border-slate-300 rounded-xl space-y-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="text-base font-extrabold text-surface-900">{med.medication}</h4>
-                        <p className="text-xs font-semibold text-surface-600 mt-1">{med.dosage}</p>
+                        <h4 className="text-base font-extrabold text-slate-900">{med.medication}</h4>
+                        <p className="text-xs font-semibold text-slate-600 mt-1">{med.dosage}</p>
                       </div>
                     </div>
 
                     <div className="space-y-1 pt-1">
-                      <p className="text-[10px] font-bold text-primary-950 uppercase">Instrucciones de Dosificación:</p>
-                      <p className="text-sm font-medium text-surface-700 leading-relaxed italic">
+                      <p className="text-[10px] font-bold text-teal-900 uppercase">Instrucciones de Dosificación:</p>
+                      <p className="text-sm font-medium text-slate-700 leading-relaxed italic">
                         &ldquo;{med.instructions}&rdquo;
                       </p>
                     </div>
@@ -2946,33 +2954,33 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 ))}
               </div>
 
-              <div className="pt-6 border-t border-surface-200 flex justify-between items-end gap-6">
+              <div className="pt-6 border-t border-slate-200 flex justify-between items-end gap-6">
                 <div className="text-xs space-y-1">
-                  <p className="font-bold text-surface-850">{selectedRecipe.doctor}</p>
-                  <p className="text-[10px] text-surface-550">{selectedRecipe.specialty}</p>
-                  <p className="text-[10px] text-surface-400 font-mono">{selectedRecipe.doctorLicense}</p>
+                  <p className="font-bold text-slate-900">{selectedRecipe.doctor}</p>
+                  <p className="text-[10px] text-slate-600">{selectedRecipe.specialty}</p>
+                  <p className="text-[10px] text-slate-400 font-mono">{selectedRecipe.doctorLicense}</p>
                 </div>
 
                 <div className="flex flex-col items-center relative pr-4">
-                  <div className="h-14 w-32 border-2 border-primary-700/60 rounded-lg flex flex-col items-center justify-center p-1 text-primary-750 rotate-3 font-serif select-none pointer-events-none bg-white/50 backdrop-blur-2xs">
+                  <div className="h-14 w-32 border-2 border-teal-700/60 rounded-lg flex flex-col items-center justify-center p-1 text-teal-800 rotate-3 font-serif select-none pointer-events-none bg-white/50 backdrop-blur-2xs">
                     <span className="text-[7px] font-bold uppercase tracking-wider">{PATIENT_PORTAL_COPY.printableSignatureLabel}</span>
                     <span className="text-2xs font-extrabold uppercase my-0.5 tracking-tight font-sans">{buildDoctorSignatureLabel(selectedRecipe.doctor)}</span>
                     <span className="text-[7px] font-mono leading-none">REGISTRADO EN SISTEMA</span>
                   </div>
-                  <span className="text-[9px] text-surface-400 font-mono mt-1">{PATIENT_PORTAL_COPY.printableSignatureFooter}</span>
+                  <span className="text-[9px] text-slate-400 font-mono mt-1">{PATIENT_PORTAL_COPY.printableSignatureFooter}</span>
                 </div>
               </div>
 
-              <div className="border-t border-surface-200 pt-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-surface-550 text-[10px]">
+              <div className="border-t border-slate-200 pt-5 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-600 text-[10px]">
                 <div className="flex flex-col gap-1 text-left">
-                  <span className="text-[9px] font-bold uppercase text-surface-400">Código de Verificación Único</span>
-                  <span className="text-2xs font-mono font-medium text-surface-600">
+                  <span className="text-[9px] font-bold uppercase text-slate-400">Código de Verificación Único</span>
+                  <span className="text-2xs font-mono font-medium text-slate-600">
                     SEC-TOKEN: {selectedRecipe.id}-{qrSeedRight}
                   </span>
                 </div>
 
                 <div className="flex flex-col items-center gap-0.5">
-                  <svg viewBox="0 0 100 20" className="w-36 h-6 text-surface-900">
+                  <svg viewBox="0 0 100 20" className="w-36 h-6 text-slate-900">
                     <rect x="0" y="0" width="2" height="20" fill="currentColor" />
                     <rect x="3" y="0" width="1" height="20" fill="currentColor" />
                     <rect x="5" y="0" width="3" height="20" fill="currentColor" />
@@ -3000,7 +3008,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <rect x="96" y="0" width="1" height="20" fill="currentColor" />
                     <rect x="98" y="0" width="2" height="20" fill="currentColor" />
                   </svg>
-                  <span className="text-[7px] font-mono text-surface-400">{PATIENT_PORTAL_COPY.verificationPortalLabel}</span>
+                  <span className="text-[7px] font-mono text-slate-400">{PATIENT_PORTAL_COPY.verificationPortalLabel}</span>
                 </div>
               </div>
 
