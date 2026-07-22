@@ -37,10 +37,6 @@ interface AdminDashboardStats {
     totalCommissions: number;
     averageTicket: number;
   };
-  charts: {
-    prescriptionsByPeriod: Array<{ period: string; value: number }>;
-    revenueByPeriod: Array<{ period: string; value: number }>;
-  };
 }
 
 interface AdminDoctorProfile {
@@ -72,79 +68,6 @@ interface CatalogRecord {
 }
 
 /**
- * Calcula la geometría del gráfico de tendencia.
- * Se reserva un margen interno porque la línea se dibujaba de borde a borde y,
- * con el grosor del trazo, la mitad quedaba recortada fuera del viewBox.
- * @param {Array<{label: string, value: number}>} values - Serie a graficar.
- * @returns {object} Dimensiones, coordenadas, ruta del área y máximo de la serie.
- */
-/**
- * Convierte el período que devuelve la API en una etiqueta legible.
- * Venía como `period.slice(5)` -> "07-22": sin año y con el mes en número, así
- * que no se sabía en qué mes ni año caía cada punto del gráfico.
- * @param {string} period - Período en formato YYYY-MM-DD o YYYY-MM.
- * @returns {string} Etiqueta corta, p. ej. "22 jul" o "jul 2026".
- */
-const formatPeriodLabel = (period: string) => {
-  const [year, month, day] = String(period || '').split('-');
-  if (!year || !month) return period;
-
-  const fecha = new Date(Number(year), Number(month) - 1, Number(day || 1));
-  if (Number.isNaN(fecha.getTime())) return period;
-
-  return day
-    ? fecha.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
-    : fecha.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' });
-};
-
-/**
- * Describe el rango cubierto por la serie, con mes y año.
- * @param {Array<{period?: string}>} source - Serie cruda de la API.
- * @returns {string} Rango legible, p. ej. "Julio 2026".
- */
-const formatPeriodRange = (source: Array<{ period?: string }>) => {
-  const periodos = source.map((item) => item.period).filter(Boolean) as string[];
-  if (!periodos.length) return '';
-
-  const aEtiqueta = (p: string) => {
-    const [year, month] = p.split('-');
-    const fecha = new Date(Number(year), Number(month) - 1, 1);
-    if (Number.isNaN(fecha.getTime())) return p;
-    const txt = fecha.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-    return txt.charAt(0).toUpperCase() + txt.slice(1);
-  };
-
-  const primero = aEtiqueta(periodos[0]);
-  const ultimo = aEtiqueta(periodos[periodos.length - 1]);
-  return primero === ultimo ? primero : `${primero} — ${ultimo}`;
-};
-
-const buildPolyline = (values: Array<{ label: string; value: number }>) => {
-  const width = 320;
-  const height = 140;
-  const padX = 6;
-  const padTop = 12;
-  const padBottom = 10;
-  const max = Math.max(...values.map((item) => item.value), 1);
-  const usableW = width - padX * 2;
-  const usableH = height - padTop - padBottom;
-
-  const coords = values.map((item, index) => {
-    const x = values.length === 1 ? width / 2 : padX + (index / (values.length - 1)) * usableW;
-    const y = padTop + (1 - item.value / max) * usableH;
-    return { x, y, ...item };
-  });
-
-  const points = coords.map((c) => `${c.x},${c.y}`).join(' ');
-  const baseline = height - padBottom;
-  const areaPath = coords.length
-    ? `M ${coords[0].x},${baseline} ${coords.map((c) => `L ${c.x},${c.y}`).join(' ')} L ${coords[coords.length - 1].x},${baseline} Z`
-    : '';
-
-  return { width, height, points, coords, areaPath, max, baseline, padTop };
-};
-
-/**
  * Vista de panel administrativo: muestra estadísticas generales del sistema
  * (pedidos, ingresos, etc.) y permite navegar a otras secciones.
  *
@@ -158,7 +81,6 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
   const [catalog, setCatalog] = useState<CatalogRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeMetricTab, setActiveMetricTab] = useState<'sales' | 'recipes'>('sales');
 
   /**
    * Carga los datos del panel administrativo.
@@ -198,10 +120,6 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
               financialVolume: 0,
               totalCommissions: 0,
               averageTicket: 0,
-            },
-            charts: {
-              prescriptionsByPeriod: [],
-              revenueByPeriod: [],
             },
           });
           setDoctors([]);
@@ -243,33 +161,6 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
     [recipes]
   );
 
-  const chartSource = useMemo(() => {
-    if (activeMetricTab === 'sales') {
-      return stats?.charts?.revenueByPeriod?.map((item) => ({
-        label: formatPeriodLabel(item.period),
-        value: Number(item.value || 0),
-      })) || [];
-    }
-
-    return stats?.charts?.prescriptionsByPeriod?.map((item) => ({
-      label: formatPeriodLabel(item.period),
-      value: Number(item.value || 0),
-    })) || [];
-  }, [activeMetricTab, stats]);
-
-  const periodRange = useMemo(() => {
-    const source = activeMetricTab === 'sales'
-      ? stats?.charts?.revenueByPeriod
-      : stats?.charts?.prescriptionsByPeriod;
-    return formatPeriodRange(source || []);
-  }, [activeMetricTab, stats]);
-
-  const chartValues = chartSource.length ? chartSource : [{ label: 'Sin datos', value: 0 }];
-  const chart = buildPolyline(chartValues);
-  // Con la serie vacía o toda en cero el trazo quedaba pegado al borde inferior,
-  // pareciendo un gráfico roto en vez de "sin datos".
-  const hasChartData = chartSource.length > 0 && chartSource.some((item) => item.value > 0);
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -297,109 +188,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
         <StatCard icon={TrendingUp} label="Comisiones liquidadas" value={formatCurrency(stats?.summary.totalCommissions || 0)} accent="primary" hint={<><span>Ticket promedio {formatCurrency(stats?.summary.averageTicket || 0)}</span></>} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-        <div className="lg:col-span-2 portal-dashboard-card space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h4 className="zenith-section-title">Tendencia administrativa</h4>
-              <p className="text-xs text-surface-400">
-                {periodRange || 'Datos agregados del panel administrativo.'}
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-2xs font-bold rounded-xl p-1 bg-[#f8f9fa] border border-[#e9ecef] dark:bg-surface-855 dark:border-surface-800">
-              <button
-                type="button"
-                onClick={() => setActiveMetricTab('sales')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                  activeMetricTab === 'sales'
-                    ? 'bg-white text-surface-950 shadow-sm dark:bg-surface-800 dark:text-foreground dark:shadow-none'
-                    : 'text-surface-500 hover:text-foreground dark:text-surface-400 dark:hover:text-foreground'
-                }`}
-              >
-                Ventas
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveMetricTab('recipes')}
-                className={`px-3 py-1.5 rounded-lg font-bold transition-colors ${
-                  activeMetricTab === 'recipes'
-                    ? 'bg-white text-surface-950 shadow-sm dark:bg-surface-800 dark:text-foreground dark:shadow-none'
-                    : 'text-surface-500 hover:text-foreground dark:text-surface-400 dark:hover:text-foreground'
-                }`}
-              >
-                Recipes
-              </button>
-            </div>
-          </div>
-
-          {hasChartData ? (
-            <>
-              <div className="flex items-baseline justify-between gap-3">
-                <span className="text-2xs text-surface-500 uppercase tracking-wider font-bold">
-                  Máximo del período
-                </span>
-                <span className="text-sm font-bold text-foreground font-mono">
-                  {activeMetricTab === 'sales' ? formatCurrency(chart.max) : chart.max}
-                </span>
-              </div>
-
-              <svg
-                viewBox={`0 0 ${chart.width} ${chart.height}`}
-                className="w-full h-44"
-                preserveAspectRatio="none"
-                role="img"
-                aria-label={`Tendencia de ${activeMetricTab === 'sales' ? 'ventas' : 'récipes'}`}
-              >
-                {/* Guías horizontales para dar referencia de altura al trazo. */}
-                {[0, 0.5, 1].map((ratio) => {
-                  const y = chart.padTop + ratio * (chart.baseline - chart.padTop);
-                  return (
-                    <line
-                      key={ratio}
-                      x1="0"
-                      y1={y}
-                      x2={chart.width}
-                      y2={y}
-                      stroke="currentColor"
-                      strokeWidth="0.5"
-                      className="text-surface-700/40"
-                    />
-                  );
-                })}
-
-                <path d={chart.areaPath} fill="var(--color-primary)" opacity="0.12" />
-
-                <polyline
-                  fill="none"
-                  stroke="var(--color-primary)"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  points={chart.points}
-                />
-
-                {/* Un solo dato no dibuja línea: el punto lo deja visible igual. */}
-                {chart.coords.map((c) => (
-                  <circle key={`${c.label}-${c.x}`} cx={c.x} cy={c.y} r="2.5" fill="var(--color-primary)" />
-                ))}
-              </svg>
-
-              <div className="flex justify-between gap-2 text-[10px] text-surface-500 font-mono">
-                {chartValues.map((item) => (
-                  <span key={`${activeMetricTab}-${item.label}`} className="truncate">{item.label}</span>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className="h-44 flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-surface-800 text-center">
-              <TrendingUp className="h-5 w-5 text-surface-600" />
-              <p className="text-xs text-surface-500">
-                Todavía no hay {activeMetricTab === 'sales' ? 'ventas' : 'récipes'} registrados en el período.
-              </p>
-            </div>
-          )}
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         <div className="portal-dashboard-card space-y-4 cursor-pointer hover:border-surface-700 transition-colors" onClick={() => onNavigate('doctors')}>
           <div>
             <h4 className="zenith-section-title">Directorio médico</h4>
@@ -418,9 +207,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
             {doctors.length === 0 ? <div className="text-xs text-surface-500">Todavía no hay médicos disponibles.</div> : null}
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="portal-dashboard-card space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
