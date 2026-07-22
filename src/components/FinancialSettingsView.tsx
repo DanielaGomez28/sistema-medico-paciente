@@ -231,14 +231,13 @@ export default function FinancialSettingsView() {
       <form onSubmit={handleUpdate} className="admin-surface-card w-full border rounded-xl p-6 space-y-5">
         <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
           <Percent className="h-4.5 w-4.5 text-surface-400" />
-          <h3 className="zenith-section-title">% Comisión del sistema</h3>
+          <h3 className="zenith-section-title">Comisión del sistema</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-1.5">
-            <label className="zenith-field-label">Comisión del médico (%)</label>
+            <label className="zenith-field-label">Comisión del sistema (%)</label>
             <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-550 font-bold text-xs">%</div>
               <input
                 type="number"
                 step="0.1"
@@ -247,7 +246,7 @@ export default function FinancialSettingsView() {
                 required
                 value={commissionValue}
                 onChange={(e) => setCommissionValue(parseFloat(e.target.value) || 0)}
-                className="w-full pl-8 pr-3 py-2.5 bg-surface-950 border border-surface-850 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-surface-400"
+                className="w-full px-3 py-2.5 bg-surface-950 border border-surface-850 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-surface-400"
               />
             </div>
           </div>
