@@ -1232,10 +1232,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const triggerCameraScan = () => {
     // Fallback operativo: en móvil la cámara/Html5Qrcode sigue siendo inestable
     // y puede tumbar la vista completa. Por ahora se evita arrancar el lector y
-    // se usa el ID temporal del paciente, que valida por HTTP y no depende de cámara.
+    // se usa el ID interno del paciente, que valida por HTTP y no depende de cámara.
     setIsScanning(false);
     setLinkedPatient(null);
-    setScannerErrorMsg('El escáner por cámara está deshabilitado temporalmente. Usá el ID TMP del paciente para vincularlo sin tumbar la página.');
+    setScannerErrorMsg('El escáner por cámara está deshabilitado temporalmente. Usá el ID del sistema del paciente para vincularlo sin tumbar la página.');
   };
 
   useEffect(() => {
@@ -2577,13 +2577,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 ) : (
                   <div className="space-y-4 text-center z-10">
                     <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
-                    <p className="text-sm text-surface-400 font-medium">Vinculación por ID TMP disponible</p>
+                    <p className="text-sm text-surface-400 font-medium">Vinculación por ID del sistema disponible</p>
                     <button
                       type="button"
                       onClick={triggerCameraScan}
                       className="px-4 py-2 bg-[var(--portal-doctor-btn-bg)] hover:bg-[var(--portal-doctor-btn-hover)] text-[var(--portal-doctor-btn-fg)] rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer"
                     >
-                      Usar ID TMP
+                      Usar ID del sistema
                     </button>
                   </div>
                 )}
