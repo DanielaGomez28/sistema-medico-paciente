@@ -1313,9 +1313,34 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       return;
     }
 
-    // Paciente nuevo para este médico: necesita autorización explícita.
+    // Paciente nuevo para este medico. En produccion no hay runtime de sockets
+    // (SOCKET_RUNTIME_SUPPORTED solo es true en localhost), asi que la rama de
+    // abajo no se ejecutaba nunca y la vinculacion por ID moria aca sin registrar
+    // nada. Se resuelve igual que el flujo del QR: consentimiento directo contra
+    // la API y apertura de la ficha.
     if (!SOCKET_RUNTIME_SUPPORTED) {
-      setScannerErrorMsg('El paciente debe autorizar la consulta desde su dispositivo y esa autorización no está disponible en este momento.');
+      try {
+        await apiClient.post('/consentimiento', {
+          patientId: targetPatient.systemId || targetPatient.patientId || patientQuery,
+          doctorId: DOCTOR_ID,
+          acceptedFlag: true,
+        });
+      } catch (linkError: unknown) {
+        const apiLinkError = linkError as ApiErrorPayload;
+        setScannerErrorMsg(
+          apiLinkError.response?.data?.error ||
+          'No se pudo registrar la vinculacion con el paciente.'
+        );
+        return;
+      }
+
+      setScannerErrorMsg('');
+      setPatients((prev) =>
+        prev.some((patient) => patient.systemId === targetPatient.systemId)
+          ? prev
+          : [...prev, targetPatient]
+      );
+      openPatientForm(targetPatient);
       return;
     }
 
