@@ -157,6 +157,29 @@ interface DoctorRecipeLogRecord {
   items: DoctorRecipeLogItem[];
 }
 
+const RECIPE_LOG_INITIAL_COUNT = 3;
+const RECIPE_LOG_LOAD_MORE_COUNT = 3;
+
+function formatRecipeLogDateTime(dateStr: string) {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) {
+    return dateStr;
+  }
+
+  const datePart = date.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+  const timePart = date.toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  return `${datePart}, ${timePart}`;
+}
+
 interface ConsentResultPayload {
   success: boolean;
   message?: string;
@@ -325,6 +348,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   const [doctorRecipeLog, setDoctorRecipeLog] = useState<DoctorRecipeLogRecord[]>([]);
   const [recipeLogLoading, setRecipeLogLoading] = useState(false);
   const [recipeLogError, setRecipeLogError] = useState('');
+  const [recipeLogVisibleCount, setRecipeLogVisibleCount] = useState(RECIPE_LOG_INITIAL_COUNT);
   
   const [patients, setPatients] = useState<LinkedPatient[]>([]);
   const [patientViewMode, setPatientViewMode] = useState<'list' | 'detail'>('list');
@@ -848,6 +872,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     };
   }, [DOCTOR_ID, activeTab]);
 
+  useEffect(() => {
+    setRecipeLogVisibleCount(RECIPE_LOG_INITIAL_COUNT);
+  }, [doctorRecipeLog]);
+
   /**
    * Marca un paciente como selección pendiente antes de confirmar el récipe.
    * @param {LinkedPatient} patient - Paciente preseleccionado.
@@ -1358,6 +1386,22 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
     return result;
   }, [catalogResults, catalogSortOrder, catalogPharmacyFilter]);
+
+  const sortedDoctorRecipeLog = useMemo(
+    () =>
+      [...doctorRecipeLog].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [doctorRecipeLog]
+  );
+
+  const visibleDoctorRecipeLog = useMemo(
+    () => sortedDoctorRecipeLog.slice(0, recipeLogVisibleCount),
+    [sortedDoctorRecipeLog, recipeLogVisibleCount]
+  );
+
+  const hasMoreDoctorRecipeLog = sortedDoctorRecipeLog.length > recipeLogVisibleCount;
+  const canShowLessDoctorRecipeLog = recipeLogVisibleCount > RECIPE_LOG_INITIAL_COUNT;
 
   return (
     <>
@@ -2075,7 +2119,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 })}
                               </div>
                               
-                              <div className="flex justify-between text-2xs text-secondary-400 font-semibold pt-1">
+                              <div className="doctor-patient-savings flex justify-between text-2xs font-semibold pt-1">
                                 <span>Ahorro para el Paciente</span>
                                 <span>
                                   {(() => {
@@ -2087,9 +2131,9 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                                 </span>
                               </div>
 
-                              <div className="flex justify-between text-xs text-white font-bold pt-1">
+                              <div className="doctor-recipe-total flex justify-between text-xs pt-1">
                                 <span>Total a pagar</span>
-                                <span className="font-mono text-secondary-400">
+                                <span className="font-mono">
                                   {(() => {
                                     const totalPay = cart.reduce((sum, item) => sum + ((item.product.price * (item.quantity || 1)) * (1 - globalDiscount / 100)), 0);
                                     return `${formatCurrency(totalPay)} Bs`;
@@ -2293,10 +2337,10 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                       ) : null}
 
                       <div className="space-y-2">
-                        {!recipeLogLoading && doctorRecipeLog.length === 0 ? (
+                        {!recipeLogLoading && sortedDoctorRecipeLog.length === 0 ? (
                           <div className="py-3 text-xs text-surface-500">Todavía no hay recipes emitidos por este médico.</div>
                         ) : null}
-                        {doctorRecipeLog.map((rec) => (
+                        {visibleDoctorRecipeLog.map((rec) => (
                           <div key={rec.recipeId} className="doctor-recipe-log-item flex items-start justify-between gap-3">
                             <div className="space-y-1.5 min-w-0 flex-1">
                               <div className="flex items-baseline justify-between gap-2">
@@ -2327,26 +2371,14 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                               <p className="text-[10px] text-surface-500 flex items-center gap-1 flex-wrap">
                                 <span>
-                                  Emitido {new Date(rec.createdAt).toLocaleString('es-ES', {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                  })}
+                                  Emitido {formatRecipeLogDateTime(rec.createdAt)}
                                 </span>
                                 {rec.fulfillmentStatus === 'fully_fulfilled' ? (
                                   <>
                                     <span>•</span>
                                     <span>
                                       Agotado{rec.fulfilledAt
-                                        ? ` el ${new Date(rec.fulfilledAt).toLocaleString('es-ES', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                          })}`
+                                        ? ` el ${formatRecipeLogDateTime(rec.fulfilledAt)}`
                                         : ''}
                                     </span>
                                   </>
@@ -2356,6 +2388,36 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
                           </div>
                         ))}
+                        {!recipeLogLoading && (hasMoreDoctorRecipeLog || canShowLessDoctorRecipeLog) ? (
+                          <div className="flex items-center justify-between gap-3 pt-2 border-t border-surface-850 mt-2">
+                            {canShowLessDoctorRecipeLog ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setRecipeLogVisibleCount((current) =>
+                                    Math.max(RECIPE_LOG_INITIAL_COUNT, current - RECIPE_LOG_LOAD_MORE_COUNT)
+                                  )
+                                }
+                                className="doctor-recipe-log-toggle text-xs font-semibold transition-colors cursor-pointer"
+                              >
+                                Leer menos
+                              </button>
+                            ) : (
+                              <span aria-hidden="true" />
+                            )}
+                            {hasMoreDoctorRecipeLog ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setRecipeLogVisibleCount((current) => current + RECIPE_LOG_LOAD_MORE_COUNT)
+                                }
+                                className="doctor-recipe-log-toggle text-xs font-semibold transition-colors cursor-pointer ml-auto"
+                              >
+                                Leer más
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
 
 

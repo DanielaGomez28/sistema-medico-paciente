@@ -1411,6 +1411,41 @@ table th {
   color: #11623c;
 }
 
+[data-portal="doctor"] .doctor-patient-savings {
+  color: #0d5735;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-patient-savings {
+  color: #3dba72;
+}
+
+[data-portal="doctor"] .doctor-recipe-total,
+[data-portal="doctor"] .doctor-recipe-total span {
+  color: #000000;
+  font-weight: 700 !important;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-recipe-total,
+[data-theme="dark"] [data-portal="doctor"] .doctor-recipe-total span {
+  color: #ffffff;
+}
+
+[data-portal="doctor"] .doctor-recipe-log-toggle {
+  color: #000000;
+}
+
+[data-portal="doctor"] .doctor-recipe-log-toggle:hover {
+  color: #1a1a1a;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-recipe-log-toggle {
+  color: #ffffff;
+}
+
+[data-theme="dark"] [data-portal="doctor"] .doctor-recipe-log-toggle:hover {
+  color: #e2e8f0;
+}
+
 [data-theme="dark"] [data-portal="doctor"] .doctor-qr-scan-link {
   color: #3dba72;
 }
