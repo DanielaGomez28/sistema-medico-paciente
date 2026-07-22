@@ -30,6 +30,7 @@ interface AuditLogEntry {
   action: string;
   createdAt?: string;
   fecha_hora_exacta?: string;
+  timestamp?: string;
   details?: Record<string, { previous?: unknown; next?: unknown }>;
 }
 
@@ -117,7 +118,9 @@ export default function FinancialSettingsView() {
 
   const auditRows = useMemo(() => auditLog.map((entry) => {
     const commissionChange = entry.details?.doctorCommissionPct;
-    const dateVal = entry.createdAt || entry.fecha_hora_exacta;
+    // La API expone la fecha como `timestamp`; sin contemplarla la bitácora
+    // mostraba siempre "N/A" en la columna Fecha/Hora.
+    const dateVal = entry.timestamp || entry.createdAt || entry.fecha_hora_exacta;
     return {
       id: String(entry.id || entry.id_log || 'N/A'),
       // El id numérico no identifica a nadie al auditar: se prefiere el nombre.
