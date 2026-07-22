@@ -2248,7 +2248,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               </div>
 
               {checkoutError ? (
-                <div className="patient-checkout-notice rounded-xl px-3 py-2 text-xs font-medium">
+                <div className="patient-checkout-error rounded-xl px-3 py-2 text-xs font-medium">
                   {checkoutError}
                 </div>
               ) : null}
