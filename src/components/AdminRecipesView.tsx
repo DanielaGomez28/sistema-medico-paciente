@@ -64,6 +64,9 @@ interface AdminRecipe {
   items?: RecipeItem[];
 }
 
+const ADMIN_RECIPE_LIST_INITIAL_COUNT = 5;
+const ADMIN_RECIPE_LIST_LOAD_MORE_COUNT = 5;
+
 /**
  * Vista administrativa de recetas médicas: lista, filtra por búsqueda y
  * muestra el estado clínico, comercial y de despacho de cada receta.
@@ -75,6 +78,7 @@ export default function AdminRecipesView() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<AdminRecipe | null>(null);
+  const [recipesVisibleCount, setRecipesVisibleCount] = useState(ADMIN_RECIPE_LIST_INITIAL_COUNT);
 
   /**
    * Recarga el listado de récipes desde el servidor.
@@ -113,17 +117,33 @@ export default function AdminRecipesView() {
     };
   }, [loadRecipes]);
 
+  useEffect(() => {
+    setRecipesVisibleCount(ADMIN_RECIPE_LIST_INITIAL_COUNT);
+  }, [recipes, searchQuery]);
+
   const filteredRecipes = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
-    if (!query) return recipes;
+    const base = !query
+      ? recipes
+      : recipes.filter((recipe) =>
+          [recipe.recipeId, recipe.patientName || '', recipe.doctorName || '', recipe.clinicalStatus, recipe.commercialStatus]
+            .join(' ')
+            .toLowerCase()
+            .includes(query)
+        );
 
-    return recipes.filter((recipe) =>
-      [recipe.recipeId, recipe.patientName || '', recipe.doctorName || '', recipe.clinicalStatus, recipe.commercialStatus]
-        .join(' ')
-        .toLowerCase()
-        .includes(query)
+    return [...base].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }, [recipes, searchQuery]);
+
+  const visibleRecipes = useMemo(
+    () => filteredRecipes.slice(0, recipesVisibleCount),
+    [filteredRecipes, recipesVisibleCount]
+  );
+
+  const hasMoreRecipes = filteredRecipes.length > recipesVisibleCount;
+  const canShowLessRecipes = recipesVisibleCount > ADMIN_RECIPE_LIST_INITIAL_COUNT;
 
   const formatDate = (dateStr: string) => {
     try {
@@ -183,60 +203,63 @@ export default function AdminRecipesView() {
 
       {/* Table */}
       <div className="portal-dashboard-card portal-dashboard-card--flush">
-        <div className="hidden lg:block overflow-x-auto">
-          <table className="w-full min-w-[56rem] text-xs">
+        <div className="zenith-table-wrap admin-recipes-table hidden lg:block">
+          <table className="zenith-table zenith-table--divided text-xs">
+            <colgroup>
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+              <col />
+            </colgroup>
             <thead>
-              <tr className="border-b border-surface-800 text-surface-400 font-bold uppercase tracking-wider">
-                <th className="text-left px-6 py-4">Código</th>
-                <th className="text-left px-6 py-4">Emisión</th>
-                <th className="text-left px-6 py-4">Medicamento</th>
-                <th className="text-left px-6 py-4">Paciente</th>
-                <th className="text-left px-6 py-4">Especialista</th>
-                <th className="text-left px-6 py-4">Estado clínico</th>
-                <th className="text-left px-6 py-4">Reserva</th>
-                <th className="text-left px-6 py-4">Entrega</th>
-                <th className="text-right px-6 py-4">Acciones</th>
+              <tr className="admin-recipes-table__head-row border-b border-surface-850">
+                <th className="admin-recipes-table__head zenith-table__code">Código</th>
+                <th className="admin-recipes-table__head">Emisión</th>
+                <th className="admin-recipes-table__head zenith-table__wrap">Medicamento</th>
+                <th className="admin-recipes-table__head zenith-table__wrap">Paciente</th>
+                <th className="admin-recipes-table__head zenith-table__wrap">Especialista</th>
+                <th className="admin-recipes-table__head">Clínico</th>
+                <th className="admin-recipes-table__head">Reserva</th>
+                <th className="admin-recipes-table__head">Entrega</th>
+                <th className="admin-recipes-table__head">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-850">
-              {filteredRecipes.map((recipe) => (
+            <tbody>
+              {visibleRecipes.map((recipe) => (
                 <tr
                   key={recipe.recipeId}
-                  className="hover:bg-surface-850/40 transition-colors"
+                  className="hover:bg-surface-850/25 transition-colors"
                 >
-                  <td className="px-6 py-4">
-                    <span className="font-mono text-surface-300 text-[10px]">Recipe: {recipe.recipeId}</span>
+                  <td className="py-3 pr-2 font-mono text-[10px] text-surface-300 zenith-table__code align-top">
+                    {recipe.recipeId}
                   </td>
-                  <td className="px-6 py-4 text-surface-300">{formatDate(recipe.createdAt)}</td>
-                  <td className="px-6 py-4">
-                    <span className="text-surface-200 font-semibold">{getMedicationSummary(recipe)}</span>
-                    {recipe.items && recipe.items.length > 0 && (
+                  <td className="py-3 text-surface-400 whitespace-nowrap align-top">{formatDate(recipe.createdAt)}</td>
+                  <td className="py-3 zenith-table__wrap align-top">
+                    <span className="text-surface-200 font-semibold break-words line-clamp-2">{getMedicationSummary(recipe)}</span>
+                    {recipe.items && recipe.items.length > 0 ? (
                       <p className="text-[10px] text-surface-500 mt-0.5">
                         {recipe.items.length} {recipe.items.length === 1 ? 'unidad' : 'unidad(es)'}
                       </p>
-                    )}
+                    ) : null}
                   </td>
-                  <td className="px-6 py-4 text-surface-300">{recipe.patientName || 'Sin paciente'}</td>
-                  <td className="px-6 py-4">
-                    <span className="text-surface-200 font-semibold">{recipe.doctorName || 'Sin médico'}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {renderStatusBadge(recipe.clinicalStatus)}
-                  </td>
-                  <td className="px-6 py-4">
-                    {renderStatusBadge(recipe.commercialStatus)}
-                  </td>
-                  <td className="px-6 py-4">
-                    {renderStatusBadge(recipe.fulfillmentStatus || 'not_fulfilled')}
-                  </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="py-3 zenith-table__wrap text-surface-300 break-words align-top">{recipe.patientName || 'Sin paciente'}</td>
+                  <td className="py-3 zenith-table__wrap text-surface-200 font-semibold break-words align-top">{recipe.doctorName || 'Sin médico'}</td>
+                  <td className="py-3 align-top">{renderStatusBadge(recipe.clinicalStatus)}</td>
+                  <td className="py-3 align-top">{renderStatusBadge(recipe.commercialStatus)}</td>
+                  <td className="py-3 align-top">{renderStatusBadge(recipe.fulfillmentStatus || 'not_fulfilled')}</td>
+                  <td className="py-3 text-right align-top">
                     <button
                       type="button"
                       onClick={() => setSelectedRecipe(recipe)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-secondary-500/10 border border-secondary-500/25 text-secondary-400 rounded-lg text-[10px] font-bold hover:bg-secondary-500/20 transition-colors cursor-pointer"
+                      className="admin-recipe-view-btn inline-flex max-w-full items-center gap-1 px-2 py-1.5 rounded-lg text-[10px] font-semibold transition-colors cursor-pointer"
                     >
-                      <Eye className="h-3 w-3" />
-                      Visualizar / PDF
+                      <Eye className="h-3 w-3 shrink-0" />
+                      <span className="truncate">Ver PDF</span>
                     </button>
                   </td>
                 </tr>
@@ -246,7 +269,7 @@ export default function AdminRecipesView() {
         </div>
 
         <div className="lg:hidden space-y-3 p-4">
-          {filteredRecipes.map((recipe) => (
+          {visibleRecipes.map((recipe) => (
             <ListCard
               key={recipe.recipeId}
               title={<span className="font-mono text-[10px] break-all">Recipe: {recipe.recipeId}</span>}
@@ -273,7 +296,38 @@ export default function AdminRecipesView() {
           ))}
         </div>
 
-        {filteredRecipes.length === 0 && (
+        {!loading && filteredRecipes.length > 0 && (hasMoreRecipes || canShowLessRecipes) ? (
+          <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-2 border-t border-surface-850">
+            {canShowLessRecipes ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setRecipesVisibleCount((current) =>
+                    Math.max(ADMIN_RECIPE_LIST_INITIAL_COUNT, current - ADMIN_RECIPE_LIST_LOAD_MORE_COUNT)
+                  )
+                }
+                className="admin-recipe-list-toggle text-xs cursor-pointer"
+              >
+                Leer menos
+              </button>
+            ) : (
+              <span aria-hidden="true" />
+            )}
+            {hasMoreRecipes ? (
+              <button
+                type="button"
+                onClick={() =>
+                  setRecipesVisibleCount((current) => current + ADMIN_RECIPE_LIST_LOAD_MORE_COUNT)
+                }
+                className="admin-recipe-list-toggle text-xs cursor-pointer ml-auto"
+              >
+                Leer más
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {filteredRecipes.length === 0 && !loading && (
           <div className="text-center py-12 text-surface-500 text-xs">
             <FileText className="h-8 w-8 mx-auto mb-3 opacity-40" />
             {searchQuery ? 'No se encontraron recipes que coincidan con la búsqueda.' : 'No hay recipes emitidos todavía.'}
