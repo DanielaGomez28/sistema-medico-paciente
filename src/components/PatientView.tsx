@@ -217,6 +217,7 @@ interface BackendPrescriptionItem {
 interface BackendPrescription {
   recipeId: string;
   createdAt: string;
+  fulfilledAt?: string | null;
   recipeExpiresAt?: string;
   doctorName?: string | null;
   doctorSpecialty?: string | null;
@@ -520,11 +521,27 @@ const buildTreatmentAlertsFromTracking = (profiles: BackendTrackingProfile[], pr
   return [...refillAlerts, ...renewalAlerts].sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
 };
 
+type OrderDeliveryStatus = 'Pendiente por retirar' | 'Listo para retirar' | 'Retirado';
+
+const RECENT_RETIRED_RECIPE_VISIBILITY_MS = 30 * 60 * 1000;
+
+const derivePrescriptionDeliveryStatus = (prescription: BackendPrescription | null): OrderDeliveryStatus => {
+  if (prescription?.fulfillmentStatus === 'fully_fulfilled') {
+    return 'Retirado';
+  }
+
+  if (prescription?.commercialStatus === 'paid') {
+    return 'Listo para retirar';
+  }
+
+  return 'Pendiente por retirar';
+};
+
 const deriveOrderDeliveryStatus = (
   checkoutSession: CheckoutSessionState | null,
   activePrescription: BackendPrescription | null
-): 'Pendiente por retirar' | 'Listo para retirar' | 'Retirado' => {
-  if (activePrescription?.fulfillmentStatus === 'fully_fulfilled') {
+): OrderDeliveryStatus => {
+  if (derivePrescriptionDeliveryStatus(activePrescription) === 'Retirado') {
     return 'Retirado';
   }
 
@@ -533,6 +550,20 @@ const deriveOrderDeliveryStatus = (
   }
 
   return 'Pendiente por retirar';
+};
+
+const isRecentlyRetiredPrescription = (prescription: BackendPrescription, now: number) => {
+  if (prescription.fulfillmentStatus !== 'fully_fulfilled' || !prescription.fulfilledAt) {
+    return false;
+  }
+
+  const fulfilledTime = new Date(prescription.fulfilledAt).getTime();
+  if (!Number.isFinite(fulfilledTime)) {
+    return false;
+  }
+
+  const elapsed = now - fulfilledTime;
+  return elapsed >= 0 && elapsed <= RECENT_RETIRED_RECIPE_VISIBILITY_MS;
 };
 
 /**
@@ -627,6 +658,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(PATIENT_PORTAL_COPY.paymentHoldSeconds); // 15 minutes in seconds
   const [simulatedPaymentReference, setSimulatedPaymentReference] = useState('');
   const [checkoutSession, setCheckoutSession] = useState<CheckoutSessionState | null>(null);
+  const [deliveryNow, setDeliveryNow] = useState(() => Date.now());
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState('');
   const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
@@ -769,6 +801,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       cancelled = true;
     };
   }, [socketPatientIdentity]);
+
+  useEffect(() => {
+    if (activeSubTab !== 'recipes') {
+      return undefined;
+    }
+
+    const intervalId = setInterval(() => setDeliveryNow(Date.now()), 60000);
+    return () => clearInterval(intervalId);
+  }, [activeSubTab]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1358,6 +1399,26 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   ] as const;
 
   const activeOrderStepIndex = orderDeliverySteps.findIndex((step) => step.id === lastOrderStatus);
+  const deliveryRecipeIdsByStatus = useMemo<Record<OrderDeliveryStatus, string[]>>(() => {
+    const grouped: Record<OrderDeliveryStatus, string[]> = {
+      'Pendiente por retirar': [],
+      'Listo para retirar': [],
+      Retirado: [],
+    };
+
+    backendPrescriptions.forEach((prescription) => {
+      if (!prescription.recipeId) return;
+
+      const status = derivePrescriptionDeliveryStatus(prescription);
+      if (status === 'Retirado' && !isRecentlyRetiredPrescription(prescription, deliveryNow)) {
+        return;
+      }
+
+      grouped[status].push(prescription.recipeId);
+    });
+
+    return grouped;
+  }, [backendPrescriptions, deliveryNow]);
 
   /**
    * Crea el checkout real en backend para la receta actualmente seleccionada.
@@ -1613,30 +1674,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       </Modal>
       {activeSubTab === 'recipes' && (
         <div className="space-y-4">
-          {/* Progress Stepper for last order */}
+          {/* Progress Stepper grouped by recipe status */}
           <div className="portal-dashboard-card portal-dashboard-card--flush relative">
             <div className="p-5 space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 space-y-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] bg-surface-800 text-surface-300 border border-surface-700 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">
-                      Última Orden de Farmacia
-                    </span>
-                    <span className="text-xs font-mono font-semibold text-surface-500">ID: {checkoutSession?.order?.orderId || activeCheckoutPrescription?.recipeId || 'SIN-ORDEN'}</span>
-                  </div>
-                  <h3 className="text-sm !font-bold text-foreground">Retiro de medicamentos en farmacia</h3>
-                </div>
-
-                <span
-                  className={`inline-flex self-start shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold border ${lastOrderStatus === 'Retirado'
-                      ? 'bg-secondary-500/10 text-secondary-500 border-secondary-500/25'
-                      : lastOrderStatus === 'Listo para retirar'
-                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/25'
-                        : 'bg-red-500/10 text-red-500 border-red-500/25'
-                    }`}
-                >
-                  {lastOrderStatus}
-                </span>
+              <div className="min-w-0 space-y-1">
+                <h3 className="text-sm !font-bold text-foreground">Retiro de medicamentos en farmacia</h3>
+                <p className="text-xs text-surface-500">Resumen de recipes por estado de retiro.</p>
               </div>
 
               <div className="border-t border-surface-800/80 pt-4 space-y-3">
@@ -1695,6 +1738,21 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                         <span className="text-[10px] font-semibold leading-tight text-foreground">
                           {step.label}
                         </span>
+                        <div className="min-h-[1.5rem] w-full space-y-1">
+                          {deliveryRecipeIdsByStatus[step.id].length ? (
+                            deliveryRecipeIdsByStatus[step.id].map((recipeId) => (
+                              <span
+                                key={`${step.id}-${recipeId}`}
+                                className="mx-auto block max-w-full truncate rounded-md border border-surface-800 bg-surface-950/50 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-surface-400"
+                                title={recipeId}
+                              >
+                                {recipeId}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="block text-[9px] font-medium text-surface-700">Sin recipes</span>
+                          )}
+                        </div>
                       </li>
                     );
                   })}
