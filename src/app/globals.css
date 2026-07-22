@@ -2862,12 +2862,9 @@ h6.font-mono {
 
 /*
  * ── Sidebar colapsable (portal Admin) ──────────────────────────────────
- * Cuando el sidebar está contraído (sin hover, solo en desktop) mostramos
- * ÚNICAMENTE los íconos, siempre en la MISMA posición fija (alineados a la
- * izquierda). Al hacer hover el sidebar se expande y solo aparece el texto
- * a la derecha del ícono — el ícono NUNCA se mueve ni un píxel, porque ya
- * no centramos la fila al contraer (eso era lo que lo desplazaba). En
- * móvil no aplica (siempre expandido).
+ * En desktop, contraído muestra solo íconos alineados a la izquierda.
+ * El despliegue completo ocurre solo con el botón manual del header
+ * (clase sidebar-collapsible--expanded). En móvil no aplica (siempre expandido).
  */
 @media (min-width: 1024px) {
   /*
@@ -2884,11 +2881,11 @@ h6.font-mono {
     gap: 0;
     transition: gap 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .sidebar-collapsible:hover .zc-row {
+  .sidebar-collapsible.sidebar-collapsible--expanded .zc-row {
     gap: 0.75rem;
   }
 
-  /* Texto que se acomoda al desplegar: colapsa a ancho 0 y aparece al hover */
+  /* Texto que se acomoda al desplegar manualmente */
   .sidebar-collapsible .zc-collapse-text {
     max-width: 0;
     opacity: 0;
@@ -2899,7 +2896,7 @@ h6.font-mono {
       max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
       opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .sidebar-collapsible:hover .zc-collapse-text {
+  .sidebar-collapsible.sidebar-collapsible--expanded .zc-collapse-text {
     max-width: 12rem;
     opacity: 1;
     /* Ya expandido: dejamos de recortar para que la barrita activa (que
@@ -2919,11 +2916,99 @@ h6.font-mono {
     pointer-events: none;
     transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .sidebar-collapsible:hover .zc-collapse-hide {
+  .sidebar-collapsible.sidebar-collapsible--expanded .zc-collapse-hide {
     opacity: 1;
     pointer-events: auto;
     transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1) 0.15s;
   }
+}
+
+/* Admin — botón compacto para alternar sidebar */
+.admin-sidebar-toggle-btn {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-right: 0.125rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: #f8fafc;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.admin-sidebar-toggle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000000;
+}
+
+.admin-sidebar-toggle-btn:hover,
+.admin-sidebar-toggle-btn:focus-visible {
+  background-color: #f1f5f9;
+  border-color: #9ca3af;
+  outline: none;
+}
+
+.admin-sidebar-toggle-btn:hover .admin-sidebar-toggle-icon,
+.admin-sidebar-toggle-btn:focus-visible .admin-sidebar-toggle-icon {
+  color: #000000;
+}
+
+.admin-sidebar-toggle-tooltip {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 0.5rem);
+  z-index: 30;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  background-color: #e2e8f0;
+  color: #0f172a;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.admin-sidebar-toggle-btn:hover .admin-sidebar-toggle-tooltip,
+.admin-sidebar-toggle-btn:focus-visible .admin-sidebar-toggle-tooltip {
+  opacity: 1;
+}
+
+[data-theme="light"] [data-portal="admin"] .admin-sidebar-toggle-btn {
+  border-color: #d1d5db;
+  background-color: #f8fafc;
+}
+
+[data-theme="light"] [data-portal="admin"] .admin-sidebar-toggle-btn:hover,
+[data-theme="light"] [data-portal="admin"] .admin-sidebar-toggle-btn:focus-visible {
+  background-color: #f1f5f9;
+  border-color: #9ca3af;
+}
+
+[data-theme="dark"] [data-portal="admin"] .admin-sidebar-toggle-btn {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+[data-theme="dark"] [data-portal="admin"] .admin-sidebar-toggle-btn:hover,
+[data-theme="dark"] [data-portal="admin"] .admin-sidebar-toggle-btn:focus-visible {
+  background-color: #f1f5f9;
+  border-color: #9ca3af;
+}
+
+[data-theme="light"] [data-portal="admin"] .admin-sidebar-toggle-tooltip {
+  background-color: #1e293b;
+  color: #f8fafc;
 }
 
 [data-portal="admin"] .portal-stat-hint {
