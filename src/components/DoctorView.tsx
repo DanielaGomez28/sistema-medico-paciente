@@ -41,7 +41,7 @@ import { formatCurrency } from '../lib/currency';
 import { Button, Modal, ModalBody, ListCard } from './ui';
 import apiClient from '../lib/api';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import {
   type DoctorLinkedPatientSeed as LinkedPatient,
 } from '../data/mockData';
@@ -531,68 +531,87 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   // LOGICA 2: ESCÁNER Y VALIDACIÓN PERIMETRAL (Módulo 1)
   // =========================================================
   useEffect(() => {
-    if (isScanning) {
-      // Configuramos la cámara (Librería html5-qrcode)
-      const scanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 } }, false);
-      
-      scanner.render(async (decodedToken) => {
-        // ¡QR Detectado! Apagamos la cámara de inmediato
-        scanner.clear();
-        setIsScanning(false);
+    if (!isScanning) {
+      return undefined;
+    }
 
-        try {
-          // 1. Se valida el cifrado y la vigencia de 5 minutos del QR.
-          const response = await apiClient.post('/qr/validate', {
-            token: decodedToken,
-            doctorId: DOCTOR_ID,
-          });
+    let cancelled = false;
+    const scanner = new Html5Qrcode('qr-reader');
 
-          const scannedPatientId = response.data?.patientId;
-          if (!scannedPatientId) {
-            setScannerErrorMsg('No se pudo leer el código QR. Pedile al paciente que genere uno nuevo.');
-            return;
-          }
+    const openScannedPatient = async (scannedPatientId: string) => {
+      const detail = await apiClient.get(`/pacientes/${encodeURIComponent(scannedPatientId)}`);
+      openPatientForm(detail.data as LinkedPatient);
+      setIsScannerModalOpen(false);
+    };
 
-          setScanProgress(100);
+    const handleDecodedToken = async (decodedToken: string) => {
+      if (cancelled) return;
+      cancelled = true;
+      await scanner.stop().catch(() => undefined);
+      await scanner.clear().catch(() => undefined);
+      setIsScanning(false);
 
-          // 2. Si el paciente ya tiene vinculación activa con este médico no hace
-          // falta pedir consentimiento otra vez: se abre su ficha directamente.
-          if (response.data?.linked) {
-            try {
-              const detail = await apiClient.get(`/pacientes/${encodeURIComponent(scannedPatientId)}`);
-              openPatientForm(detail.data as LinkedPatient);
-              return;
-            } catch {
-              setScannerErrorMsg('No se pudo abrir la ficha del paciente. Intentá de nuevo.');
-              return;
-            }
-          }
+      try {
+        const response = await apiClient.post('/qr/validate', {
+          token: decodedToken,
+          doctorId: DOCTOR_ID,
+        });
 
-          // 3. Requiere consentimiento: se solicita por el canal en tiempo real.
-          if (!SOCKET_RUNTIME_SUPPORTED) {
-            setScannerErrorMsg('El paciente debe autorizar la consulta desde su dispositivo y esa autorización no está disponible en este momento.');
-            return;
-          }
-
-          setWaitingConsent(true);
-          socket.emit('requestConsent', {
-            doctorId: DOCTOR_ID,
-            doctorName: DOCTOR_NAME,
-            patientId: scannedPatientId,
-          });
-        } catch (error: unknown) {
-          // QR caducado, ya usado o alterado.
-          const apiError = error as ApiErrorPayload;
-          setScannerErrorMsg(apiError.response?.data?.error || 'El código QR caducó o no es válido. Pedile al paciente que genere uno nuevo.');
+        const scannedPatientId = response.data?.patientId;
+        if (!scannedPatientId) {
+          setScannerErrorMsg('No se pudo leer el código QR. Pedile al paciente que genere uno nuevo.');
+          return;
         }
-      }, () => {
-        // Errores silenciosos mientras busca el QR frame por frame (se ignoran)
+
+        setScanProgress(100);
+
+        if (response.data?.linked) {
+          await openScannedPatient(scannedPatientId);
+          return;
+        }
+
+        if (!SOCKET_RUNTIME_SUPPORTED) {
+          setScannerErrorMsg('QR leído correctamente, pero este despliegue no tiene canal en tiempo real para pedir consentimiento. El paciente todavía debe aceptar la vinculación explícitamente; no se crea el vínculo automáticamente.');
+          return;
+        }
+
+        setWaitingConsent(true);
+        socket.emit('requestConsent', {
+          doctorId: DOCTOR_ID,
+          doctorName: DOCTOR_NAME,
+          patientId: scannedPatientId,
+        });
+      } catch (error: unknown) {
+        const apiError = error as ApiErrorPayload;
+        setScannerErrorMsg(
+          apiError.response?.data?.error ||
+          apiError.response?.data?.details ||
+          'No se pudo validar el QR. Pedile al paciente que genere uno nuevo.'
+        );
+      }
+    };
+
+    scanner
+      .start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => { void handleDecodedToken(decodedText); },
+        () => undefined
+      )
+      .catch((error) => {
+        if (cancelled) return;
+        setIsScanning(false);
+        setScannerErrorMsg(
+          error?.message ||
+          'No se pudo abrir la cámara. Revisá permisos del navegador y que estés usando HTTPS.'
+        );
       });
 
-      return () => {
-        scanner.clear().catch(e => console.error(e));
-      };
-    }
+    return () => {
+      cancelled = true;
+      scanner.stop().catch(() => undefined);
+      scanner.clear().catch(() => undefined);
+    };
   }, [DOCTOR_ID, DOCTOR_NAME, isScanning]);
 
   const filteredPatients = useMemo(() => {
