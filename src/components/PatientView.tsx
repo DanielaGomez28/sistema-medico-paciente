@@ -789,6 +789,39 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [checkoutError, setCheckoutError] = useState('');
   const [paymentStatusMessage, setPaymentStatusMessage] = useState('');
 
+  /**
+   * Lineas del comprobante: tras pagar, `remaining_quantity` queda en 0 y el
+   * carrito vivo se ve vacío. Se reconstruye con lo dispensado / prescrito.
+   */
+  const voucherItems = useMemo<ProposalItem[]>(() => {
+    if (!activeCheckoutPrescription) return [];
+
+    const isPaid =
+      checkoutSession?.order?.status === 'payment_confirmed' ||
+      activeCheckoutPrescription.commercialStatus === 'paid';
+
+    return (Array.isArray(activeCheckoutPrescription.items) ? activeCheckoutPrescription.items : [])
+      .map((item, index) => {
+        const prescribed = Number(item.cantidad_prescrita ?? item.cantidad ?? 0);
+        const remaining = Number(item.remaining_quantity ?? prescribed);
+        const dispensed = Number(item.cantidad_dispensada ?? 0);
+        const paidQty = dispensed > 0 ? dispensed : Math.max(0, prescribed - remaining);
+        const quantity = isPaid
+          ? (paidQty > 0 ? paidQty : prescribed)
+          : Number(item.remaining_quantity ?? item.cantidad ?? 0);
+
+        return {
+          id: `${activeCheckoutPrescription.recipeId}-voucher-${index + 1}`,
+          productId: item.id_producto,
+          medication: item.nombre,
+          quantity,
+          unitPrice: Number(item.precio_unitario_base || item.precio_unitario_final || 0),
+          discountPercent: Number(item.beneficio_pct || 0),
+        };
+      })
+      .filter((item) => item.quantity > 0);
+  }, [activeCheckoutPrescription, checkoutSession?.order?.status]);
+
   const treatments = useMemo(() => buildTreatmentsFromTracking(trackingProfiles, backendPrescriptions), [trackingProfiles, backendPrescriptions]);
   const trackedDoseLogs = useMemo(() => buildDoseLogsFromTracking(trackingProfiles), [trackingProfiles]);
   const doseLogs = useMemo<DoseLog[]>(() => {
@@ -1250,6 +1283,58 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const totals = getProposalTotals();
 
   /**
+   * Totales del comprobante. OJO: despues del pago el carrito usa
+   * `remaining_quantity` (ya en 0) y el subtotal vivo queda en Bs. 0,00.
+   * Se prioriza el `amount` confirmado de la orden; si falta, se recalcula
+   * con las lineas reconstruidas del voucher.
+   */
+  const voucherTotals = useMemo(() => {
+    const recipeId =
+      checkoutSession?.order?.recipeId ||
+      activeCheckoutRecipeId ||
+      activeCheckoutPrescription?.recipeId ||
+      '';
+    const storedAmount =
+      typeof window !== 'undefined' && recipeId
+        ? Number(window.sessionStorage.getItem(`smp-paid-amount:${recipeId}`) || 0)
+        : 0;
+    const paidAmount = Number(checkoutSession?.order?.amount || 0) || storedAmount;
+
+    if (paidAmount > 0) {
+      const netSubtotal = paidAmount / 1.16;
+      return {
+        grossTotal: paidAmount,
+        totalSavings: 0,
+        netSubtotal,
+        vat: paidAmount - netSubtotal,
+        netTotal: paidAmount,
+      };
+    }
+
+    let grossTotal = 0;
+    let totalSavings = 0;
+    voucherItems.forEach((item) => {
+      grossTotal += item.unitPrice * item.quantity;
+      totalSavings += item.unitPrice * item.quantity * (item.discountPercent / 100);
+    });
+    const netSubtotal = grossTotal - totalSavings;
+    const vat = netSubtotal * 0.16;
+    return {
+      grossTotal,
+      totalSavings,
+      netSubtotal,
+      vat,
+      netTotal: netSubtotal + vat,
+    };
+  }, [
+    activeCheckoutPrescription?.recipeId,
+    activeCheckoutRecipeId,
+    checkoutSession?.order?.amount,
+    checkoutSession?.order?.recipeId,
+    voucherItems,
+  ]);
+
+  /**
    * Sincroniza el estado del checkout recibido desde backend con la UI local.
    * @param {CheckoutSessionState | null} nextSession - Sesion de checkout consolidada.
    * @param {boolean} [moveToVoucher=false] - Indica si debe navegar automaticamente al comprobante.
@@ -1266,6 +1351,18 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     if (nextSession?.order?.paymentReference || nextSession?.order?.gatewayTransactionId) {
       setSimulatedPaymentReference(
         nextSession.order.paymentReference || nextSession.order.gatewayTransactionId || ''
+      );
+    }
+
+    const paidAmount = Number(nextSession?.order?.amount || 0);
+    if (
+      typeof window !== 'undefined' &&
+      nextSession?.order?.recipeId &&
+      paidAmount > 0
+    ) {
+      window.sessionStorage.setItem(
+        `smp-paid-amount:${nextSession.order.recipeId}`,
+        String(paidAmount)
       );
     }
 
@@ -1460,6 +1557,42 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     return () => clearInterval(interval);
   }, [activeSubTab, checkoutSession?.order?.recipeId, checkoutSession?.order?.status]);
 
+  // Al abrir el comprobante, refrescar la orden para leer el monto pagado real.
+  // Sin esto, si remaining_quantity ya está en 0, el total se veía en Bs. 0,00.
+  useEffect(() => {
+    if (activeSubTab !== 'voucher') return;
+
+    const recipeId =
+      checkoutSession?.order?.recipeId ||
+      activeCheckoutRecipeId ||
+      activeCheckoutPrescription?.recipeId;
+    if (!recipeId) return;
+    if (Number(checkoutSession?.order?.amount || 0) > 0) return;
+
+    let cancelled = false;
+    const loadPaidOrder = async () => {
+      try {
+        const session = await fetchCheckoutSession(recipeId);
+        if (!cancelled) {
+          applyCheckoutSession(session);
+        }
+      } catch {
+        // Best-effort: el voucher puede recalcular desde las líneas reconstruidas.
+      }
+    };
+
+    void loadPaidOrder();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeSubTab,
+    activeCheckoutRecipeId,
+    activeCheckoutPrescription?.recipeId,
+    checkoutSession?.order?.recipeId,
+    checkoutSession?.order?.amount,
+  ]);
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -1610,6 +1743,17 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         order: response.data?.order as PaymentOrderState,
         hold: (response.data?.hold || null) as InventoryHoldState | null,
       };
+
+      // Conservar el total cobrado por si tras el pago remaining_quantity queda en 0.
+      if (typeof window !== 'undefined' && session.order?.recipeId) {
+        const amountToPersist = Number(session.order.amount || totals.netTotal || 0);
+        if (amountToPersist > 0) {
+          window.sessionStorage.setItem(
+            `smp-paid-amount:${session.order.recipeId}`,
+            String(amountToPersist)
+          );
+        }
+      }
 
       if (response.data?.order?.redirectUrl) {
         window.location.href = response.data.order.redirectUrl;
@@ -2825,20 +2969,20 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         <div className="animate-in fade-in zoom-in-95 duration-200">
           <div className="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
 
-            <div className="bg-slate-950 text-white p-6 flex items-center justify-between">
+            <div className="bg-[var(--portal-btn-bg)] text-white p-6 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-secondary-500 text-slate-950 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-full bg-white/20 text-white flex items-center justify-center">
                   <Check className="h-6 w-6 stroke-[3]" />
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-secondary-450 uppercase tracking-widest leading-none block">Transacción Aprobada</span>
-                  <h3 className="zenith-section-title mt-0.5">Comprobante de Venta</h3>
+                  <span className="text-[9px] font-bold text-white/80 uppercase tracking-widest leading-none block">Transacción Aprobada</span>
+                  <h3 className="text-lg font-bold text-white mt-0.5">Comprobante de Venta</h3>
                 </div>
               </div>
 
               <button
                 onClick={() => window.print()}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-600"
+                className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/25"
               >
                 <Printer className="h-3.5 w-3.5" />
                 <span>Imprimir</span>
@@ -2874,7 +3018,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <div className="space-y-2">
                 <span className="font-bold text-teal-900 uppercase tracking-widest block text-[9px]">Productos Adquiridos</span>
                 <div className="divide-y divide-slate-150 border-t border-b border-slate-200">
-                  {proposalItems.map((item) => (
+                  {voucherItems.length ? voucherItems.map((item) => (
                     <div key={item.id} className="py-2.5 flex justify-between">
                       <div>
                         <span className="font-bold text-slate-800">{item.medication}</span>
@@ -2882,7 +3026,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       </div>
                       <span className="font-bold text-slate-900">{formatCurrency(calculateItemSubtotal(item))}</span>
                     </div>
-                  ))}
+                  )) : (
+                    <div className="py-2.5 text-slate-500">No hay productos asociados a este comprobante.</div>
+                  )}
                 </div>
               </div>
 
@@ -2890,15 +3036,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 <div className="w-56 space-y-2 text-2xs text-slate-500">
                   <div className="flex justify-between">
                     <span>Subtotal Neto</span>
-                    <span className="font-semibold text-slate-800">{formatCurrency(totals.netSubtotal)}</span>
+                    <span className="font-semibold text-slate-800">{formatCurrency(voucherTotals.netSubtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>IVA (16%)</span>
-                    <span className="font-semibold text-slate-800">{formatCurrency(totals.vat)}</span>
+                    <span className="font-semibold text-slate-800">{formatCurrency(voucherTotals.vat)}</span>
                   </div>
                   <div className="flex justify-between items-baseline font-bold text-slate-950 border-t border-slate-200 pt-2 text-xs">
                     <span>Total Pagado</span>
-                    <span className="text-sm text-primary-700">{formatCurrency(totals.netTotal)}</span>
+                    <span className="text-sm text-primary-700">{formatCurrency(voucherTotals.netTotal)}</span>
                   </div>
                 </div>
               </div>
@@ -2921,12 +3067,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
             <div className="bg-slate-50 px-8 py-4 border-t border-slate-200 flex justify-between items-center">
               <p className="text-[10px] text-slate-600">Guarde este recibo en su dispositivo móvil para retirar.</p>
-              <button
-                onClick={() => setActiveSubTab('recipes')}
-                className="px-4.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer"
-              >
+              <Button variant="patient" onClick={() => setActiveSubTab('recipes')}>
                 Regresar a Récipes
-              </button>
+              </Button>
             </div>
 
           </div>
