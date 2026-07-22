@@ -1284,7 +1284,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
   };
 
   /**
-   * Simula el inicio del escaneo mediante cámara.
+   * Inicia la vinculacion: camara solo en movil; en computadora muestra mensaje y exige ID interno.
    */
   const triggerPatientLink = () => {
     setScannerErrorMsg('');
@@ -1292,13 +1292,13 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
 
     if (!isMobileDevice()) {
       setIsScanning(false);
-      setScannerErrorMsg('En PC vinculá al paciente con su ID interno del sistema. La cámara se activa solo en móvil.');
+      setScannerErrorMsg('No se permite usar la camara en computadora. Para vincular al paciente desde PC, usa su ID interno del sistema.');
       return;
     }
 
     if (typeof window === 'undefined' || !window.navigator.mediaDevices?.getUserMedia) {
       setIsScanning(false);
-      setScannerErrorMsg('Este navegador móvil no permite acceder a la cámara. Usá el ID interno del sistema del paciente.');
+      setScannerErrorMsg('Este navegador movil no permite acceder a la camara. Usa el ID interno del sistema del paciente.');
       return;
     }
 
@@ -2638,7 +2638,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
           ) : (
             <>
               <p className="text-xs text-surface-400">
-                Active la cámara desde este dispositivo o use la vinculación manual para cargar el expediente del paciente.
+                La camara solo esta permitida desde telefono movil. En computadora, vincula al paciente usando su ID interno del sistema.
               </p>
 
               <div className="mx-auto w-full max-w-[280px] aspect-square rounded-2xl bg-surface-950 border border-surface-800 relative flex flex-col items-center justify-center overflow-hidden p-4">
@@ -2660,7 +2660,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 ) : (
                   <div className="space-y-4 text-center z-10">
                     <QrCode className="h-14 w-14 text-surface-600 mx-auto" />
-                    <p className="text-sm text-surface-400 font-medium">Vincular por cámara móvil o ID del sistema</p>
+                    <p className="text-sm text-surface-400 font-medium">Vincular por camara movil o ID interno del sistema</p>
                     <button
                       type="button"
                       onClick={triggerPatientLink}
