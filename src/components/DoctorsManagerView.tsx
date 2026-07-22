@@ -197,7 +197,7 @@ export default function DoctorsManagerView() {
       const payload = {
         name: form.name,
         email: form.email,
-        ...(editingDoctorId ? {} : { password: form.password }),
+        password: form.password,
         mpps: form.mpps,
         specialty: form.specialty,
         medicalBoard: form.medicalBoard,
@@ -277,8 +277,8 @@ export default function DoctorsManagerView() {
             <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required />
           </div>
           <div className="space-y-1">
-            <label className="zenith-field-label">Contraseña {editingDoctorId ? '(opcional)' : '*'}</label>
-            <input type="text" value={form.password} onChange={(e) => handleChange('password', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required={!editingDoctorId} />
+            <label className="zenith-field-label">Contraseña *</label>
+            <input type="text" value={form.password} onChange={(e) => handleChange('password', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required />
           </div>
           <div className="space-y-1">
             <label className="zenith-field-label">Registro MPPS *</label>
