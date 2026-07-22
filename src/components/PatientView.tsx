@@ -2140,8 +2140,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   ID interno del paciente: <span className="font-mono text-surface-300 font-semibold">{qrPatientIdentity}</span>
                 </p>
                 <button
+                  type="button"
                   onClick={handleGenerarQR}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-primary-600 hover:bg-primary-500 text-white text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg shadow-primary-950/20 active:scale-95"
+                  className="patient-qr-credential-btn w-full sm:w-auto px-5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer shadow-lg active:scale-95 rounded-xl"
                 >
                   Generar credencial QR
                 </button>
@@ -2600,7 +2601,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     <span>Subtotal Bruto</span>
                     <span className="font-medium text-surface-300">{formatCurrency(totals.grossTotal)}</span>
                   </div>
-                  <div className="flex justify-between text-secondary-400">
+                  <div className="patient-exclusive-savings flex justify-between text-xs font-semibold">
                     <span>Ahorro Exclusivo</span>
                     <span className="font-bold">-{formatCurrency(totals.totalSavings)}</span>
                   </div>

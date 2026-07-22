@@ -163,6 +163,26 @@ const RECIPE_LOG_LOAD_MORE_COUNT = 3;
 const COMMISSION_LEDGER_INITIAL_COUNT = 5;
 const COMMISSION_LEDGER_LOAD_MORE_COUNT = 5;
 
+const DOCTOR_DISCOUNT_LEVELS = [0, 10, 15, 20, 30] as const;
+
+function getDoctorDiscountButtonClass(discount: number, isSelected: boolean) {
+  const base = 'doctor-discount-btn py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer';
+
+  if (!isSelected) {
+    return `${base} doctor-discount-btn--idle bg-surface-950/60 border-surface-800 text-surface-400 hover:text-white`;
+  }
+
+  const levelClass: Record<number, string> = {
+    0: 'doctor-discount-btn--level-0',
+    10: 'doctor-discount-btn--level-10',
+    15: 'doctor-discount-btn--level-15',
+    20: 'doctor-discount-btn--level-20',
+    30: 'doctor-discount-btn--level-30',
+  };
+
+  return `${base} doctor-discount-btn--selected ${levelClass[discount] ?? 'doctor-discount-btn--level-0'}`;
+}
+
 function formatRecipeLogDateTime(dateStr: string) {
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) {
@@ -2114,16 +2134,12 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               </span>
                               
                               <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                                {[0, 10, 15, 20, 30].map((disc) => (
+                                {DOCTOR_DISCOUNT_LEVELS.map((disc) => (
                                   <button
                                     key={disc}
                                     type="button"
                                     onClick={() => setGlobalDiscount(disc)}
-                                    className={`py-1.5 rounded-lg text-xs font-bold border transition-colors cursor-pointer ${
-                                      globalDiscount === disc
-                                        ? 'bg-secondary-500 border-secondary-550 text-white'
-                                        : 'bg-surface-950/60 border-surface-800 text-surface-400 hover:text-white'
-                                    }`}
+                                    className={getDoctorDiscountButtonClass(disc, globalDiscount === disc)}
                                   >
                                     {disc}%
                                   </button>
@@ -2174,7 +2190,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             {/* Main action submit */}
                             <button
                               type="submit"
-                              className="w-full mt-2 py-3 bg-secondary-600 hover:bg-secondary-700 text-white rounded-xl text-xs font-black shadow-lg shadow-secondary-550/10 hover:shadow-secondary-550/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                              className="doctor-generate-recipe-btn doctor-recipe-submit-btn w-full mt-2 py-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer border"
                             >
                               <Send className="h-4 w-4" />
                               <span>Registrar e Iniciar Envío de Récipe</span>
