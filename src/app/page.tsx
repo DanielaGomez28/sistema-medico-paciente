@@ -209,12 +209,13 @@ export default function Home() {
   const [hasReadTermsAndConditions, setHasReadTermsAndConditions] = useState(false);
   const [hasReadUsagePolicy, setHasReadUsagePolicy] = useState(false);
 
+  // OJO: no usar requestAnimationFrame acá. El navegador lo suspende en pestañas
+  // en segundo plano, así que si la app se abría sin foco (ctrl+click, restaurar
+  // sesión, abrir en pestaña nueva) isHydrated nunca pasaba a true y la pantalla
+  // quedaba clavada en el splash para siempre. useEffect ya corre solo en el
+  // cliente después de hidratar, que es lo único que necesitamos garantizar.
   useEffect(() => {
-    const frameId = window.requestAnimationFrame(() => {
-      setIsHydrated(true);
-    });
-
-    return () => window.cancelAnimationFrame(frameId);
+    setIsHydrated(true);
   }, []);
 
   // Sync helpers
