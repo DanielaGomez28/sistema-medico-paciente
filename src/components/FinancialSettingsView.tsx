@@ -192,20 +192,20 @@ export default function FinancialSettingsView() {
       />
 
       {backendError ? (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-center gap-2.5 text-amber-300 text-xs">
+        <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-lg flex items-center gap-2.5 text-amber-300 text-xs">
           <ShieldAlert className="h-4.5 w-4.5 shrink-0" />
           <span>{backendError}</span>
         </div>
       ) : null}
 
       {saveSuccess ? (
-        <div className="p-4 bg-surface-800 border border-surface-700 rounded-2xl flex items-center gap-2.5 text-surface-200 text-xs">
+        <div className="p-4 bg-surface-800 border border-surface-700 rounded-lg flex items-center gap-2.5 text-surface-200 text-xs">
           <CheckCircle className="h-4.5 w-4.5 shrink-0" />
           <span>Política financiera actualizada.</span>
         </div>
       ) : null}
 
-      <form onSubmit={handleUpdate} className="admin-surface-card w-full border rounded-3xl p-6 space-y-5">
+      <form onSubmit={handleUpdate} className="admin-surface-card w-full border rounded-xl p-6 space-y-5">
         <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
           <Percent className="h-4.5 w-4.5 text-surface-400" />
           <h3 className="zenith-section-title">% Comisión del sistema</h3>
@@ -245,7 +245,7 @@ export default function FinancialSettingsView() {
       {/* Comisiones por médico: la global es el valor por defecto, pero cada
           médico puede tener una asignada que prevalece. Se muestra cuál rige
           para que el porcentaje no se lea como si fuera el mismo para todos. */}
-      <div className="admin-surface-card w-full border rounded-3xl p-6 space-y-5">
+      <div className="admin-surface-card w-full border rounded-xl p-6 space-y-5">
         <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
           <Users className="h-4.5 w-4.5 text-surface-400" />
           <div>
@@ -263,7 +263,7 @@ export default function FinancialSettingsView() {
             const propia = doctor.commissionRateSource === 'doctor';
 
             return (
-              <div key={doctor.id} className="rounded-2xl border border-surface-850 bg-surface-950/40 overflow-hidden">
+              <div key={doctor.id} className="rounded-lg border border-surface-850 bg-surface-950/40 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setExpandedDoctorId(abierto ? null : doctor.id)}

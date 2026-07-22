@@ -89,7 +89,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
 
       {/* Analytics widgets */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-surface-900/40 border border-surface-850 rounded-2xl p-5 flex items-center gap-4">
+        <div className="bg-surface-900/40 border border-surface-850 rounded-xl p-5 flex items-center gap-4">
           <div className="h-10 w-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center">
             <Users className="h-5 w-5" />
           </div>
@@ -98,7 +98,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
             <p className="text-lg font-semibold text-white mt-0.5">{customers.length}</p>
           </div>
         </div>
-        <div className="bg-surface-900/40 border border-surface-850 rounded-2xl p-5 flex items-center gap-4">
+        <div className="bg-surface-900/40 border border-surface-850 rounded-xl p-5 flex items-center gap-4">
           <div className="h-10 w-10 rounded-xl bg-primary-500/10 text-primary-400 flex items-center justify-center">
             <DollarSign className="h-5 w-5" />
           </div>
@@ -109,7 +109,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
             </p>
           </div>
         </div>
-        <div className="bg-surface-900/40 border border-surface-850 rounded-2xl p-5 flex items-center gap-4">
+        <div className="bg-surface-900/40 border border-surface-850 rounded-xl p-5 flex items-center gap-4">
           <div className="h-10 w-10 rounded-xl bg-secondary-500/10 text-secondary-400 flex items-center justify-center">
             <ShoppingBag className="h-5 w-5" />
           </div>
@@ -135,7 +135,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
       </div>
 
       {/* Customers Table List */}
-      <div className="bg-surface-900/60 border border-surface-800 rounded-2xl overflow-hidden backdrop-blur-md">
+      <div className="bg-surface-900/60 border border-surface-800 rounded-xl overflow-hidden backdrop-blur-md">
         {filteredCustomers.length > 0 ? (
           <>
           <div className="zenith-table-wrap hidden lg:block">

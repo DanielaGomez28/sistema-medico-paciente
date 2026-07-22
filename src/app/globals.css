@@ -2552,6 +2552,11 @@ h6.font-mono {
 /*
  * Admin — tarjetas: blancas en claro, oscuras consistentes con el canvas en oscuro.
  */
+[data-portal="admin"] .admin-surface-card,
+[data-portal="admin"] main .zenith-panel {
+  border-radius: 0.75rem !important;
+}
+
 [data-theme="light"] [data-portal="admin"] .admin-surface-card,
 [data-theme="light"] [data-portal="admin"] main form.bg-surface-900,
 [data-theme="light"] [data-portal="admin"] main .bg-surface-900.rounded-3xl,

@@ -241,20 +241,20 @@ export default function DoctorsManagerView() {
       />
 
       {errorMsg ? (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-center gap-2.5 text-amber-300 text-xs">
+        <div className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-lg flex items-center gap-2.5 text-amber-300 text-xs">
           <ShieldAlert className="h-4.5 w-4.5 shrink-0" />
           <span>{errorMsg}</span>
         </div>
       ) : null}
 
       {successMsg ? (
-        <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-450 text-xs">
+        <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-lg flex items-center gap-2.5 text-secondary-450 text-xs">
           <CheckCircle className="h-4.5 w-4.5 shrink-0" />
           <span>{successMsg}</span>
         </div>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="admin-surface-card w-full border rounded-3xl p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="admin-surface-card w-full border rounded-xl p-6 space-y-5">
         <div className="flex items-center justify-between gap-3 border-b border-surface-850 pb-3">
           <div className="flex items-center gap-2">
             <UserPlus className="h-4.5 w-4.5 text-surface-400" />

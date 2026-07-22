@@ -2682,18 +2682,18 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         <>
         <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300">
           {profileSaveMsg && (
-            <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-2xl flex items-center gap-2.5 text-secondary-400 text-xs">
+            <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-lg flex items-center gap-2.5 text-secondary-400 text-xs">
               <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
               <span>{profileSaveMsg}</span>
             </div>
           )}
           {profileError && (
-            <div className="p-4 bg-danger-500/10 border border-danger-500/25 rounded-2xl flex items-center gap-2.5 text-danger-500 text-xs font-semibold">
+            <div className="p-4 bg-danger-500/10 border border-danger-500/25 rounded-lg flex items-center gap-2.5 text-danger-500 text-xs font-semibold">
               <Info className="h-4.5 w-4.5 shrink-0" />
               <span>{profileError.message}</span>
             </div>
           )}
-          <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-8 backdrop-blur-md space-y-6">
+          <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-8 backdrop-blur-md space-y-6">
             <div className="border-b border-surface-850 pb-4">
               <div>
                 <h3 className="zenith-section-title text-xs">Perfil del paciente</h3>

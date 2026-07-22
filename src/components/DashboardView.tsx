@@ -234,7 +234,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
       />
 
       {error ? (
-        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-300">
           {error}
         </div>
       ) : null}
@@ -247,7 +247,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+        <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-xl p-6 backdrop-blur-md space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="zenith-section-title">Tendencia administrativa</h4>
@@ -347,7 +347,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           )}
         </div>
 
-        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4 cursor-pointer hover:border-surface-700 transition-colors" onClick={() => onNavigate('doctors')}>
+        <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-6 backdrop-blur-md space-y-4 cursor-pointer hover:border-surface-700 transition-colors" onClick={() => onNavigate('doctors')}>
           <div>
             <h4 className="zenith-section-title">Directorio médico</h4>
             <p className="text-xs text-surface-400">Perfiles registrados en la plataforma.</p>
@@ -368,7 +368,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+        <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-6 backdrop-blur-md space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="zenith-section-title">Monitor administrativo de recipes</h4>
@@ -406,7 +406,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           </div>
         </div>
 
-        <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+        <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-6 backdrop-blur-md space-y-4">
           <div>
             <h4 className="zenith-section-title">Actividad operativa</h4>
             <p className="text-xs text-surface-400">Sincronizada con recipes emitidos y catálogo activo.</p>
