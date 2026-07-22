@@ -126,7 +126,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
    * @returns {Promise<void>}
    */
   const loadAdminData = useCallback(async (options?: { cancelled?: () => boolean }) => {
-    const cancelled = Boolean(options?.cancelled?.());
+    const cancelled = () => Boolean(options?.cancelled?.());
     {
       try {
         setLoading(true);
@@ -138,14 +138,14 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           apiClient.get('/prescripciones/catalogo'),
         ]);
 
-        if (!cancelled) {
+        if (!cancelled()) {
           setStats(statsResponse.data || null);
           setDoctors(Array.isArray(doctorsResponse.data?.items) ? doctorsResponse.data.items : []);
           setRecipes(Array.isArray(recipesResponse.data?.items) ? recipesResponse.data.items : []);
           setCatalog(Array.isArray(catalogResponse.data?.items) ? catalogResponse.data.items : []);
         }
       } catch (requestError: unknown) {
-        if (!cancelled) {
+        if (!cancelled()) {
           // Si el backend no está disponible, caemos en un estado vacío (como si la BD estuviese vacía)
           setStats({
             generatedAt: new Date().toISOString(),
@@ -166,10 +166,13 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           setDoctors([]);
           setRecipes([]);
           setCatalog([]);
-          // setError(apiError.response?.data?.error || apiError.response?.data?.details || 'No se pudo cargar el dashboard administrativo.');
+          // Sin este aviso, un fallo del panel se veía igual que "todavía no hay
+          // datos": el usuario no tenía forma de saber que no se actualizaba.
+          const apiError = requestError as ApiErrorPayload;
+          setError(apiError.response?.data?.error || 'No se pudieron cargar los datos del panel.');
         }
       } finally {
-        if (!cancelled) {
+        if (!cancelled()) {
           setLoading(false);
         }
       }
