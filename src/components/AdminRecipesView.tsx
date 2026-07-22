@@ -205,7 +205,7 @@ export default function AdminRecipesView() {
                   className="hover:bg-surface-850/40 transition-colors"
                 >
                   <td className="px-6 py-4">
-                    <span className="font-mono text-surface-300 text-[10px]">{recipe.recipeId}</span>
+                    <span className="font-mono text-surface-300 text-[10px]">Recipe: {recipe.recipeId}</span>
                   </td>
                   <td className="px-6 py-4 text-surface-300">{formatDate(recipe.createdAt)}</td>
                   <td className="px-6 py-4">
@@ -249,7 +249,7 @@ export default function AdminRecipesView() {
           {filteredRecipes.map((recipe) => (
             <ListCard
               key={recipe.recipeId}
-              title={<span className="font-mono text-[10px] break-all">{recipe.recipeId}</span>}
+              title={<span className="font-mono text-[10px] break-all">Recipe: {recipe.recipeId}</span>}
               subtitle={recipe.patientName || 'Sin paciente'}
               badge={renderStatusBadge(recipe.clinicalStatus)}
               fields={[

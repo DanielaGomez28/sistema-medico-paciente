@@ -548,7 +548,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       if (cancelled) return;
       cancelled = true;
       await scanner.stop().catch(() => undefined);
-      await scanner.clear().catch(() => undefined);
+      try {
+        scanner.clear();
+      } catch {
+        // Limpiar el contenedor es best-effort: si ya se desmontó, no hay nada que hacer.
+      }
       setIsScanning(false);
 
       try {
@@ -610,7 +614,11 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     return () => {
       cancelled = true;
       scanner.stop().catch(() => undefined);
-      scanner.clear().catch(() => undefined);
+      try {
+        scanner.clear();
+      } catch {
+        // Ídem: el componente puede haberse desmontado antes de limpiar.
+      }
     };
   }, [DOCTOR_ID, DOCTOR_NAME, isScanning]);
 
@@ -2130,7 +2138,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="flex justify-between items-start text-xs">
                               <div className="min-w-0">
                                 <span className="font-semibold text-surface-200 block truncate">
-                                  {entry.medications || `Recipe ${entry.recipeId}`}
+                                  {entry.medications || `Recipe: ${entry.recipeId}`}
                                 </span>
                                 <span className="text-[10px] text-surface-500 truncate block">
                                   {entry.pharmacy_name || `Orden ${entry.orderId}`} • Liquidada {new Date(entry.settledAt).toLocaleString('es-ES', {
@@ -2199,7 +2207,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <div className="space-y-1.5 min-w-0 flex-1">
                               <div className="flex items-baseline justify-between gap-2">
                                 <p className="doctor-recipe-log-item__name text-sm truncate">{rec.patientName || rec.patientId}</p>
-                                <span className="text-[9px] font-mono text-surface-500 shrink-0">{rec.recipeId}</span>
+                                <span className="text-[9px] font-mono text-surface-500 shrink-0">Recipe: {rec.recipeId}</span>
                               </div>
 
                               {/* Un récipe no vence por fecha: se agota cuando se
