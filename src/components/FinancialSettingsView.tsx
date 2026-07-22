@@ -71,6 +71,29 @@ export default function FinancialSettingsView() {
   const [backendError, setBackendError] = useState('');
   const [doctorRows, setDoctorRows] = useState<DoctorCommissionRow[]>([]);
   const [expandedDoctorId, setExpandedDoctorId] = useState<number | null>(null);
+  const [savingDoctorId, setSavingDoctorId] = useState<number | null>(null);
+
+  /**
+   * Fija o quita la comisión propia de un médico.
+   * @param {number} doctorId - Médico a actualizar.
+   * @param {number|null} value - Porcentaje, o null para que le rija la global.
+   * @returns {Promise<void>}
+   */
+  const saveDoctorCommission = async (doctorId: number, value: number | null) => {
+    try {
+      setSavingDoctorId(doctorId);
+      setBackendError('');
+      await apiClient.put(`/admin/doctors/${doctorId}`, { assignedCommission: value });
+      await loadFinancialData();
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error: unknown) {
+      const apiError = error as ApiErrorPayload;
+      setBackendError(apiError.response?.data?.error || 'No se pudo actualizar la comisión del médico.');
+    } finally {
+      setSavingDoctorId(null);
+    }
+  };
 
   const loadFinancialData = async () => {
     const [configResponse, auditResponse, doctorsResponse] = await Promise.all([
@@ -294,7 +317,44 @@ export default function FinancialSettingsView() {
                 </button>
 
                 {abierto ? (
-                  <div className="border-t border-surface-850 px-4 py-3 space-y-2">
+                  <div className="border-t border-surface-850 px-4 py-3 space-y-3">
+                    <div className="flex flex-wrap items-end gap-3 pb-3 border-b border-surface-850">
+                      <div className="space-y-1.5">
+                        <label className="zenith-field-label">Comisión propia (%)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="100"
+                          defaultValue={propia ? tasa : ''}
+                          placeholder={`${commissionValue} (global)`}
+                          disabled={savingDoctorId === doctor.id}
+                          onBlur={(e) => {
+                            const raw = e.target.value.trim();
+                            const nuevo = raw === '' ? null : Number(raw);
+                            const actual = propia ? tasa : null;
+                            if (nuevo !== actual) void saveDoctorCommission(doctor.id, nuevo);
+                          }}
+                          className="w-40 px-3 py-2 bg-surface-950 border border-surface-850 rounded-xl text-xs text-white font-mono focus:outline-none focus:border-surface-400"
+                        />
+                      </div>
+                      {propia ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={savingDoctorId === doctor.id}
+                          onClick={() => { void saveDoctorCommission(doctor.id, null); }}
+                        >
+                          Usar la global
+                        </Button>
+                      ) : (
+                        <p className="text-[10px] text-surface-500 pb-2">
+                          Sin comisión propia: le rige la global del sistema.
+                        </p>
+                      )}
+                    </div>
+
                     {doctor.transactions?.length ? (
                       doctor.transactions.map((t, idx) => (
                         <div key={`${t.recipeId}-${idx}`} className="flex items-start justify-between gap-3 text-xs py-1.5">
