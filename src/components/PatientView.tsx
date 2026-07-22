@@ -144,11 +144,14 @@ function createEmptyPatientProfileDraft(): PatientProfileDraft {
  * @returns {PatientProfileDraft} Datos listos para el formulario.
  */
 function buildPatientProfileDraft(profile: BackendPatientProfile | null, fallbackName: string): PatientProfileDraft {
+  const allowedGenders = new Set(['Femenino', 'Masculino']);
+  const gender = profile?.gender || '';
+
   return {
     name: profile?.name || fallbackName || '',
     phone: profile?.phone || PATIENT_PROFILE_DEFAULTS.profilePhone,
     age: profile?.age ? String(profile.age) : '',
-    gender: profile?.gender || '',
+    gender: allowedGenders.has(gender) ? gender : '',
     bloodType: profile?.bloodType || '',
     condition: profile?.condition || '',
     allergies: profile?.allergies || '',
@@ -170,7 +173,7 @@ interface ValidationError {
 }
 
 function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationError | null {
-  const allowedGenders = new Set(['Femenino', 'Masculino', 'Otro', 'Prefiere no decir']);
+  const allowedGenders = new Set(['Femenino', 'Masculino']);
   const hasClinicalContent = /[\p{L}\p{N}]/u;
   const normalized = {
     name: draft.name.trim(),
@@ -203,8 +206,8 @@ function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationErro
     return { field: 'age', message: 'No se pudo modificar los datos del usuario. Edad inválida. Formato esperado: número entre 0 y 130.' };
   }
 
-  if (normalized.gender && !allowedGenders.has(normalized.gender)) {
-    return { field: 'gender', message: 'No se pudo modificar los datos del usuario. Género inválido. Seleccioná una opción válida.' };
+  if (!normalized.gender || !allowedGenders.has(normalized.gender)) {
+    return { field: 'gender', message: 'No se pudo modificar los datos del usuario. Género obligatorio. Seleccioná Femenino o Masculino.' };
   }
 
   if (normalized.bloodType && !/^(A|B|AB|O)[+-]$/i.test(normalized.bloodType)) {
@@ -3044,18 +3047,23 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                           setProfileDraft((prev) => ({ ...prev, gender: e.target.value }));
                           if (profileError?.field === 'gender') setProfileError(null);
                         }}
+                        required
                         className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${profileError?.field === 'gender' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing}`}
                       >
-                        <option value="">Seleccione...</option>
+                        <option value="" disabled>
+                          Seleccione...
+                        </option>
                         <option value="Femenino">Femenino</option>
                         <option value="Masculino">Masculino</option>
-                        <option value="Otro">Otro</option>
-                        <option value="Prefiere no decir">Prefiere no decir</option>
                       </select>
                     ) : (
                       <input
                         type="text"
-                        value={patientProfile?.gender || 'Sin especificar'}
+                        value={
+                          patientProfile?.gender === 'Femenino' || patientProfile?.gender === 'Masculino'
+                            ? patientProfile.gender
+                            : ''
+                        }
                         readOnly
                         className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${patientProfileFieldReadonly}`}
                       />
