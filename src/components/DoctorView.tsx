@@ -41,7 +41,6 @@ import { formatCurrency } from '../lib/currency';
 import { Button, Modal, ModalBody, ListCard } from './ui';
 import apiClient from '../lib/api';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
-import { Html5Qrcode } from 'html5-qrcode';
 import {
   type DoctorLinkedPatientSeed as LinkedPatient,
 } from '../data/mockData';
@@ -563,7 +562,17 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     }
 
     let cancelled = false;
-    const scanner = new Html5Qrcode('qr-reader');
+    let scanner: import('html5-qrcode').Html5Qrcode | null = null;
+
+    const cleanupScanner = async () => {
+      if (!scanner) return;
+      await scanner.stop().catch(() => undefined);
+      try {
+        scanner.clear();
+      } catch {
+        // Limpiar el contenedor es best-effort: si ya se desmontó, no hay nada que hacer.
+      }
+    };
 
     const openScannedPatient = async (scannedPatientId: string) => {
       const detail = await apiClient.get(`/pacientes/${encodeURIComponent(scannedPatientId)}`);
@@ -574,12 +583,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
     const handleDecodedToken = async (decodedToken: string) => {
       if (cancelled) return;
       cancelled = true;
-      await scanner.stop().catch(() => undefined);
-      try {
-        scanner.clear();
-      } catch {
-        // Limpiar el contenedor es best-effort: si ya se desmontó, no hay nada que hacer.
-      }
+      await cleanupScanner();
       setIsScanning(false);
 
       try {
@@ -602,11 +606,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         }
 
         if (!SOCKET_RUNTIME_SUPPORTED) {
-          // Sin canal en tiempo real no se puede pedir la aprobación en vivo, pero
-          // el QR ya es un acto deliberado del paciente: lo generó en su propio
-          // teléfono, dura 5 minutos, es de un solo uso y se lo entregó al médico.
-          // Se registra como consentimiento por QR, que queda auditado en la
-          // aceptación de términos junto con el vínculo.
           try {
             await apiClient.post('/consentimiento', {
               patientId: scannedPatientId,
@@ -640,30 +639,42 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
       }
     };
 
-    scanner
-      .start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        (decodedText) => { void handleDecodedToken(decodedText); },
-        () => undefined
-      )
-      .catch((error) => {
+    const startScanner = async () => {
+      try {
+        await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
         if (cancelled) return;
+        const readerElement = document.getElementById('qr-reader');
+        if (!readerElement) {
+          throw new Error('No se pudo preparar el lector QR. Cerrá y abrí nuevamente el escáner.');
+        }
+
+        const { Html5Qrcode } = await import('html5-qrcode');
+        if (cancelled) return;
+
+        scanner = new Html5Qrcode(readerElement.id);
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText: string) => { void handleDecodedToken(decodedText); },
+          () => undefined
+        );
+      } catch (error: unknown) {
+        if (cancelled) return;
+        const scannerError = error as { message?: string };
         setIsScanning(false);
         setScannerErrorMsg(
-          error?.message ||
+          scannerError?.message ||
           'No se pudo abrir la cámara. Revisá permisos del navegador y que estés usando HTTPS.'
         );
-      });
+      }
+    };
+
+    void startScanner();
 
     return () => {
       cancelled = true;
-      scanner.stop().catch(() => undefined);
-      try {
-        scanner.clear();
-      } catch {
-        // Ídem: el componente puede haberse desmontado antes de limpiar.
-      }
+      void cleanupScanner();
     };
   }, [DOCTOR_ID, DOCTOR_NAME, isScanning]);
 
