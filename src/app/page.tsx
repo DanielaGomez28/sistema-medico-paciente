@@ -45,6 +45,46 @@ type InitialAdminState = {
   customers: Customer[];
 };
 
+const CURRENT_SESSION_STORAGE_KEY = 'plus_salud_user';
+const LEGACY_SESSION_STORAGE_KEY = 'zenith_user';
+
+function readStoredSession(): string | null {
+  const currentSession = sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
+  if (currentSession) return currentSession;
+
+  const currentLocal = localStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
+  if (currentLocal) return currentLocal;
+
+  const legacySession = sessionStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
+  if (legacySession) {
+    sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, legacySession);
+    return legacySession;
+  }
+
+  const legacyLocal = localStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
+  if (legacyLocal) {
+    sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, legacyLocal);
+    localStorage.setItem(CURRENT_SESSION_STORAGE_KEY, legacyLocal);
+    return legacyLocal;
+  }
+
+  return null;
+}
+
+function clearStoredSession() {
+  sessionStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
+  localStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
+  sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+  localStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+}
+
+function writeStoredSession(user: AuthenticatedUser) {
+  const serialized = JSON.stringify(user);
+  sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, serialized);
+  localStorage.setItem(CURRENT_SESSION_STORAGE_KEY, serialized);
+  localStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+}
+
 /**
  * Lee la persistencia administrativa local y devuelve un estado inicial consistente.
  * @returns {InitialAdminState} Estado inicial hidratado para ?rdenes, productos y clientes.
@@ -87,8 +127,7 @@ function getInitialAdminState(): InitialAdminState {
     return { orders, products, customers };
   } catch (error) {
     console.error('Error cargando datos de LocalStorage en desarrollo:', error);
-    sessionStorage.removeItem('zenith_user');
-    localStorage.removeItem('zenith_user');
+    clearStoredSession();
     return {
       orders: INITIAL_ORDERS,
       products: INITIAL_PRODUCTS,
@@ -164,7 +203,7 @@ export default function Home() {
     if (typeof window === 'undefined') return null;
 
     try {
-      const localUser = sessionStorage.getItem('zenith_user') || localStorage.getItem('zenith_user');
+      const localUser = readStoredSession();
       if (!localUser || localUser === 'undefined' || localUser === 'null') {
         return null;
       }
@@ -223,14 +262,12 @@ export default function Home() {
 
   const handleLoginSuccess = (user: AuthenticatedUser) => {
     setCurrentUser(user);
-    sessionStorage.setItem('zenith_user', JSON.stringify(user));
-    localStorage.setItem('zenith_user', JSON.stringify(user));
+    writeStoredSession(user);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    sessionStorage.removeItem('zenith_user');
-    localStorage.removeItem('zenith_user');
+    clearStoredSession();
     setPlatformTerms(null);
     setShowPlatformTermsModal(false);
   };

@@ -5,6 +5,8 @@
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const CURRENT_SESSION_STORAGE_KEY = 'plus_salud_user';
+const LEGACY_SESSION_STORAGE_KEY = 'zenith_user';
 
 type StoredSession = {
   token?: string | null;
@@ -21,12 +23,16 @@ const apiClient = axios.create({
 
 /**
  * Interceptor de request que adjunta el token Bearer de la sesión almacenada
- * en `localStorage` (clave `zenith_user`) a cada petición saliente. Si el dato
- * almacenado está corrupto, lo limpia.
+ * en la sesión local de +Salud a cada petición saliente. Si el dato
+ * almacenado está corrupto, lo limpia junto con la clave heredada.
  */
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const rawSession = window.sessionStorage.getItem('zenith_user') || window.localStorage.getItem('zenith_user');
+    const rawSession =
+      window.sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY) ||
+      window.localStorage.getItem(CURRENT_SESSION_STORAGE_KEY) ||
+      window.sessionStorage.getItem(LEGACY_SESSION_STORAGE_KEY) ||
+      window.localStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
 
     if (rawSession) {
       try {
@@ -35,8 +41,10 @@ apiClient.interceptors.request.use((config) => {
           config.headers.Authorization = `Bearer ${parsed.token}`;
         }
       } catch {
-        window.sessionStorage.removeItem('zenith_user');
-        window.localStorage.removeItem('zenith_user');
+        window.sessionStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
+        window.localStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
+        window.sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+        window.localStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
       }
     }
   }
