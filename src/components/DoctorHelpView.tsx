@@ -10,6 +10,12 @@ import { ChevronDown, CircleHelp, HelpCircle, LifeBuoy } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { DOCTOR_HELP_FAQS, DOCTOR_HELP_STEPS } from '../data/mockData';
 
+/**
+ * Vista de ayuda del portal médico: presenta la guía de pasos de uso y un
+ * acordeón de preguntas frecuentes.
+ *
+ * @returns {JSX.Element} Sección de ayuda para médicos.
+ */
 export default function DoctorHelpView() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 

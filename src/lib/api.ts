@@ -10,6 +10,7 @@ type StoredSession = {
   token?: string | null;
 };
 
+/** Cliente Axios preconfigurado con la URL base del backend y timeout de 10s. */
 const apiClient = axios.create({
   baseURL: API_URL,
   headers: {
@@ -18,6 +19,11 @@ const apiClient = axios.create({
   timeout: 10000,
 });
 
+/**
+ * Interceptor de request que adjunta el token Bearer de la sesión almacenada
+ * en `localStorage` (clave `zenith_user`) a cada petición saliente. Si el dato
+ * almacenado está corrupto, lo limpia.
+ */
 apiClient.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const rawSession = window.localStorage.getItem('zenith_user');
@@ -37,4 +43,5 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+/** Instancia de Axios usada por todo el frontend para llamar a la API del backend. */
 export default apiClient;

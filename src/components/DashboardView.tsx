@@ -21,6 +21,7 @@ interface ApiErrorPayload {
   };
 }
 
+/** Props del componente `DashboardView`. */
 interface DashboardViewProps {
   onNavigate: (tab: string) => void;
 }
@@ -83,6 +84,13 @@ const buildPolyline = (values: Array<{ label: string; value: number }>) => {
   return { width, height, points: points.join(' ') };
 };
 
+/**
+ * Vista de panel administrativo: muestra estadísticas generales del sistema
+ * (pedidos, ingresos, etc.) y permite navegar a otras secciones.
+ *
+ * @param {DashboardViewProps} props - Propiedades del componente.
+ * @returns {JSX.Element} Panel de dashboard administrativo.
+ */
 export default function DashboardView({ onNavigate }: DashboardViewProps) {
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [doctors, setDoctors] = useState<AdminDoctorProfile[]>([]);

@@ -1,3 +1,10 @@
+/**
+ * @fileoverview Utilidades de color y etiquetado para estados de pedidos.
+ * @description Centraliza el mapeo entre `OrderStatus` y su representación
+ * visual (semáforo, clases CSS, etiquetas traducidas) usada en las vistas de
+ * despacho, recetas y órdenes.
+ */
+
 import { OrderStatus } from '../types';
 
 /**

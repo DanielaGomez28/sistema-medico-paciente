@@ -48,6 +48,12 @@ interface AdminRecipe {
   items?: RecipeItem[];
 }
 
+/**
+ * Vista administrativa de recetas médicas: lista, filtra por búsqueda y
+ * muestra el estado clínico, comercial y de despacho de cada receta.
+ *
+ * @returns {JSX.Element} Panel de administración de recetas.
+ */
 export default function AdminRecipesView() {
   const [recipes, setRecipes] = useState<AdminRecipe[]>([]);
   const [loading, setLoading] = useState(false);

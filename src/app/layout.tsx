@@ -17,11 +17,13 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
+/** Metadatos globales (título y descripción) usados por Next.js para `<head>`. */
 export const metadata: Metadata = {
   title: "Médico-Paciente - Sistema de Gestión de Pedidos",
   description: "Plataforma premium para el control de inventario, registro de clientes y seguimiento de pedidos en tiempo real.",
 };
 
+/** Configuración del viewport (ancho y escala inicial) para dispositivos móviles. */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

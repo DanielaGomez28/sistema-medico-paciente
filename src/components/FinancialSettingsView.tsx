@@ -19,6 +19,7 @@ interface ApiErrorPayload {
   };
 }
 
+/** Entrada del registro de auditoría de cambios en configuración financiera. */
 interface AuditLogEntry {
   id?: string;
   id_log?: number;
@@ -30,6 +31,12 @@ interface AuditLogEntry {
   details?: Record<string, { previous?: unknown; next?: unknown }>;
 }
 
+/**
+ * Vista de configuración financiera: permite ajustar la comisión del sistema
+ * y consultar el historial de auditoría de cambios realizados.
+ *
+ * @returns {JSX.Element} Panel de configuración financiera.
+ */
 export default function FinancialSettingsView() {
   const [commissionValue, setCommissionValue] = useState<number>(0);
   const [auditLog, setAuditLog] = useState<AuditLogEntry[]>([]);

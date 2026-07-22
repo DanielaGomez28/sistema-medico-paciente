@@ -1,9 +1,22 @@
+/**
+ * @fileoverview Página de selección de método de entrega para pedidos.
+ * @description Permite al paciente elegir entre delivery a domicilio o retiro
+ * en sede como paso final tras la generación de una receta, y simula el
+ * guardado de la preferencia antes de redirigir al inicio.
+ */
+
 'use client';
 
 import { Suspense, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Truck, Store } from 'lucide-react';
 
+/**
+ * Contenido interactivo de selección de método de entrega (delivery o retiro
+ * en sede), con confirmación simulada y redirección al inicio.
+ *
+ * @returns {JSX.Element} Formulario de selección de método de entrega.
+ */
 function DeliveryMethodContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -97,6 +110,12 @@ function DeliveryMethodContent() {
   );
 }
 
+/**
+ * Página que envuelve el contenido de selección de método de entrega en un
+ * `Suspense` boundary, requerido por el uso de `useSearchParams`.
+ *
+ * @returns {JSX.Element} Layout de la página de método de entrega.
+ */
 export default function DeliveryMethodPage() {
   return (
     <main className="min-h-screen bg-surface-950 text-white flex items-center justify-center px-4 py-10">

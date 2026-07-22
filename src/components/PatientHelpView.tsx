@@ -10,6 +10,12 @@ import { ChevronDown, CircleHelp, HelpCircle, LifeBuoy } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { PATIENT_HELP_FAQS, PATIENT_HELP_STEPS } from '../data/mockData';
 
+/**
+ * Vista de ayuda del portal paciente: presenta la guía de pasos de uso y un
+ * acordeón de preguntas frecuentes.
+ *
+ * @returns {JSX.Element} Sección de ayuda para pacientes.
+ */
 export default function PatientHelpView() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 

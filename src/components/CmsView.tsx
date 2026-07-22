@@ -46,6 +46,12 @@ const DEFAULT_SETTINGS: CmsSettings = {
   usagePolicy: 'Política de uso no cargada.',
 };
 
+/**
+ * Vista de administración del CMS: permite editar apariencia, textos de
+ * bienvenida y políticas legales que se muestran en el portal público.
+ *
+ * @returns {JSX.Element} Panel de configuración del CMS.
+ */
 export default function CmsView() {
   const [settings, setSettings] = useState<CmsSettings>(DEFAULT_SETTINGS);
   const [activeSection, setActiveSection] = useState<CmsSection>('appearance');

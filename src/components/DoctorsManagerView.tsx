@@ -78,6 +78,12 @@ const toDoctorForm = (doctor: DoctorProfile): DoctorFormState => ({
   status: doctor.status,
 });
 
+/**
+ * Vista de administración de médicos: lista, crea, edita y gestiona el
+ * estado de las cuentas médicas registradas en la plataforma.
+ *
+ * @returns {JSX.Element} Panel de gestión de médicos.
+ */
 export default function DoctorsManagerView() {
   const [doctors, setDoctors] = useState<DoctorProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

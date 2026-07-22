@@ -39,6 +39,7 @@ type LoginSuccessPayload = {
   } | null;
 };
 
+/** Props del componente `LoginView`. */
 interface LoginViewProps {
   onLoginSuccess: (user: LoginSuccessPayload) => void;
 }
@@ -50,6 +51,13 @@ const DEFAULT_LOGIN_BANNER_SUBTITLE =
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 const containsSuspiciousPattern = (value: string) => /('|--|;|\/\*|\*\/|\bunion\b|\bselect\b|\binsert\b|\bdelete\b|\bdrop\b|\bupdate\b|<script)/i.test(value);
 
+/**
+ * Normaliza el rol recibido del backend (con variantes de idioma/acentos) a
+ * uno de los roles canónicos del frontend: `admin`, `doctor` o `patient`.
+ *
+ * @param {string | null | undefined} role - Rol crudo devuelto por la API.
+ * @returns {string} Rol normalizado, o el valor normalizado sin mapear si no coincide.
+ */
 function normalizeFrontendRole(role: string | null | undefined): string {
   const normalizedRole = String(role || '')
     .trim()
@@ -72,6 +80,13 @@ function normalizeFrontendRole(role: string | null | undefined): string {
   return normalizedRole;
 }
 
+/**
+ * Vista de inicio de sesión: valida credenciales contra la API, normaliza el
+ * rol del usuario autenticado y notifica el éxito al componente padre.
+ *
+ * @param {LoginViewProps} props - Propiedades del componente.
+ * @returns {JSX.Element} Formulario de inicio de sesión.
+ */
 export default function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
