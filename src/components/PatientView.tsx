@@ -1612,9 +1612,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         </ModalBody>
       </Modal>
       {activeSubTab === 'recipes' && (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Progress Stepper for last order */}
-          <div className="bg-surface-900/60 border border-surface-800 rounded-2xl backdrop-blur-md relative overflow-hidden">
+          <div className="portal-dashboard-card portal-dashboard-card--flush relative">
             <div className="p-5 space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 space-y-2">
@@ -1704,7 +1704,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           </div>
 
           {/* Recipes Table Card */}
-          <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+          <div className="portal-dashboard-card space-y-4">
             <div>
               <h3 className="zenith-section-title">Récipes Emitidos por Especialistas</h3>
             </div>
@@ -1882,7 +1882,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
           {/* Credencial QR */}
           <div className="patient-treatment-card">
-            <div className="flex flex-col md:flex-row md:items-stretch md:justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-stretch md:justify-between gap-4">
               <div className="space-y-4 flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <ShieldCheck className="h-5 w-5 text-primary-400 shrink-0" />
@@ -1916,7 +1916,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           </div>
 
           {/* Panel de actividad */}
-          <div className="patient-treatment-card p-0 overflow-hidden">
+          <div className="portal-dashboard-card portal-dashboard-card--flush">
             <div className="flex flex-nowrap gap-2 p-3 border-b border-surface-850 overflow-x-auto">
               {([
                 { id: 'today' as const, label: 'Hoy', icon: Clock, count: pendingTodayDoses.length },
@@ -2076,7 +2076,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
           {/* Panel: Progreso */}
           {treatmentPanel === 'progress' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {treatmentAlerts.length > 0 && (
                 <div className="patient-treatment-stat space-y-4">
                   <div>
@@ -2199,11 +2199,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
       {/* P.2: COMMERCIAL PROPOSAL & BILLING */}
       {activeSubTab === 'proposals' && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
             {/* Proposal Breakdown Table */}
-            <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+            <div className="lg:col-span-2 portal-dashboard-card space-y-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div className="min-w-0 flex-1">
                   <h3 className="zenith-section-title">Medicamentos recetados</h3>
@@ -2335,8 +2335,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
 
             {/* Facturación Invoice Box */}
-            <div className="space-y-6">
-              <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+            <div className="space-y-4">
+              <div className="portal-dashboard-card space-y-4">
                 <h3 className="zenith-section-title">Resumen de Facturación</h3>
 
                 <div className="space-y-2.5 text-xs text-surface-400">
@@ -2364,7 +2364,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 </div>
               </div>
 
-              <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+              <div className="portal-dashboard-card space-y-4">
                 <h3 className="zenith-section-title flex items-center gap-2">
                   <Building className="h-4 w-4 text-surface-400" />
                   <span>Sucursal de Envío</span>
@@ -2403,7 +2403,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
       {/* P.3: PAYMENT GATEWAY */}
       {activeSubTab === 'payment' && (
-        <div className="space-y-6 animate-in fade-in duration-300">
+        <div className="space-y-4 animate-in fade-in duration-300">
           <div className="flex justify-end">
             <div className="bg-secondary-500/10 border border-secondary-500/20 px-4 py-2.5 rounded-2xl flex items-center gap-3 shrink-0">
               <Clock className="h-5 w-5 text-secondary-400 animate-pulse" />
@@ -2414,11 +2414,11 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
 
             {/* Estado del checkout y futura redirección */}
             {/* Pasarela de pago temporal (Mock) */}
-            <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-5 flex flex-col items-center justify-center text-center min-h-[400px]">
+            <div className="lg:col-span-2 portal-dashboard-card space-y-4 flex flex-col items-center justify-center text-center min-h-[400px]">
               <div className="h-16 w-16 rounded-full bg-primary-500/10 flex items-center justify-center mb-2">
                 <CreditCard className="h-8 w-8 text-primary-400" />
               </div>
@@ -2464,7 +2464,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
 
             {/* Summary of checkout */}
-            <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
+            <div className="portal-dashboard-card space-y-4">
               <h3 className="zenith-section-title">Resumen de Compra</h3>
 
               <div className="space-y-3">
@@ -2503,7 +2503,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       {/* P.4: DELIVERY / PERSONAL PICKUP SELECTION */}
       {activeSubTab === 'delivery' && (
         <div className="max-w-3xl mx-auto py-8 animate-in fade-in zoom-in-95 duration-200">
-          <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 sm:p-8 backdrop-blur-md space-y-6">
+          <div className="portal-dashboard-card space-y-4">
             <div className="flex items-start gap-4">
               <div className="h-12 w-12 rounded-2xl bg-secondary-500/15 border border-secondary-500/30 text-secondary-300 flex items-center justify-center shrink-0">
                 <Check className="h-6 w-6 stroke-[3]" />
@@ -2678,7 +2678,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       {/* P.5: PROFILE CONFIGURATION VIEW */}
       {activeSubTab === 'profile' && (
         <>
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in duration-300 portal-profile-view">
+        <div className="max-w-2xl mx-auto space-y-4 animate-in fade-in duration-300 portal-profile-view">
           {profileSaveMsg && (
             <div className="p-4 bg-secondary-500/10 border border-secondary-500/25 rounded-lg flex items-center gap-2.5 text-secondary-400 text-xs">
               <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
@@ -2691,7 +2691,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               <span>{profileError.message}</span>
             </div>
           )}
-          <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-5 sm:p-8 backdrop-blur-md space-y-6">
+          <div className="portal-dashboard-card space-y-4">
             <div className="border-b border-surface-850 pb-4">
               <div>
                 <h3 className="zenith-section-title text-xs">Perfil del paciente</h3>
@@ -2701,7 +2701,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               </div>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div className="space-y-4">
                 <h3 className="zenith-section-title text-xs border-b border-surface-850 pb-2">
                   Información Personal
@@ -3094,25 +3094,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         </div>
       )}
 
-      <CredentialQrModal
-        open={isCredentialModalOpen}
-        onClose={() => setIsCredentialModalOpen(false)}
-        description=""
-        displayName={patientName || ""}
-        credentialLine={undefined}
-        modalTitle={null}
-        qrImage={qrImage}
-        qrToken={patientProfile?.patientId || qrPatientIdentity}
-        qrSecondsLeft={qrSecondsLeft}
-        onRefresh={() => {
-          handleRefreshQR();
-          void handleGenerarQR();
-        }}
-        onReturn={() => {
-          setActiveSubTab('treatment');
-        }}
-      />
-
       {/* Mandatory Terms & Conditions Modal */}
       {isTermsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
@@ -3179,6 +3160,25 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           </div>
         </div>
       )}
+
+      <CredentialQrModal
+        open={isCredentialModalOpen}
+        onClose={() => setIsCredentialModalOpen(false)}
+        description=""
+        displayName={patientName || ""}
+        credentialLine={undefined}
+        modalTitle={null}
+        qrImage={qrImage}
+        qrToken={patientProfile?.patientId || qrPatientIdentity}
+        qrSecondsLeft={qrSecondsLeft}
+        onRefresh={() => {
+          handleRefreshQR();
+          void handleGenerarQR();
+        }}
+        onReturn={() => {
+          setActiveSubTab('treatment');
+        }}
+      />
 
       {/* MODAL GLOBAL DE CONSENTIMIENTO ÉTICO (Tiempo Real) */}
       {showConsentModal && (

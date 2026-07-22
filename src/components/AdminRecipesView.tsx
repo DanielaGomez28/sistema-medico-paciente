@@ -176,7 +176,7 @@ export default function AdminRecipesView() {
       </div>
 
       {/* Table */}
-      <div className="bg-surface-900/60 border border-surface-800 rounded-xl backdrop-blur-md overflow-hidden">
+      <div className="portal-dashboard-card portal-dashboard-card--flush">
         <div className="hidden lg:block overflow-x-auto">
           <table className="w-full min-w-[56rem] text-xs">
             <thead>

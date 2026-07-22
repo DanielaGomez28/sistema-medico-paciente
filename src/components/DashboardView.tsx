@@ -294,8 +294,8 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
         <StatCard icon={TrendingUp} label="Comisiones liquidadas" value={formatCurrency(stats?.summary.totalCommissions || 0)} accent="primary" hint={<><span>Ticket promedio {formatCurrency(stats?.summary.averageTicket || 0)}</span></>} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-xl p-6 backdrop-blur-md space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+        <div className="lg:col-span-2 portal-dashboard-card space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="zenith-section-title">Tendencia administrativa</h4>
@@ -397,7 +397,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           )}
         </div>
 
-        <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-6 backdrop-blur-md space-y-4 cursor-pointer hover:border-surface-700 transition-colors" onClick={() => onNavigate('doctors')}>
+        <div className="portal-dashboard-card space-y-4 cursor-pointer hover:border-surface-700 transition-colors" onClick={() => onNavigate('doctors')}>
           <div>
             <h4 className="zenith-section-title">Directorio médico</h4>
             <p className="text-xs text-surface-400">Perfiles registrados en la plataforma.</p>
@@ -418,7 +418,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-6 backdrop-blur-md space-y-4">
+        <div className="portal-dashboard-card space-y-4">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h4 className="zenith-section-title">Monitor administrativo de recipes</h4>
@@ -456,7 +456,7 @@ export default function DashboardView({ onNavigate }: DashboardViewProps) {
           </div>
         </div>
 
-        <div className="bg-surface-900/60 border border-surface-800 rounded-xl p-6 backdrop-blur-md space-y-4">
+        <div className="portal-dashboard-card space-y-4">
           <div>
             <h4 className="zenith-section-title">Actividad operativa</h4>
             <p className="text-xs text-surface-400">Sincronizada con recipes emitidos y catálogo activo.</p>

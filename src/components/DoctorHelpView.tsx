@@ -24,8 +24,8 @@ export default function DoctorHelpView() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in duration-300">
-      <div className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 sm:p-8 backdrop-blur-md space-y-3">
+    <div className="max-w-3xl mx-auto space-y-4 animate-in fade-in duration-300">
+      <div className="portal-dashboard-card space-y-3">
         <div className="flex items-start gap-3">
           <div className="h-11 w-11 rounded-xl bg-secondary-500/10 border border-secondary-500/25 flex items-center justify-center shrink-0">
             <LifeBuoy className="h-5 w-5 text-secondary-400" />
@@ -39,7 +39,7 @@ export default function DoctorHelpView() {
         </div>
       </div>
 
-      <section className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 sm:p-8 backdrop-blur-md space-y-5">
+      <section className="portal-dashboard-card space-y-4">
         <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
           <HelpCircle className="h-4.5 w-4.5 text-secondary-400 shrink-0" />
           <h3 className="zenith-section-title text-xs sm:text-sm">Cómo funciona la plataforma</h3>
@@ -49,7 +49,7 @@ export default function DoctorHelpView() {
           {DOCTOR_HELP_STEPS.map((step, index) => (
             <li
               key={step.title}
-              className="rounded-2xl border border-surface-850 bg-surface-950/40 p-4 sm:p-5 space-y-2"
+              className="portal-dashboard-stat space-y-2"
             >
               <div className="flex items-start gap-3">
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary-500/15 border border-secondary-500/30 text-[11px] font-bold text-secondary-400">
@@ -65,7 +65,7 @@ export default function DoctorHelpView() {
         </ol>
       </section>
 
-      <section className="bg-surface-900/60 border border-surface-800 rounded-3xl p-6 sm:p-8 backdrop-blur-md space-y-5">
+      <section className="portal-dashboard-card space-y-4">
         <div className="flex items-center gap-2 border-b border-surface-850 pb-3">
           <CircleHelp className="h-4.5 w-4.5 text-secondary-400 shrink-0" />
           <h3 className="zenith-section-title text-xs sm:text-sm">Preguntas frecuentes</h3>
@@ -78,7 +78,7 @@ export default function DoctorHelpView() {
             return (
               <div
                 key={faq.question}
-                className="rounded-2xl border border-surface-850 bg-surface-950/40 overflow-hidden"
+                className="portal-dashboard-stat overflow-hidden"
               >
                 <button
                   type="button"

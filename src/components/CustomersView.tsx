@@ -135,7 +135,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
       </div>
 
       {/* Customers Table List */}
-      <div className="bg-surface-900/60 border border-surface-800 rounded-xl overflow-hidden backdrop-blur-md">
+      <div className="portal-dashboard-card overflow-hidden backdrop-blur-md">
         {filteredCustomers.length > 0 ? (
           <>
           <div className="zenith-table-wrap hidden lg:block">

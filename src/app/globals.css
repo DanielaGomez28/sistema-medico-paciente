@@ -1716,6 +1716,10 @@ table th {
   background-color: #50e9f8;
 }
 
+/*
+ * Portal dashboard — tarjetas consistentes (paciente, médico, admin)
+ */
+[data-portal] .portal-dashboard-card,
 [data-portal="patient"] .patient-treatment-card {
   background: color-mix(in srgb, var(--zenith-surface-900) 60%, transparent);
   border: 1px solid var(--zenith-surface-800);
@@ -1724,6 +1728,12 @@ table th {
   backdrop-filter: blur(12px);
 }
 
+[data-portal] .portal-dashboard-card--flush {
+  padding: 0;
+  overflow: hidden;
+}
+
+[data-portal] .portal-dashboard-stat,
 [data-portal="patient"] .patient-treatment-stat {
   display: flex;
   flex-direction: column;
@@ -1735,6 +1745,7 @@ table th {
   background: color-mix(in srgb, var(--zenith-surface-950) 50%, transparent);
 }
 
+[data-portal] .portal-dashboard-stat__label,
 [data-portal="patient"] .patient-treatment-stat__label {
   font-size: 0.625rem;
   font-weight: 600;
@@ -1743,6 +1754,7 @@ table th {
   color: var(--zenith-surface-500);
 }
 
+[data-portal] .portal-dashboard-stat__value,
 [data-portal="patient"] .patient-treatment-stat__value {
   font-size: 0.875rem;
   font-weight: 700;
@@ -1750,18 +1762,22 @@ table th {
   line-height: 1.35;
 }
 
+[data-portal] .portal-dashboard-stat__meta,
 [data-portal="patient"] .patient-treatment-stat__meta {
   font-size: 0.6875rem;
   color: var(--zenith-surface-400);
   line-height: 1.45;
 }
 
+[data-theme="light"] [data-portal] .portal-dashboard-card,
+[data-theme="light"] [data-portal] .portal-dashboard-stat,
 [data-theme="light"] [data-portal="patient"] .patient-treatment-card,
 [data-theme="light"] [data-portal="patient"] .patient-treatment-stat {
   background: #ffffff;
   border-color: #e9ecef;
 }
 
+[data-theme="light"] [data-portal] .portal-dashboard-stat__value,
 [data-theme="light"] [data-portal="patient"] .patient-treatment-stat__value {
   color: #0a1220;
 }
@@ -2603,6 +2619,7 @@ h6.font-mono {
  * Admin — tarjetas: blancas en claro, oscuras consistentes con el canvas en oscuro.
  */
 [data-theme="light"] [data-portal="admin"] .admin-surface-card,
+[data-theme="light"] [data-portal="admin"] .portal-dashboard-card,
 [data-theme="light"] [data-portal="admin"] main form.bg-surface-900,
 [data-theme="light"] [data-portal="admin"] main .bg-surface-900.rounded-3xl,
 [data-theme="light"] [data-portal="admin"] main .zenith-panel,
@@ -2615,6 +2632,7 @@ h6.font-mono {
 }
 
 [data-theme="dark"] [data-portal="admin"] .admin-surface-card,
+[data-theme="dark"] [data-portal="admin"] .portal-dashboard-card,
 [data-theme="dark"] [data-portal="admin"] main form.bg-surface-900,
 [data-theme="dark"] [data-portal="admin"] main .bg-surface-900.rounded-3xl,
 [data-theme="dark"] [data-portal="admin"] main .zenith-panel,
@@ -2904,7 +2922,7 @@ body :is(.rounded-sm, .rounded, .rounded-md, .rounded-lg, .rounded-xl, .rounded-
   border-radius: var(--radius-card) !important;
 }
 
-body :is(.admin-surface-card, .zenith-panel, .zenith-card, .zenith-filter-bar, .doctor-recipe-log-item, .patient-checkout-notice, .login-view__card, .patient-treatment-card, .patient-treatment-stat) {
+body :is(.admin-surface-card, .zenith-panel, .zenith-card, .zenith-filter-bar, .doctor-recipe-log-item, .patient-checkout-notice, .login-view__card, .portal-dashboard-card, .portal-dashboard-stat, .patient-treatment-card, .patient-treatment-stat) {
   border-radius: var(--radius-card) !important;
 }
 
