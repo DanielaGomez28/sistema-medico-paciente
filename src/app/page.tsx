@@ -173,11 +173,11 @@ function getPlatformTermsAcceptanceStorageKey(user: AuthenticatedUser) {
 }
 
 /**
- * Componente principal (Home) que actÃºa como controlador y orquestador (Entry Point).
- * Dependiendo del estado de autenticaciÃ³n (role: 'mÃ©dico' | 'paciente' | 'admin'), 
+ * Componente principal (Home) que actúa como controlador y orquestador (Entry Point).
+ * Dependiendo del estado de autenticación (role: 'médico' | 'paciente' | 'admin'), 
  * renderiza el portal (vista) correspondiente.
  * 
- * TambiÃ©n maneja el estado global maestro para la aplicaciÃ³n administrativa (Orders, Products, Customers)
+ * También maneja el estado global maestro para la aplicación administrativa (Orders, Products, Customers)
  * y se encarga de hidratar la memoria local (localStorage) en el cliente para persistencia de datos simulada.
  * 
  * @returns {JSX.Element}
@@ -576,7 +576,7 @@ export default function Home() {
   const isAdminRole = normalizedRole === 'admin';
 
   if (isDoctorRole) {
-    // ðŸš€ Ommran: Nombre dinÃ¡mico si viene en las credenciales del usuario
+    // ðŸš€ Ommran: Nombre dinámico si viene en las credenciales del usuario
     const currentName = currentUser.name || APP_USER_DEFAULTS.doctorName;
     return withPlatformTermsGate(
       <DoctorView
@@ -590,7 +590,7 @@ export default function Home() {
   }
 
   if (isPatientRole) {
-    // ðŸš€ Ommran: Nombre dinÃ¡mico si viene en las credenciales del usuario
+    // ðŸš€ Ommran: Nombre dinámico si viene en las credenciales del usuario
     const currentName = currentUser.name || APP_USER_DEFAULTS.patientName;
     return withPlatformTermsGate(
       <PatientView
@@ -621,9 +621,9 @@ export default function Home() {
           enableOperationalTabs={enableOperationalTabs}
         />
       }
-      // ðŸ“„ Dentro de tu src/app/page.tsx (SecciÃ³n del Header del Administrador)
+      // ðŸ“„ Dentro de tu src/app/page.tsx (Sección del Header del Administrador)
       header={({ onMenuClick, desktopSidebarExpanded, toggleDesktopSidebar }) => {
-        // ðŸš€ 1. Calculamos las iniciales en tiempo real basÃ¡ndonos en el backend
+        // ðŸš€ 1. Calculamos las iniciales en tiempo real basándonos en el backend
         const getInitials = (nameString: string) => {
           const parts = nameString.trim().split(/\s+/);
           if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
@@ -642,7 +642,7 @@ export default function Home() {
             statusLabel=""
             showNotifications={false}
             className="admin-header-white"
-            // ðŸš€ 2. INYECTAMOS LAS PROPIEDADES DINÃMICAS AQUÃ:
+            // ðŸš€ 2. INYECTAMOS LAS PROPIEDADES DINÁMICAS AQUÍ:
             profileName={adminName}
             profileInitials={adminInitials}
             showProfileName={false}
