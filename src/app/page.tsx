@@ -45,6 +45,33 @@ type InitialAdminState = {
   customers: Customer[];
 };
 
+const CURRENT_SESSION_STORAGE_KEY = 'plus_salud_user';
+const LEGACY_SESSION_STORAGE_KEY = 'zenith_user';
+
+function readStoredSession(): string | null {
+  const currentSession = sessionStorage.getItem(CURRENT_SESSION_STORAGE_KEY);
+  if (currentSession) return currentSession;
+
+  const legacySession = sessionStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
+  if (legacySession) {
+    sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, legacySession);
+    sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+    return legacySession;
+  }
+
+  return null;
+}
+
+function clearStoredSession() {
+  sessionStorage.removeItem(CURRENT_SESSION_STORAGE_KEY);
+  sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+}
+
+function writeStoredSession(user: AuthenticatedUser) {
+  sessionStorage.setItem(CURRENT_SESSION_STORAGE_KEY, JSON.stringify(user));
+  sessionStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+}
+
 /**
  * Lee la persistencia administrativa local y devuelve un estado inicial consistente.
  * @returns {InitialAdminState} Estado inicial hidratado para ?rdenes, productos y clientes.
@@ -87,7 +114,7 @@ function getInitialAdminState(): InitialAdminState {
     return { orders, products, customers };
   } catch (error) {
     console.error('Error cargando datos de LocalStorage en desarrollo:', error);
-    localStorage.removeItem('zenith_user');
+    clearStoredSession();
     return {
       orders: INITIAL_ORDERS,
       products: INITIAL_PRODUCTS,
@@ -163,7 +190,7 @@ export default function Home() {
     if (typeof window === 'undefined') return null;
 
     try {
-      const localUser = localStorage.getItem('zenith_user');
+      const localUser = readStoredSession();
       if (!localUser || localUser === 'undefined' || localUser === 'null') {
         return null;
       }
@@ -222,12 +249,12 @@ export default function Home() {
 
   const handleLoginSuccess = (user: AuthenticatedUser) => {
     setCurrentUser(user);
-    localStorage.setItem('zenith_user', JSON.stringify(user));
+    writeStoredSession(user);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('zenith_user');
+    clearStoredSession();
     setPlatformTerms(null);
     setShowPlatformTermsModal(false);
   };
