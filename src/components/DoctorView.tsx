@@ -1319,7 +1319,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                   <div className="lg:col-span-2 bg-surface-900/60 border border-surface-800 rounded-2xl p-6 space-y-4">
                     <div>
                       <h3 className="zenith-section-title">Pacientes Registrados</h3>
-                      <p className="text-xs text-surface-400">Consulte y modifique los datos clínicos de cada paciente.</p>
                     </div>
 
                     <div className="divide-y divide-surface-850">
@@ -1389,16 +1388,15 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                 <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 space-y-4">
                   <div>
                     <h3 className="zenith-section-title">Productos en farmacias aliadas</h3>
-                    <p className="text-xs text-surface-400">Listado de productos internos de farmacia disponibles para la agenda clínica del día.</p>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {inventoryPreview.slice(0, 4).map((prod) => (
-                      <div key={prod.id} className="overflow-hidden bg-surface-950/50 border border-surface-850 rounded-2xl p-4 space-y-3">
+                      <div key={prod.id} className="overflow-hidden bg-surface-950/50 border border-secondary-500/50 rounded-2xl p-4 space-y-3">
                         <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
                           <div className="min-w-0 flex-1 space-y-1">
                             <span className="block min-w-0 flex-1 max-w-full text-xs text-surface-200 leading-snug break-words line-clamp-3 font-normal">
                               <span className="font-normal text-surface-200">Principio activo: {prod.category ? prod.category.charAt(0).toUpperCase() + prod.category.slice(1).toLowerCase() : ''}</span><br />
-                              <span className="font-normal text-surface-200">{prod.name}</span>
+                              <span className="!font-bold text-surface-200">{prod.name}</span>
                             </span>
                           </div>
                           <span className="w-fit max-w-full shrink-0 truncate whitespace-nowrap text-[9px] text-surface-400 bg-surface-800 px-2 py-0.5 rounded-full uppercase tracking-[0.16em]">
@@ -1408,7 +1406,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                         <div className="text-[10px] text-surface-400 break-words line-clamp-3">{prod.description}</div>
                         <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[10px] text-surface-300">
                           <span className="whitespace-nowrap">Stock: {prod.stock} u.</span>
-                          <span className="font-semibold text-secondary-400 whitespace-nowrap">{formatCurrency(prod.price)}</span>
+                          <span className="text-sm !font-bold text-secondary-400 whitespace-nowrap">{formatCurrency(prod.price)}</span>
                         </div>
                       </div>
                     ))}
@@ -1492,54 +1490,57 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                             <table className="zenith-table zenith-table--divided text-sm">
                               <thead>
                                 <tr className="border-b border-surface-850 bg-surface-950/20 text-xs font-semibold text-surface-400 uppercase tracking-wider">
-                                  <th className="px-6 py-4 zenith-table__stack">Paciente</th>
-                                  <th className="px-6 py-4 zenith-table__stack">Contacto</th>
-                                  <th className="px-6 py-4 zenith-table__wrap">Condición</th>
-                                  <th className="px-6 py-4">Última visita</th>
-                                  <th className="px-6 py-4 text-right">Acción</th>
+                                  <th className="px-6 py-4 zenith-table__stack !min-w-0 w-[27%]">Paciente</th>
+                                  <th className="px-6 py-4 zenith-table__stack !min-w-0 w-[18%]">Contacto</th>
+                                  <th className="px-6 py-4 zenith-table__wrap !min-w-0 !max-w-none w-[26%]">Condición</th>
+                                  <th className="px-6 py-4 text-center whitespace-nowrap w-[15%]">Última visita</th>
+                                  <th className="px-6 py-4 text-right w-[14%]"></th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-surface-850">
                                 {filteredPatients.map((patient) => (
                                   <tr
                                     key={patient.patientId}
-                                    onClick={() => openPatientForm(patient)}
-                                    className="hover:bg-surface-850/20 transition-colors cursor-pointer"
+                                    className="transition-colors"
                                   >
-                                    <td className="px-6 py-4.5 zenith-table__stack">
-                                      <div className="flex items-center gap-3">
+                                    <td className="px-6 py-4.5 zenith-table__stack !min-w-0">
+                                      <div className="flex items-center gap-3 min-w-0">
                                         <div className="h-8 w-8 rounded-full bg-secondary-650 flex items-center justify-center font-bold text-white text-xs shrink-0">
                                           {patient.name.charAt(0)}
                                         </div>
-                                        <div>
-                                          <p className="font-semibold text-surface-200 leading-none">{patient.name}</p>
-                                          <span className="text-[10px] text-surface-500 font-mono mt-1 block">ID: {patient.patientId}</span>
+                                        <div className="min-w-0">
+                                          <p className="font-semibold text-surface-200 leading-snug !whitespace-normal break-words">{patient.name}</p>
+                                          <span className="inline-block text-[9px] font-mono text-surface-500 bg-surface-950 px-1.5 py-0.5 rounded border border-surface-850 mt-1 !whitespace-normal break-words">ID: {patient.patientId}</span>
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="px-6 py-4.5 zenith-table__stack">
-                                      <p className="text-xs text-surface-350">{patient.phone}</p>
-                                      <p className="text-[10px] text-surface-500 mt-0.5">
+                                    <td className="px-6 py-4.5 zenith-table__stack !min-w-0">
+                                      <p className="text-xs text-surface-350 !whitespace-normal break-words">{patient.phone}</p>
+                                      <p className="text-[10px] text-surface-500 !font-bold mt-0.5 !whitespace-normal break-words">
                                         {patient.age} años • {patient.gender}
                                       </p>
                                     </td>
-                                    <td className="px-6 py-4.5 zenith-table__wrap">
+                                    <td className="px-6 py-4.5 zenith-table__wrap !min-w-0 !max-w-none">
                                       <p className="text-xs text-surface-300">{patient.condition || 'Sin condición registrada'}</p>
                                       {patient.allergies && !patient.allergies.toLowerCase().includes('ningun') && patient.allergies.trim() !== '' && (
-                                        <p className="text-[10px] text-secondary-455 mt-1 flex items-center gap-1">
+                                        <p className="text-[10px] text-secondary-455 !font-bold mt-1 flex items-center gap-1">
                                           <ShieldAlert className="h-3 w-3 shrink-0" />
                                           {patient.allergies}
                                         </p>
                                       )}
                                     </td>
-                                    <td className="px-6 py-4.5 text-xs text-surface-400 whitespace-nowrap">
+                                    <td className="px-6 py-4.5 text-xs text-surface-400 !font-bold text-center whitespace-nowrap">
                                       {patient.lastVisit}
                                     </td>
-                                    <td className="px-6 py-4.5 text-right">
-                                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-secondary-400">
+                                    <td className="px-6 py-4.5 text-center">
+                                      <button
+                                        type="button"
+                                        onClick={() => openPatientForm(patient)}
+                                        className="zenith-on-dark inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-[#179150] hover:bg-[#146b42] shadow-sm transition-colors cursor-pointer"
+                                        style={{ color: '#ffffff' }}
+                                      >
                                         Ver expediente
-                                        <ChevronRight className="h-3.5 w-3.5" />
-                                      </span>
+                                      </button>
                                     </td>
                                   </tr>
                                 ))}
@@ -2061,7 +2062,6 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     <div className="bg-surface-900/60 border border-surface-800 rounded-2xl p-6 backdrop-blur-md space-y-4">
                       <div>
                         <h3 className="zenith-section-title">Historial de Récipes Firmados</h3>
-                        <p className="text-xs text-surface-400">Historial de recetas digitales emitidas y firmadas electrónicamente.</p>
                       </div>
 
                       {recipeLogError ? (
