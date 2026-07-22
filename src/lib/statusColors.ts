@@ -103,30 +103,76 @@ export function getDispatchTransitionClassName(status: OrderStatus): string {
 }
 
 /**
+ * Catálogo único de estados del récipe, en español.
+ *
+ * El récipe atraviesa tres ejes independientes y cada columna de la interfaz
+ * muestra uno distinto:
+ *
+ * 1. CLÍNICO (`clinical_status`): vigencia de la prescripción médica.
+ *      active   -> el médico la emitió y sigue siendo válida.
+ *      expired  -> perdió vigencia clínica y ya no puede surtirse.
+ *
+ * 2. RESERVA / COMERCIAL (`commercial_status`): en qué punto de la compra está.
+ *      dispatched_to_pharmacy -> emitida y enviada a la farmacia; nadie la compró aún.
+ *      inventory_reserved     -> el stock quedó apartado mientras el paciente decide.
+ *      awaiting_payment       -> hay un carrito armado esperando el pago.
+ *      paid                   -> el pago se confirmó.
+ *      payment_expired        -> venció el tiempo de la reserva sin pagar; el stock volvió.
+ *      inventory_released     -> la reserva se soltó a mano (el paciente no compró ahora).
+ *      cancelled              -> la compra se anuló.
+ *
+ * 3. ENTREGA / SURTIDO (`fulfillment_status`): cuánto se dispensó de lo recetado.
+ *      not_fulfilled       -> todavía no se entregó ninguna unidad.
+ *      partially_fulfilled -> se entregó una parte; el récipe sigue teniendo saldo.
+ *      fully_fulfilled     -> se entregó todo: el récipe quedó AGOTADO.
+ *
+ * OJO: un récipe no vence por fecha, se agota por uso. `expired` es vigencia
+ * clínica; `fully_fulfilled` es agotamiento por dispensación.
+ */
+const RECIPE_STATUS_LABELS: Record<string, string> = {
+  // Clínico
+  active: 'Vigente',
+  activo: 'Vigente',
+  activa: 'Vigente',
+  expired: 'Sin vigencia',
+
+  // Reserva / comercial
+  dispatched_to_pharmacy: 'En farmacia',
+  inventory_reserved: 'Stock apartado',
+  awaiting_payment: 'Esperando pago',
+  pending_payment: 'Esperando pago',
+  checkout_pending: 'Compra en curso',
+  checkout_in_progress: 'Compra en curso',
+  paid: 'Pagado',
+  payment_confirmed: 'Pago confirmado',
+  payment_expired: 'Reserva vencida',
+  inventory_released: 'Reserva liberada',
+  cancelled: 'Anulado',
+  unpaid: 'Sin pagar',
+
+  // Entrega / surtido
+  not_fulfilled: 'Sin entregar',
+  partially_fulfilled: 'Entrega parcial',
+  fully_fulfilled: 'Agotado',
+
+  // Despacho a farmacia
+  received_by_pharmacy: 'Recibido en farmacia',
+  reserved: 'Stock apartado',
+  released: 'Reserva liberada',
+  confirmed: 'Confirmado',
+
+  // Genéricos
+  pending: 'Pendiente',
+  partial: 'Parcial',
+};
+
+/**
  * Traduce estados de back-end (inglés) a español para la UI.
  * @param {string} status - Estado a traducir.
  * @returns {string} Estado traducido.
  */
 export function translateStatus(status: string): string {
-  const map: Record<string, string> = {
-    'active': 'Activo',
-    'activo': 'Activo',
-    'activa': 'Activo',
-    'expired': 'Expirado',
-    'paid': 'Pagado',
-    'pending_payment': 'Pago Pendiente',
-    'awaiting_payment': 'Pago pendiente',
-    'unpaid': 'No Pagado',
-    'pending': 'Pendiente',
-    'partial': 'Parcial',
-    'fully_fulfilled': 'Completado',
-    'not_fulfilled': 'No surtido',
-    'inventory_reserved': 'Inventario reservado',
-    'dispatched_to_pharmacy': 'Despachado a farmacia',
-    'checkout_pending': 'Checkout Pendiente',
-    'payment_confirmed': 'Pago Confirmado',
-  };
-  return map[status?.toLowerCase()] || status;
+  return RECIPE_STATUS_LABELS[status?.toLowerCase()?.trim()] || status;
 }
 
 /**
@@ -142,7 +188,18 @@ export function getRecipeStatusBadgeClassName(status: string): string {
     inventory_reserved: 'recipe-status-badge--inventory-reserved',
     dispatched_to_pharmacy: 'recipe-status-badge--dispatched-pharmacy',
     awaiting_payment: 'recipe-status-badge--awaiting-payment',
+    checkout_pending: 'recipe-status-badge--awaiting-payment',
     not_fulfilled: 'recipe-status-badge--not-fulfilled',
+    // Sin estos, los estados de reserva vencida o anulada caían al gris neutro
+    // y se leían igual que un estado normal.
+    payment_expired: 'recipe-status-badge--expired',
+    inventory_released: 'recipe-status-badge--expired',
+    expired: 'recipe-status-badge--expired',
+    cancelled: 'recipe-status-badge--expired',
+    paid: 'recipe-status-badge--paid',
+    payment_confirmed: 'recipe-status-badge--paid',
+    fully_fulfilled: 'recipe-status-badge--paid',
+    partially_fulfilled: 'recipe-status-badge--awaiting-payment',
   };
 
   return map[normalized] ?? 'recipe-status-badge--neutral';
