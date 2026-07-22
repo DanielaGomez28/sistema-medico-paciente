@@ -1,3 +1,9 @@
+<!--
+/**
+ * @fileoverview Documenta el archivo README de +Salud.
+ * @module README
+ */
+-->
 ﻿# Frontend SMP Farmahumana
 
 Cliente Next.js del Sistema Médico-Paciente.

@@ -1,4 +1,8 @@
 /**
+ * @fileoverview Documenta el modulo postcss.config de +Salud.
+ * @module postcss.config
+ */
+/**
  * Configuración de PostCSS.
  * Se utiliza principalmente para integrar Tailwind CSS en el pipeline de compilación.
  *
