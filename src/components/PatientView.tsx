@@ -1429,6 +1429,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       portal="patient"
       layout="horizontal"
       contentClassName="max-w-6xl"
+      scrollKey={activeSubTab}
       sidebar={
         <AppSidebar
           accent="primary"

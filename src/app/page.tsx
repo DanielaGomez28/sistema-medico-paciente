@@ -552,6 +552,7 @@ export default function Home() {
     <AppShell
       portal="admin"
       layout="vertical-collapsible"
+      scrollKey={activeTab}
       sidebar={
         <Sidebar
           activeTab={activeTab}

@@ -1232,6 +1232,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
         portal="doctor"
         layout="horizontal"
         contentClassName="max-w-7xl"
+        scrollKey={activeTab}
         sidebar={
           <AppSidebar
             accent="primary"
