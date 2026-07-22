@@ -2360,8 +2360,8 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                     <div className="portal-dashboard-card space-y-4">
                       <div>
                         <h3 className="zenith-section-title">Historial de Récipes Firmados</h3>
-                        {(linkedPatient?.name || patientForm.name) ? (
-                          <p className="text-xs text-surface-500 mt-1">Paciente: {linkedPatient?.name || patientForm.name}</p>
+                        {(linkedPatient?.name || patientForm.name || sortedDoctorRecipeLog[0]?.patientName || sortedDoctorRecipeLog[0]?.patientId) ? (
+                          <p className="text-xs text-surface-500 mt-1">Paciente: {linkedPatient?.name || patientForm.name || sortedDoctorRecipeLog[0]?.patientName || sortedDoctorRecipeLog[0]?.patientId}</p>
                         ) : null}
                       </div>
 
