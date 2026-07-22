@@ -124,6 +124,12 @@ interface DoctorCommissionSummary {
   transactions: DoctorCommissionTransaction[];
 }
 
+// OJO: los items de una receta ya emitida usan claves en ESPAÑOL (nombre,
+// cantidad_prescrita, pharmacy_name) porque son el payload que arma este
+// mismo formulario al crear la receta -- nunca se tradujo. Es distinto del
+// catálogo de productos (MedicalProduct, ver mapCatalogItemToProduct más
+// arriba), que sí usa inglés (name, basePrice) porque es un DTO real del
+// backend. No mezclar los dos.
 interface DoctorRecipeLogItem {
   id: string;
   nombre: string;

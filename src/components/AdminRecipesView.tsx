@@ -29,6 +29,11 @@ interface ApiErrorPayload {
   };
 }
 
+// OJO: los items de una receta ya emitida usan claves en ESPAÑOL (nombre,
+// cantidad_prescrita) porque son el payload que arma el formulario del
+// médico al crear la receta -- nunca se tradujo. Es distinto del catálogo
+// de productos, que sí usa inglés porque es un DTO real del backend. No
+// mezclar los dos (ver el mismo comentario en DoctorView.tsx/PatientView.tsx).
 interface RecipeItem {
   id: string;
   nombre: string;

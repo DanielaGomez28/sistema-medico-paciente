@@ -194,6 +194,13 @@ interface ApiErrorPayload {
   };
 }
 
+// OJO: los items de una receta ya emitida (BackendPrescriptionItem,
+// BackendTrackingItem) usan claves en ESPAÑOL (nombre, cantidad_prescrita,
+// beneficio_pct, pharmacy_name) porque son el payload que arma el propio
+// formulario del médico al crear la receta -- nunca se tradujo. Es distinto
+// del catálogo de productos (MedicalProduct / PrescriptionCatalogApiItem en
+// DoctorView.tsx), que sí usa inglés (name, basePrice) porque es un DTO real
+// del backend. No mezclar los dos.
 interface BackendPrescriptionItem {
   id: string;
   nombre: string;
