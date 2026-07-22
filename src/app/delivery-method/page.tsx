@@ -34,7 +34,11 @@ function DeliveryMethodContent() {
       setLoading(false);
       setSuccess(true);
       setTimeout(() => {
-        router.push('/');
+        // Se vuelve a la sección de récipes con el récipe recién gestionado
+        // destacado, en vez de dejar al paciente en el inicio sin contexto.
+        router.push(
+          recipeId ? `/?seccion=recipes&recipeId=${encodeURIComponent(recipeId)}` : '/'
+        );
       }, 1500);
     }, 1000);
   };
@@ -44,7 +48,7 @@ function DeliveryMethodContent() {
       <div className="w-full max-w-lg rounded-3xl border border-secondary-500/30 bg-secondary-500/10 p-10 text-center space-y-4">
         <h2 className="text-xl font-bold text-secondary-300">¡Preferencia guardada!</h2>
         <p className="text-sm text-secondary-200">
-          Redirigiendo al inicio...
+          Te llevamos a tus récipes médicos...
         </p>
       </div>
     );

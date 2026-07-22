@@ -6,7 +6,7 @@
  */
 
 import Image from 'next/image';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   FileText,
   Calendar,
@@ -597,6 +597,22 @@ const derivePrescriptionDeliveryStatus = (prescription: BackendPrescription | nu
   return 'Pendiente por retirar';
 };
 
+/**
+ * Lee de la URL a qué sección volver y qué récipe destacar.
+ * La pasarela y la selección de entrega viven en páginas aparte, así que al
+ * regresar al portal necesitan indicar dónde dejar parado al paciente.
+ * @returns {{seccion: string, recipeId: string}} Intención de navegación.
+ */
+const leerIntencionDeNavegacion = () => {
+  if (typeof window === 'undefined') return { seccion: '', recipeId: '' };
+
+  const params = new URLSearchParams(window.location.search);
+  return {
+    seccion: params.get('seccion') || '',
+    recipeId: params.get('recipeId') || '',
+  };
+};
+
 const deriveOrderDeliveryStatus = (
   checkoutSession: CheckoutSessionState | null,
   activePrescription: BackendPrescription | null
@@ -639,13 +655,17 @@ const isRecentlyRetiredPrescription = (prescription: BackendPrescription, now: n
  */
 export default function PatientView({ patientName, patientEmail, patientId, socketIdentity, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile'
-  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile' | 'help'>('treatment');
+  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile' | 'help'>(
+    () => (leerIntencionDeNavegacion().seccion === 'recipes' ? 'recipes' : 'treatment')
+  );
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [backendPrescriptions, setBackendPrescriptions] = useState<BackendPrescription[]>([]);
   const [activeCheckoutRecipeId, setActiveCheckoutRecipeId] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [expandedMedicationRecipeId, setExpandedMedicationRecipeId] = useState<string | null>(null);
+  const [expandedMedicationRecipeId, setExpandedMedicationRecipeId] = useState<string | null>(
+    () => leerIntencionDeNavegacion().recipeId || null
+  );
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
   const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
@@ -657,6 +677,27 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   // de cerrarlo. Se ajusta durante el render, que es el patrón recomendado para
   // resetear estado ante un cambio: con un efecto se renderiza una vez de más
   // con el modal todavía abierto sobre la pestaña nueva.
+
+
+  useEffect(() => {
+    if (!expandedMedicationRecipeId) return;
+
+    const handleOutsidePointerDown = (event: MouseEvent | TouchEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (expandedMedicationPopoverRef.current?.contains(target)) return;
+      setExpandedMedicationRecipeId(null);
+    };
+
+    document.addEventListener('mousedown', handleOutsidePointerDown);
+    document.addEventListener('touchstart', handleOutsidePointerDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsidePointerDown);
+      document.removeEventListener('touchstart', handleOutsidePointerDown);
+    };
+  }, [expandedMedicationRecipeId]);
+
   const [subTabAlAbrirRecipe, setSubTabAlAbrirRecipe] = useState(activeSubTab);
   if (subTabAlAbrirRecipe !== activeSubTab) {
     setSubTabAlAbrirRecipe(activeSubTab);
@@ -1771,8 +1812,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
                 <ol className="grid grid-cols-3 gap-2 sm:gap-4">
                   {orderDeliverySteps.map((step, index) => {
-                    const isComplete = index < activeOrderStepIndex;
-                    const isActive = index === activeOrderStepIndex;
+                    // El color sale de los récipes que hay en cada estado, que es
+                    // justo lo que se lista debajo del círculo. Antes dependía del
+                    // récipe abierto en el checkout, así que la barra no reflejaba
+                    // la situación real de los pedidos.
+                    const tieneRecipes = deliveryRecipeIdsByStatus[step.id].length > 0;
+                    const isComplete = tieneRecipes && index < activeOrderStepIndex;
+                    const isActive = tieneRecipes && index >= activeOrderStepIndex;
 
                     return (
                       <li key={step.id} className="flex min-w-0 flex-col items-center gap-2 text-center">
@@ -1876,13 +1922,16 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       </td>
                       <td className="py-4 text-xs text-surface-400">{rec.date}</td>
                       <td className="py-4 zenith-table__wrap">
-                        <div className="relative flex flex-col gap-0.5 min-w-0">
+                        <div ref={expandedMedicationRecipeId === rec.id ? expandedMedicationPopoverRef : null} className="relative flex flex-col gap-0.5 min-w-0">
                           <span className="font-semibold text-surface-200 break-words">
                             {rec.medications[0]?.medication || 'Sin medicamentos'}
                             {rec.medications.length > 1 ? (
                               <button
                                 type="button"
-                                onClick={() => setExpandedMedicationRecipeId((current) => current === rec.id ? null : rec.id)}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  setExpandedMedicationRecipeId((current) => current === rec.id ? null : rec.id);
+                                }}
                                 className="ml-1.5 text-[10px] font-bold text-primary-400 underline-offset-2 hover:underline cursor-pointer"
                               >
                                 +{rec.medications.length - 1} más
