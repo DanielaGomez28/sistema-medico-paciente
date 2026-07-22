@@ -597,6 +597,22 @@ const derivePrescriptionDeliveryStatus = (prescription: BackendPrescription | nu
   return 'Pendiente por retirar';
 };
 
+/**
+ * Lee de la URL a qué sección volver y qué récipe destacar.
+ * La pasarela y la selección de entrega viven en páginas aparte, así que al
+ * regresar al portal necesitan indicar dónde dejar parado al paciente.
+ * @returns {{seccion: string, recipeId: string}} Intención de navegación.
+ */
+const leerIntencionDeNavegacion = () => {
+  if (typeof window === 'undefined') return { seccion: '', recipeId: '' };
+
+  const params = new URLSearchParams(window.location.search);
+  return {
+    seccion: params.get('seccion') || '',
+    recipeId: params.get('recipeId') || '',
+  };
+};
+
 const deriveOrderDeliveryStatus = (
   checkoutSession: CheckoutSessionState | null,
   activePrescription: BackendPrescription | null
@@ -639,14 +655,17 @@ const isRecentlyRetiredPrescription = (prescription: BackendPrescription, now: n
  */
 export default function PatientView({ patientName, patientEmail, patientId, socketIdentity, onLogout }: PatientViewProps) {
   // Navigation Tabs: 'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile'
-  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile' | 'help'>('treatment');
+  const [activeSubTab, setActiveSubTab] = useState<'recipes' | 'treatment' | 'proposals' | 'payment' | 'voucher' | 'delivery' | 'profile' | 'help'>(
+    () => (leerIntencionDeNavegacion().seccion === 'recipes' ? 'recipes' : 'treatment')
+  );
 
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [backendPrescriptions, setBackendPrescriptions] = useState<BackendPrescription[]>([]);
   const [activeCheckoutRecipeId, setActiveCheckoutRecipeId] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [expandedMedicationRecipeId, setExpandedMedicationRecipeId] = useState<string | null>(null);
-  const expandedMedicationPopoverRef = useRef<HTMLDivElement | null>(null);
+  const [expandedMedicationRecipeId, setExpandedMedicationRecipeId] = useState<string | null>(
+    () => leerIntencionDeNavegacion().recipeId || null
+  );
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [recipesError, setRecipesError] = useState('');
   const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
@@ -1793,8 +1812,13 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
                 <ol className="grid grid-cols-3 gap-2 sm:gap-4">
                   {orderDeliverySteps.map((step, index) => {
-                    const isComplete = index < activeOrderStepIndex;
-                    const isActive = index === activeOrderStepIndex;
+                    // El color sale de los récipes que hay en cada estado, que es
+                    // justo lo que se lista debajo del círculo. Antes dependía del
+                    // récipe abierto en el checkout, así que la barra no reflejaba
+                    // la situación real de los pedidos.
+                    const tieneRecipes = deliveryRecipeIdsByStatus[step.id].length > 0;
+                    const isComplete = tieneRecipes && index < activeOrderStepIndex;
+                    const isActive = tieneRecipes && index >= activeOrderStepIndex;
 
                     return (
                       <li key={step.id} className="flex min-w-0 flex-col items-center gap-2 text-center">
