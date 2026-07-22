@@ -79,6 +79,18 @@ function PagoMockContent() {
           {loading === 'cancel' ? 'Cancelando...' : 'No pagar ahora'}
         </button>
       </div>
+
+      {/* Salida siempre disponible: sin esto la pasarela es una pantalla sin
+          retorno (no tiene header ni sidebar), y si la decisión falla el
+          usuario queda atrapado sin forma de volver al portal. */}
+      <button
+        type="button"
+        onClick={() => { router.push('/'); }}
+        disabled={loading !== ''}
+        className="w-full rounded-2xl border border-surface-800 bg-transparent hover:bg-surface-900 disabled:opacity-60 px-4 py-2.5 text-sm font-semibold text-surface-400 hover:text-surface-200 transition-colors"
+      >
+        Volver al portal
+      </button>
     </div>
   );
 }

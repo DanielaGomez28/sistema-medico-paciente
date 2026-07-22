@@ -96,7 +96,7 @@ function DeliveryMethodContent() {
         </button>
       </div>
 
-      <div className="pt-4">
+      <div className="pt-4 space-y-3">
         <button
           type="button"
           disabled={!method || loading}
@@ -104,6 +104,18 @@ function DeliveryMethodContent() {
           className="w-full rounded-2xl bg-secondary-600 hover:bg-secondary-500 disabled:opacity-50 disabled:hover:bg-secondary-600 px-4 py-4 font-bold transition-all"
         >
           {loading ? 'Guardando...' : 'Confirmar preferencia'}
+        </button>
+
+        {/* Salida siempre disponible: esta pantalla no tiene header ni sidebar,
+            así que sin este botón el usuario queda atrapado si no quiere elegir
+            un método ahora. */}
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => { router.push('/'); }}
+          className="w-full rounded-2xl border border-surface-800 bg-transparent hover:bg-surface-900 disabled:opacity-60 px-4 py-2.5 text-sm font-semibold text-surface-400 hover:text-surface-200 transition-colors"
+        >
+          Volver al portal
         </button>
       </div>
     </div>

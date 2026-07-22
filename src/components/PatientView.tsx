@@ -560,6 +560,14 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const [downloadingRecipePdf, setDownloadingRecipePdf] = useState(false);
   const [recipePdfError, setRecipePdfError] = useState('');
 
+  // El modal de "ver recipe" vive fuera de los bloques por activeSubTab (para
+  // poder mostrarse desde cualquier pestaña), así que hay que cerrarlo a mano
+  // al navegar -- si no, queda flotando encima de la pestaña nueva sin forma
+  // de cerrarlo.
+  useEffect(() => {
+    setSelectedRecipe(null);
+  }, [activeSubTab]);
+
   // Treatment tracking states
   const [trackingProfiles, setTrackingProfiles] = useState<BackendTrackingProfile[]>([]);
   const [doseSuccessMsg, setDoseSuccessMsg] = useState('');
@@ -663,8 +671,17 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
   const hasActiveCartReserve = Boolean(
     checkoutSession?.order?.status === 'checkout_pending' && paymentTimeLeft > 0
   );
+  // OJO: solo se avisa de expiración cuando REALMENTE hubo una reserva que venció.
+  // Antes se mostraba con solo no haber reserva activa, así que el mensaje salía
+  // apenas entrabas a la pestaña (sin checkoutSession todavía), como si algo
+  // hubiera expirado sin haber iniciado nunca un carrito.
+  const hasExpiredCartReserve = Boolean(
+    checkoutSession?.order &&
+      (checkoutSession.order.status === 'expired' ||
+        (checkoutSession.order.status === 'checkout_pending' && paymentTimeLeft <= 0))
+  );
   const proposalStatusMessage =
-    !checkoutError && activeSubTab === 'proposals' && activeCheckoutPrescription && !hasActiveCartReserve
+    !checkoutError && activeSubTab === 'proposals' && activeCheckoutPrescription && hasExpiredCartReserve
       ? 'Expiró la reserva del carrito.'
       : '';
 
@@ -2851,9 +2868,9 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
           modal. No usar clases surface acá adentro. */}
       {selectedRecipe && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-          <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm fixed" onClick={() => setSelectedRecipe(null)}></div>
+          <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-sm" onClick={() => setSelectedRecipe(null)}></div>
 
-          <div className="relative bg-white text-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200 print:max-h-full print:shadow-none print:w-full print:rounded-none z-10 my-8">
+          <div className="relative bg-white text-slate-900 w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in duration-200 print:max-h-full print:shadow-none print:w-full print:rounded-none z-10 my-8">
 
             <div className="flex items-center justify-between px-6 py-3.5 bg-slate-900 text-white border-b border-slate-800 print:hidden">
               <span className="text-xs font-bold font-mono text-teal-400 flex items-center gap-1.5">
