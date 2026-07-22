@@ -196,7 +196,7 @@ interface ApiErrorPayload {
 
 interface BackendPrescriptionItem {
   id: string;
-  name: string;
+  nombre: string;
   dosis: string;
   cantidad: number;
   daily_doses?: number;
@@ -205,7 +205,7 @@ interface BackendPrescriptionItem {
   precio_unitario_final: number;
   subtotal_base?: number;
   subtotal_final?: number;
-  benefitPct: number;
+  beneficio_pct: number;
 }
 
 interface BackendPrescription {
@@ -256,7 +256,7 @@ interface CheckoutSessionState {
 
 interface BackendTrackingItem {
   id: string;
-  name: string;
+  nombre: string;
   totalPrescribedDoses: number;
   totalDispensedDoses: number;
   availableDoses: number;
@@ -397,7 +397,7 @@ const mapBackendPrescriptionToRecipes = (prescription: BackendPrescription): Rec
     id: `${prescription.recipeId}${index > 0 ? `-${index + 1}` : ''}`,
     date: formatRecipeDate(createdAt),
     expiryDate,
-    medication: item.name,
+    medication: item.nombre,
     dosage: `${item.cantidad} unidad(es)`,
     instructions: item.dosis || 'Seguir indicaciones médicas.',
     doctor: prescription.doctorName || PATIENT_PORTAL_COPY.fallbackDoctorName,
@@ -433,7 +433,7 @@ const buildTreatmentsFromTracking = (
       return {
         id: buildTreatmentId(profile.recipeId, item.id),
         productId: item.id,
-        name: item.name,
+        name: item.nombre,
         dosage: prescriptionItem?.dosis || 'Seguir indicaciones médicas',
         frequency: item.averageDailyConsumption > 0 ? `${item.averageDailyConsumption.toFixed(2)} dosis/día` : 'Seguimiento activo',
         scheduleTimes: buildScheduleTimes(Number(prescriptionItem?.daily_doses || 1)),
@@ -458,7 +458,7 @@ const buildDoseLogsFromTracking = (profiles: BackendTrackingProfile[]): DoseLog[
         recipeId: profile.recipeId,
         productId: item.id,
         medicationId: buildTreatmentId(profile.recipeId, item.id),
-        medicationName: item.name,
+        medicationName: item.nombre,
         scheduledTime: new Date(log.takenAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
         takenAt: new Date(log.takenAt).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
         status: 'Tomada' as const,
@@ -474,7 +474,7 @@ const buildTreatmentAlertsFromTracking = (profiles: BackendTrackingProfile[], pr
       .map((item) => ({
         id: `refill-${profile.recipeId}-${item.id}`,
         type: 'recordatorio' as const,
-        title: `Reposición sugerida para ${item.name}`,
+        title: `Reposición sugerida para ${item.nombre}`,
         message: item.estimatedDaysRemaining !== null
           ? `Quedan aproximadamente ${item.estimatedDaysRemaining} días de tratamiento disponibles.`
           : 'El tratamiento est? activo y requiere seguimiento de reposición.',
@@ -579,10 +579,10 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
 
     return (Array.isArray(activeCheckoutPrescription.items) ? activeCheckoutPrescription.items : []).map((item, index) => ({
       id: `${activeCheckoutPrescription.recipeId}-${index + 1}`,
-      medication: item.name,
+      medication: item.nombre,
       quantity: Number(item.cantidad || 0),
       unitPrice: Number(item.precio_unitario_base || item.precio_unitario_final || 0),
-      discountPercent: Number(item.benefitPct || 0),
+      discountPercent: Number(item.beneficio_pct || 0),
     }));
   }, [activeCheckoutPrescription]);
   const [selectedBranch, setSelectedBranch] = useState(PATIENT_PORTAL_COPY.selectedBranchOptions[0]);

@@ -126,10 +126,10 @@ interface DoctorCommissionSummary {
 
 interface DoctorRecipeLogItem {
   id: string;
-  name: string;
-  prescribedQuantity?: number;
+  nombre: string;
+  cantidad_prescrita?: number;
   remaining_quantity?: number;
-  pharmacyName?: string;
+  pharmacy_name?: string;
 }
 
 interface DoctorRecipeLogRecord {
@@ -2116,7 +2116,7 @@ export default function DoctorView({ doctorName, doctorEmail, doctorId, doctorPr
                               <p className="doctor-recipe-log-item__name text-sm">{rec.patientName || rec.patientId}</p>
                               <div className="flex flex-wrap gap-1 pt-0.5">
                                 {rec.items.map((item, idx) => (
-                                  <span key={idx} className="doctor-recipe-log-item__med text-[9px] px-1.5 py-0.5 rounded">{item.name} ({item.remaining_quantity ?? 0}/{item.prescribedQuantity ?? 0}) • {item.pharmacyName || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
+                                  <span key={idx} className="doctor-recipe-log-item__med text-[9px] px-1.5 py-0.5 rounded">{item.nombre} ({item.remaining_quantity ?? 0}/{item.cantidad_prescrita ?? 0}) • {item.pharmacy_name || process.env.NEXT_PUBLIC_FARMACIA_NAME || 'Farmacia'}</span>
                                 ))}
                               </div>
                               <p className="text-[10px] text-black dark:text-surface-300 flex items-center gap-1 flex-wrap">
