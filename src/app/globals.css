@@ -3697,11 +3697,19 @@ html {
 
 html,
 body {
-  touch-action: pan-x pan-y pinch-zoom;
+  max-width: 100%;
+  overflow-x: clip;
+  touch-action: pan-y pinch-zoom;
 }
 
 .portal-main {
   -webkit-overflow-scrolling: touch;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.portal-main .zenith-table-wrap {
+  max-width: 100%;
 }
 
 .portal-profile-view {

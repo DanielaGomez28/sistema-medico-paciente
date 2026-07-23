@@ -1951,7 +1951,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       <div
         className={cn(
           getPatientPageLayoutClass(activeSubTab as PatientSubTab),
-          'space-y-4 animate-in fade-in duration-300',
+          'space-y-4 animate-in fade-in duration-300 min-w-0 max-w-full',
           (activeSubTab === 'delivery' || activeSubTab === 'voucher') && 'py-8'
         )}
       >
@@ -2966,65 +2966,65 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
       {/* OJO: mismo criterio que el modal de receta imprimible -- fondo blanco
           fijo, colores fijos (slate), no usar surface-*. */}
       {activeSubTab === 'voucher' && (
-        <div className="animate-in fade-in zoom-in-95 duration-200">
-          <div className="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+        <div className="animate-in fade-in zoom-in-95 duration-200 min-w-0 max-w-full">
+          <div className="bg-white text-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 min-w-0 max-w-full">
 
-            <div className="bg-[var(--portal-btn-bg)] text-white p-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-white/20 text-white flex items-center justify-center">
+            <div className="bg-[var(--portal-btn-bg)] text-white p-4 sm:p-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-10 w-10 shrink-0 rounded-full bg-white/20 text-white flex items-center justify-center">
                   <Check className="h-6 w-6 stroke-[3]" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span className="text-[9px] font-bold text-white/80 uppercase tracking-widest leading-none block">Transacción Aprobada</span>
-                  <h3 className="text-lg font-bold text-white mt-0.5">Comprobante de Venta</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-white mt-0.5 break-words">Comprobante de Venta</h3>
                 </div>
               </div>
 
               <button
                 onClick={() => window.print()}
-                className="px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/25"
+                className="self-start sm:self-auto px-3 py-1.5 bg-white/15 hover:bg-white/25 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-white/25"
               >
                 <Printer className="h-3.5 w-3.5" />
                 <span>Imprimir</span>
               </button>
             </div>
 
-            <div className="p-8 space-y-6 text-xs leading-relaxed">
+            <div className="p-4 sm:p-8 space-y-6 text-xs leading-relaxed min-w-0">
 
-              <div className="flex justify-between items-start border-b border-slate-200 pb-4">
-                <div>
-                  <h4 className="text-sm font-bold text-slate-950">{PATIENT_PORTAL_COPY.pharmacyLegalName}</h4>
-                  <p className="text-2xs text-slate-500">{PATIENT_PORTAL_COPY.pharmacyLegalReference}</p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-start border-b border-slate-200 pb-4">
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-slate-950 break-words">{PATIENT_PORTAL_COPY.pharmacyLegalName}</h4>
+                  <p className="text-2xs text-slate-500 break-words">{PATIENT_PORTAL_COPY.pharmacyLegalReference}</p>
                 </div>
-                <div className="text-right">
-                  <p className="font-bold text-slate-900">CÓDIGO: {voucherId}</p>
+                <div className="sm:text-right shrink-0">
+                  <p className="font-bold text-slate-900 break-all">CÓDIGO: {voucherId}</p>
                   <p className="text-2xs text-slate-400 mt-0.5">Fecha: {new Date().toLocaleDateString()}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-2xs">
-                <div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200 text-2xs">
+                <div className="min-w-0">
                   <span className="font-bold text-slate-500 uppercase block">Paciente</span>
-                  <span className="font-bold text-slate-800 text-xs mt-0.5 block">{profileName}</span>
-                  <span className="text-slate-500 mt-0.5 block">{patientEmail}</span>
+                  <span className="font-bold text-slate-800 text-xs mt-0.5 block break-words">{profileName}</span>
+                  <span className="text-slate-500 mt-0.5 block break-all">{patientEmail}</span>
                 </div>
-                <div>
+                <div className="min-w-0">
                   <span className="font-bold text-slate-500 uppercase block">Retiro Autorizado en</span>
-                  <span className="font-bold text-slate-800 text-xs mt-0.5 block">{selectedBranch}</span>
+                  <span className="font-bold text-slate-800 text-xs mt-0.5 block break-words">{selectedBranch}</span>
                   <span className="text-slate-500 mt-0.5 block">Presentar credencial QR física</span>
                 </div>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 min-w-0">
                 <span className="font-bold text-teal-900 uppercase tracking-widest block text-[9px]">Productos Adquiridos</span>
                 <div className="divide-y divide-slate-150 border-t border-b border-slate-200">
                   {voucherItems.length ? voucherItems.map((item) => (
-                    <div key={item.id} className="py-2.5 flex justify-between">
-                      <div>
-                        <span className="font-bold text-slate-800">{item.medication}</span>
+                    <div key={item.id} className="py-2.5 flex flex-col gap-1 sm:flex-row sm:justify-between sm:items-start min-w-0">
+                      <div className="min-w-0">
+                        <span className="font-bold text-slate-800 break-words">{item.medication}</span>
                         <span className="text-slate-500 block text-2xs">Cant: {item.quantity} • Descuento aplicado</span>
                       </div>
-                      <span className="font-bold text-slate-900">{formatCurrency(calculateItemSubtotal(item))}</span>
+                      <span className="font-bold text-slate-900 shrink-0">{formatCurrency(calculateItemSubtotal(item))}</span>
                     </div>
                   )) : (
                     <div className="py-2.5 text-slate-500">No hay productos asociados a este comprobante.</div>
@@ -3033,41 +3033,41 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
               </div>
 
               <div className="flex justify-end pt-2">
-                <div className="w-56 space-y-2 text-2xs text-slate-500">
-                  <div className="flex justify-between">
+                <div className="w-full max-w-56 space-y-2 text-2xs text-slate-500">
+                  <div className="flex justify-between gap-3">
                     <span>Subtotal Neto</span>
                     <span className="font-semibold text-slate-800">{formatCurrency(voucherTotals.netSubtotal)}</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between gap-3">
                     <span>IVA (16%)</span>
                     <span className="font-semibold text-slate-800">{formatCurrency(voucherTotals.vat)}</span>
                   </div>
-                  <div className="flex justify-between items-baseline font-bold text-slate-950 border-t border-slate-200 pt-2 text-xs">
+                  <div className="flex justify-between items-baseline gap-3 font-bold text-slate-950 border-t border-slate-200 pt-2 text-xs">
                     <span>Total Pagado</span>
                     <span className="text-sm text-primary-700">{formatCurrency(voucherTotals.netTotal)}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-[10px]">
-                <div>
+              <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-slate-500 text-[10px]">
+                <div className="min-w-0">
                   <p className="font-semibold text-slate-600">Recipe / Order ID:</p>
-                  <p className="font-mono text-slate-800 font-bold mt-0.5">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'PENDIENTE'}</p>
+                  <p className="font-mono text-slate-800 font-bold mt-0.5 break-all">{checkoutSession?.order?.recipeId || activeCheckoutPrescription?.recipeId || 'PENDIENTE'}</p>
                   <p className="font-semibold text-slate-600 mt-2">Referencia de pago confirmada:</p>
-                  <p className="font-mono text-slate-800 font-bold mt-0.5">{simulatedPaymentReference || 'PENDIENTE DE CALLBACK'}</p>
+                  <p className="font-mono text-slate-800 font-bold mt-0.5 break-all">{simulatedPaymentReference || 'PENDIENTE DE CALLBACK'}</p>
                 </div>
 
                 <div className="flex items-center gap-1.5 text-secondary-605 font-bold">
-                  <ShieldCheck className="h-4.5 w-4.5" />
+                  <ShieldCheck className="h-4.5 w-4.5 shrink-0" />
                   <span>{checkoutSession?.order?.status === 'payment_confirmed' ? 'Reserva Confirmada en Almacén' : 'Esperando confirmación del pago'}</span>
                 </div>
               </div>
 
             </div>
 
-            <div className="bg-slate-50 px-8 py-4 border-t border-slate-200 flex justify-between items-center">
+            <div className="bg-slate-50 px-4 sm:px-8 py-4 border-t border-slate-200 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
               <p className="text-[10px] text-slate-600">Guarde este recibo en su dispositivo móvil para retirar.</p>
-              <Button variant="patient" onClick={() => setActiveSubTab('recipes')}>
+              <Button variant="patient" onClick={() => setActiveSubTab('recipes')} className="w-full sm:w-auto">
                 Regresar a Récipes
               </Button>
             </div>
@@ -3341,22 +3341,22 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
             </div>
           </div>
         </div>
-        <div className="portal-floating-actions fixed z-30 flex flex-col items-end gap-2 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1.5rem,env(safe-area-inset-right))] pointer-events-none">
-          <div className="pointer-events-auto flex flex-col items-end gap-2">
+        <div className="portal-floating-actions fixed z-30 flex flex-col items-end gap-2 bottom-[max(1.5rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] left-[max(1rem,env(safe-area-inset-left))] sm:left-auto pointer-events-none">
+          <div className="pointer-events-auto flex w-full sm:w-auto flex-col items-stretch sm:items-end gap-2">
             {isEditingProfile ? (
               <>
                 <button
                   type="button"
                   onClick={() => void handleConfirmProfileEdit()}
                   disabled={profileLoading}
-                  className="min-w-[220px] px-4 py-2.5 bg-[#0A6B75] hover:bg-[#095c67] disabled:opacity-60 !text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
+                  className="w-full sm:w-auto sm:min-w-[220px] px-4 py-2.5 bg-[#0A6B75] hover:bg-[#095c67] disabled:opacity-60 !text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
                 >
                   {profileLoading ? 'Guardando...' : 'Confirmar cambios'}
                 </button>
                 <button
                   type="button"
                   onClick={handleCancelProfileEdit}
-                  className="min-w-[220px] px-4 py-2.5 bg-white dark:bg-surface-900 border border-[#0A6B75]/35 dark:border-surface-700 text-[#0A6B75] dark:!text-white hover:bg-[#0A6B75]/10 dark:hover:bg-surface-800 hover:text-[#095c67] dark:hover:!text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
+                  className="w-full sm:w-auto sm:min-w-[220px] px-4 py-2.5 bg-white dark:bg-surface-900 border border-[#0A6B75]/35 dark:border-surface-700 text-[#0A6B75] dark:!text-white hover:bg-[#0A6B75]/10 dark:hover:bg-surface-800 hover:text-[#095c67] dark:hover:!text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
                 >
                   Cancelar
                 </button>
@@ -3366,7 +3366,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                 type="button"
                 onClick={handleStartProfileEdit}
                 disabled={profileLoading}
-                className="min-w-[220px] px-4 py-2.5 bg-[#0A6B75] hover:bg-[#095c67] disabled:opacity-60 !text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
+                className="w-full sm:w-auto sm:min-w-[220px] px-4 py-2.5 bg-[#0A6B75] hover:bg-[#095c67] disabled:opacity-60 !text-white rounded-xl text-[15px] font-bold shadow-lg shadow-black/25 transition-all"
               >
                 {profileLoading ? 'Cargando...' : 'Editar perfil'}
               </button>
