@@ -82,6 +82,7 @@ interface PatientViewProps {
 interface BackendPatientProfile {
   systemId: string;
   patientId: string;
+  cedula?: string;
   name: string;
   age: number;
   gender: string;
@@ -101,7 +102,6 @@ interface PatientProfileDraft {
   phone: string;
   age: string;
   gender: string;
-  bloodType: string;
   condition: string;
   allergies: string;
   medications: string;
@@ -127,7 +127,6 @@ function createEmptyPatientProfileDraft(): PatientProfileDraft {
     phone: PATIENT_PROFILE_DEFAULTS.profilePhone,
     age: '',
     gender: '',
-    bloodType: '',
     condition: '',
     allergies: '',
     medications: '',
@@ -152,7 +151,6 @@ function buildPatientProfileDraft(profile: BackendPatientProfile | null, fallbac
     phone: profile?.phone || PATIENT_PROFILE_DEFAULTS.profilePhone,
     age: profile?.age ? String(profile.age) : '',
     gender: allowedGenders.has(gender) ? gender : '',
-    bloodType: profile?.bloodType || '',
     condition: profile?.condition || '',
     allergies: profile?.allergies || '',
     medications: profile?.medications?.length ? profile.medications.join(', ') : '',
@@ -180,7 +178,6 @@ function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationErro
     phone: draft.phone.trim(),
     age: draft.age.trim(),
     gender: draft.gender.trim(),
-    bloodType: draft.bloodType.trim(),
     condition: draft.condition.trim(),
     allergies: draft.allergies.trim(),
     medications: draft.medications.trim(),
@@ -208,10 +205,6 @@ function validatePatientProfileDraft(draft: PatientProfileDraft): ValidationErro
 
   if (!normalized.gender || !allowedGenders.has(normalized.gender)) {
     return { field: 'gender', message: 'No se pudo modificar los datos del usuario. Género obligatorio. Seleccioná Femenino o Masculino.' };
-  }
-
-  if (normalized.bloodType && !/^(A|B|AB|O)[+-]$/i.test(normalized.bloodType)) {
-    return { field: 'bloodType', message: 'No se pudo modificar los datos del usuario. Grupo sanguíneo inválido. Formato esperado: A+, A-, B+, B-, AB+, AB-, O+ u O-.' };
   }
 
   if (normalized.condition && (!/^[\p{L}\p{N}\s.,()/'-]{2,200}$/u.test(normalized.condition) || !hasClinicalContent.test(normalized.condition))) {
@@ -923,6 +916,8 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
     'bg-[#50e9f8]/15 text-[#0a1220] dark:!text-white border-[#0A6B75]/35 focus:border-[#0A6B75]';
   const profileName = patientProfile?.name || patientName;
   const profilePhone = patientProfile?.phone || PATIENT_PROFILE_DEFAULTS.profilePhone;
+  const profileCedula = patientProfile?.cedula || patientProfile?.patientId || '';
+  const profileBloodType = patientProfile?.bloodType || '';
   const deliveryAddress = patientProfile?.deliveryAddress || PATIENT_PROFILE_DEFAULTS.deliveryAddress;
   const deliveryState = patientProfile?.deliveryState || PATIENT_PROFILE_DEFAULTS.deliveryState;
   const deliveryMunicipio = patientProfile?.deliveryMunicipio || PATIENT_PROFILE_DEFAULTS.deliveryMunicipio;
@@ -1222,7 +1217,6 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
         phone: profileDraft.phone.trim(),
         age: profileDraft.age.trim() ? Number(profileDraft.age.trim()) : 0,
         gender: profileDraft.gender.trim(),
-        bloodType: profileDraft.bloodType.trim().toUpperCase(),
         condition: profileDraft.condition.trim(),
         allergies: profileDraft.allergies.trim(),
         medications: profileDraft.medications.split(',').map((item) => item.trim()).filter(Boolean),
@@ -3148,6 +3142,15 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                     />
                   </div>
                   <div className="space-y-1.5">
+                    <label className="zenith-field-label">Cédula de identidad</label>
+                    <input
+                      type="text"
+                      value={profileCedula}
+                      readOnly
+                      className="w-full bg-surface-950/40 border border-surface-850 rounded-xl px-3.5 py-2.5 text-xs text-surface-250 font-mono focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
                     <label className="zenith-field-label">ID Interno del Sistema</label>
                     <input
                       type="text"
@@ -3214,28 +3217,12 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                   </div>
                   <div className="space-y-1.5">
                     <label className="zenith-field-label">Grupo sanguíneo</label>
-                    {isEditingProfile ? (
-                      <select
-                        value={profileDraft.bloodType}
-                        onChange={(e) => {
-                          setProfileDraft((prev) => ({ ...prev, bloodType: e.target.value }));
-                          if (profileError?.field === 'bloodType') setProfileError(null);
-                        }}
-                        className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none cursor-pointer ${profileError?.field === 'bloodType' ? 'bg-surface-950 text-white border-danger-500 focus:border-danger-400 ring-1 ring-danger-500' : patientProfileFieldEditing}`}
-                      >
-                        <option value="">Seleccione...</option>
-                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
-                          <option key={type} value={type}>{type}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        value={patientProfile?.bloodType || 'Sin especificar'}
-                        readOnly
-                        className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${patientProfileFieldReadonly}`}
-                      />
-                    )}
+                    <input
+                      type="text"
+                      value={profileBloodType}
+                      readOnly
+                      className={`w-full border rounded-xl px-3.5 py-2.5 text-xs focus:outline-none ${patientProfileFieldReadonly}`}
+                    />
                   </div>
                   <div className="space-y-1.5 md:col-span-2">
                     <label className="zenith-field-label">Condición / diagnóstico de control</label>
