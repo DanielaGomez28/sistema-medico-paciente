@@ -50,6 +50,7 @@ import { Button, ListCard, Modal, ModalBody, PageHeader } from './ui';
 import { getPatientPageDescription, getPatientPageLayoutClass, getPatientPageTitle, type PatientSubTab } from '../lib/viewTitles';
 import { cn } from '../lib/utils';
 import apiClient from '../lib/api';
+import { formatPhone, onlyLetters, safeText } from '../lib/inputValidation';
 import { getRecipeStatusBadgeClassName, translateStatus } from '../lib/statusColors';
 import { socket, SOCKET_RUNTIME_SUPPORTED } from '../lib/socket';
 import {
@@ -57,11 +58,8 @@ import {
   PATIENT_PROFILE_DEFAULTS,
 } from '../data/mockData';
 
-const formatPhoneNumber = (val: string) => {
-  const digits = val.replace(/\D/g, '');
-  if (digits.length <= 4) return digits;
-  return `${digits.slice(0, 4)}-${digits.slice(4, 11)}`;
-};
+// El formateo de telefono vive en lib/inputValidation para no duplicar reglas.
+const formatPhoneNumber = formatPhone;
 
 /**
  * Propiedades de la vista de portal del Paciente.
@@ -3112,7 +3110,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       type="text"
                       value={isEditingProfile ? profileDraft.name : profileName}
                       onChange={(e) => {
-                        setProfileDraft((prev) => ({ ...prev, name: e.target.value }));
+                        setProfileDraft((prev) => ({ ...prev, name: onlyLetters(e.target.value) }));
                         if (profileError?.field === 'name') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}
@@ -3230,7 +3228,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       type="text"
                       value={isEditingProfile ? profileDraft.condition : (patientProfile?.condition || 'Sin condiciones registradas')}
                       onChange={(e) => {
-                        setProfileDraft((prev) => ({ ...prev, condition: e.target.value }));
+                        setProfileDraft((prev) => ({ ...prev, condition: safeText(e.target.value, 160) }));
                         if (profileError?.field === 'condition') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}
@@ -3243,7 +3241,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       type="text"
                       value={isEditingProfile ? profileDraft.allergies : (patientProfile?.allergies || 'Ninguna conocida')}
                       onChange={(e) => {
-                        setProfileDraft((prev) => ({ ...prev, allergies: e.target.value }));
+                        setProfileDraft((prev) => ({ ...prev, allergies: safeText(e.target.value, 200) }));
                         if (profileError?.field === 'allergies') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}
@@ -3256,7 +3254,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       type="text"
                       value={isEditingProfile ? profileDraft.medications : (patientProfile?.medications?.length ? patientProfile.medications.join(', ') : 'Sin tratamientos activos')}
                       onChange={(e) => {
-                        setProfileDraft((prev) => ({ ...prev, medications: e.target.value }));
+                        setProfileDraft((prev) => ({ ...prev, medications: safeText(e.target.value, 300) }));
                         if (profileError?.field === 'medications') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}
@@ -3278,7 +3276,7 @@ export default function PatientView({ patientName, patientEmail, patientId, sock
                       type="text"
                       value={isEditingProfile ? profileDraft.deliveryAddress : deliveryAddress}
                       onChange={(e) => {
-                        setProfileDraft((prev) => ({ ...prev, deliveryAddress: e.target.value }));
+                        setProfileDraft((prev) => ({ ...prev, deliveryAddress: safeText(e.target.value, 200) }));
                         if (profileError?.field === 'deliveryAddress') setProfileError(null);
                       }}
                       readOnly={!isEditingProfile}

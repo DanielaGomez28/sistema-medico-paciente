@@ -11,6 +11,7 @@ import { Customer } from '../types';
 import { formatCurrency } from '../lib/currency';
 import { formatCustomerAddress, formatCustomerLocation } from '../lib/customerLocation';
 import VenezuelanStateSelect from './VenezuelanStateSelect';
+import { formatPhone, normalizeEmail, onlyLetters } from '../lib/inputValidation';
 import { PageHeader, Button, Modal, ModalBody, ModalFooter, ListCard } from './ui';
 
 /**
@@ -247,7 +248,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
                   required
                   placeholder="Ej: Laura Martínez"
                   value={newCustomerForm.name}
-                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, name: e.target.value })}
+                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, name: onlyLetters(e.target.value) })}
                   className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2.5 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                 />
               </div>
@@ -259,7 +260,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
                   required
                   placeholder="laura@email.com"
                   value={newCustomerForm.email}
-                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, email: e.target.value })}
+                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, email: normalizeEmail(e.target.value) })}
                   className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2.5 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                 />
               </div>
@@ -267,10 +268,11 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
               <div>
                 <label className="zenith-field-label">Teléfono Móvil</label>
                 <input
-                  type="text"
+                  type="tel"
+                  inputMode="numeric"
                   placeholder="0412-0000000"
                   value={newCustomerForm.phone}
-                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: e.target.value })}
+                  onChange={(e) => setNewCustomerForm({ ...newCustomerForm, phone: formatPhone(e.target.value) })}
                   className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2.5 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                 />
               </div>
@@ -283,7 +285,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
                     required
                     placeholder="Ej: Av. Francisco de Miranda, Urb. Campo Alegre, Edif. Parque Cristal, Piso 4B"
                     value={newCustomerForm.address}
-                    onChange={(e) => setNewCustomerForm({ ...newCustomerForm, address: e.target.value })}
+                    onChange={(e) => setNewCustomerForm({ ...newCustomerForm, address: safeText(e.target.value, 200) })}
                     className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2.5 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                   />
                 </div>
@@ -305,7 +307,7 @@ export default function CustomersView({ customers, onAddCustomer }: CustomersVie
                       required
                       placeholder="Ej: Chacao"
                       value={newCustomerForm.municipio}
-                      onChange={(e) => setNewCustomerForm({ ...newCustomerForm, municipio: e.target.value })}
+                      onChange={(e) => setNewCustomerForm({ ...newCustomerForm, municipio: onlyLetters(e.target.value, 60) })}
                       className="w-full bg-surface-950 border border-surface-850 rounded-lg p-2.5 text-xs text-white placeholder-surface-600 focus:outline-none focus:border-primary-500 mt-1"
                     />
                   </div>

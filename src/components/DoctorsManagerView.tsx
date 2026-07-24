@@ -20,6 +20,19 @@ import { PageHeader, Button, Modal, ModalBody, ListCard } from './ui';
 import { DOCTOR_SPECIALTY_OPTIONS } from '../data/mockData';
 import apiClient from '../lib/api';
 import { getDoctorStatusBadgeClassName } from '../lib/statusColors';
+import {
+  firstError,
+  formatMpps,
+  formatSanitaryRegistration,
+  normalizeEmail,
+  onlyLetters,
+  safeText,
+  validateEmail,
+  validateMpps,
+  validateName,
+  validatePassword,
+  validateSanitaryRegistration,
+} from '../lib/inputValidation';
 
 interface ApiErrorPayload {
   response?: {
@@ -154,8 +167,36 @@ export default function DoctorsManagerView() {
     );
   }, [doctors, searchQuery]);
 
+  /**
+   * Filtra el valor tecleado segun el tipo de campo, para que un caracter
+   * invalido no llegue siquiera a mostrarse en pantalla.
+   * @param {K} field - Campo del formulario.
+   * @param {string} value - Valor tecleado en crudo.
+   * @returns {string} Valor ya saneado.
+   */
+  const sanitizeField = <K extends keyof DoctorFormState>(field: K, value: string): string => {
+    switch (field) {
+      case 'name':
+        return onlyLetters(value);
+      case 'email':
+        return normalizeEmail(value);
+      case 'mpps':
+        return formatMpps(value);
+      case 'specialSanitaryRegistration':
+        return formatSanitaryRegistration(value);
+      case 'medicalBoard':
+      case 'officeLocation':
+        return safeText(value, 120);
+      default:
+        return value;
+    }
+  };
+
   const handleChange = <K extends keyof DoctorFormState>(field: K, value: DoctorFormState[K]) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    const sanitized =
+      typeof value === 'string' ? (sanitizeField(field, value) as DoctorFormState[K]) : value;
+    setForm((prev) => ({ ...prev, [field]: sanitized }));
+    if (errorMsg) setErrorMsg('');
   };
 
   const resetForm = () => {
@@ -200,6 +241,24 @@ export default function DoctorsManagerView() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Al editar, la contrasenia solo se valida si el admin escribio una nueva.
+    const validationError = firstError([
+      validateName(form.name),
+      validateEmail(form.email, true),
+      editingDoctorId
+        ? validatePassword(form.password, false)
+        : validatePassword(form.password, true),
+      validateMpps(form.mpps),
+      form.specialty ? null : 'Debe seleccionar una especialidad.',
+      form.medicalBoard.trim() ? null : 'El colegio de medicos es obligatorio.',
+      validateSanitaryRegistration(form.specialSanitaryRegistration),
+    ]);
+
+    if (validationError) {
+      setErrorMsg(validationError);
+      return;
+    }
 
     try {
       setSaving(true);
@@ -415,19 +474,19 @@ export default function DoctorsManagerView() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className="zenith-field-label">Nombre completo *</label>
-                <input value={form.name} onChange={(e) => handleChange('name', e.target.value)} className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-surface-400 ${editingDoctorId ? 'bg-surface-950/40 text-surface-250 border-surface-850' : 'bg-surface-950 text-white border-surface-850'}`} required readOnly={!!editingDoctorId} />
+                <input value={form.name} onChange={(e) => handleChange('name', e.target.value)} placeholder="Solo letras" className={`w-full border rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-surface-400 ${editingDoctorId ? 'bg-surface-950/40 text-surface-250 border-surface-850' : 'bg-surface-950 text-white border-surface-850'}`} required readOnly={!!editingDoctorId} />
               </div>
               <div className="space-y-1">
                 <label className="zenith-field-label">Correo electrónico *</label>
-                <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required />
+                <input type="email" value={form.email} onChange={(e) => handleChange('email', e.target.value)} placeholder="medico@dominio.com" className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required />
               </div>
               <div className="space-y-1">
                 <label className="zenith-field-label">Contraseña {editingDoctorId ? '(opcional)' : '*'}</label>
-                <input type="text" value={form.password} onChange={(e) => handleChange('password', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required={!editingDoctorId} />
+                <input type="password" autoComplete="new-password" value={form.password} onChange={(e) => handleChange('password', e.target.value)} placeholder="Minimo 8 caracteres, letras y numeros" className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-surface-400" required={!editingDoctorId} />
               </div>
               <div className="space-y-1">
                 <label className="zenith-field-label">Registro MPPS *</label>
-                <input value={form.mpps} onChange={(e) => handleChange('mpps', e.target.value)} className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" required />
+                <input value={form.mpps} onChange={(e) => handleChange('mpps', e.target.value)} placeholder="MPPS-12345" inputMode="numeric" className="w-full bg-surface-950 border border-surface-850 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-surface-400" required />
               </div>
               <div className="space-y-1">
                 <label className="zenith-field-label">Colegio de Médicos *</label>
